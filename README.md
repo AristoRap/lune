@@ -21,10 +21,11 @@ The CLI is not distributed as a pre-built binary. Clone this repo and either ins
 ```sh
 git clone https://github.com/aristorap/lune
 cd lune
-make setup        # shards install + npm install
+make setup        # shards install
 
 make deploy       # build release binary → /usr/local/bin/lune
-# or run without installing:
+
+# or run without installing (runs relative to your path):
 crystal run bin/lune.cr -- <command>
 ```
 
