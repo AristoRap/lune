@@ -14,7 +14,6 @@ help:
 
 setup:
 	shards install
-	cd frontend && npm install
 
 test:
 	crystal spec
