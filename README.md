@@ -39,7 +39,7 @@ cd my_app
 lune dev
 ```
 
-`lune init` scaffolds a Crystal entry point and a Vite frontend. `lune dev` compiles your Crystal app and starts the Vite dev server together, with hot-reload on source changes.
+`lune init` scaffolds a Crystal entry point and a Vite frontend. `lune dev` compiles your Crystal app and starts the Vite dev server together, with hot-reload on source changes. See [examples/main.cr](examples/main.cr) for what the generated entry point looks like.
 
 ## Adding Lune to an existing project
 
