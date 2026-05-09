@@ -1,0 +1,168 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #0f0f0f;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  display: flex;
+  place-items: center;
+  min-height: 100vh;
+}
+
+#app {
+  max-width: 440px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+
+/* ── logos ───────────────────────────────────────────── */
+
+.logos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.logo {
+  height: 16em;
+  padding: 1em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+
+.logo.lune:hover {
+  filter: drop-shadow(0 0 1.5em #a78bfa99);
+}
+
+.logo.vite:hover {
+  filter: drop-shadow(0 0 1.5em #ffd62e88);
+}
+
+.logo.vue:hover {
+  filter: drop-shadow(0 0 1.5em #41b88388);
+}
+
+/* ── heading ─────────────────────────────────────────── */
+
+h1 {
+  font-size: 2.4em;
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 2rem;
+  background: linear-gradient(135deg, #fff 40%, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── cards ───────────────────────────────────────────── */
+
+.card {
+  padding: 1.5em 0;
+}
+
+.card-label {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.85em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 0.9rem;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* ── greet ───────────────────────────────────────────── */
+
+.input-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+input[type="text"] {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.87);
+  font-family: inherit;
+  font-size: 1em;
+  padding: 0.5em 0.8em;
+  outline: none;
+  transition: border-color 250ms;
+}
+
+input[type="text"]:focus { border-color: #a78bfa; }
+
+.greet-result {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.95em;
+  margin-top: 0.75rem;
+  min-height: 1.4em;
+}
+
+/* ── counter ─────────────────────────────────────────── */
+
+.counter-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.counter-value {
+  font-size: 1.8em;
+  font-weight: 600;
+  min-width: 3ch;
+}
+
+/* ── buttons ─────────────────────────────────────────── */
+
+button {
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.5em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.87);
+  cursor: pointer;
+  transition: border-color 250ms, background 250ms;
+}
+
+button:hover {
+  border-color: #a78bfa;
+  background: rgba(167, 139, 250, 0.1);
+}
+
+button:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: 2px;
+}
+
+button.primary {
+  background: #a78bfa;
+  border-color: transparent;
+  color: #0f0f0f;
+  font-weight: 600;
+}
+
+button.primary:hover {
+  background: #c4b5fd;
+}

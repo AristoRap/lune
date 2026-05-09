@@ -1,0 +1,37 @@
+name: Specs
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  specs:
+    name: crystal-spec (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Crystal
+        uses: crystal-lang/install-crystal@v1
+
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+
+      - name: Install shards
+        run: shards install
+
+      - name: Run all specs
+        run: crystal spec

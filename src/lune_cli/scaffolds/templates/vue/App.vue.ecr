@@ -1,0 +1,55 @@
+<script setup>
+import { ref } from "vue";
+import api from "../lunejs/app/App.js";
+import luneSrc from "./assets/images/lune.svg";
+import vueSrc from "./assets/images/vue.svg";
+
+const name = ref("");
+const greetResult = ref("");
+const count = ref(0);
+
+async function greet() {
+  if (!name.value.trim()) return;
+  greetResult.value = await api.greet(name.value.trim());
+}
+
+async function inc() {
+  count.value = await api.counter.inc(count.value);
+}
+
+async function dec() {
+  count.value = await api.counter.dec(count.value);
+}
+</script>
+
+<template>
+  <div class="logos">
+    <a href="https://github.com/aristorap/lune" target="_blank">
+      <img :src="luneSrc" class="logo lune" alt="Lune" />
+    </a>
+    <a href="https://vuejs.org" target="_blank">
+      <img :src="vueSrc" class="logo vue" alt="Vue" />
+    </a>
+  </div>
+
+  <h1><%= @ctx.app_name %></h1>
+
+  <div class="card">
+    <div class="input-row">
+      <input v-model="name" type="text" placeholder="Your name…" autocomplete="off" />
+      <button class="primary" @click="greet">Greet</button>
+    </div>
+    <p class="greet-result">{{ greetResult }}</p>
+  </div>
+
+  <hr />
+
+  <div class="card">
+    <p class="card-label">Counter</p>
+    <div class="counter-row">
+      <button @click="dec">−</button>
+      <span class="counter-value">{{ count }}</span>
+      <button @click="inc">+</button>
+    </div>
+  </div>
+</template>

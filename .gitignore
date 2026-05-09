@@ -1,0 +1,10 @@
+/docs/
+/lib/
+/build/
+/bin/*
+!/bin/lune.cr
+/.shards/
+*.dwarf
+/.lune-dev
+/shard.lock
+/frontend/*

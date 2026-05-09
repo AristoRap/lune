@@ -1,0 +1,64 @@
+import "./style.css";
+import api from "../lunejs/app/App.js";
+import luneSrc from "./assets/images/lune.svg";
+import viteSrc from "./assets/images/vite.svg";
+
+document.querySelector("#app").innerHTML = `
+  <div class="logos">
+    <a href="https://github.com/aristorap/lune" target="_blank">
+      <img src="${luneSrc}" class="logo lune" alt="Lune" />
+    </a>
+    <a href="https://vite.dev" target="_blank">
+      <img src="${viteSrc}" class="logo vite" alt="Vite" />
+    </a>
+  </div>
+
+  <h1><%= @ctx.app_name %></h1>
+
+  <div class="card">
+    <div class="input-row">
+      <input id="name" type="text" placeholder="Your name…" autocomplete="off" />
+      <button class="primary" id="greet-btn">Greet</button>
+    </div>
+    <p class="greet-result" id="greet-result"></p>
+  </div>
+
+  <hr />
+
+  <div class="card">
+    <p class="card-label">Counter</p>
+    <div class="counter-row">
+      <button id="dec-btn">−</button>
+      <span class="counter-value" id="counter-value">0</span>
+      <button id="inc-btn">+</button>
+    </div>
+  </div>
+`;
+
+const nameEl = document.getElementById("name");
+const greetResult = document.getElementById("greet-result");
+const counterEl = document.getElementById("counter-value");
+
+nameEl?.focus();
+
+document.getElementById("greet-btn")?.addEventListener("click", () => {
+  const name = nameEl?.value?.trim() ?? "";
+  if (!name) return;
+  api.greet(name)
+    .then((msg) => { if (greetResult) greetResult.textContent = msg; })
+    .catch(console.error);
+});
+
+document.getElementById("inc-btn")?.addEventListener("click", () => {
+  const cur = parseInt(counterEl?.textContent ?? "0", 10);
+  api.counter.inc(cur)
+    .then((n) => { if (counterEl) counterEl.textContent = String(n); })
+    .catch(console.error);
+});
+
+document.getElementById("dec-btn")?.addEventListener("click", () => {
+  const cur = parseInt(counterEl?.textContent ?? "0", 10);
+  api.counter.dec(cur)
+    .then((n) => { if (counterEl) counterEl.textContent = String(n); })
+    .catch(console.error);
+});

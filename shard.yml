@@ -1,0 +1,21 @@
+name: lune
+version: 0.1.0
+description: Build native desktop apps with Crystal and a web frontend.
+
+authors:
+  - Aristotelis Rapai <aristotelisrapai@gmail.com>
+
+crystal: ">= 1.20.0"
+
+license: MIT
+
+dependencies:
+  webview:
+    github: naqvis/webview
+  argy:
+    github: AristoRap/argy
+    version: ~> 0.2
+
+targets:
+  lune:
+    main: bin/lune.cr
