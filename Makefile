@@ -4,7 +4,7 @@ SHELL := /bin/sh
 
 help:
 	@echo "Targets:"
-	@echo "  make setup    # install Crystal + frontend deps"
+	@echo "  make setup    # install Crystal deps"
 	@echo "  make test     # run specs"
 	@echo "  make build    # test + build CLI binary"
 	@echo "  make release  # test + build CLI binary with --release"
