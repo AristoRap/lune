@@ -182,6 +182,7 @@ lune init [APP_NAME]    Scaffold a new Lune app (--template vanilla|vue)
 lune dev                Start Vite + Crystal with hot-reload
 lune check              Type-check without building
 lune build              Build frontend + compile Crystal binary
+lune build --release    Build with Crystal --release optimizations
 lune run                Launch the previously built artifact
 ```
 
