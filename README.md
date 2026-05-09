@@ -12,26 +12,25 @@ Lune wraps a native WebView and lets you call Crystal code from JavaScript over 
 
 - [Crystal](https://crystal-lang.org) >= 1.20.0
 - [Node.js](https://nodejs.org) (for the frontend build)
-- [Lune CLI](#cli) on your PATH (`make deploy` or `shards build && cp bin/lune /usr/local/bin/lune`)
+- The Lune CLI — see below
 
-## Installation
+## Getting the CLI
 
-Add Lune to your `shard.yml`:
-
-```yaml
-dependencies:
-  lune:
-    github: aristorap/lune
-    version: ~> 0.1
-```
-
-Then run:
+The CLI is not distributed as a pre-built binary. Clone this repo and either install it globally or run it directly:
 
 ```sh
-shards install
+git clone https://github.com/aristorap/lune
+cd lune
+make setup        # shards install + npm install
+
+make deploy       # build release binary → /usr/local/bin/lune
+# or run without installing:
+crystal run bin/lune.cr -- <command>
 ```
 
 ## Quick start
+
+With the CLI on your PATH:
 
 ```sh
 lune init my_app
@@ -40,6 +39,23 @@ lune dev
 ```
 
 `lune init` scaffolds a Crystal entry point and a Vite frontend. `lune dev` compiles your Crystal app and starts the Vite dev server together, with hot-reload on source changes.
+
+## Adding Lune to an existing project
+
+Add it to your `shard.yml`:
+
+```yaml
+dependencies:
+  lune:
+    github: aristorap/lune
+    version: ~> 0.1
+```
+
+```sh
+shards install
+```
+
+You still need the CLI for `lune dev` and `lune build` — see [Getting the CLI](#getting-the-cli).
 
 ## Crystal API
 
