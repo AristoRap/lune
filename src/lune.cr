@@ -9,7 +9,7 @@ require "./lune/installable"
 require "./lune/app"
 
 module Lune
-  VERSION = "0.1.1"
+  VERSION = "0.1.2"
 
   # Navigation priority (first match wins):
   #   1. html:   — inline HTML string (useful for tests and simple apps)
@@ -92,7 +92,7 @@ module Lune
       elsif u = url
         wv.navigate(u)
       elsif dev_url = ENV["LUNE_DEV_URL"]?
-        Runtime.write_js([] of String)
+        Runtime.write_js(app.binding_names)
         wv.navigate(dev_url)
       elsif !Assets.empty?
         s = AssetServer.new
