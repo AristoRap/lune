@@ -9,7 +9,7 @@ require "./lune/installable"
 require "./lune/app"
 
 module Lune
-  VERSION = "0.1.2"
+  VERSION = "0.1.3"
 
   # Navigation priority (first match wins):
   #   1. html:   — inline HTML string (useful for tests and simple apps)
@@ -82,6 +82,24 @@ module Lune
           })();
         JS
       end
+
+      wv.init(<<-JS)
+        (function(){
+          document.addEventListener('keydown', function(e) {
+            if (!e.metaKey && !e.ctrlKey) return;
+            var cmd;
+            switch (e.key) {
+              case 'a': cmd = 'selectAll'; break;
+              case 'c': cmd = 'copy'; break;
+              case 'v': cmd = 'paste'; break;
+              case 'x': cmd = 'cut'; break;
+              case 'z': cmd = e.shiftKey ? 'redo' : 'undo'; break;
+              case 'y': cmd = 'redo'; break;
+            }
+            if (cmd) { e.preventDefault(); document.execCommand(cmd); }
+          });
+        })();
+      JS
 
       # asset_server is only set in the embedded-assets branch; it is stopped
       # after wv.run returns so the port is released when the window closes.
