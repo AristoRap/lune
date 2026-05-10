@@ -6,7 +6,6 @@
 - [ ] Additional templates: Svelte, React+TS (TS templates also generate `.d.ts` alongside `App.js`)
 - [x] `lune doctor` — check crystal/node versions, shards installed, frontend deps
 - [x] Single-instance lock — lock file or UNIX socket at `~/.lune/<app>.lock`
-- [ ] Window state persistence — save/restore position+size to `~/.config/<app>/window.json`
 
 ## v0.3 — Production-ready
 
@@ -25,3 +24,7 @@ These require native platform APIs beyond what `webview.h` exposes.
 - [ ] OS notifications
 - [ ] Multiple windows
 - [ ] Screen info / DPI queries
+
+## Random — no timeline
+
+- [ ] Window state persistence — save/restore position+size to `~/.config/<app>/window.json`
