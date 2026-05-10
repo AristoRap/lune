@@ -44,13 +44,27 @@ module LuneCLI
       nil
     end
 
-    def run(app_entry : String) : Bool
+    def run_lock_slug(app_entry : String) : String
+      abs = File.expand_path(artifact_path_for(app_entry))
+      "run-" + Lune::SingleInstance.slug(abs)
+    end
+
+    def run(
+      app_entry : String,
+      lock_dir : String = File.join(Path.home, ".lune")
+    ) : Bool
+      lock_file = Lune::SingleInstance.acquire(run_lock_slug(app_entry), lock_dir)
+      unless lock_file
+        Lune.logger.error { "Another instance is already running for #{app_entry}" }
+        return false
+      end
+
       artifact_path = artifact_path_for(app_entry)
 
       {% if flag?(:darwin) %}
         Process.run(
           "open",
-          ["-W", "-n", artifact_path],
+          [artifact_path],
           input: Process::Redirect::Inherit,
           output: Process::Redirect::Inherit,
           error: Process::Redirect::Inherit

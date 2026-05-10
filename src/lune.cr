@@ -7,6 +7,7 @@ require "./lune/bridge"
 require "./lune/runtime"
 require "./lune/installable"
 require "./lune/app"
+require "./lune/single_instance"
 
 module Lune
   VERSION = "0.1.3"

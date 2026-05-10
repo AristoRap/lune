@@ -5,7 +5,7 @@
 - [x] Events system: `app.emit("event", data)` from Crystal → JS event bus (`on`/`once`/`off` in runtime.js)
 - [ ] Additional templates: Svelte, React+TS (TS templates also generate `.d.ts` alongside `App.js`)
 - [x] `lune doctor` — check crystal/node versions, shards installed, frontend deps
-- [ ] Single-instance lock — lock file or UNIX socket at `~/.lune/<app>.lock`
+- [x] Single-instance lock — lock file or UNIX socket at `~/.lune/<app>.lock`
 - [ ] Window state persistence — save/restore position+size to `~/.config/<app>/window.json`
 
 ## v0.3 — Production-ready

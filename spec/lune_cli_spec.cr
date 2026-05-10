@@ -74,6 +74,32 @@ describe LuneCLI do
       cmd.validate_paths(frontend_dir: "missing_frontend", app_entry: "spec/fixtures/main.cr")
         .should eq("Frontend directory not found: missing_frontend")
     end
+
+    it "dev_lock_slug is prefixed with dev- and derived from the app entry path" do
+      cmd = LuneCLI::DevCommand.new
+      slug = cmd.dev_lock_slug("src/main.cr")
+      slug.should start_with("dev-")
+      slug.size.should be > "dev-".size
+    end
+
+    it "returns false immediately when a dev lock is already held for the same entry" do
+      with_tempdir do |lock_dir|
+        cmd = LuneCLI::DevCommand.new
+        slug = cmd.dev_lock_slug("spec/fixtures/main.cr")
+        held = Lune::SingleInstance.acquire(slug, lock_dir)
+        held.should_not be_nil
+
+        result = cmd.run(
+          frontend_dir: "frontend",
+          app_entry: "spec/fixtures/main.cr",
+          dev_url: "http://localhost:5173",
+          lock_dir: lock_dir
+        )
+        result.should be_false
+
+        held.try(&.close)
+      end
+    end
   end
 
   describe "build command" do
@@ -158,6 +184,26 @@ describe LuneCLI do
                         {% end %}
 
       cmd.artifact_path_for("main.cr").should eq(expected_output)
+    end
+
+    it "returns false immediately when a run lock is already held for the same entry" do
+      with_tempdir do |lock_dir|
+        cmd = LuneCLI::RunCommand.new
+        slug = cmd.run_lock_slug("src/main.cr")
+        held = Lune::SingleInstance.acquire(slug, lock_dir)
+        held.should_not be_nil
+
+        result = cmd.run(app_entry: "src/main.cr", lock_dir: lock_dir)
+        result.should be_false
+
+        held.try(&.close)
+      end
+    end
+
+    it "run_lock_slug differs from dev_lock_slug for the same entry" do
+      run_cmd = LuneCLI::RunCommand.new
+      dev_cmd = LuneCLI::DevCommand.new
+      run_cmd.run_lock_slug("src/main.cr").should_not eq(dev_cmd.dev_lock_slug("src/main.cr"))
     end
   end
 

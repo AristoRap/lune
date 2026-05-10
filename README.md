@@ -93,16 +93,16 @@ You still need the CLI for `lune dev` and `lune build` — see [Getting the CLI]
 require "lune"
 
 Lune.run(
-  title:      "My App",
-  assets:     "frontend/dist",   # embedded at compile time
-  width:      1200,
-  height:     800,
-  min_width:  800,
-  min_height: 600,
-  debug:      false,
-  on_load:    -> { puts "page loaded" },
+  title:       "My App",
+  assets:      "frontend/dist",   # embedded at compile time
+  width:       1200,
+  height:      800,
+  min_width:   800,
+  min_height:  600,
+  debug:       false,
+  on_load:     -> { puts "page loaded" },
   on_navigate: ->(url : String) { puts "navigated to #{url}" },
-  on_close:   -> { puts "window closed" },
+  on_close:    -> { puts "window closed" },
 ) do |app|
   # register bindings here
 end
@@ -263,6 +263,8 @@ lune build --release    Build with Crystal --release optimizations
 lune run   (alias: r)   Launch the previously built artifact
 lune doctor             Check Crystal, Node, npm, shards, and frontend deps
 ```
+
+`lune dev` and `lune run` both enforce single-instance at the CLI level — a second invocation for the same app entry exits immediately with an error rather than spawning a duplicate window.
 
 Shared flags (apply to all commands):
 
