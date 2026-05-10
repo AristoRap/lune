@@ -4,15 +4,20 @@ require "../lune"
 
 module LuneCLI
   class BuildCommand
-    BUILD_DIR = File.join("build", "bin")
+    DEFAULT_BUILD_CMD = "#{NPM_CMD} run build"
+    BUILD_DIR         = File.join("build", "bin")
 
     def to_command : Argy::Command
+      config = LuneCLI::Config.load
+
       command = Argy::Command.new(
         use: "build",
         aliases: ["b"],
         short: "Build the Lune app",
         long: "Build frontend assets, then compile the configured Crystal app into a runnable artifact."
       )
+
+      command.flags.string("build-cmd", nil, config.build_cmd || DEFAULT_BUILD_CMD, "command to build the frontend assets")
 
       command.on_pre_run do |cmd, _args|
         frontend_dir = cmd.string_flag("frontend-dir")
@@ -30,10 +35,11 @@ module LuneCLI
         frontend_dir = cmd.string_flag("frontend-dir")
         app_entry = cmd.string_flag("app-entry")
         release = cmd.bool_flag("release")
+        build_cmd = cmd.string_flag("build-cmd")
         output_path = output_path_for(app_entry)
 
         Lune.logger.info { "Building frontend assets..." }
-        success = run(frontend_dir: frontend_dir, app_entry: app_entry, output_path: output_path, release: release)
+        success = run(frontend_dir: frontend_dir, app_entry: app_entry, output_path: output_path, release: release, build_cmd: build_cmd)
 
         if success
           Lune.logger.info { "Built app: #{output_path}" }
@@ -62,14 +68,15 @@ module LuneCLI
       nil
     end
 
-    def run(frontend_dir : String, app_entry : String, output_path : String, release : Bool = false) : Bool
-      # Pre-generate JS so the bundler can resolve lunejs imports before `npm run build`.
+    def run(frontend_dir : String, app_entry : String, output_path : String, release : Bool = false, build_cmd : String = DEFAULT_BUILD_CMD) : Bool
+      # Pre-generate JS so the bundler can resolve lunejs imports before the build command runs.
       # Binding names are unavailable here — the Proxy fallback in App.js handles runtime dispatch.
       LuneCLI.pregen_runtime_js(frontend_dir)
 
+      build_parts = build_cmd.split(' ', remove_empty: true)
       frontend_status = Process.run(
-        NPM_CMD,
-        ["run", "build"],
+        build_parts[0],
+        build_parts[1..],
         chdir: frontend_dir,
         input: Process::Redirect::Inherit,
         output: Process::Redirect::Inherit,

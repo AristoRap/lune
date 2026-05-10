@@ -66,7 +66,7 @@ cd my_app
 lune dev
 ```
 
-`lune init` scaffolds a Crystal entry point and a Vite frontend. `lune dev` compiles your Crystal app and starts the Vite dev server together, with hot-reload on source changes. See [examples/main.cr](examples/main.cr) for what the generated entry point looks like.
+`lune init` scaffolds a Crystal entry point, a Vite frontend, and a `lune.yml` project config. `lune dev` compiles your Crystal app and starts the frontend dev server together, with hot-reload on source changes. See [examples/main.cr](examples/main.cr) for what the generated entry point looks like.
 
 ## Adding Lune to an existing project
 
@@ -283,11 +283,26 @@ Lune generates `.d.ts` files alongside every JS file it writes:
 
 Binding argument and return types require `lune generate` (see roadmap), which reads Crystal annotations to produce precise types.
 
+## lune.yml
+
+`lune init` generates a `lune.yml` in your project root. All keys are optional — omitted values fall back to their CLI defaults.
+
+```yaml
+name: my_app
+app_entry: src/main.cr
+frontend_dir: frontend
+dev_cmd: npm run dev       # command to start the frontend dev server
+build_cmd: npm run build   # command to build frontend assets
+dev_url: http://localhost:5173
+```
+
+Any value set here can still be overridden at runtime with the corresponding CLI flag.
+
 ## CLI
 
 ```
 lune init [APP_NAME]    Scaffold a new Lune app (--template vanilla|vue)
-lune dev   (alias: d)   Start Vite + Crystal with hot-reload
+lune dev   (alias: d)   Start frontend dev server + Crystal with hot-reload
 lune check              Type-check without building
 lune build (alias: b)   Build frontend + compile Crystal binary
 lune build --release    Build with Crystal --release optimizations
@@ -305,6 +320,20 @@ Shared flags (apply to all commands):
 --debug          Enable debug logging
 ```
 
+`lune dev` flags:
+
+```sh
+--dev-cmd   Command to start the frontend dev server (default: npm run dev)
+--dev-url   Frontend development URL (default: http://localhost:5173)
+```
+
+`lune build` flags:
+
+```sh
+--build-cmd   Command to build frontend assets (default: npm run build)
+--release     Build with Crystal --release optimizations
+```
+
 ### `lune build` output
 
 ```sh
@@ -313,7 +342,7 @@ lune build
 # Linux  → build/bin/my_app
 ```
 
-The frontend is compiled with `npm run build` and embedded in the binary via Crystal macros — the artifact is a single self-contained file.
+The frontend is compiled via `build_cmd` (configurable in `lune.yml`) and embedded in the binary via Crystal macros — the artifact is a single self-contained file.
 
 ## Development
 

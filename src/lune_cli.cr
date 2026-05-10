@@ -1,5 +1,6 @@
 require "argy"
 require "./lune"
+require "./lune_cli/config"
 require "./lune_cli/file_watcher"
 require "./lune_cli/build_command"
 require "./lune_cli/check_command"
