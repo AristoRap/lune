@@ -3,7 +3,6 @@
 ## v0.2 — Developer experience
 
 - [x] Events system: `app.emit("event", data)` from Crystal → JS event bus (`on`/`once`/`off` in runtime.js)
-- [ ] Additional templates: Svelte, React+TS
 - [x] Runtime JS API — `quit()`, `openURL(url)`, `environment()` built into `runtime.js`
 - [x] TypeScript definitions — `runtime.d.ts` (fully typed) and `App.d.ts` (name stubs) generated alongside JS files
 - [x] `lune doctor` — check crystal/node versions, shards installed, frontend deps
@@ -29,4 +28,5 @@ These require native platform APIs beyond what `webview.h` exposes.
 
 ## Random — no timeline
 
+- [ ] Additional templates: Svelte, React+TS (wait until core API is stable)
 - [ ] Window state persistence — save/restore position+size to `~/.config/<app>/window.json`

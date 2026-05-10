@@ -11,7 +11,7 @@ require "./lune/single_instance"
 require "./lune/runtime_bindings"
 
 module Lune
-  VERSION = "0.1.3"
+  VERSION = "0.2.0"
 
   # Navigation priority (first match wins):
   #   1. html:   — inline HTML string (useful for tests and simple apps)

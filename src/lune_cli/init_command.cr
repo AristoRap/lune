@@ -110,7 +110,7 @@ module LuneCLI
       raise Argy::Error.new("crystal init failed") unless status.success?
     end
 
-    private def inject_dependency(shard_yml_path : String)
+    def inject_dependency(shard_yml_path : String)
       Lune.logger.debug { "Injecting lune dependency into shard.yml" }
 
       raw = YAML.parse(File.read(shard_yml_path)).as_h
@@ -120,7 +120,7 @@ module LuneCLI
       lune_dep = {} of YAML::Any => YAML::Any
 
       lune_dep[YAML::Any.new("github")] = YAML::Any.new("aristorap/lune")
-      lune_dep[YAML::Any.new("version")] = YAML::Any.new("~> 0.1")
+      lune_dep[YAML::Any.new("version")] = YAML::Any.new("~> #{Lune::VERSION.split(".").first(2).join(".")}")
 
       deps[YAML::Any.new("lune")] = YAML::Any.new(lune_dep)
       raw[YAML::Any.new("dependencies")] = YAML::Any.new(deps)

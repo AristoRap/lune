@@ -171,6 +171,19 @@ describe LuneCLI do
         cmd.shards_install_args.should_not contain("--skip-postinstall")
       {% end %}
     end
+
+    it "injects the current major.minor lune version into shard.yml" do
+      with_tempdir do |dir|
+        shard_yml = File.join(dir, "shard.yml")
+        File.write(shard_yml, "name: testapp\nversion: 0.1.0\n")
+
+        LuneCLI::InitCommand.new.inject_dependency(shard_yml)
+
+        content = File.read(shard_yml)
+        expected = "~> #{Lune::VERSION.split(".").first(2).join(".")}"
+        content.should contain(expected)
+      end
+    end
   end
 
   describe "run command" do

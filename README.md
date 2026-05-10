@@ -76,7 +76,7 @@ Add it to your `shard.yml`:
 dependencies:
   lune:
     github: aristorap/lune
-    version: ~> 0.1
+    version: ~> 0.2
 ```
 
 ```sh
