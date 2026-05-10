@@ -83,6 +83,24 @@ module Lune
         JS
       end
 
+      wv.init(<<-JS)
+        (function(){
+          document.addEventListener('keydown', function(e) {
+            if (!e.metaKey && !e.ctrlKey) return;
+            var cmd;
+            switch (e.key) {
+              case 'a': cmd = 'selectAll'; break;
+              case 'c': cmd = 'copy'; break;
+              case 'v': cmd = 'paste'; break;
+              case 'x': cmd = 'cut'; break;
+              case 'z': cmd = e.shiftKey ? 'redo' : 'undo'; break;
+              case 'y': cmd = 'redo'; break;
+            }
+            if (cmd) { e.preventDefault(); document.execCommand(cmd); }
+          });
+        })();
+      JS
+
       # asset_server is only set in the embedded-assets branch; it is stopped
       # after wv.run returns so the port is released when the window closes.
       asset_server : AssetServer? = nil
