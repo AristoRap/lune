@@ -9,7 +9,7 @@ require "./lune/installable"
 require "./lune/app"
 
 module Lune
-  VERSION = "0.1.2"
+  VERSION = "0.1.3"
 
   # Navigation priority (first match wins):
   #   1. html:   — inline HTML string (useful for tests and simple apps)
