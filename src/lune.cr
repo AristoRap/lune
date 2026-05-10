@@ -7,9 +7,11 @@ require "./lune/bridge"
 require "./lune/runtime"
 require "./lune/installable"
 require "./lune/app"
+require "./lune/single_instance"
+require "./lune/runtime_bindings"
 
 module Lune
-  VERSION = "0.1.3"
+  VERSION = "0.2.0"
 
   # Navigation priority (first match wins):
   #   1. html:   — inline HTML string (useful for tests and simple apps)
@@ -65,6 +67,8 @@ module Lune
       bridge = Bridge.new(wv)
       app = App.new(bridge)
 
+      RuntimeBindings.register(bridge, on_quit: -> { wv.dispatch { wv.terminate } }, debug: debug)
+
       block.call(app)
 
       wv.on_load = on_load
@@ -85,6 +89,7 @@ module Lune
 
       wv.init(<<-JS)
         (function(){
+          // Keyboard shortcuts (copy/paste/undo/redo/select-all)
           document.addEventListener('keydown', function(e) {
             if (!e.metaKey && !e.ctrlKey) return;
             var cmd;
@@ -98,6 +103,27 @@ module Lune
             }
             if (cmd) { e.preventDefault(); document.execCommand(cmd); }
           });
+
+          // Event bus — used by app.emit() on the Crystal side
+          var _ll = {};
+          window.__lune_emit = function(name, data) {
+            var ls = _ll[name];
+            if (!ls) return;
+            var keep = [];
+            for (var i = 0; i < ls.length; i++) {
+              ls[i].cb(data);
+              ls[i].n++;
+              if (ls[i].max < 0 || ls[i].n < ls[i].max) keep.push(ls[i]);
+            }
+            _ll[name] = keep;
+          };
+          window.__lune_on = function(name, cb, max) {
+            (_ll[name] = _ll[name] || []).push({ cb: cb, n: 0, max: max === undefined ? -1 : max });
+          };
+          window.__lune_off = function(name, cb) {
+            if (!cb) { delete _ll[name]; return; }
+            if (_ll[name]) _ll[name] = _ll[name].filter(function(e) { return e.cb !== cb; });
+          };
         })();
       JS
 

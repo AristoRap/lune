@@ -2,11 +2,11 @@
 
 ## v0.2 — Developer experience
 
-- [ ] Events system: `app.emit("event", data)` from Crystal → `window.dispatchEvent(CustomEvent)` in JS (pure `wv.eval`, no C)
-- [ ] Additional templates: Svelte, React+TS (TS templates also generate `.d.ts` alongside `App.js`)
-- [ ] `lune doctor` — check crystal/node versions, shard resolvable, frontend builds
-- [ ] Single-instance lock — lock file or UNIX socket at `~/.lune/<app>.lock`
-- [ ] Window state persistence — save/restore position+size to `~/.config/<app>/window.json`
+- [x] Events system: `app.emit("event", data)` from Crystal → JS event bus (`on`/`once`/`off` in runtime.js)
+- [x] Runtime JS API — `quit()`, `openURL(url)`, `environment()` built into `runtime.js`
+- [x] TypeScript definitions — `runtime.d.ts` (fully typed) and `App.d.ts` (name stubs) generated alongside JS files
+- [x] `lune doctor` — check crystal/node versions, shards installed, frontend deps
+- [x] Single-instance lock — lock file or UNIX socket at `~/.lune/<app>.lock`
 
 ## v0.3 — Production-ready
 
@@ -25,3 +25,8 @@ These require native platform APIs beyond what `webview.h` exposes.
 - [ ] OS notifications
 - [ ] Multiple windows
 - [ ] Screen info / DPI queries
+
+## Random — no timeline
+
+- [ ] Additional templates: Svelte, React+TS (wait until core API is stable)
+- [ ] Window state persistence — save/restore position+size to `~/.config/<app>/window.json`

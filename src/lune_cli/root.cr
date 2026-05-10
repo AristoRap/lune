@@ -32,6 +32,7 @@ module LuneCLI
         BuildCommand.new.to_command,
         CheckCommand.new.to_command,
         DevCommand.new.to_command,
+        DoctorCommand.new.to_command,
         RunCommand.new.to_command,
         InitCommand.new.to_command,
         VersionCommand.new.to_command

@@ -9,6 +9,7 @@ module LuneCLI
     def to_command : Argy::Command
       command = Argy::Command.new(
         use: "dev",
+        aliases: ["d"],
         short: "Run the Lune app in dev mode",
         long: "Starts the Vite dev server and the Crystal app together. Kills the dev server when the app exits."
       )
@@ -46,7 +47,24 @@ module LuneCLI
       nil
     end
 
-    def run(frontend_dir : String, app_entry : String, dev_url : String, watcher : FileWatcher = FileWatcher.new) : Bool
+    def dev_lock_slug(app_entry : String) : String
+      abs = File.expand_path(app_entry)
+      "dev-" + Lune::SingleInstance.slug(abs)
+    end
+
+    def run(
+      frontend_dir : String,
+      app_entry : String,
+      dev_url : String,
+      watcher : FileWatcher = FileWatcher.new,
+      lock_dir : String = File.join(Path.home, ".lune")
+    ) : Bool
+      lock_file = Lune::SingleInstance.acquire(dev_lock_slug(app_entry), lock_dir)
+      unless lock_file
+        Lune.logger.error { "Another 'lune dev' is already running for #{app_entry}" }
+        return false
+      end
+
       LuneCLI.pregen_runtime_js(frontend_dir)
 
       Lune.logger.info { "Starting Vite dev server in #{frontend_dir}..." }

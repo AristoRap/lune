@@ -76,7 +76,7 @@ Add it to your `shard.yml`:
 dependencies:
   lune:
     github: aristorap/lune
-    version: ~> 0.1
+    version: ~> 0.2
 ```
 
 ```sh
@@ -93,16 +93,16 @@ You still need the CLI for `lune dev` and `lune build` — see [Getting the CLI]
 require "lune"
 
 Lune.run(
-  title:      "My App",
-  assets:     "frontend/dist",   # embedded at compile time
-  width:      1200,
-  height:     800,
-  min_width:  800,
-  min_height: 600,
-  debug:      false,
-  on_load:    -> { puts "page loaded" },
+  title:       "My App",
+  assets:      "frontend/dist",   # embedded at compile time
+  width:       1200,
+  height:      800,
+  min_width:   800,
+  min_height:  600,
+  debug:       false,
+  on_load:     -> { puts "page loaded" },
   on_navigate: ->(url : String) { puts "navigated to #{url}" },
-  on_close:   -> { puts "window closed" },
+  on_close:    -> { puts "window closed" },
 ) do |app|
   # register bindings here
 end
@@ -167,6 +167,33 @@ end
 
 Namespaces compose: `math.trig.sin` registers as `math.trig.sin` in JS.
 
+### Events (Crystal → JS)
+
+Push events from Crystal to the frontend at any time — from a background fiber, a timer, or after a binding returns:
+
+```crystal
+# emit with any JSON-serializable data
+app.emit("status", "ready")
+app.emit("progress", {step: 3, total: 10})
+
+# namespaced — event name is prefixed automatically
+app.namespace("hash") do |h|
+  h.bind_async("compute") do |args|
+    result = compute(args[0].as_s)
+    h.emit("done", result)   # fires as "hash.done"
+    JSON::Any.new(result)
+  end
+end
+
+# fire from a background fiber
+spawn do
+  loop do
+    sleep 1.second
+    app.emit("tick", Time.utc.to_s)
+  end
+end
+```
+
 ### Plugin modules
 
 Extract binding sets into reusable `Installable` modules:
@@ -203,16 +230,72 @@ const msg = await greet("world");
 
 All bindings return `Promise`. Exceptions thrown in Crystal reject the promise.
 
+### Runtime functions
+
+`runtime.js` also exports built-in system functions:
+
+```js
+import { quit, openURL, environment } from "../lunejs/runtime/runtime.js";
+
+await quit();                          // terminate the app
+await openURL("https://example.com"); // open in system browser
+const env = await environment();      // { os, arch, debug }
+```
+
+`environment()` returns a `LuneEnvironment` object:
+
+```ts
+interface LuneEnvironment {
+  os: "darwin" | "linux" | "windows";
+  arch: string;   // "arm64" | "x86_64"
+  debug: boolean;
+}
+```
+
+### Listening to events from Crystal
+
+Import `on`, `once`, or `off` from `runtime.js` to subscribe to events emitted by `app.emit`:
+
+```js
+import { on, once, off } from "../lunejs/runtime/runtime.js";
+
+// persistent listener
+on("status", (data) => console.log(data));
+
+// fires once then removes itself
+once("tick", (data) => console.log("first tick:", data));
+
+// remove a specific listener
+const handler = (data) => updateUI(data);
+on("progress", handler);
+off("progress", handler);
+
+// remove all listeners for an event
+off("progress");
+```
+
+### TypeScript
+
+Lune generates `.d.ts` files alongside every JS file it writes:
+
+- `runtime.d.ts` — fully typed declarations for all runtime functions and the `LuneEnvironment` interface
+- `App.d.ts` — name stubs (`Promise<unknown>`) for each registered binding; tells the IDE which calls exist
+
+Binding argument and return types require `lune generate` (see roadmap), which reads Crystal annotations to produce precise types.
+
 ## CLI
 
 ```
 lune init [APP_NAME]    Scaffold a new Lune app (--template vanilla|vue)
-lune dev                Start Vite + Crystal with hot-reload
+lune dev   (alias: d)   Start Vite + Crystal with hot-reload
 lune check              Type-check without building
-lune build              Build frontend + compile Crystal binary
+lune build (alias: b)   Build frontend + compile Crystal binary
 lune build --release    Build with Crystal --release optimizations
-lune run                Launch the previously built artifact
+lune run   (alias: r)   Launch the previously built artifact
+lune doctor             Check Crystal, Node, npm, shards, and frontend deps
 ```
+
+`lune dev` and `lune run` both enforce single-instance at the CLI level — a second invocation for the same app entry exits immediately with an error rather than spawning a duplicate window.
 
 Shared flags (apply to all commands):
 

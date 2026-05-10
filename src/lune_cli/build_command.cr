@@ -9,6 +9,7 @@ module LuneCLI
     def to_command : Argy::Command
       command = Argy::Command.new(
         use: "build",
+        aliases: ["b"],
         short: "Build the Lune app",
         long: "Build frontend assets, then compile the configured Crystal app into a runnable artifact."
       )

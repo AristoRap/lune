@@ -19,6 +19,57 @@ describe Lune::Runtime do
     js.includes?("export const __lune").should be_true
   end
 
+  it "exports on, once, off event bus helpers" do
+    js = Lune::Runtime.generate_runtime_js
+
+    js.includes?("export function on").should be_true
+    js.includes?("export function once").should be_true
+    js.includes?("export function off").should be_true
+    js.includes?("__lune_on").should be_true
+    js.includes?("__lune_off").should be_true
+  end
+
+  it "exports quit, openURL, environment runtime functions" do
+    js = Lune::Runtime.generate_runtime_js
+
+    js.includes?("export function quit").should be_true
+    js.includes?("export function openURL").should be_true
+    js.includes?("export function environment").should be_true
+    js.includes?("__lune.quit").should be_true
+    js.includes?("__lune.openURL").should be_true
+    js.includes?("__lune.environment").should be_true
+  end
+
+  it "generates runtime.d.ts with typed declarations" do
+    dts = Lune::Runtime.generate_runtime_dts
+
+    dts.includes?("LuneEnvironment").should be_true
+    dts.includes?("export declare function quit").should be_true
+    dts.includes?("export declare function openURL").should be_true
+    dts.includes?("export declare function environment").should be_true
+    dts.includes?("export declare function on").should be_true
+    dts.includes?("export declare function once").should be_true
+    dts.includes?("export declare function off").should be_true
+  end
+
+  it "generates App.d.ts with a stub per binding name" do
+    dts = Lune::Runtime.generate_app_dts(["greet", "counter.inc"])
+
+    dts.includes?("export declare function greet").should be_true
+    dts.includes?("export declare function counter__inc").should be_true
+    dts.includes?("export declare const api").should be_true
+  end
+
+  it "writes .d.ts files alongside the JS files" do
+    with_tempdir do |tmpdir|
+      lunejs_dir = File.join(tmpdir, "lunejs")
+      Lune::Runtime.write_js(["greet"], lunejs_dir)
+
+      File.exists?(File.join(lunejs_dir, "runtime", "runtime.d.ts")).should be_true
+      File.exists?(File.join(lunejs_dir, "app", "App.d.ts")).should be_true
+    end
+  end
+
   it "generates app API code with bindings" do
     js = Lune::Runtime.generate_app_js(["zeta", "alpha"])
 
