@@ -109,6 +109,35 @@ describe LuneCLI do
     end
   end
 
+  describe "NPM_CMD" do
+    it "is npm on non-Windows platforms" do
+      {% unless flag?(:win32) %}
+        LuneCLI::NPM_CMD.should eq("npm")
+      {% end %}
+    end
+
+    it "is npm.cmd on Windows" do
+      {% if flag?(:win32) %}
+        LuneCLI::NPM_CMD.should eq("npm.cmd")
+      {% end %}
+    end
+  end
+
+  describe "init command" do
+    it "always includes install in shards_install_args" do
+      LuneCLI::InitCommand.new.shards_install_args.should contain("install")
+    end
+
+    it "adds --skip-postinstall only on Windows" do
+      cmd = LuneCLI::InitCommand.new
+      {% if flag?(:win32) %}
+        cmd.shards_install_args.should contain("--skip-postinstall")
+      {% else %}
+        cmd.shards_install_args.should_not contain("--skip-postinstall")
+      {% end %}
+    end
+  end
+
   describe "run command" do
     it "derives the built artifact path from the app entry" do
       cmd = LuneCLI::RunCommand.new

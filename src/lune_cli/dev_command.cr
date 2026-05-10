@@ -51,7 +51,7 @@ module LuneCLI
 
       Lune.logger.info { "Starting Vite dev server in #{frontend_dir}..." }
       vite = Process.new(
-        "npm",
+        NPM_CMD,
         ["run", "dev"],
         chdir: frontend_dir,
         input: Process::Redirect::Close,

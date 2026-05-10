@@ -1,4 +1,10 @@
 module LuneCLI
+  {% if flag?(:win32) %}
+    NPM_CMD = "npm.cmd"
+  {% else %}
+    NPM_CMD = "npm"
+  {% end %}
+
   module Root
     DEFAULT_FRONTEND_DIR = "frontend"
     DEFAULT_APP_ENTRY    = "src/main.cr"

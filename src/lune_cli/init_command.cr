@@ -158,10 +158,18 @@ module LuneCLI
       FileUtils.mkdir_p(File.join(frontend_dir, "dist"))
     end
 
+    def shards_install_args : Array(String)
+      args = ["install"]
+      {% if flag?(:win32) %}
+      args << "--skip-postinstall"
+      {% end %}
+      args
+    end
+
     private def run_shards_install(app_name : String)
       Lune.logger.info { "Running shards install..." }
       status = Process.run(
-        "shards", ["install"],
+        "shards", shards_install_args,
         chdir: app_name,
         input: Process::Redirect::Inherit,
         output: Process::Redirect::Inherit,
@@ -173,7 +181,7 @@ module LuneCLI
     private def run_npm_install(app_name : String, frontend_dir : String)
       Lune.logger.info { "Running npm install..." }
       status = Process.run(
-        "npm", ["install"],
+        NPM_CMD, ["install"],
         chdir: File.join(app_name, frontend_dir),
         input: Process::Redirect::Inherit,
         output: Process::Redirect::Inherit,

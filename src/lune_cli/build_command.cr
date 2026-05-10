@@ -67,7 +67,7 @@ module LuneCLI
       LuneCLI.pregen_runtime_js(frontend_dir)
 
       frontend_status = Process.run(
-        "npm",
+        NPM_CMD,
         ["run", "build"],
         chdir: frontend_dir,
         input: Process::Redirect::Inherit,

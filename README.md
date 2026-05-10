@@ -14,6 +14,33 @@ Lune wraps a native WebView and lets you call Crystal code from JavaScript over 
 - [Node.js](https://nodejs.org) (for the frontend build)
 - The Lune CLI — see below
 
+## Platform support
+
+| Platform | Dev (`lune dev`) | Build (`lune build`) |
+|---|---|---|
+| macOS | ✅ | ✅ |
+| Linux | ✅ | ✅ |
+| Windows | ⚠️ requires manual setup | ❌ blocked (see below) |
+
+### Windows
+
+Windows support is incomplete. The development workflow can be made to work with manual steps, but production builds are blocked by a fundamental Crystal-on-Windows limitation.
+
+#### Manual setup required: WebView2
+
+The `naqvis/webview` shard's postinstall script is Unix-only. Before running `shards install`, fetch the WebView2 SDK manually:
+
+1. Download the [WebView2 NuGet package](https://www.nuget.org/packages/Microsoft.Web.WebView2) and extract `build/native/include/WebView2.h` into `lib/webview/ext/`.
+2. Build `webview.dll` and `webview.lib` with MSVC `cl.exe` against that header.
+3. Copy `webview.dll`, `webview.lib`, and `WebView2Loader.dll` into a directory listed in `CRYSTAL_LIBRARY_PATH`.
+4. Then run: `shards install --skip-postinstall` (Lune passes this flag automatically on Windows).
+
+#### Production builds are blocked
+
+`lune build` produces a binary that serves embedded assets over a local HTTP server, then opens a WebView2 window. On Windows, `wv.run()` blocks the main thread inside WebView2's native message loop. Even with `-Dpreview_mt` and `Thread.new`, Crystal's IO scheduler does not get CPU time while the main thread is blocked by a foreign C run loop — so the HTTP server never responds and the webview window loads a blank page.
+
+This is a Crystal stdlib limitation (IOCP + green thread scheduler interaction on Windows), not something Lune can work around without a significant architectural change such as spawning the asset server as a separate process. There is no ETA. If Crystal's Windows scheduler improves, or if you want to take a crack at the separate-process approach, contributions are very welcome.
+
 ## Getting the CLI
 
 The CLI is not distributed as a pre-built binary. Clone this repo and either install it globally or run it directly:

@@ -31,7 +31,7 @@ module Lune
     # Files are registered as "/<relative-path>" e.g. "/index.html", "/assets/main.js".
     macro embed_dir(dir)
       {% normalized_dir = dir.id.gsub(/"/, "") %}
-      {% file_list = `cd #{normalized_dir} && find . -type f 2>/dev/null`.strip.split('\n') %}
+      {% file_list = run("./macros/list_files", normalized_dir).strip.split('\n') %}
       {% for relative_path in file_list %}
         {% if relative_path != "" %}
           {% asset_path = normalized_dir + "/" + relative_path[2..] %}
