@@ -13,6 +13,11 @@ module Lune
           return window[name](...args);
         },
       };
+
+      // Event bus — wraps the globals set up by Lune's wv.init script.
+      export function on(name, cb)   { window.__lune_on(name, cb, -1); }
+      export function once(name, cb) { window.__lune_on(name, cb,  1); }
+      export function off(name, cb)  { window.__lune_off(name, cb); }
       JS
     end
 
@@ -60,7 +65,7 @@ module Lune
     end
 
     def self.write_js(binding_names : Array(String), lunejs_dir : String = LUNEJS_DIR)
-      app_path     = File.join(lunejs_dir, "app", "App.js")
+      app_path = File.join(lunejs_dir, "app", "App.js")
       runtime_path = File.join(lunejs_dir, "runtime", "runtime.js")
 
       FileUtils.mkdir_p(File.dirname(app_path))

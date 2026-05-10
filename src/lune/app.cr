@@ -43,6 +43,16 @@ module Lune
     end
 
     # ----------------------------
+    # Events
+    # ----------------------------
+
+    def emit(event : String, data = nil)
+      name = scoped(event)
+      json = data.nil? ? "null" : data.to_json
+      @bridge.eval("window.__lune_emit(#{name.inspect}, #{json})")
+    end
+
+    # ----------------------------
     # JS eval
     # ----------------------------
 

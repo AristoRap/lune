@@ -2,7 +2,7 @@
 
 ## v0.2 — Developer experience
 
-- [ ] Events system: `app.emit("event", data)` from Crystal → `window.dispatchEvent(CustomEvent)` in JS (pure `wv.eval`, no C)
+- [x] Events system: `app.emit("event", data)` from Crystal → JS event bus (`on`/`once`/`off` in runtime.js)
 - [ ] Additional templates: Svelte, React+TS (TS templates also generate `.d.ts` alongside `App.js`)
 - [ ] `lune doctor` — check crystal/node versions, shard resolvable, frontend builds
 - [ ] Single-instance lock — lock file or UNIX socket at `~/.lune/<app>.lock`
