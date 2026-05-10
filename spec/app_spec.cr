@@ -83,6 +83,38 @@ describe Lune::App do
     end
   end
 
+  describe "#emit" do
+    it "evaluates __lune_emit with the event name and serialized data" do
+      fake = AppFakeWebview.new
+      app = Lune::App.new(Lune::Bridge.new(fake))
+
+      app.emit("tick", {count: 1})
+
+      fake.eval_calls.size.should eq(1)
+      fake.eval_calls[0].should contain("window.__lune_emit")
+      fake.eval_calls[0].should contain(%("tick"))
+      fake.eval_calls[0].should contain("count")
+    end
+
+    it "emits null when no data is provided" do
+      fake = AppFakeWebview.new
+      app = Lune::App.new(Lune::Bridge.new(fake))
+
+      app.emit("ping")
+
+      fake.eval_calls[0].should contain("null")
+    end
+
+    it "prefixes the event name with the namespace" do
+      fake = AppFakeWebview.new
+      app = Lune::App.new(Lune::Bridge.new(fake))
+
+      app.namespace("hash") { |ns| ns.emit("done", "ok") }
+
+      fake.eval_calls[0].should contain("hash.done")
+    end
+  end
+
   describe "#eval" do
     it "forwards JavaScript to the webview" do
       fake = AppFakeWebview.new

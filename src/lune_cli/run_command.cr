@@ -3,6 +3,7 @@ module LuneCLI
     def to_command : Argy::Command
       command = Argy::Command.new(
         use: "run",
+        aliases: ["r"],
         short: "Run the built Lune app",
         long: "Run the previously built Lune app artifact for the configured app entry."
       )

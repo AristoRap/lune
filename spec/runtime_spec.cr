@@ -19,6 +19,16 @@ describe Lune::Runtime do
     js.includes?("export const __lune").should be_true
   end
 
+  it "exports on, once, off event bus helpers" do
+    js = Lune::Runtime.generate_runtime_js
+
+    js.includes?("export function on").should be_true
+    js.includes?("export function once").should be_true
+    js.includes?("export function off").should be_true
+    js.includes?("__lune_on").should be_true
+    js.includes?("__lune_off").should be_true
+  end
+
   it "generates app API code with bindings" do
     js = Lune::Runtime.generate_app_js(["zeta", "alpha"])
 

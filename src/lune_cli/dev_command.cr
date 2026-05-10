@@ -9,6 +9,7 @@ module LuneCLI
     def to_command : Argy::Command
       command = Argy::Command.new(
         use: "dev",
+        aliases: ["d"],
         short: "Run the Lune app in dev mode",
         long: "Starts the Vite dev server and the Crystal app together. Kills the dev server when the app exits."
       )

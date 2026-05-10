@@ -23,6 +23,15 @@ describe LuneCLI do
       cmd.subcommands.has_key?("build").should be_true
       cmd.subcommands.has_key?("run").should be_true
       cmd.subcommands.has_key?("version").should be_true
+      cmd.subcommands.has_key?("doctor").should be_true
+    end
+
+    it "registers short aliases for dev, build, and run" do
+      cmd = LuneCLI.root_command
+
+      cmd.subcommands.has_key?("d").should be_true
+      cmd.subcommands.has_key?("b").should be_true
+      cmd.subcommands.has_key?("r").should be_true
     end
 
     it "defines shared frontend and app flags on the root command" do

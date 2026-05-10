@@ -167,6 +167,33 @@ end
 
 Namespaces compose: `math.trig.sin` registers as `math.trig.sin` in JS.
 
+### Events (Crystal → JS)
+
+Push events from Crystal to the frontend at any time — from a background fiber, a timer, or after a binding returns:
+
+```crystal
+# emit with any JSON-serializable data
+app.emit("status", "ready")
+app.emit("progress", {step: 3, total: 10})
+
+# namespaced — event name is prefixed automatically
+app.namespace("hash") do |h|
+  h.bind_async("compute") do |args|
+    result = compute(args[0].as_s)
+    h.emit("done", result)   # fires as "hash.done"
+    JSON::Any.new(result)
+  end
+end
+
+# fire from a background fiber
+spawn do
+  loop do
+    sleep 1.second
+    app.emit("tick", Time.utc.to_s)
+  end
+end
+```
+
 ### Plugin modules
 
 Extract binding sets into reusable `Installable` modules:
@@ -203,15 +230,38 @@ const msg = await greet("world");
 
 All bindings return `Promise`. Exceptions thrown in Crystal reject the promise.
 
+### Listening to events from Crystal
+
+Import `on`, `once`, or `off` from `runtime.js` to subscribe to events emitted by `app.emit`:
+
+```js
+import { on, once, off } from "../lunejs/runtime/runtime.js";
+
+// persistent listener
+on("status", (data) => console.log(data));
+
+// fires once then removes itself
+once("tick", (data) => console.log("first tick:", data));
+
+// remove a specific listener
+const handler = (data) => updateUI(data);
+on("progress", handler);
+off("progress", handler);
+
+// remove all listeners for an event
+off("progress");
+```
+
 ## CLI
 
 ```
 lune init [APP_NAME]    Scaffold a new Lune app (--template vanilla|vue)
-lune dev                Start Vite + Crystal with hot-reload
+lune dev   (alias: d)   Start Vite + Crystal with hot-reload
 lune check              Type-check without building
-lune build              Build frontend + compile Crystal binary
+lune build (alias: b)   Build frontend + compile Crystal binary
 lune build --release    Build with Crystal --release optimizations
-lune run                Launch the previously built artifact
+lune run   (alias: r)   Launch the previously built artifact
+lune doctor             Check Crystal, Node, npm, shards, and frontend deps
 ```
 
 Shared flags (apply to all commands):
