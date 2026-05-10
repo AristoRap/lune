@@ -3,18 +3,22 @@ require "socket"
 
 module LuneCLI
   class DevCommand
+    DEFAULT_DEV_CMD = "#{NPM_CMD} run dev"
     DEFAULT_DEV_URL = "http://localhost:5173"
     DEV_BINARY      = ".lune-dev"
 
     def to_command : Argy::Command
+      config = LuneCLI::Config.load
+
       command = Argy::Command.new(
         use: "dev",
         aliases: ["d"],
         short: "Run the Lune app in dev mode",
-        long: "Starts the Vite dev server and the Crystal app together. Kills the dev server when the app exits."
+        long: "Starts the frontend dev server and the Crystal app together. Kills the dev server when the app exits."
       )
 
-      command.flags.string("dev-url", nil, DEFAULT_DEV_URL, "frontend development URL")
+      command.flags.string("dev-cmd", nil, config.dev_cmd || DEFAULT_DEV_CMD, "command to start the frontend dev server")
+      command.flags.string("dev-url", nil, config.dev_url || DEFAULT_DEV_URL, "frontend development URL")
 
       command.on_pre_run do |cmd, _args|
         frontend_dir = cmd.string_flag("frontend-dir")
@@ -29,9 +33,10 @@ module LuneCLI
       command.on_run do |cmd, _args|
         frontend_dir = cmd.string_flag("frontend-dir")
         app_entry = cmd.string_flag("app-entry")
+        dev_cmd = cmd.string_flag("dev-cmd")
         dev_url = cmd.string_flag("dev-url")
 
-        unless run(frontend_dir: frontend_dir, app_entry: app_entry, dev_url: dev_url)
+        unless run(frontend_dir: frontend_dir, app_entry: app_entry, dev_cmd: dev_cmd, dev_url: dev_url)
           Lune.logger.error { "dev failed" }
           raise Argy::Error.new("dev failed")
         end
@@ -56,6 +61,7 @@ module LuneCLI
       frontend_dir : String,
       app_entry : String,
       dev_url : String,
+      dev_cmd : String = DEFAULT_DEV_CMD,
       watcher : FileWatcher = FileWatcher.new,
       lock_dir : String = File.join(Path.home, ".lune")
     ) : Bool
@@ -67,10 +73,11 @@ module LuneCLI
 
       LuneCLI.pregen_runtime_js(frontend_dir)
 
-      Lune.logger.info { "Starting Vite dev server in #{frontend_dir}..." }
+      Lune.logger.info { "Starting frontend dev server in #{frontend_dir} (#{dev_cmd})..." }
+      dev_parts = dev_cmd.split(' ', remove_empty: true)
       vite = Process.new(
-        NPM_CMD,
-        ["run", "dev"],
+        dev_parts[0],
+        dev_parts[1..],
         chdir: frontend_dir,
         input: Process::Redirect::Close,
         output: Process::Redirect::Inherit,

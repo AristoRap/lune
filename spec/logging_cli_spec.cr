@@ -26,7 +26,7 @@ private class LoggingBuildCommand < LuneCLI::BuildCommand
   def initialize(@result : Bool)
   end
 
-  def run(frontend_dir : String, app_entry : String, output_path : String, release : Bool = false) : Bool
+  def run(frontend_dir : String, app_entry : String, output_path : String, release : Bool = false, build_cmd : String = LuneCLI::BuildCommand::DEFAULT_BUILD_CMD) : Bool
     @result
   end
 end
@@ -48,7 +48,7 @@ private class LoggingDevCommand < LuneCLI::DevCommand
   def initialize(@result : Bool)
   end
 
-  def run(frontend_dir : String, app_entry : String, dev_url : String) : Bool
+  def run(frontend_dir : String, app_entry : String, dev_url : String, dev_cmd : String = LuneCLI::DevCommand::DEFAULT_DEV_CMD, watcher : LuneCLI::FileWatcher = LuneCLI::FileWatcher.new, lock_dir : String = File.join(Path.home, ".lune")) : Bool
     @result
   end
 end

@@ -82,6 +82,12 @@ describe LuneCLI do
       slug.size.should be > "dev-".size
     end
 
+    it "registers a --dev-cmd flag defaulting to npm run dev" do
+      cmd = LuneCLI::DevCommand.new.to_command
+      cmd.flags.lookup("dev-cmd").should_not be_nil
+      cmd.string_flag("dev-cmd").should contain("run dev")
+    end
+
     it "returns false immediately when a dev lock is already held for the same entry" do
       with_tempdir do |lock_dir|
         cmd = LuneCLI::DevCommand.new
@@ -131,6 +137,12 @@ describe LuneCLI do
       cmd = LuneCLI::BuildCommand.new.to_command
       cmd.flags.lookup("release").should_not be_nil
     end
+
+    it "registers a --build-cmd flag defaulting to npm run build" do
+      cmd = LuneCLI::BuildCommand.new.to_command
+      cmd.flags.lookup("build-cmd").should_not be_nil
+      cmd.string_flag("build-cmd").should contain("run build")
+    end
   end
 
   describe "version command" do
@@ -141,6 +153,49 @@ describe LuneCLI do
 
     it "version string includes the lune version constant" do
       LuneCLI::VersionCommand.new.version_string.should eq("lune v#{Lune::VERSION}")
+    end
+  end
+
+  describe LuneCLI::Config do
+    describe ".load" do
+      it "returns an all-nil config when the file does not exist" do
+        config = LuneCLI::Config.load("nonexistent_lune.yml")
+        config.dev_cmd.should be_nil
+        config.build_cmd.should be_nil
+        config.dev_url.should be_nil
+        config.app_entry.should be_nil
+        config.frontend_dir.should be_nil
+      end
+
+      it "loads values from a YAML file" do
+        with_tempdir do |dir|
+          path = File.join(dir, "lune.yml")
+          File.write(path, "dev_cmd: mint start\nbuild_cmd: mint build\ndev_url: http://localhost:3000\n")
+          config = LuneCLI::Config.load(path)
+          config.dev_cmd.should eq("mint start")
+          config.build_cmd.should eq("mint build")
+          config.dev_url.should eq("http://localhost:3000")
+        end
+      end
+
+      it "accepts a partial config with only some keys" do
+        with_tempdir do |dir|
+          path = File.join(dir, "lune.yml")
+          File.write(path, "name: myapp\n")
+          config = LuneCLI::Config.load(path)
+          config.name.should eq("myapp")
+          config.dev_cmd.should be_nil
+        end
+      end
+
+      it "returns an all-nil config when the file is invalid YAML" do
+        with_tempdir do |dir|
+          path = File.join(dir, "lune.yml")
+          File.write(path, ":\nbroken: [yaml")
+          config = LuneCLI::Config.load(path)
+          config.dev_cmd.should be_nil
+        end
+      end
     end
   end
 
