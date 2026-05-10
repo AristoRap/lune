@@ -7,6 +7,7 @@
 - [x] TypeScript definitions — `runtime.d.ts` (fully typed) and `App.d.ts` (name stubs) generated alongside JS files
 - [x] `lune doctor` — check crystal/node versions, shards installed, frontend deps
 - [x] Single-instance lock — lock file or UNIX socket at `~/.lune/<app>.lock`
+- [x] `lune.yml` project config — set `dev_cmd`, `build_cmd`, `dev_url`, `app_entry`, and `frontend_dir` per project; scaffolded by `lune init`
 
 ## v0.3 — Production-ready
 
