@@ -73,7 +73,7 @@ module LuneCLI
       gitignore_path = File.join(ctx.app_name, ".gitignore")
       File.write(
         gitignore_path,
-        File.read(gitignore_path) + "\nfrontend/dist/\nnode_modules/\nbuild/bin/\n.lune-dev\n.lune-dev.dwarf\n"
+        File.read(gitignore_path) + "\n#{ctx.frontend_dir}/dist/\n#{ctx.frontend_dir}/lunejs/\nnode_modules/\nbuild/bin/\n.lune-dev\n.lune-dev.dwarf\n"
       )
 
       true
