@@ -22,6 +22,17 @@ module Lune
     # Sync binding
     # -----------------------------------
 
+    # Like bind, but does not add the name to binding_names — used for
+    # internal runtime bindings that should not appear in App.js stubs.
+    def bind_internal(name : String, &block : Array(JSON::Any) -> JSON::Any)
+      wv = @wv
+      @wv.bind_deferred(name) do |seq, args|
+        dispatch_result(wv, seq, closed: -> { @closed.get }) do
+          block.call(args)
+        end
+      end
+    end
+
     def bind(name : String, &block : Array(JSON::Any) -> JSON::Any)
       @names << name unless @seen.includes?(name)
       @seen << name

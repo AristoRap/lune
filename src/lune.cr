@@ -8,6 +8,7 @@ require "./lune/runtime"
 require "./lune/installable"
 require "./lune/app"
 require "./lune/single_instance"
+require "./lune/runtime_bindings"
 
 module Lune
   VERSION = "0.1.3"
@@ -65,6 +66,8 @@ module Lune
 
       bridge = Bridge.new(wv)
       app = App.new(bridge)
+
+      RuntimeBindings.register(bridge, on_quit: -> { wv.dispatch { wv.terminate } }, debug: debug)
 
       block.call(app)
 

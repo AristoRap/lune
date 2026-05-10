@@ -1,38 +1,5 @@
 require "./spec_helper"
 
-private class AppFakeWebview
-  include Lune::WebviewLike
-
-  getter eval_calls : Array(String)
-  getter resolve_calls : Array(Tuple(String, Int32, String))
-
-  def initialize
-    @eval_calls = [] of String
-    @resolve_calls = [] of Tuple(String, Int32, String)
-    @bindings = {} of String => Proc(String, Array(JSON::Any), Nil)
-  end
-
-  def bind_deferred(name : String, &block : String, Array(JSON::Any) -> Nil)
-    @bindings[name] = block
-  end
-
-  def invoke(name : String, seq : String, args : Array(JSON::Any))
-    @bindings[name].call(seq, args)
-  end
-
-  def dispatch(&block : ->)
-    block.call
-  end
-
-  def resolve(seq : String, status : Int32, result : String)
-    @resolve_calls << {seq, status, result}
-  end
-
-  def eval(js : String)
-    @eval_calls << js
-  end
-end
-
 private class EchoModule
   include Lune::Installable
 
@@ -44,7 +11,7 @@ end
 describe Lune::App do
   describe "#bind" do
     it "registers a sync binding and propagates the seq to resolve" do
-      fake = AppFakeWebview.new
+      fake = FakeWebview.new
       app = Lune::App.new(Lune::Bridge.new(fake))
 
       app.bind("greet") { |args| JSON::Any.new("hi #{args[0].as_s}") }
@@ -57,7 +24,7 @@ describe Lune::App do
     end
 
     it "resolves errors with status 1" do
-      fake = AppFakeWebview.new
+      fake = FakeWebview.new
       app = Lune::App.new(Lune::Bridge.new(fake))
 
       app.bind("boom") { |_| raise "oops" }
@@ -71,7 +38,7 @@ describe Lune::App do
 
   describe "#install" do
     it "delegates binding registration to the Installable module" do
-      fake = AppFakeWebview.new
+      fake = FakeWebview.new
       app = Lune::App.new(Lune::Bridge.new(fake))
 
       app.install(EchoModule.new)
@@ -85,7 +52,7 @@ describe Lune::App do
 
   describe "#emit" do
     it "evaluates __lune_emit with the event name and serialized data" do
-      fake = AppFakeWebview.new
+      fake = FakeWebview.new
       app = Lune::App.new(Lune::Bridge.new(fake))
 
       app.emit("tick", {count: 1})
@@ -97,7 +64,7 @@ describe Lune::App do
     end
 
     it "emits null when no data is provided" do
-      fake = AppFakeWebview.new
+      fake = FakeWebview.new
       app = Lune::App.new(Lune::Bridge.new(fake))
 
       app.emit("ping")
@@ -106,7 +73,7 @@ describe Lune::App do
     end
 
     it "prefixes the event name with the namespace" do
-      fake = AppFakeWebview.new
+      fake = FakeWebview.new
       app = Lune::App.new(Lune::Bridge.new(fake))
 
       app.namespace("hash") { |ns| ns.emit("done", "ok") }
@@ -117,7 +84,7 @@ describe Lune::App do
 
   describe "#eval" do
     it "forwards JavaScript to the webview" do
-      fake = AppFakeWebview.new
+      fake = FakeWebview.new
       app = Lune::App.new(Lune::Bridge.new(fake))
 
       app.eval("console.log('hi')")
@@ -128,7 +95,7 @@ describe Lune::App do
 
   describe "#binding_names" do
     it "returns names in registration order" do
-      fake = AppFakeWebview.new
+      fake = FakeWebview.new
       app = Lune::App.new(Lune::Bridge.new(fake))
 
       app.bind("beta") { |_| JSON::Any.new(nil) }
@@ -138,7 +105,7 @@ describe Lune::App do
     end
 
     it "excludes duplicates while preserving order" do
-      fake = AppFakeWebview.new
+      fake = FakeWebview.new
       app = Lune::App.new(Lune::Bridge.new(fake))
 
       app.bind("ping") { |_| JSON::Any.new(nil) }
@@ -149,7 +116,7 @@ describe Lune::App do
     end
 
     it "includes namespace-prefixed names" do
-      fake = AppFakeWebview.new
+      fake = FakeWebview.new
       app = Lune::App.new(Lune::Bridge.new(fake))
 
       app.namespace("math") do |ns|
@@ -161,7 +128,7 @@ describe Lune::App do
     end
 
     it "includes names registered via install" do
-      fake = AppFakeWebview.new
+      fake = FakeWebview.new
       app = Lune::App.new(Lune::Bridge.new(fake))
 
       app.install(EchoModule.new)

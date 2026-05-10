@@ -3,7 +3,9 @@
 ## v0.2 — Developer experience
 
 - [x] Events system: `app.emit("event", data)` from Crystal → JS event bus (`on`/`once`/`off` in runtime.js)
-- [ ] Additional templates: Svelte, React+TS (TS templates also generate `.d.ts` alongside `App.js`)
+- [ ] Additional templates: Svelte, React+TS
+- [x] Runtime JS API — `quit()`, `openURL(url)`, `environment()` built into `runtime.js`
+- [x] TypeScript definitions — `runtime.d.ts` (fully typed) and `App.d.ts` (name stubs) generated alongside JS files
 - [x] `lune doctor` — check crystal/node versions, shards installed, frontend deps
 - [x] Single-instance lock — lock file or UNIX socket at `~/.lune/<app>.lock`
 

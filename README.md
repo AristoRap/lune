@@ -230,6 +230,28 @@ const msg = await greet("world");
 
 All bindings return `Promise`. Exceptions thrown in Crystal reject the promise.
 
+### Runtime functions
+
+`runtime.js` also exports built-in system functions:
+
+```js
+import { quit, openURL, environment } from "../lunejs/runtime/runtime.js";
+
+await quit();                          // terminate the app
+await openURL("https://example.com"); // open in system browser
+const env = await environment();      // { os, arch, debug }
+```
+
+`environment()` returns a `LuneEnvironment` object:
+
+```ts
+interface LuneEnvironment {
+  os: "darwin" | "linux" | "windows";
+  arch: string;   // "arm64" | "x86_64"
+  debug: boolean;
+}
+```
+
 ### Listening to events from Crystal
 
 Import `on`, `once`, or `off` from `runtime.js` to subscribe to events emitted by `app.emit`:
@@ -251,6 +273,15 @@ off("progress", handler);
 // remove all listeners for an event
 off("progress");
 ```
+
+### TypeScript
+
+Lune generates `.d.ts` files alongside every JS file it writes:
+
+- `runtime.d.ts` — fully typed declarations for all runtime functions and the `LuneEnvironment` interface
+- `App.d.ts` — name stubs (`Promise<unknown>`) for each registered binding; tells the IDE which calls exist
+
+Binding argument and return types require `lune generate` (see roadmap), which reads Crystal annotations to produce precise types.
 
 ## CLI
 
