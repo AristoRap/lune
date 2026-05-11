@@ -40,6 +40,7 @@ module Lune
     end
   end
 
+  {% if flag?(:win32) %}
   def self.__run(
     title : String,
     width : Int32 = 1024,
@@ -60,20 +61,39 @@ module Lune
   )
     STDOUT.sync = true
     actual_hint = resizable ? hint : Webview::SizeHints::FIXED
-
-    {% if flag?(:win32) %}
-      done = Channel(Exception?).new(1)
-      Fiber::ExecutionContext::Isolated.new("webview") do
-        __run_webview(width, height, actual_hint, title, debug, min_width, min_height, max_width, max_height, html, url, on_load, on_navigate, on_close, &block)
-        done.send(nil)
-      rescue ex
-        done.send(ex)
-      end
-      done.receive.try { |ex| raise ex }
-    {% else %}
+    done = Channel(Exception?).new(1)
+    Fiber::ExecutionContext::Isolated.new("webview") do
       __run_webview(width, height, actual_hint, title, debug, min_width, min_height, max_width, max_height, html, url, on_load, on_navigate, on_close, &block)
-    {% end %}
+      done.send(nil)
+    rescue ex
+      done.send(ex)
+    end
+    done.receive.try { |ex| raise ex }
   end
+  {% else %}
+  def self.__run(
+    title : String,
+    width : Int32 = 1024,
+    height : Int32 = 768,
+    hint : Webview::SizeHints = Webview::SizeHints::NONE,
+    resizable : Bool = true,
+    min_width : Int32? = nil,
+    min_height : Int32? = nil,
+    max_width : Int32? = nil,
+    max_height : Int32? = nil,
+    debug : Bool = false,
+    html : String? = nil,
+    url : String? = nil,
+    on_load : (-> Nil)? = nil,
+    on_navigate : (String -> Nil)? = nil,
+    on_close : (-> Nil)? = nil,
+    &block : App -> Nil
+  )
+    STDOUT.sync = true
+    actual_hint = resizable ? hint : Webview::SizeHints::FIXED
+    __run_webview(width, height, actual_hint, title, debug, min_width, min_height, max_width, max_height, html, url, on_load, on_navigate, on_close, &block)
+  end
+  {% end %}
 
   private def self.__run_webview(
     width : Int32,

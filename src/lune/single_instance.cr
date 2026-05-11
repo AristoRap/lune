@@ -8,17 +8,12 @@ module Lune
       lock_path = File.join(dir, "#{app_slug}.lock")
 
       lock_file = File.open(lock_path, "w")
-      result = LibC.flock(lock_file.fd, LibC::FlockOp::EX | LibC::FlockOp::NB)
-      unless result == 0
-        lock_file.close
-        return nil
-      end
-
+      lock_file.flock_exclusive(blocking: false)
       lock_file.print(Process.pid)
       lock_file.flush
       lock_file
-    rescue ex : File::Error
-      Lune.logger.error { "Single-instance: could not open lock file: #{ex.message}" }
+    rescue File::Error | IO::Error
+      lock_file.try(&.close)
       nil
     end
 
