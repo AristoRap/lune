@@ -10,8 +10,7 @@ module LuneCLI
       )
 
       command.on_pre_run do |_cmd, _args|
-        unless File.file?(config.app_entry)
-          message = "App entry file not found: #{config.app_entry}"
+        if message = validate_paths(config.app_entry)
           Lune.logger.error { message }
           raise Argy::Error.new(message)
         end
@@ -29,6 +28,11 @@ module LuneCLI
       end
 
       command
+    end
+
+    def validate_paths(app_entry : String) : String?
+      return "App entry file not found: #{app_entry}" unless File.file?(app_entry)
+      nil
     end
 
     def run(app_entry : String) : Bool

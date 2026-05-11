@@ -18,7 +18,7 @@ module LuneCLI
       command
     end
 
-    def run(frontend_dir : String, app_entry : String) : Bool
+    def run(frontend_dir : String, app_entry : String, output : IO = STDOUT) : Bool
       checks = [
         check_tool("crystal", ["--version"]),
         check_tool("node",    ["--version"]),
@@ -28,8 +28,8 @@ module LuneCLI
         check_app_entry(app_entry),
       ]
 
-      checks.each { |c| print_check(c) }
-      puts
+      checks.each { |c| print_check(c, output) }
+      output.puts
       checks.all?(&.ok)
     end
 
@@ -74,9 +74,9 @@ module LuneCLI
       )
     end
 
-    private def print_check(c : Check)
+    private def print_check(c : Check, output : IO) : Nil
       mark = c.ok ? "✓" : "✗"
-      puts "  #{mark}  #{c.label.ljust(16)} #{c.detail}"
+      output.puts "  #{mark}  #{c.label.ljust(16)} #{c.detail}"
     end
   end
 end

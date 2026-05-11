@@ -2,6 +2,17 @@ require "spec"
 require "file_utils"
 require "../src/lune_cli"
 
+private class RecordingDoctorCommand < LuneCLI::DoctorCommand
+  getter captured_frontend_dir : String = ""
+  getter captured_app_entry : String = ""
+
+  def run(frontend_dir : String, app_entry : String) : Bool
+    @captured_frontend_dir = frontend_dir
+    @captured_app_entry = app_entry
+    true
+  end
+end
+
 private def with_tempdir(& : String -> _)
   dir = File.join(Dir.tempdir, "lune_cli_#{Random.new.hex(8)}")
   Dir.mkdir_p(dir)
@@ -268,6 +279,39 @@ describe LuneCLI do
       run_cmd = LuneCLI::RunCommand.new
       dev_cmd = LuneCLI::DevCommand.new
       run_cmd.run_lock_slug("src/main.cr").should_not eq(dev_cmd.dev_lock_slug("src/main.cr"))
+    end
+  end
+
+  describe "doctor command" do
+    it "reports frontend deps as failing when node_modules is absent" do
+      with_tempdir do |dir|
+        cmd = LuneCLI::DoctorCommand.new
+        result = cmd.run(frontend_dir: dir, app_entry: "spec/fixtures/main.cr", output: IO::Memory.new)
+        result.should be_false
+      end
+    end
+
+    it "reports app entry as failing when the file does not exist" do
+      with_tempdir do |dir|
+        Dir.mkdir_p(File.join(dir, "node_modules"))
+        cmd = LuneCLI::DoctorCommand.new
+        result = cmd.run(frontend_dir: dir, app_entry: File.join(dir, "nonexistent.cr"), output: IO::Memory.new)
+        result.should be_false
+      end
+    end
+
+    it "reads frontend_dir and app_entry from lune.yml" do
+      with_tempdir do |dir|
+        File.write(File.join(dir, "lune.yml"), "frontend_dir: custom_fe\napp_entry: custom/main.cr\n")
+
+        cmd = RecordingDoctorCommand.new
+        Dir.cd(dir) do
+          cmd.to_command.__execute_without_rescue_for_spec([] of String)
+        end
+
+        cmd.captured_frontend_dir.should eq("custom_fe")
+        cmd.captured_app_entry.should eq("custom/main.cr")
+      end
     end
   end
 

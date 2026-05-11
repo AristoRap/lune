@@ -286,18 +286,18 @@ Binding argument and return types require `lune generate` (see roadmap), which r
 
 ## lune.yml
 
-`lune init` generates a `lune.yml` in your project root. All keys are optional — omitted values fall back to their CLI defaults.
+`lune init` generates a `lune.yml` in your project root. All keys are optional — omitted values fall back to their defaults.
 
 ```yaml
 name: my_app
-app_entry: src/main.cr
-frontend_dir: frontend
-dev_cmd: npm run dev       # command to start the frontend dev server
-build_cmd: npm run build   # command to build frontend assets
-dev_url: http://localhost:5173
+app_entry: src/main.cr        # default: src/main.cr
+frontend_dir: frontend         # default: frontend
+dev_cmd: npm run dev           # default: npm run dev
+build_cmd: npm run build       # default: npm run build
+dev_url: http://localhost:5173 # default: http://localhost:5173
 ```
 
-Any value set here can still be overridden at runtime with the corresponding CLI flag.
+`lune.yml` is the single source of truth for project paths and toolchain commands. There are no CLI flag equivalents — change these values in the config file.
 
 ## CLI
 
@@ -313,27 +313,14 @@ lune doctor             Check Crystal, Node, npm, shards, and frontend deps
 
 `lune dev` and `lune run` both enforce single-instance at the CLI level — a second invocation for the same app entry exits immediately with an error rather than spawning a duplicate window.
 
-Shared flags (apply to all commands):
+Flags:
 
 ```sh
---frontend-dir   Frontend directory (default: frontend)
---app-entry      Crystal entry file (default: src/main.cr)
---debug          Enable debug logging
+--debug     Enable debug logging (all commands)
+--release   Build with Crystal --release optimizations (lune build only)
 ```
 
-`lune dev` flags:
-
-```sh
---dev-cmd   Command to start the frontend dev server (default: npm run dev)
---dev-url   Frontend development URL (default: http://localhost:5173)
-```
-
-`lune build` flags:
-
-```sh
---build-cmd   Command to build frontend assets (default: npm run build)
---release     Build with Crystal --release optimizations
-```
+All project paths and toolchain commands (`app_entry`, `frontend_dir`, `dev_cmd`, `build_cmd`, `dev_url`) are configured in `lune.yml`, not via CLI flags.
 
 ### `lune build` output
 
@@ -343,7 +330,7 @@ lune build
 # Linux  → build/bin/my_app
 ```
 
-The frontend is compiled via `build_cmd` (configurable in `lune.yml`) and embedded in the binary via Crystal macros — the artifact is a single self-contained file.
+The frontend is compiled via `build_cmd` (set in `lune.yml`) and embedded in the binary via Crystal macros — the artifact is a single self-contained file.
 
 ## Development
 
