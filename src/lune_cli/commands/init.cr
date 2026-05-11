@@ -1,24 +1,10 @@
 require "yaml"
-require "./scaffolds/shared"
-require "./scaffolds/vanilla"
-require "./scaffolds/vue"
+require "../scaffolds/shared"
+require "../scaffolds/vanilla"
+require "../scaffolds/vue"
+require "../context"
 
 module LuneCLI
-  struct Context
-    getter app_name : String
-    getter frontend_dir : String
-    getter skip_install : Bool
-    getter template : String
-
-    def initialize(
-      @app_name : String,
-      @frontend_dir : String = "frontend",
-      @skip_install : Bool = false,
-      @template : String = "vanilla",
-    )
-    end
-  end
-
   class InitCommand
     def to_command : Argy::Command
       command = Argy::Command.new(
@@ -160,7 +146,7 @@ module LuneCLI
     def shards_install_args : Array(String)
       args = ["install"]
       {% if flag?(:win32) %}
-      args << "--skip-postinstall"
+        args << "--skip-postinstall"
       {% end %}
       args
     end

@@ -45,9 +45,24 @@ Thanks to Crystal core team for the suggestion on Reddit — see the [ExecutionC
 
 **This fix is untested on real Windows hardware.** The project is developed on macOS and Windows CI only runs a type-check (`--no-codegen`) because webview `.lib` linking is not supported in the CI environment. If you have a Windows machine and can test this, feedback and bug reports are very welcome.
 
+## Disclaimer
+
+While in v0.x, both the Lune lib and LuneCLI are subjected to changes.
+I don't have any major re-writes planned, but if you use this now, please keep in mind that the APIs and features will possibly change.
+
 ## Getting the CLI
 
-The CLI is not distributed as a pre-built binary. Clone this repo and either install it globally or run it directly:
+**Pre-built binaries** are attached to each [GitHub release](https://github.com/AristoRap/lune/releases):
+
+| Platform | File |
+|---|---|
+| macOS (Apple Silicon) | `lune-darwin-arm64` |
+| macOS (Intel) | `lune-darwin-x86_64` |
+| Linux x86_64 | `lune-linux-x86_64` |
+
+Download the binary for your platform, `chmod +x` it, and place it somewhere on your `PATH` (e.g. `/usr/local/bin/lune`).
+
+**Or build from source:**
 
 ```sh
 git clone https://github.com/aristorap/lune
@@ -56,7 +71,7 @@ make setup        # shards install
 
 make deploy       # build release binary → /usr/local/bin/lune
 
-# or run without installing (runs relative to your path):
+# or run without installing:
 crystal run bin/lune.cr -- <command>
 ```
 
@@ -218,12 +233,12 @@ end
 
 ## JavaScript API
 
-Lune generates `frontend/lunejs/app/App.js` from your registered bindings. Import `api` for a fully dynamic proxy, or import named stubs directly:
+Lune generates `<frontend.dir>/lunejs/app/App.js` from your registered bindings (e.g. `ui/lunejs/` if `frontend.dir: ui`). Import `api` for a fully dynamic proxy, or import named stubs directly:
 
 ```js
 import api from "../lunejs/app/App.js";
 
-// dynamic proxy — any registered binding works
+// dynamic proxy — works in both dev and production builds
 const msg = await api.greet("world");
 const next = await api.counter.inc(0);
 
@@ -233,6 +248,8 @@ const msg = await greet("world");
 ```
 
 All bindings return `Promise`. Exceptions thrown in Crystal reject the promise.
+
+> **Note:** Named stubs (`import { greet }`) are only generated at runtime during `lune dev`. In production builds (`lune build`), binding names are not known at bundle time, so named imports will be `undefined`. **Use the `api` proxy for any code that runs in a production build.** Named stubs are still useful for IDE autocomplete during development. A `lune generate` command that pre-declares bindings from Crystal annotations is planned — see the [roadmap](ROADMAP.md).
 
 ### Runtime functions
 

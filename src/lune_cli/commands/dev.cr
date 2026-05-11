@@ -1,3 +1,4 @@
+require "../file_watcher"
 require "uri"
 require "socket"
 
@@ -49,7 +50,7 @@ module LuneCLI
       dev_url : String,
       dev_cmd : String = DEFAULT_DEV_CMD,
       watcher : FileWatcher = FileWatcher.new,
-      lock_dir : String = File.join(Path.home, ".lune")
+      lock_dir : String = File.join(Path.home, ".lune"),
     ) : Bool
       lock_file = Lune::SingleInstance.acquire(dev_lock_slug(app_entry), lock_dir)
       unless lock_file
@@ -80,7 +81,7 @@ module LuneCLI
       # Merge LUNE_DEV_URL into the current environment rather than replacing
       # it entirely. Passing only a single-key Hash to Process.run drops PATH,
       # HOME, CRYSTAL_PATH, and everything else the child process needs.
-      env = ENV.to_h.merge({"LUNE_DEV_URL" => dev_url})
+      env = ENV.to_h.merge({"LUNE_DEV_URL" => dev_url, "LUNE_FRONTEND_DIR" => frontend_dir})
       src_dir = File.dirname(app_entry)
 
       begin
