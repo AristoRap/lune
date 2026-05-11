@@ -34,15 +34,13 @@ describe LuneCLI do
       cmd.subcommands.has_key?("r").should be_true
     end
 
-    it "defines shared frontend and app flags on the root command" do
+    it "exposes only --debug as a persistent flag (frontend-dir and app-entry belong in lune.yml)" do
       cmd = LuneCLI.root_command
 
       cmd.persistent_flags.lookup("debug").should_not be_nil
-      cmd.persistent_flags.lookup("frontend-dir").should_not be_nil
-      cmd.persistent_flags.lookup("app-entry").should_not be_nil
+      cmd.persistent_flags.lookup("frontend-dir").should be_nil
+      cmd.persistent_flags.lookup("app-entry").should be_nil
       cmd.bool_flag("debug").should be_false
-      cmd.string_flag("frontend-dir").should eq("frontend")
-      cmd.string_flag("app-entry").should eq("src/main.cr")
     end
 
     it "renders help that mentions the check command" do
@@ -156,13 +154,13 @@ describe LuneCLI do
 
   describe LuneCLI::Config do
     describe ".load" do
-      it "returns an all-nil config when the file does not exist" do
+      it "returns a default config when the file does not exist" do
         config = LuneCLI::Config.load("nonexistent_lune.yml")
         config.dev_cmd.should be_nil
         config.build_cmd.should be_nil
         config.dev_url.should be_nil
-        config.app_entry.should be_nil
-        config.frontend_dir.should be_nil
+        config.app_entry.should eq("src/main.cr")
+        config.frontend_dir.should eq("frontend")
       end
 
       it "loads values from a YAML file" do

@@ -17,21 +17,15 @@ module LuneCLI
         long: "Starts the frontend dev server and the Crystal app together. Kills the dev server when the app exits."
       )
 
-      command.on_pre_run do |cmd, _args|
-        frontend_dir = cmd.string_flag("frontend-dir")
-        app_entry = cmd.string_flag("app-entry")
-
-        if error = validate_paths(frontend_dir: frontend_dir, app_entry: app_entry)
+      command.on_pre_run do |_cmd, _args|
+        if error = validate_paths(frontend_dir: config.frontend_dir, app_entry: config.app_entry)
           Lune.logger.error { error }
           raise Argy::Error.new(error)
         end
       end
 
-      command.on_run do |cmd, _args|
-        frontend_dir = cmd.string_flag("frontend-dir")
-        app_entry = cmd.string_flag("app-entry")
-
-        unless run(frontend_dir: frontend_dir, app_entry: app_entry, dev_cmd: config.dev_cmd || DEFAULT_DEV_CMD, dev_url: config.dev_url || DEFAULT_DEV_URL)
+      command.on_run do |_cmd, _args|
+        unless run(frontend_dir: config.frontend_dir, app_entry: config.app_entry, dev_cmd: config.dev_cmd || DEFAULT_DEV_CMD, dev_url: config.dev_url || DEFAULT_DEV_URL)
           Lune.logger.error { "dev failed" }
           raise Argy::Error.new("dev failed")
         end

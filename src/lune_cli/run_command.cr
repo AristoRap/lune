@@ -1,6 +1,8 @@
 module LuneCLI
   class RunCommand
     def to_command : Argy::Command
+      config = LuneCLI::Config.load
+
       command = Argy::Command.new(
         use: "run",
         aliases: ["r"],
@@ -8,17 +10,15 @@ module LuneCLI
         long: "Run the previously built Lune app artifact for the configured app entry."
       )
 
-      command.on_pre_run do |cmd, _args|
-        app_entry = cmd.string_flag("app-entry")
-        if message = validate_paths(app_entry: app_entry)
+      command.on_pre_run do |_cmd, _args|
+        if message = validate_paths(app_entry: config.app_entry)
           Lune.logger.error { message }
           raise Argy::Error.new(message)
         end
       end
 
-      command.on_run do |cmd, _args|
-        app_entry = cmd.string_flag("app-entry")
-        unless run(app_entry: app_entry)
+      command.on_run do |_cmd, _args|
+        unless run(app_entry: config.app_entry)
           Lune.logger.error { "run failed" }
           raise Argy::Error.new("run failed")
         end
@@ -36,9 +36,9 @@ module LuneCLI
 
       artifact_path = artifact_path_for(app_entry)
       {% if flag?(:darwin) %}
-        return "Built app not found: #{artifact_path}. Run 'lune build --app-entry #{app_entry}' first." unless Dir.exists?(artifact_path)
+        return "Built app not found: #{artifact_path}. Run 'lune build' first." unless Dir.exists?(artifact_path)
       {% else %}
-        return "Built app not found: #{artifact_path}. Run 'lune build --app-entry #{app_entry}' first." unless File.file?(artifact_path)
+        return "Built app not found: #{artifact_path}. Run 'lune build' first." unless File.file?(artifact_path)
       {% end %}
 
       nil

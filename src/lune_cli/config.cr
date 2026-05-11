@@ -5,8 +5,8 @@ module LuneCLI
     include YAML::Serializable
 
     getter name : String? = nil
-    getter app_entry : String? = nil
-    getter frontend_dir : String? = nil
+    getter app_entry : String = "src/main.cr"
+    getter frontend_dir : String = "frontend"
     getter dev_cmd : String? = nil
     getter build_cmd : String? = nil
     getter dev_url : String? = nil
