@@ -11,7 +11,6 @@ module LuneCLI
 
       command.on_pre_run do |_cmd, _args|
         if message = validate_paths(config.app_entry)
-          Lune.logger.error { message }
           raise Argy::Error.new(message)
         end
       end
@@ -22,7 +21,6 @@ module LuneCLI
         if run(app_entry: config.app_entry)
           Lune.logger.info { "OK" }
         else
-          Lune.logger.error { "check failed" }
           raise Argy::Error.new("check failed")
         end
       end

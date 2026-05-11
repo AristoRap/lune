@@ -19,7 +19,6 @@ module LuneCLI
 
       command.on_pre_run do |_cmd, _args|
         if error = validate_paths(frontend_dir: config.frontend.dir, app_entry: config.app_entry)
-          Lune.logger.error { error }
           raise Argy::Error.new(error)
         end
       end
@@ -36,7 +35,6 @@ module LuneCLI
         if success
           Lune.logger.info { "Built app: #{output_path}" }
         else
-          Lune.logger.error { "build failed" }
           raise Argy::Error.new("build failed")
         end
       end
