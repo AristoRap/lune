@@ -4,7 +4,6 @@ require "socket"
 module LuneCLI
   class DevCommand
     DEFAULT_DEV_CMD = "#{NPM_CMD} run dev"
-    DEFAULT_DEV_URL = "http://localhost:5173"
     DEV_BINARY      = ".lune-dev"
 
     def to_command : Argy::Command
@@ -17,27 +16,14 @@ module LuneCLI
         long: "Starts the frontend dev server and the Crystal app together. Kills the dev server when the app exits."
       )
 
-      command.flags.string("dev-cmd", nil, config.dev_cmd || DEFAULT_DEV_CMD, "command to start the frontend dev server")
-      command.flags.string("dev-url", nil, config.dev_url || DEFAULT_DEV_URL, "frontend development URL")
-
-      command.on_pre_run do |cmd, _args|
-        frontend_dir = cmd.string_flag("frontend-dir")
-        app_entry = cmd.string_flag("app-entry")
-
-        if error = validate_paths(frontend_dir: frontend_dir, app_entry: app_entry)
-          Lune.logger.error { error }
+      command.on_pre_run do |_cmd, _args|
+        if error = validate_paths(frontend_dir: config.frontend.dir, app_entry: config.app_entry)
           raise Argy::Error.new(error)
         end
       end
 
-      command.on_run do |cmd, _args|
-        frontend_dir = cmd.string_flag("frontend-dir")
-        app_entry = cmd.string_flag("app-entry")
-        dev_cmd = cmd.string_flag("dev-cmd")
-        dev_url = cmd.string_flag("dev-url")
-
-        unless run(frontend_dir: frontend_dir, app_entry: app_entry, dev_cmd: dev_cmd, dev_url: dev_url)
-          Lune.logger.error { "dev failed" }
+      command.on_run do |_cmd, _args|
+        unless run(frontend_dir: config.frontend.dir, app_entry: config.app_entry, dev_cmd: config.frontend.dev.cmd || DEFAULT_DEV_CMD, dev_url: config.frontend.dev.url)
           raise Argy::Error.new("dev failed")
         end
       end

@@ -2,6 +2,17 @@ require "spec"
 require "file_utils"
 require "../src/lune_cli"
 
+private class RecordingDoctorCommand < LuneCLI::DoctorCommand
+  getter captured_frontend_dir : String = ""
+  getter captured_app_entry : String = ""
+
+  def run(frontend_dir : String, app_entry : String, install_hint : String = LuneCLI::DoctorCommand::DEFAULT_INSTALL_CMD, output : IO = STDOUT) : Bool
+    @captured_frontend_dir = frontend_dir
+    @captured_app_entry = app_entry
+    true
+  end
+end
+
 private def with_tempdir(& : String -> _)
   dir = File.join(Dir.tempdir, "lune_cli_#{Random.new.hex(8)}")
   Dir.mkdir_p(dir)
@@ -34,15 +45,13 @@ describe LuneCLI do
       cmd.subcommands.has_key?("r").should be_true
     end
 
-    it "defines shared frontend and app flags on the root command" do
+    it "exposes only --debug as a persistent flag (frontend-dir and app-entry belong in lune.yml)" do
       cmd = LuneCLI.root_command
 
       cmd.persistent_flags.lookup("debug").should_not be_nil
-      cmd.persistent_flags.lookup("frontend-dir").should_not be_nil
-      cmd.persistent_flags.lookup("app-entry").should_not be_nil
+      cmd.persistent_flags.lookup("frontend-dir").should be_nil
+      cmd.persistent_flags.lookup("app-entry").should be_nil
       cmd.bool_flag("debug").should be_false
-      cmd.string_flag("frontend-dir").should eq("frontend")
-      cmd.string_flag("app-entry").should eq("src/main.cr")
     end
 
     it "renders help that mentions the check command" do
@@ -82,10 +91,9 @@ describe LuneCLI do
       slug.size.should be > "dev-".size
     end
 
-    it "registers a --dev-cmd flag defaulting to npm run dev" do
+    it "does not expose a --dev-cmd flag (belongs in lune.yml)" do
       cmd = LuneCLI::DevCommand.new.to_command
-      cmd.flags.lookup("dev-cmd").should_not be_nil
-      cmd.string_flag("dev-cmd").should contain("run dev")
+      cmd.flags.lookup("dev-cmd").should be_nil
     end
 
     it "returns false immediately when a dev lock is already held for the same entry" do
@@ -138,10 +146,9 @@ describe LuneCLI do
       cmd.flags.lookup("release").should_not be_nil
     end
 
-    it "registers a --build-cmd flag defaulting to npm run build" do
+    it "does not expose a --build-cmd flag (belongs in lune.yml)" do
       cmd = LuneCLI::BuildCommand.new.to_command
-      cmd.flags.lookup("build-cmd").should_not be_nil
-      cmd.string_flag("build-cmd").should contain("run build")
+      cmd.flags.lookup("build-cmd").should be_nil
     end
   end
 
@@ -158,42 +165,54 @@ describe LuneCLI do
 
   describe LuneCLI::Config do
     describe ".load" do
-      it "returns an all-nil config when the file does not exist" do
+      it "returns defaults when the file does not exist" do
         config = LuneCLI::Config.load("nonexistent_lune.yml")
-        config.dev_cmd.should be_nil
-        config.build_cmd.should be_nil
-        config.dev_url.should be_nil
-        config.app_entry.should be_nil
-        config.frontend_dir.should be_nil
+        config.app_entry.should eq("src/main.cr")
+        config.frontend.dir.should eq("frontend")
+        config.frontend.install.should be_nil
+        config.frontend.build.should be_nil
+        config.frontend.dev.cmd.should be_nil
+        config.frontend.dev.url.should eq("http://localhost:5173")
       end
 
-      it "loads values from a YAML file" do
+      it "loads nested frontend values from a YAML file" do
         with_tempdir do |dir|
           path = File.join(dir, "lune.yml")
-          File.write(path, "dev_cmd: mint start\nbuild_cmd: mint build\ndev_url: http://localhost:3000\n")
+          File.write(path, <<-YAML)
+            frontend:
+              dir: my_frontend
+              install: pnpm install
+              build: pnpm run build
+              dev:
+                cmd: pnpm run dev
+                url: http://localhost:3000
+            YAML
           config = LuneCLI::Config.load(path)
-          config.dev_cmd.should eq("mint start")
-          config.build_cmd.should eq("mint build")
-          config.dev_url.should eq("http://localhost:3000")
+          config.frontend.dir.should eq("my_frontend")
+          config.frontend.install.should eq("pnpm install")
+          config.frontend.build.should eq("pnpm run build")
+          config.frontend.dev.cmd.should eq("pnpm run dev")
+          config.frontend.dev.url.should eq("http://localhost:3000")
         end
       end
 
-      it "accepts a partial config with only some keys" do
+      it "accepts a partial config — absent frontend keys use defaults" do
         with_tempdir do |dir|
           path = File.join(dir, "lune.yml")
           File.write(path, "name: myapp\n")
           config = LuneCLI::Config.load(path)
           config.name.should eq("myapp")
-          config.dev_cmd.should be_nil
+          config.frontend.dev.cmd.should be_nil
+          config.frontend.dev.url.should eq("http://localhost:5173")
         end
       end
 
-      it "returns an all-nil config when the file is invalid YAML" do
+      it "returns defaults when the file is invalid YAML" do
         with_tempdir do |dir|
           path = File.join(dir, "lune.yml")
           File.write(path, ":\nbroken: [yaml")
           config = LuneCLI::Config.load(path)
-          config.dev_cmd.should be_nil
+          config.frontend.dev.cmd.should be_nil
         end
       end
     end
@@ -272,6 +291,39 @@ describe LuneCLI do
       run_cmd = LuneCLI::RunCommand.new
       dev_cmd = LuneCLI::DevCommand.new
       run_cmd.run_lock_slug("src/main.cr").should_not eq(dev_cmd.dev_lock_slug("src/main.cr"))
+    end
+  end
+
+  describe "doctor command" do
+    it "reports frontend deps as failing when node_modules is absent" do
+      with_tempdir do |dir|
+        cmd = LuneCLI::DoctorCommand.new
+        result = cmd.run(frontend_dir: dir, app_entry: "spec/fixtures/main.cr", output: IO::Memory.new)
+        result.should be_false
+      end
+    end
+
+    it "reports app entry as failing when the file does not exist" do
+      with_tempdir do |dir|
+        Dir.mkdir_p(File.join(dir, "node_modules"))
+        cmd = LuneCLI::DoctorCommand.new
+        result = cmd.run(frontend_dir: dir, app_entry: File.join(dir, "nonexistent.cr"), output: IO::Memory.new)
+        result.should be_false
+      end
+    end
+
+    it "reads frontend_dir and app_entry from lune.yml" do
+      with_tempdir do |dir|
+        File.write(File.join(dir, "lune.yml"), "frontend:\n  dir: custom_fe\napp_entry: custom/main.cr\n")
+
+        cmd = RecordingDoctorCommand.new
+        Dir.cd(dir) do
+          cmd.to_command.__execute_without_rescue_for_spec([] of String)
+        end
+
+        cmd.captured_frontend_dir.should eq("custom_fe")
+        cmd.captured_app_entry.should eq("custom/main.cr")
+      end
     end
   end
 

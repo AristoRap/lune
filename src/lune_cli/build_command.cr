@@ -17,14 +17,8 @@ module LuneCLI
         long: "Build frontend assets, then compile the configured Crystal app into a runnable artifact."
       )
 
-      command.flags.string("build-cmd", nil, config.build_cmd || DEFAULT_BUILD_CMD, "command to build the frontend assets")
-
-      command.on_pre_run do |cmd, _args|
-        frontend_dir = cmd.string_flag("frontend-dir")
-        app_entry = cmd.string_flag("app-entry")
-
-        if error = validate_paths(frontend_dir: frontend_dir, app_entry: app_entry)
-          Lune.logger.error { error }
+      command.on_pre_run do |_cmd, _args|
+        if error = validate_paths(frontend_dir: config.frontend.dir, app_entry: config.app_entry)
           raise Argy::Error.new(error)
         end
       end
@@ -32,19 +26,15 @@ module LuneCLI
       command.flags.bool("release", 'r', false, "Compile with --release optimizations")
 
       command.on_run do |cmd, _args|
-        frontend_dir = cmd.string_flag("frontend-dir")
-        app_entry = cmd.string_flag("app-entry")
         release = cmd.bool_flag("release")
-        build_cmd = cmd.string_flag("build-cmd")
-        output_path = output_path_for(app_entry)
+        output_path = output_path_for(config.app_entry)
 
         Lune.logger.info { "Building frontend assets..." }
-        success = run(frontend_dir: frontend_dir, app_entry: app_entry, output_path: output_path, release: release, build_cmd: build_cmd)
+        success = run(frontend_dir: config.frontend.dir, app_entry: config.app_entry, output_path: output_path, release: release, build_cmd: config.frontend.build || DEFAULT_BUILD_CMD)
 
         if success
           Lune.logger.info { "Built app: #{output_path}" }
         else
-          Lune.logger.error { "build failed" }
           raise Argy::Error.new("build failed")
         end
       end

@@ -63,21 +63,21 @@ describe LuneCLI::FileWatcher do
     it "returns true when a file's mtime changes" do
       now = Time.utc
       before = {"a.cr" => now}
-      after  = {"a.cr" => now + 1.second}
+      after = {"a.cr" => now + 1.second}
       LuneCLI::FileWatcher.new.changed?(before, after).should be_true
     end
 
     it "returns true when a new file is added" do
       now = Time.utc
       before = {"a.cr" => now}
-      after  = {"a.cr" => now, "b.cr" => now}
+      after = {"a.cr" => now, "b.cr" => now}
       LuneCLI::FileWatcher.new.changed?(before, after).should be_true
     end
 
     it "returns true when a file is removed" do
       now = Time.utc
       before = {"a.cr" => now, "b.cr" => now}
-      after  = {"a.cr" => now}
+      after = {"a.cr" => now}
       LuneCLI::FileWatcher.new.changed?(before, after).should be_true
     end
   end
