@@ -1,15 +1,5 @@
 require "argy"
 require "./lune"
-require "./lune_cli/config"
-require "./lune_cli/file_watcher"
-require "./lune_cli/context"
-require "./lune_cli/commands/build"
-require "./lune_cli/commands/check"
-require "./lune_cli/commands/dev"
-require "./lune_cli/commands/doctor"
-require "./lune_cli/commands/run"
-require "./lune_cli/commands/init"
-require "./lune_cli/commands/version"
 require "./lune_cli/root"
 
 module LuneCLI

@@ -1,3 +1,4 @@
+require "../file_watcher"
 require "uri"
 require "socket"
 

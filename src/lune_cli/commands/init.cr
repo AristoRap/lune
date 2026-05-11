@@ -2,6 +2,7 @@ require "yaml"
 require "../scaffolds/shared"
 require "../scaffolds/vanilla"
 require "../scaffolds/vue"
+require "../context"
 
 module LuneCLI
   class InitCommand

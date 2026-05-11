@@ -1,3 +1,12 @@
+require "./config"
+require "./commands/build"
+require "./commands/check"
+require "./commands/dev"
+require "./commands/doctor"
+require "./commands/run"
+require "./commands/init"
+require "./commands/version"
+
 module LuneCLI
   {% if flag?(:win32) %}
     NPM_CMD = "npm.cmd"
