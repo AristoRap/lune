@@ -60,6 +60,38 @@ module Lune
   )
     STDOUT.sync = true
     actual_hint = resizable ? hint : Webview::SizeHints::FIXED
+
+    {% if flag?(:win32) %}
+      done = Channel(Exception?).new(1)
+      Fiber::ExecutionContext::Isolated.new("webview") do
+        __run_webview(width, height, actual_hint, title, debug, min_width, min_height, max_width, max_height, html, url, on_load, on_navigate, on_close, &block)
+        done.send(nil)
+      rescue ex
+        done.send(ex)
+      end
+      done.receive.try { |ex| raise ex }
+    {% else %}
+      __run_webview(width, height, actual_hint, title, debug, min_width, min_height, max_width, max_height, html, url, on_load, on_navigate, on_close, &block)
+    {% end %}
+  end
+
+  private def self.__run_webview(
+    width : Int32,
+    height : Int32,
+    actual_hint : Webview::SizeHints,
+    title : String,
+    debug : Bool,
+    min_width : Int32?,
+    min_height : Int32?,
+    max_width : Int32?,
+    max_height : Int32?,
+    html : String?,
+    url : String?,
+    on_load : (-> Nil)?,
+    on_navigate : (String -> Nil)?,
+    on_close : (-> Nil)?,
+    &block : App -> Nil
+  )
     Webview.with_window(width, height, actual_hint, title, debug) do |wv|
       wv.size(min_width || 0, min_height || 0, Webview::SizeHints::MIN) if min_width || min_height
       wv.size(max_width || 0, max_height || 0, Webview::SizeHints::MAX) if max_width || max_height
@@ -155,3 +187,4 @@ module Lune
     end
   end
 end
+

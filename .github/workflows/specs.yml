@@ -13,9 +13,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - ubuntu-latest
-          - macos-latest
+        include:
+          - os: ubuntu-latest
+            spec_flags: ""
+          - os: macos-latest
+            spec_flags: ""
+          - os: windows-latest
+            spec_flags: "-Dpreview_mt"
 
     steps:
       - name: Checkout
@@ -34,4 +38,4 @@ jobs:
         run: shards install
 
       - name: Run all specs
-        run: crystal spec
+        run: crystal spec ${{ matrix.spec_flags }}
