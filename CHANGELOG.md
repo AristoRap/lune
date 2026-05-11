@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.4] - 2026-05-X
+
+- Reorganize CLI internals
+- Ensure we pass the configured frontend_dir to dev for write_js calls
+
 ## [0.2.3] - 2026-05-11
 
 ### Fixed

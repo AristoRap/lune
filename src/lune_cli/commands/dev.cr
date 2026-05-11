@@ -80,7 +80,7 @@ module LuneCLI
       # Merge LUNE_DEV_URL into the current environment rather than replacing
       # it entirely. Passing only a single-key Hash to Process.run drops PATH,
       # HOME, CRYSTAL_PATH, and everything else the child process needs.
-      env = ENV.to_h.merge({"LUNE_DEV_URL" => dev_url})
+      env = ENV.to_h.merge({"LUNE_DEV_URL" => dev_url, "LUNE_FRONTEND_DIR" => frontend_dir})
       src_dir = File.dirname(app_entry)
 
       begin
