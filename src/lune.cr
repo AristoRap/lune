@@ -11,7 +11,7 @@ require "./lune/single_instance"
 require "./lune/runtime_bindings"
 
 module Lune
-  VERSION = "0.2.0"
+  VERSION = "0.2.3"
 
   # Navigation priority (first match wins):
   #   1. html:   — inline HTML string (useful for tests and simple apps)
@@ -40,6 +40,7 @@ module Lune
     end
   end
 
+  {% if flag?(:win32) %}
   def self.__run(
     title : String,
     width : Int32 = 1024,
@@ -60,6 +61,57 @@ module Lune
   )
     STDOUT.sync = true
     actual_hint = resizable ? hint : Webview::SizeHints::FIXED
+    done = Channel(Exception?).new(1)
+    Fiber::ExecutionContext::Isolated.new("webview") do
+      __run_webview(width, height, actual_hint, title, debug, min_width, min_height, max_width, max_height, html, url, on_load, on_navigate, on_close, &block)
+      done.send(nil)
+    rescue ex
+      done.send(ex)
+    end
+    done.receive.try { |ex| raise ex }
+  end
+  {% else %}
+  def self.__run(
+    title : String,
+    width : Int32 = 1024,
+    height : Int32 = 768,
+    hint : Webview::SizeHints = Webview::SizeHints::NONE,
+    resizable : Bool = true,
+    min_width : Int32? = nil,
+    min_height : Int32? = nil,
+    max_width : Int32? = nil,
+    max_height : Int32? = nil,
+    debug : Bool = false,
+    html : String? = nil,
+    url : String? = nil,
+    on_load : (-> Nil)? = nil,
+    on_navigate : (String -> Nil)? = nil,
+    on_close : (-> Nil)? = nil,
+    &block : App -> Nil
+  )
+    STDOUT.sync = true
+    actual_hint = resizable ? hint : Webview::SizeHints::FIXED
+    __run_webview(width, height, actual_hint, title, debug, min_width, min_height, max_width, max_height, html, url, on_load, on_navigate, on_close, &block)
+  end
+  {% end %}
+
+  private def self.__run_webview(
+    width : Int32,
+    height : Int32,
+    actual_hint : Webview::SizeHints,
+    title : String,
+    debug : Bool,
+    min_width : Int32?,
+    min_height : Int32?,
+    max_width : Int32?,
+    max_height : Int32?,
+    html : String?,
+    url : String?,
+    on_load : (-> Nil)?,
+    on_navigate : (String -> Nil)?,
+    on_close : (-> Nil)?,
+    &block : App -> Nil
+  )
     Webview.with_window(width, height, actual_hint, title, debug) do |wv|
       wv.size(min_width || 0, min_height || 0, Webview::SizeHints::MIN) if min_width || min_height
       wv.size(max_width || 0, max_height || 0, Webview::SizeHints::MAX) if max_width || max_height
@@ -155,3 +207,4 @@ module Lune
     end
   end
 end
+

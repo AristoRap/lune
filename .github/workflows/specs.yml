@@ -13,9 +13,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - ubuntu-latest
-          - macos-latest
+        include:
+          - os: ubuntu-latest
+            spec_flags: ""
+          - os: macos-latest
+            spec_flags: ""
+          - os: windows-latest
+            spec_flags: "-Dpreview_mt"
+            compile_check_only: true
 
     steps:
       - name: Checkout
@@ -30,8 +35,21 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
 
+      - name: Install WebView2 SDK headers (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          nuget install Microsoft.Web.WebView2 -OutputDirectory "$env:RUNNER_TEMP\webview2"
+          $includeDir = (Get-ChildItem "$env:RUNNER_TEMP\webview2" -Filter "Microsoft.Web.WebView2.*" | Select-Object -First 1).FullName
+          echo "CPATH=$includeDir\build\native\include" | Out-File -FilePath $env:GITHUB_ENV -Append
+
       - name: Install shards
         run: shards install
 
       - name: Run all specs
-        run: crystal spec
+        if: ${{ !matrix.compile_check_only }}
+        run: crystal spec ${{ matrix.spec_flags }}
+
+      - name: Type-check (Windows — webview linking not supported in CI)
+        if: ${{ matrix.compile_check_only }}
+        run: crystal build src/lune_cli.cr ${{ matrix.spec_flags }} --no-codegen
