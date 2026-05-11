@@ -37,10 +37,9 @@ module LuneCLI
 
       command.on_run do |cmd, args|
         app_name = sanitize_app_name(args.first)
-        frontend_dir = cmd.string_flag("frontend-dir")
         skip_install = cmd.bool_flag("skip-install")
         template = cmd.string_flag("template")
-        ctx = Context.new(app_name, frontend_dir, skip_install, template)
+        ctx = Context.new(app_name, skip_install: skip_install, template: template)
 
         Lune.logger.info { "Initializing new Lune app '#{app_name}'..." }
 

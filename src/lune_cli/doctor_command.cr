@@ -1,5 +1,7 @@
 module LuneCLI
   class DoctorCommand
+    DEFAULT_INSTALL_CMD = "#{NPM_CMD} install"
+
     def to_command : Argy::Command
       command = Argy::Command.new(
         use: "doctor",
@@ -10,7 +12,11 @@ module LuneCLI
       config = LuneCLI::Config.load
 
       command.on_run do |_cmd, _args|
-        unless run(frontend_dir: config.frontend_dir, app_entry: config.app_entry)
+        unless run(
+          frontend_dir: config.frontend.dir,
+          app_entry: config.app_entry,
+          install_hint: config.frontend.install || DEFAULT_INSTALL_CMD
+        )
           raise Argy::Error.new("doctor found issues")
         end
       end
@@ -18,13 +24,13 @@ module LuneCLI
       command
     end
 
-    def run(frontend_dir : String, app_entry : String, output : IO = STDOUT) : Bool
+    def run(frontend_dir : String, app_entry : String, install_hint : String = DEFAULT_INSTALL_CMD, output : IO = STDOUT) : Bool
       checks = [
         check_tool("crystal", ["--version"]),
         check_tool("node",    ["--version"]),
         check_tool(NPM_CMD,   ["--version"], label: "npm"),
         check_shards,
-        check_frontend_deps(frontend_dir),
+        check_frontend_deps(frontend_dir, install_hint),
         check_app_entry(app_entry),
       ]
 
@@ -56,12 +62,12 @@ module LuneCLI
       Check.new(label: "shards", ok: false, detail: "shards not found")
     end
 
-    private def check_frontend_deps(frontend_dir : String) : Check
+    private def check_frontend_deps(frontend_dir : String, install_hint : String) : Check
       ok = Dir.exists?(File.join(frontend_dir, "node_modules"))
       Check.new(
         label: "frontend deps",
         ok: ok,
-        detail: ok ? "ok" : "run `npm install` in #{frontend_dir}"
+        detail: ok ? "ok" : "run `#{install_hint}` in #{frontend_dir}"
       )
     end
 

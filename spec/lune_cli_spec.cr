@@ -6,7 +6,7 @@ private class RecordingDoctorCommand < LuneCLI::DoctorCommand
   getter captured_frontend_dir : String = ""
   getter captured_app_entry : String = ""
 
-  def run(frontend_dir : String, app_entry : String) : Bool
+  def run(frontend_dir : String, app_entry : String, install_hint : String = LuneCLI::DoctorCommand::DEFAULT_INSTALL_CMD, output : IO = STDOUT) : Bool
     @captured_frontend_dir = frontend_dir
     @captured_app_entry = app_entry
     true
@@ -165,42 +165,54 @@ describe LuneCLI do
 
   describe LuneCLI::Config do
     describe ".load" do
-      it "returns a default config when the file does not exist" do
+      it "returns defaults when the file does not exist" do
         config = LuneCLI::Config.load("nonexistent_lune.yml")
-        config.dev_cmd.should be_nil
-        config.build_cmd.should be_nil
-        config.dev_url.should be_nil
         config.app_entry.should eq("src/main.cr")
-        config.frontend_dir.should eq("frontend")
+        config.frontend.dir.should eq("frontend")
+        config.frontend.install.should be_nil
+        config.frontend.build.should be_nil
+        config.frontend.dev.cmd.should be_nil
+        config.frontend.dev.url.should eq("http://localhost:5173")
       end
 
-      it "loads values from a YAML file" do
+      it "loads nested frontend values from a YAML file" do
         with_tempdir do |dir|
           path = File.join(dir, "lune.yml")
-          File.write(path, "dev_cmd: mint start\nbuild_cmd: mint build\ndev_url: http://localhost:3000\n")
+          File.write(path, <<-YAML)
+            frontend:
+              dir: my_frontend
+              install: pnpm install
+              build: pnpm run build
+              dev:
+                cmd: pnpm run dev
+                url: http://localhost:3000
+            YAML
           config = LuneCLI::Config.load(path)
-          config.dev_cmd.should eq("mint start")
-          config.build_cmd.should eq("mint build")
-          config.dev_url.should eq("http://localhost:3000")
+          config.frontend.dir.should eq("my_frontend")
+          config.frontend.install.should eq("pnpm install")
+          config.frontend.build.should eq("pnpm run build")
+          config.frontend.dev.cmd.should eq("pnpm run dev")
+          config.frontend.dev.url.should eq("http://localhost:3000")
         end
       end
 
-      it "accepts a partial config with only some keys" do
+      it "accepts a partial config — absent frontend keys use defaults" do
         with_tempdir do |dir|
           path = File.join(dir, "lune.yml")
           File.write(path, "name: myapp\n")
           config = LuneCLI::Config.load(path)
           config.name.should eq("myapp")
-          config.dev_cmd.should be_nil
+          config.frontend.dev.cmd.should be_nil
+          config.frontend.dev.url.should eq("http://localhost:5173")
         end
       end
 
-      it "returns an all-nil config when the file is invalid YAML" do
+      it "returns defaults when the file is invalid YAML" do
         with_tempdir do |dir|
           path = File.join(dir, "lune.yml")
           File.write(path, ":\nbroken: [yaml")
           config = LuneCLI::Config.load(path)
-          config.dev_cmd.should be_nil
+          config.frontend.dev.cmd.should be_nil
         end
       end
     end
@@ -302,7 +314,7 @@ describe LuneCLI do
 
     it "reads frontend_dir and app_entry from lune.yml" do
       with_tempdir do |dir|
-        File.write(File.join(dir, "lune.yml"), "frontend_dir: custom_fe\napp_entry: custom/main.cr\n")
+        File.write(File.join(dir, "lune.yml"), "frontend:\n  dir: custom_fe\napp_entry: custom/main.cr\n")
 
         cmd = RecordingDoctorCommand.new
         Dir.cd(dir) do

@@ -6,10 +6,7 @@ module LuneCLI
 
     getter name : String? = nil
     getter app_entry : String = "src/main.cr"
-    getter frontend_dir : String = "frontend"
-    getter dev_cmd : String? = nil
-    getter build_cmd : String? = nil
-    getter dev_url : String? = nil
+    getter frontend : Frontend = Frontend.new
 
     def initialize; end
 
@@ -19,6 +16,26 @@ module LuneCLI
     rescue ex : YAML::ParseException
       Lune.logger.warn { "Could not parse #{path}: #{ex.message}" }
       new
+    end
+
+    struct Frontend
+      include YAML::Serializable
+
+      getter dir : String = "frontend"
+      getter install : String? = nil
+      getter build : String? = nil
+      getter dev : Dev = Dev.new
+
+      def initialize; end
+
+      struct Dev
+        include YAML::Serializable
+
+        getter cmd : String? = nil
+        getter url : String = "http://localhost:5173"
+
+        def initialize; end
+      end
     end
   end
 end

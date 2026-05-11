@@ -1,6 +1,9 @@
 name: <%= @ctx.app_name %>
 app_entry: src/main.cr
-frontend_dir: <%= @ctx.frontend_dir %>
-dev_cmd: npm run dev
-build_cmd: npm run build
-dev_url: http://localhost:5173
+frontend:
+  dir: <%= @ctx.frontend_dir %>
+  install: <%= LuneCLI::NPM_CMD %> install
+  build: <%= LuneCLI::NPM_CMD %> run build
+  dev:
+    cmd: <%= LuneCLI::NPM_CMD %> run dev
+    url: http://localhost:5173

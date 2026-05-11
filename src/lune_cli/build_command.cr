@@ -18,7 +18,7 @@ module LuneCLI
       )
 
       command.on_pre_run do |_cmd, _args|
-        if error = validate_paths(frontend_dir: config.frontend_dir, app_entry: config.app_entry)
+        if error = validate_paths(frontend_dir: config.frontend.dir, app_entry: config.app_entry)
           Lune.logger.error { error }
           raise Argy::Error.new(error)
         end
@@ -31,7 +31,7 @@ module LuneCLI
         output_path = output_path_for(config.app_entry)
 
         Lune.logger.info { "Building frontend assets..." }
-        success = run(frontend_dir: config.frontend_dir, app_entry: config.app_entry, output_path: output_path, release: release, build_cmd: config.build_cmd || DEFAULT_BUILD_CMD)
+        success = run(frontend_dir: config.frontend.dir, app_entry: config.app_entry, output_path: output_path, release: release, build_cmd: config.frontend.build || DEFAULT_BUILD_CMD)
 
         if success
           Lune.logger.info { "Built app: #{output_path}" }

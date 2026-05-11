@@ -4,7 +4,6 @@ require "socket"
 module LuneCLI
   class DevCommand
     DEFAULT_DEV_CMD = "#{NPM_CMD} run dev"
-    DEFAULT_DEV_URL = "http://localhost:5173"
     DEV_BINARY      = ".lune-dev"
 
     def to_command : Argy::Command
@@ -18,14 +17,14 @@ module LuneCLI
       )
 
       command.on_pre_run do |_cmd, _args|
-        if error = validate_paths(frontend_dir: config.frontend_dir, app_entry: config.app_entry)
+        if error = validate_paths(frontend_dir: config.frontend.dir, app_entry: config.app_entry)
           Lune.logger.error { error }
           raise Argy::Error.new(error)
         end
       end
 
       command.on_run do |_cmd, _args|
-        unless run(frontend_dir: config.frontend_dir, app_entry: config.app_entry, dev_cmd: config.dev_cmd || DEFAULT_DEV_CMD, dev_url: config.dev_url || DEFAULT_DEV_URL)
+        unless run(frontend_dir: config.frontend.dir, app_entry: config.app_entry, dev_cmd: config.frontend.dev.cmd || DEFAULT_DEV_CMD, dev_url: config.frontend.dev.url)
           Lune.logger.error { "dev failed" }
           raise Argy::Error.new("dev failed")
         end

@@ -290,14 +290,17 @@ Binding argument and return types require `lune generate` (see roadmap), which r
 
 ```yaml
 name: my_app
-app_entry: src/main.cr        # default: src/main.cr
-frontend_dir: frontend         # default: frontend
-dev_cmd: npm run dev           # default: npm run dev
-build_cmd: npm run build       # default: npm run build
-dev_url: http://localhost:5173 # default: http://localhost:5173
+app_entry: src/main.cr   # default: src/main.cr
+frontend:
+  dir: frontend          # default: frontend
+  install: npm install   # default: npm install
+  build: npm run build   # default: npm run build
+  dev:
+    cmd: npm run dev     # default: npm run dev
+    url: http://localhost:5173
 ```
 
-`lune.yml` is the single source of truth for project paths and toolchain commands. There are no CLI flag equivalents — change these values in the config file.
+All keys are optional — omitted values fall back to their defaults. `lune.yml` is the single source of truth for project paths and toolchain commands; there are no CLI flag equivalents.
 
 ## CLI
 
