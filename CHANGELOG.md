@@ -1,9 +1,18 @@
 # Changelog
 
-## [0.2.4] - 2026-05-X
+## [0.2.4] - 2026-05-11
+
+### Fixed
+
+- `lune dev` now passes the configured `frontend.dir` to the compiled app via `LUNE_FRONTEND_DIR`, so `write_js` writes to the correct directory (e.g. `ui/lunejs/`) instead of the hardcoded `frontend/lunejs/`
+
+### CI
+
+- Release workflow — pushing a `v*` tag builds `lune-linux-x86_64`, `lune-darwin-arm64`, and `lune-darwin-x86_64` and attaches them to the GitHub release
+
+### Internal
 
 - Reorganize CLI internals
-- Ensure we pass the configured frontend_dir to dev for write_js calls
 
 ## [0.2.3] - 2026-05-11
 
