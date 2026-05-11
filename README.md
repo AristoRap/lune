@@ -45,6 +45,11 @@ Thanks to Crystal core team for the suggestion on Reddit — see the [ExecutionC
 
 **This fix is untested on real Windows hardware.** The project is developed on macOS and Windows CI only runs a type-check (`--no-codegen`) because webview `.lib` linking is not supported in the CI environment. If you have a Windows machine and can test this, feedback and bug reports are very welcome.
 
+## Disclaimer
+
+While in v0.x, both the Lune lib and LuneCLI are subjected to changes.
+I don't have any major re-writes planned, but if you use this now, please keep in mind that the APIs and features will possibly change.
+
 ## Getting the CLI
 
 The CLI is not distributed as a pre-built binary. Clone this repo and either install it globally or run it directly:
