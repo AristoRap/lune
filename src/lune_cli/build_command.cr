@@ -17,8 +17,6 @@ module LuneCLI
         long: "Build frontend assets, then compile the configured Crystal app into a runnable artifact."
       )
 
-      command.flags.string("build-cmd", nil, config.build_cmd || DEFAULT_BUILD_CMD, "command to build the frontend assets")
-
       command.on_pre_run do |cmd, _args|
         frontend_dir = cmd.string_flag("frontend-dir")
         app_entry = cmd.string_flag("app-entry")
@@ -35,11 +33,10 @@ module LuneCLI
         frontend_dir = cmd.string_flag("frontend-dir")
         app_entry = cmd.string_flag("app-entry")
         release = cmd.bool_flag("release")
-        build_cmd = cmd.string_flag("build-cmd")
         output_path = output_path_for(app_entry)
 
         Lune.logger.info { "Building frontend assets..." }
-        success = run(frontend_dir: frontend_dir, app_entry: app_entry, output_path: output_path, release: release, build_cmd: build_cmd)
+        success = run(frontend_dir: frontend_dir, app_entry: app_entry, output_path: output_path, release: release, build_cmd: config.build_cmd || DEFAULT_BUILD_CMD)
 
         if success
           Lune.logger.info { "Built app: #{output_path}" }

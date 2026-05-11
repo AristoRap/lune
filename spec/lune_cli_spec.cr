@@ -82,10 +82,9 @@ describe LuneCLI do
       slug.size.should be > "dev-".size
     end
 
-    it "registers a --dev-cmd flag defaulting to npm run dev" do
+    it "does not expose a --dev-cmd flag (belongs in lune.yml)" do
       cmd = LuneCLI::DevCommand.new.to_command
-      cmd.flags.lookup("dev-cmd").should_not be_nil
-      cmd.string_flag("dev-cmd").should contain("run dev")
+      cmd.flags.lookup("dev-cmd").should be_nil
     end
 
     it "returns false immediately when a dev lock is already held for the same entry" do
@@ -138,10 +137,9 @@ describe LuneCLI do
       cmd.flags.lookup("release").should_not be_nil
     end
 
-    it "registers a --build-cmd flag defaulting to npm run build" do
+    it "does not expose a --build-cmd flag (belongs in lune.yml)" do
       cmd = LuneCLI::BuildCommand.new.to_command
-      cmd.flags.lookup("build-cmd").should_not be_nil
-      cmd.string_flag("build-cmd").should contain("run build")
+      cmd.flags.lookup("build-cmd").should be_nil
     end
   end
 
