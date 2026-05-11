@@ -20,6 +20,7 @@ jobs:
             spec_flags: ""
           - os: windows-latest
             spec_flags: "-Dpreview_mt"
+            compile_check_only: true
 
     steps:
       - name: Checkout
@@ -46,4 +47,9 @@ jobs:
         run: shards install
 
       - name: Run all specs
+        if: ${{ !matrix.compile_check_only }}
         run: crystal spec ${{ matrix.spec_flags }}
+
+      - name: Type-check (Windows — webview linking not supported in CI)
+        if: ${{ matrix.compile_check_only }}
+        run: crystal build src/lune_cli.cr ${{ matrix.spec_flags }} --no-codegen
