@@ -7,11 +7,10 @@ module LuneCLI
         long: "Verify that Crystal, Node, npm, shards, and frontend dependencies are all present."
       )
 
-      command.on_run do |cmd, _args|
-        frontend_dir = cmd.string_flag("frontend-dir")
-        app_entry    = cmd.string_flag("app-entry")
+      config = LuneCLI::Config.load
 
-        unless run(frontend_dir: frontend_dir, app_entry: app_entry)
+      command.on_run do |_cmd, _args|
+        unless run(frontend_dir: config.frontend_dir, app_entry: config.app_entry)
           raise Argy::Error.new("doctor found issues")
         end
       end
