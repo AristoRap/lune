@@ -1,6 +1,5 @@
 require "file_utils"
 require "json"
-require "../lune"
 
 module LuneCLI
   class BuildCommand

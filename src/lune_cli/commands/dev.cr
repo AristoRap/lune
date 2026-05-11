@@ -49,7 +49,7 @@ module LuneCLI
       dev_url : String,
       dev_cmd : String = DEFAULT_DEV_CMD,
       watcher : FileWatcher = FileWatcher.new,
-      lock_dir : String = File.join(Path.home, ".lune")
+      lock_dir : String = File.join(Path.home, ".lune"),
     ) : Bool
       lock_file = Lune::SingleInstance.acquire(dev_lock_slug(app_entry), lock_dir)
       unless lock_file
