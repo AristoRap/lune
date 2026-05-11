@@ -17,11 +17,11 @@ Lune wraps a native WebView and lets you call Crystal code from JavaScript over 
 
 ## Platform support
 
-| Platform | Dev (`lune dev`) | Build (`lune build`) |
-|---|---|---|
-| macOS | ✅ | ✅ |
-| Linux | ✅ | ✅ |
-| Windows | ⚠️ requires manual setup | ❌ blocked (see below) |
+| Platform | Dev (`lune dev`)         | Build (`lune build`)    |
+| -------- | ------------------------ | ----------------------- |
+| macOS    | ✅                       | ✅                      |
+| Linux    | ✅                       | ✅                      |
+| Windows  | ⚠️ requires manual setup | ⚠️ untested (see below) |
 
 ### Windows
 
@@ -36,11 +36,14 @@ The `naqvis/webview` shard's postinstall script is Unix-only. Before running `sh
 3. Copy `webview.dll`, `webview.lib`, and `WebView2Loader.dll` into a directory listed in `CRYSTAL_LIBRARY_PATH`.
 4. Then run: `shards install --skip-postinstall` (Lune passes this flag automatically on Windows).
 
-#### Production builds are blocked
+#### Webview thread isolation
 
-`lune build` produces a binary that serves embedded assets over a local HTTP server, then opens a WebView2 window. On Windows, `wv.run()` blocks the main thread inside WebView2's native message loop. Even with `-Dpreview_mt` and `Thread.new`, Crystal's IO scheduler does not get CPU time while the main thread is blocked by a foreign C run loop — so the HTTP server never responds and the webview window loads a blank page.
+`wv.run()` blocks its calling thread inside WebView2's native message loop. On Windows this means the C event loop must own a dedicated OS thread, otherwise Crystal's IO scheduler never gets CPU time and any concurrent work (HTTP server, file watcher, etc.) stalls.
 
-This is a Crystal stdlib limitation (IOCP + green thread scheduler interaction on Windows), not something Lune can work around without a significant architectural change such as spawning the asset server as a separate process. There is no ETA. If Crystal's Windows scheduler improves, or if you want to take a crack at the separate-process approach, contributions are very welcome.
+Lune addresses this with `Fiber::ExecutionContext::Isolated`, which runs the entire webview setup and event loop on its own thread.
+Thanks to Crystal core team for the suggestion on Reddit — see the [ExecutionContext API docs](https://crystal-lang.org/api/1.20.1/Fiber/ExecutionContext.html).
+
+**This fix is untested on real Windows hardware.** The project is developed on macOS and Windows CI only runs a type-check (`--no-codegen`) because webview `.lib` linking is not supported in the CI environment. If you have a Windows machine and can test this, feedback and bug reports are very welcome.
 
 ## Getting the CLI
 
@@ -238,9 +241,9 @@ All bindings return `Promise`. Exceptions thrown in Crystal reject the promise.
 ```js
 import { quit, openURL, environment } from "../lunejs/runtime/runtime.js";
 
-await quit();                          // terminate the app
+await quit(); // terminate the app
 await openURL("https://example.com"); // open in system browser
-const env = await environment();      // { os, arch, debug }
+const env = await environment(); // { os, arch, debug }
 ```
 
 `environment()` returns a `LuneEnvironment` object:
@@ -248,7 +251,7 @@ const env = await environment();      // { os, arch, debug }
 ```ts
 interface LuneEnvironment {
   os: "darwin" | "linux" | "windows";
-  arch: string;   // "arm64" | "x86_64"
+  arch: string; // "arm64" | "x86_64"
   debug: boolean;
 }
 ```
@@ -290,13 +293,13 @@ Binding argument and return types require `lune generate` (see roadmap), which r
 
 ```yaml
 name: my_app
-app_entry: src/main.cr   # default: src/main.cr
+app_entry: src/main.cr # default: src/main.cr
 frontend:
-  dir: frontend          # default: frontend
-  install: npm install   # default: npm install
-  build: npm run build   # default: npm run build
+  dir: frontend # default: frontend
+  install: npm install # default: npm install
+  build: npm run build # default: npm run build
   dev:
-    cmd: npm run dev     # default: npm run dev
+    cmd: npm run dev # default: npm run dev
     url: http://localhost:5173
 ```
 
