@@ -38,7 +38,7 @@ module Lune
             JSON::Any.new(nil)
           },
           internal: true,
-          async: false
+          async: true
         ),
 
         BindingDef.new(

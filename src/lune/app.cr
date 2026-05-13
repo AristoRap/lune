@@ -40,7 +40,7 @@ module Lune
 
     def emit(event : String, data = nil)
       json = data.nil? ? "null" : data.to_json
-      with_bridge.eval("window.__lune_emit(#{event.inspect}, #{json})")
+      with_bridge.dispatch_eval("window.__lune_emit(#{event.inspect}, #{json})")
     end
 
     # ----------------------------
@@ -48,7 +48,7 @@ module Lune
     # ----------------------------
 
     def eval(js : String)
-      with_bridge.eval(js)
+      with_bridge.dispatch_eval(js)
     end
 
     # ----------------------------

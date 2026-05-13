@@ -42,6 +42,11 @@ module Lune
       @wv.eval(js)
     end
 
+    def dispatch_eval(js : String)
+      wv = @wv
+      wv.dispatch { wv.eval(js) }
+    end
+
     # -----------------------------------
     # Internal dispatch
     # -----------------------------------

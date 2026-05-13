@@ -196,7 +196,7 @@ end
 ```
 
 - Argument types are derived from your Crystal method signatures — no manual JSON conversion needed.
-- `async: true` runs the method off the main thread.
+- `async: true` runs the method in a Crystal fiber, off the webview's main thread. Use it for anything that does I/O or sleeps — `async: false` (the default) runs the callback directly on the main thread and will freeze the UI if it blocks.
 - The **Crystal class name** becomes the JS namespace: `GreetModule` → `api.GreetModule.*`.
 - Crystal method names are camelcased: `slow_echo` → `SlowEcho`.
 
