@@ -69,12 +69,12 @@ describe LuneCLI do
   describe "dev command" do
     it "returns nil when both paths exist" do
       cmd = LuneCLI::Commands::Dev.new
-      cmd.validate_paths(frontend_dir: "frontend", app_entry: "spec/fixtures/main.cr").should be_nil
+      cmd.validate_paths(frontend_dir: "spec", app_entry: "spec/fixtures/main.cr").should be_nil
     end
 
     it "rejects a missing app entry" do
       cmd = LuneCLI::Commands::Dev.new
-      cmd.validate_paths(frontend_dir: "frontend", app_entry: "missing_main.cr")
+      cmd.validate_paths(frontend_dir: "spec", app_entry: "missing_main.cr")
         .should eq("App entry file not found: missing_main.cr")
     end
 
@@ -137,7 +137,7 @@ describe LuneCLI do
 
     it "rejects a missing app entry" do
       cmd = LuneCLI::Commands::Build.new
-      cmd.validate_paths(frontend_dir: "frontend", app_entry: "missing_main.cr")
+      cmd.validate_paths(frontend_dir: "spec", app_entry: "missing_main.cr")
         .should eq("App entry file not found: missing_main.cr")
     end
 
