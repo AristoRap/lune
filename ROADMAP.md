@@ -1,6 +1,6 @@
 # Lune Roadmap Ideas
 
-## v0.2 — Developer experience
+## v0.2
 
 - [x] Events system: `app.emit("event", data)` from Crystal → JS event bus (`on`/`once`/`off` in runtime.js)
 - [x] Runtime JS API — `quit()`, `openURL(url)`, `environment()` built into `runtime.js`
@@ -9,10 +9,10 @@
 - [x] Single-instance lock — lock file or UNIX socket at `~/.lune/<app>.lock`
 - [x] `lune.yml` project config — set `dev_cmd`, `build_cmd`, `dev_url`, `app_entry`, and `frontend_dir` per project; scaffolded by `lune init`
 - [x] GitHub Actions release pipeline — build macOS + Linux binaries on tag push, attach to GitHub release
-- [ ] codegen binding registration boilerplate and `.d.ts` from Crystal annotations
 
-## v0.3 — Production-ready
+## v0.3
 
+- [x] codegen binding registration boilerplate and `.d.ts` from Crystal annotations
 - [ ] Dev error overlay — pipe Crystal compile errors into the webview as an HTML overlay when `lune dev` compilation fails
 - [ ] Structured binding errors — define an error envelope with a `code` field so JS can branch on `e.code` instead of parsing the message string
 
