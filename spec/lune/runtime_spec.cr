@@ -259,7 +259,7 @@ describe Lune::Runtime do
       app_path = File.join(lunejs_dir, "app", "App.js")
       mtime_before = File.info(app_path).modification_time
 
-      sleep 20.milliseconds
+      sleep 100.milliseconds
 
       Lune::Runtime.write_js([
         Lune::BindingDef.new(
@@ -297,7 +297,7 @@ describe Lune::Runtime do
       app_path = File.join(lunejs_dir, "app", "App.js")
       mtime_before = File.info(app_path).modification_time
 
-      sleep 20.milliseconds
+      sleep 100.milliseconds
 
       Lune::Runtime.write_js([
         Lune::BindingDef.new(

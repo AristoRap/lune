@@ -1,17 +1,5 @@
 require "../spec_helper"
 
-private class CaptureBackend < Log::Backend
-  getter entries = [] of Log::Entry
-
-  def initialize
-    super(:sync)
-  end
-
-  def write(entry : Log::Entry)
-    @entries << entry
-  end
-end
-
 private class LoggingCheckCommand < LuneCLI::Commands::Check
   def initialize(@result : Bool)
   end
@@ -64,39 +52,13 @@ private class LoggingDevCommand < LuneCLI::Commands::Dev
   end
 end
 
-# Runs the block inside a temp dir that has no lune.yml, so Config defaults apply.
-private def in_blank_project(& : ->)
-  dir = File.join(Dir.tempdir, "lune_log_#{Random.new.hex(6)}")
-  Dir.mkdir_p(dir)
-  begin
-    Dir.cd(dir) { yield }
-  ensure
-    FileUtils.rm_rf(dir)
-  end
-end
-
-# Runs the block inside a temp dir with the given lune.yml content.
-private def in_project_with(lune_yml : String, & : ->)
-  dir = File.join(Dir.tempdir, "lune_log_#{Random.new.hex(6)}")
-  Dir.mkdir_p(dir)
-  File.write(File.join(dir, "lune.yml"), lune_yml)
-  begin
-    Dir.cd(dir) { yield }
-  ensure
-    FileUtils.rm_rf(dir)
-  end
-end
-
 describe "LuneCLI logging" do
   # In a blank temp dir: default app_entry is "src/main.cr" which does not exist.
   it "enables info logging by default before command preflight" do
-    original = Lune.logger
     backend = CaptureBackend.new
     logger = Log.new("lune.spec.cli", backend, :none)
 
-    begin
-      Lune.logger = logger
-
+    with_logger(logger) do
       in_blank_project do
         root = LuneCLI.root_command
 
@@ -105,20 +67,15 @@ describe "LuneCLI logging" do
         end
       end
 
-      Lune.logger.level.should eq(Log::Severity::Info)
-    ensure
-      Lune.logger = original
+      logger.level.should eq(Log::Severity::Info)
     end
   end
 
   it "enables debug logging from the global flag before command preflight" do
-    original = Lune.logger
     backend = CaptureBackend.new
     logger = Log.new("lune.spec.cli", backend, :none)
 
-    begin
-      Lune.logger = logger
-
+    with_logger(logger) do
       in_blank_project do
         root = LuneCLI.root_command
 
@@ -127,35 +84,28 @@ describe "LuneCLI logging" do
         end
       end
 
-      Lune.logger.level.should eq(Log::Severity::Debug)
-    ensure
-      Lune.logger = original
+      logger.level.should eq(Log::Severity::Debug)
     end
   end
 
   it "logs check progress and success" do
-    original = Lune.logger
     backend = CaptureBackend.new
     logger = Log.new("lune.spec.cli", backend, :debug)
 
-    begin
-      Lune.logger = logger
-
+    with_logger(logger) do
       in_project_with("app_entry: my_app.cr\n") do
         command = LoggingCheckCommand.new(true).to_command
         command.__execute_without_rescue_for_spec([] of String)
       end
-
-      checking = backend.entries.find { |e| e.message == "Checking my_app.cr..." }
-      checking.should_not be_nil
-      checking.not_nil!.severity.should eq(Log::Severity::Info)
-
-      ok = backend.entries.find { |e| e.message == "OK" }
-      ok.should_not be_nil
-      ok.not_nil!.severity.should eq(Log::Severity::Info)
-    ensure
-      Lune.logger = original
     end
+
+    checking = backend.entries.find { |e| e.message == "Checking my_app.cr..." }
+    checking.should_not be_nil
+    checking.not_nil!.severity.should eq(Log::Severity::Info)
+
+    ok = backend.entries.find { |e| e.message == "OK" }
+    ok.should_not be_nil
+    ok.not_nil!.severity.should eq(Log::Severity::Info)
   end
 
   it "raises on missing app entry during check preflight" do
