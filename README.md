@@ -95,7 +95,7 @@ Add it to your `shard.yml`:
 dependencies:
   lune:
     github: aristorap/lune
-    version: ~> 0.2
+    version: ~> 0.3
 ```
 
 ```sh
