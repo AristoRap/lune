@@ -49,17 +49,21 @@ describe "Lune core logging" do
     begin
       Lune.logger = logger
 
-      Lune::Runtime.write_js([
-        Lune::BindingDef.new(
-          name: "ping",
-          namespace: "test",
-          args: [] of String,
-          return_type: "void",
-          callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(nil) },
-          internal: false,
-          async: false
-        ),
-      ])
+      with_tempdir do |tmpdir|
+        Dir.cd(tmpdir) do
+          Lune::Runtime.write_js([
+            Lune::BindingDef.new(
+              name: "ping",
+              namespace: "test",
+              args: [] of String,
+              return_type: "void",
+              callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(nil) },
+              internal: false,
+              async: false
+            ),
+          ])
+        end
+      end
 
       entry = backend.entries.find { |e| e.message.includes?("Lune JS written") }
       entry.should_not be_nil
