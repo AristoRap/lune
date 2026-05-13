@@ -9,12 +9,12 @@
 - [x] Single-instance lock — lock file or UNIX socket at `~/.lune/<app>.lock`
 - [x] `lune.yml` project config — set `dev_cmd`, `build_cmd`, `dev_url`, `app_entry`, and `frontend_dir` per project; scaffolded by `lune init`
 - [x] GitHub Actions release pipeline — build macOS + Linux binaries on tag push, attach to GitHub release
+- [ ] codegen binding registration boilerplate and `.d.ts` from Crystal annotations
 
 ## v0.3 — Production-ready
 
 - [ ] Dev error overlay — pipe Crystal compile errors into the webview as an HTML overlay when `lune dev` compilation fails
 - [ ] Structured binding errors — define an error envelope with a `code` field so JS can branch on `e.code` instead of parsing the message string
-- [ ] `lune generate` — codegen binding registration boilerplate and `.d.ts` from Crystal annotations
 
 ## Needs C bindings — post-v0.3
 

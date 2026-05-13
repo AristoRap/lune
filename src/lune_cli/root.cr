@@ -1,4 +1,6 @@
+require "./constants"
 require "./config"
+require "./generator"
 require "./commands/build"
 require "./commands/check"
 require "./commands/dev"
@@ -8,12 +10,6 @@ require "./commands/init"
 require "./commands/version"
 
 module LuneCLI
-  {% if flag?(:win32) %}
-    NPM_CMD = "npm.cmd"
-  {% else %}
-    NPM_CMD = "npm"
-  {% end %}
-
   module Root
     def self.build : Argy::Command
       root = Argy::Command.new(
@@ -33,13 +29,13 @@ module LuneCLI
       end
 
       root.add_command(
-        BuildCommand.new.to_command,
-        CheckCommand.new.to_command,
-        DevCommand.new.to_command,
-        DoctorCommand.new.to_command,
-        RunCommand.new.to_command,
-        InitCommand.new.to_command,
-        VersionCommand.new.to_command
+        Commands::Build.new.to_command,
+        Commands::Check.new.to_command,
+        Commands::Dev.new.to_command,
+        Commands::Doctor.new.to_command,
+        Commands::Run.new.to_command,
+        Commands::Init.new.to_command,
+        Commands::Version.new.to_command
       )
       root
     end

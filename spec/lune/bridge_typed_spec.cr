@@ -1,4 +1,4 @@
-require "./spec_helper"
+require "../spec_helper"
 
 private class TypedFakeWebview
   include Lune::WebviewLike
@@ -15,11 +15,14 @@ private class TypedFakeWebview
   end
 
   def invoke(name : String, seq : String, args : Array(JSON::Any))
-    @bindings[name].call(seq, args)
+    if handler = @bindings[name]?
+      handler.call(seq, args)
+    end
   end
 
   def dispatch(&block : ->)
     block.call
+    nil
   end
 
   def resolve(seq : String, status : Int32, result : String)
@@ -35,8 +38,24 @@ describe "Bridge typed bindings" do
     fake = TypedFakeWebview.new
     bridge = Lune::Bridge.new(fake)
 
-    bridge.bind_typed("inc", Int32) { |n| n + 1 }
-    fake.invoke("inc", "seq-1", [JSON::Any.new(41_i64)])
+    binding = Lune::BindingDef.new(
+      name: "inc",
+      namespace: "test",
+      args: ["Int32"],
+      return_type: "Int32",
+      callback: ->(args : Array(JSON::Any)) : JSON::Any {
+        n = args[0].as_i.to_i32
+        JSON::Any.new(n + 1)
+      },
+      internal: false,
+      async: false
+    )
+
+    bridge.register_bindings([binding])
+
+    fake.invoke("test.inc", "seq-1", [JSON::Any.new(41_i64)])
+
+    fake.resolve_calls.size.should eq(1)
 
     seq, status, result = fake.resolve_calls[0]
     seq.should eq("seq-1")
@@ -48,11 +67,30 @@ describe "Bridge typed bindings" do
     fake = TypedFakeWebview.new
     bridge = Lune::Bridge.new(fake)
 
-    bridge.bind_typed("inc", Int32) { |n| n + 1 }
-    fake.invoke("inc", "seq-2", [] of JSON::Any)
+    binding = Lune::BindingDef.new(
+      name: "inc",
+      namespace: "test",
+      args: ["Int32"],
+      return_type: "Int32",
+      callback: ->(args : Array(JSON::Any)) : JSON::Any {
+        if args.size != 1
+          raise "Expected 1 argument"
+        end
+        n = args[0].as_i.to_i32
+        JSON::Any.new(n + 1)
+      },
+      internal: false,
+      async: false
+    )
+
+    bridge.register_bindings([binding])
+
+    fake.invoke("test.inc", "seq-2", [] of JSON::Any)
+
+    fake.resolve_calls.size.should eq(1)
 
     _seq, status, result = fake.resolve_calls[0]
     status.should eq(1)
-    JSON.parse(result)["error"].as_s.includes?("Expected 1 argument").should be_true
+    JSON.parse(result)["error"].as_s.should contain("Expected 1 argument")
   end
 end

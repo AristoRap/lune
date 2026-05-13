@@ -21,7 +21,7 @@ module LuneCLI
     struct Frontend
       include YAML::Serializable
 
-      getter dir : String = "frontend"
+      getter dir : String = Lune::DEFAULT_FRONTEND_DIR
       getter install : String? = nil
       getter build : String? = nil
       getter dev : Dev = Dev.new

@@ -1,4 +1,4 @@
-require "./spec_helper"
+require "../spec_helper"
 
 Lune::Assets.embed_dir("spec/fixtures/embed_assets")
 

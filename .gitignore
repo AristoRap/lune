@@ -8,3 +8,5 @@
 /.lune-dev
 /shard.lock
 /frontend/*
+lune.yml
+src/main.cr

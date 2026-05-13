@@ -18,3 +18,13 @@ Spec.before_each do
     logger.level = Log::Severity::None
   end
 end
+
+def with_tempdir(& : String -> _)
+  dir = File.join(Dir.tempdir, "lune_rt_#{Random.new.hex(8)}")
+  Dir.mkdir_p(dir)
+  begin
+    yield dir
+  ensure
+    FileUtils.rm_rf(dir)
+  end
+end

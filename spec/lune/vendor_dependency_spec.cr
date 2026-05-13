@@ -1,4 +1,4 @@
-require "./spec_helper"
+require "../spec_helper"
 require "yaml"
 require "digest/sha256"
 

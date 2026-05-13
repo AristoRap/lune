@@ -1,81 +1,83 @@
 module LuneCLI
-  class RunCommand
-    def to_command : Argy::Command
-      config = LuneCLI::Config.load
+  module Commands
+    class Run
+      def to_command : Argy::Command
+        config = LuneCLI::Config.load
 
-      command = Argy::Command.new(
-        use: "run",
-        aliases: ["r"],
-        short: "Run the built Lune app",
-        long: "Run the previously built Lune app artifact for the configured app entry."
-      )
+        command = Argy::Command.new(
+          use: "run",
+          aliases: ["r"],
+          short: "Run the built Lune app",
+          long: "Run the previously built Lune app artifact for the configured app entry."
+        )
 
-      command.on_pre_run do |_cmd, _args|
-        if message = validate_paths(app_entry: config.app_entry)
-          raise Argy::Error.new(message)
+        command.on_pre_run do |_cmd, _args|
+          if message = validate_paths(app_entry: config.app_entry)
+            raise Argy::Error.new(message)
+          end
         end
-      end
 
-      command.on_run do |_cmd, _args|
-        unless run(app_entry: config.app_entry)
-          raise Argy::Error.new("run failed")
+        command.on_run do |_cmd, _args|
+          unless run(app_entry: config.app_entry)
+            raise Argy::Error.new("run failed")
+          end
         end
+
+        command
       end
 
-      command
-    end
-
-    def artifact_path_for(app_entry : String) : String
-      BuildCommand.new.output_path_for(app_entry)
-    end
-
-    def validate_paths(app_entry : String) : String?
-      return "App entry file not found: #{app_entry}" unless File.file?(app_entry)
-
-      artifact_path = artifact_path_for(app_entry)
-      {% if flag?(:darwin) %}
-        return "Built app not found: #{artifact_path}. Run 'lune build' first." unless Dir.exists?(artifact_path)
-      {% else %}
-        return "Built app not found: #{artifact_path}. Run 'lune build' first." unless File.file?(artifact_path)
-      {% end %}
-
-      nil
-    end
-
-    def run_lock_slug(app_entry : String) : String
-      abs = File.expand_path(artifact_path_for(app_entry))
-      "run-" + Lune::SingleInstance.slug(abs)
-    end
-
-    def run(
-      app_entry : String,
-      lock_dir : String = File.join(Path.home, ".lune")
-    ) : Bool
-      lock_file = Lune::SingleInstance.acquire(run_lock_slug(app_entry), lock_dir)
-      unless lock_file
-        Lune.logger.error { "Another instance is already running for #{app_entry}" }
-        return false
+      def artifact_path_for(app_entry : String) : String
+        Commands::Build.new.output_path_for(app_entry)
       end
 
-      artifact_path = artifact_path_for(app_entry)
+      def validate_paths(app_entry : String) : String?
+        return "App entry file not found: #{app_entry}" unless File.file?(app_entry)
 
-      {% if flag?(:darwin) %}
-        Process.run(
-          "open",
-          [artifact_path],
-          input: Process::Redirect::Inherit,
-          output: Process::Redirect::Inherit,
-          error: Process::Redirect::Inherit
-        ).success?
-      {% else %}
-        Process.run(
-          artifact_path,
-          [] of String,
-          input: Process::Redirect::Inherit,
-          output: Process::Redirect::Inherit,
-          error: Process::Redirect::Inherit
-        ).success?
-      {% end %}
+        artifact_path = artifact_path_for(app_entry)
+        {% if flag?(:darwin) %}
+          return "Built app not found: #{artifact_path}. Run 'lune build' first." unless Dir.exists?(artifact_path)
+        {% else %}
+          return "Built app not found: #{artifact_path}. Run 'lune build' first." unless File.file?(artifact_path)
+        {% end %}
+
+        nil
+      end
+
+      def run_lock_slug(app_entry : String) : String
+        abs = File.expand_path(artifact_path_for(app_entry))
+        "run-" + Lune::SingleInstance.slug(abs)
+      end
+
+      def run(
+        app_entry : String,
+        lock_dir : String = File.join(Path.home, ".lune"),
+      ) : Bool
+        lock_file = Lune::SingleInstance.acquire(run_lock_slug(app_entry), lock_dir)
+        unless lock_file
+          Lune.logger.error { "Another instance is already running for #{app_entry}" }
+          return false
+        end
+
+        artifact_path = artifact_path_for(app_entry)
+
+        {% if flag?(:darwin) %}
+          Process.run(
+            "open",
+            [artifact_path],
+            input: Process::Redirect::Inherit,
+            output: Process::Redirect::Inherit,
+            error: Process::Redirect::Inherit
+          ).success?
+        {% else %}
+          Process.run(
+            artifact_path,
+            [] of String,
+            input: Process::Redirect::Inherit,
+            output: Process::Redirect::Inherit,
+            error: Process::Redirect::Inherit
+          ).success?
+        {% end %}
+      end
     end
   end
 end

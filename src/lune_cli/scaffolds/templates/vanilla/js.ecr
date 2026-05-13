@@ -24,41 +24,21 @@ document.querySelector("#app").innerHTML = `
   </div>
 
   <hr />
-
-  <div class="card">
-    <p class="card-label">Counter</p>
-    <div class="counter-row">
-      <button id="dec-btn">−</button>
-      <span class="counter-value" id="counter-value">0</span>
-      <button id="inc-btn">+</button>
-    </div>
-  </div>
 `;
 
 const nameEl = document.getElementById("name");
 const greetResult = document.getElementById("greet-result");
-const counterEl = document.getElementById("counter-value");
 
 nameEl?.focus();
 
-document.getElementById("greet-btn")?.addEventListener("click", () => {
-  const name = nameEl?.value?.trim() ?? "";
+document.getElementById("greet-btn")?.addEventListener("click", async () => {
+  const name = nameEl?.value?.trim();
   if (!name) return;
-  api.greet(name)
-    .then((msg) => { if (greetResult) greetResult.textContent = msg; })
-    .catch(console.error);
-});
 
-document.getElementById("inc-btn")?.addEventListener("click", () => {
-  const cur = parseInt(counterEl?.textContent ?? "0", 10);
-  api.counter.inc(cur)
-    .then((n) => { if (counterEl) counterEl.textContent = String(n); })
-    .catch(console.error);
-});
-
-document.getElementById("dec-btn")?.addEventListener("click", () => {
-  const cur = parseInt(counterEl?.textContent ?? "0", 10);
-  api.counter.dec(cur)
-    .then((n) => { if (counterEl) counterEl.textContent = String(n); })
-    .catch(console.error);
+  try {
+    const msg = await api.Welcome.Greet(name);
+    greetResult.textContent = msg;
+  } catch (err) {
+    console.error(err);
+  }
 });

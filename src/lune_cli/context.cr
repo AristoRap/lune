@@ -7,7 +7,7 @@ module LuneCLI
 
     def initialize(
       @app_name : String,
-      @frontend_dir : String = "frontend",
+      @frontend_dir : String = Lune::DEFAULT_FRONTEND_DIR,
       @skip_install : Bool = false,
       @template : String = "vanilla",
     )

@@ -1,5 +1,4 @@
-require "./spec_helper"
-require "../src/lune_cli"
+require "../spec_helper"
 
 private class CaptureBackend < Log::Backend
   getter entries = [] of Log::Entry
@@ -13,7 +12,7 @@ private class CaptureBackend < Log::Backend
   end
 end
 
-private class LoggingCheckCommand < LuneCLI::CheckCommand
+private class LoggingCheckCommand < LuneCLI::Commands::Check
   def initialize(@result : Bool)
   end
 
@@ -26,7 +25,7 @@ private class LoggingCheckCommand < LuneCLI::CheckCommand
   end
 end
 
-private class LoggingBuildCommand < LuneCLI::BuildCommand
+private class LoggingBuildCommand < LuneCLI::Commands::Build
   def initialize(@result : Bool)
   end
 
@@ -34,12 +33,12 @@ private class LoggingBuildCommand < LuneCLI::BuildCommand
     nil
   end
 
-  def run(frontend_dir : String, app_entry : String, output_path : String, release : Bool = false, build_cmd : String = LuneCLI::BuildCommand::DEFAULT_BUILD_CMD) : Bool
+  def run(frontend_dir : String, app_entry : String, output_path : String, release : Bool = false, build_cmd : String = LuneCLI::DEFAULT_BUILD_CMD) : Bool
     @result
   end
 end
 
-private class LoggingRunCommand < LuneCLI::RunCommand
+private class LoggingRunCommand < LuneCLI::Commands::Run
   def initialize(@result : Bool)
   end
 
@@ -52,7 +51,7 @@ private class LoggingRunCommand < LuneCLI::RunCommand
   end
 end
 
-private class LoggingDevCommand < LuneCLI::DevCommand
+private class LoggingDevCommand < LuneCLI::Commands::Dev
   def initialize(@result : Bool)
   end
 
@@ -60,11 +59,10 @@ private class LoggingDevCommand < LuneCLI::DevCommand
     nil
   end
 
-  def run(frontend_dir : String, app_entry : String, dev_url : String, dev_cmd : String = LuneCLI::DevCommand::DEFAULT_DEV_CMD, watcher : LuneCLI::FileWatcher = LuneCLI::FileWatcher.new, lock_dir : String = File.join(Path.home, ".lune")) : Bool
+  def run(frontend_dir : String, app_entry : String, dev_url : String, dev_cmd : String = LuneCLI::DEFAULT_DEV_CMD, watcher : LuneCLI::FileWatcher = LuneCLI::FileWatcher.new, lock_dir : String = File.join(Path.home, ".lune")) : Bool
     @result
   end
 end
-
 
 # Runs the block inside a temp dir that has no lune.yml, so Config defaults apply.
 private def in_blank_project(& : ->)

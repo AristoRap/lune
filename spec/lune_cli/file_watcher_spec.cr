@@ -1,6 +1,6 @@
 require "spec"
 require "file_utils"
-require "../src/lune_cli/file_watcher"
+require "../spec_helper"
 
 private def with_tempdir(& : String -> _)
   dir = File.join(Dir.tempdir, "lune_fw_#{Random.new.hex(8)}")

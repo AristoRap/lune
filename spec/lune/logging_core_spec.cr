@@ -1,4 +1,4 @@
-require "./spec_helper"
+require "../spec_helper"
 
 private class CaptureBackend < Log::Backend
   getter entries = [] of Log::Entry
@@ -24,7 +24,9 @@ private class LoggingFakeWebview
   end
 
   def invoke(name : String, seq : String, args : Array(JSON::Any))
-    @bindings[name].call(seq, args)
+    if handler = @bindings[name]?
+      handler.call(seq, args)
+    end
   end
 
   def dispatch(&block : ->)
@@ -46,7 +48,18 @@ describe "Lune core logging" do
 
     begin
       Lune.logger = logger
-      Lune::Runtime.write_js(["ping"])
+
+      Lune::Runtime.write_js([
+        Lune::BindingDef.new(
+          name: "ping",
+          namespace: "test",
+          args: [] of String,
+          return_type: "void",
+          callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(nil) },
+          internal: false,
+          async: false
+        ),
+      ])
 
       entry = backend.entries.find { |e| e.message.includes?("Lune JS written") }
       entry.should_not be_nil
@@ -63,16 +76,31 @@ describe "Lune core logging" do
 
     begin
       Lune.logger = logger
-      wv = LoggingFakeWebview.new
-      app = Lune::App.new(Lune::Bridge.new(wv))
 
-      app.bind("boom") do |_args|
+      app = Lune::App.new
+
+      app.bind(
+        name: "boom",
+        namespace: "test",
+        args: [] of String,
+        return_type: "void",
+        async: false
+      ) do |_args|
         raise "boom"
       end
 
-      wv.invoke("boom", "seq-1", [] of JSON::Any)
+      wv = LoggingFakeWebview.new
+      bridge = Lune::Bridge.new(wv)
 
-      entry = backend.entries.find { |e| e.message.includes?("Binding execution failed") }
+      bridge.register_bindings(app.bindings)
+      app.bridge = bridge
+
+      wv.invoke("test.boom", "seq-1", [] of JSON::Any)
+
+      entry = backend.entries.find do |e|
+        e.message.includes?("Binding execution failed")
+      end
+
       entry.should_not be_nil
       entry.not_nil!.severity.should eq(Log::Severity::Error)
     ensure

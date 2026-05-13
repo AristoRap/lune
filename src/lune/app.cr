@@ -1,45 +1,37 @@
 module Lune
   class App
-    include Bindable
+    getter bindings = [] of BindingDef
+    getter title
+    property bridge : Bridge?
 
-    def initialize(@bridge : Bridge, @prefix : String? = nil)
-    end
-
-    # ----------------------------
-    # Bindable — concrete impl
-    # ----------------------------
-
-    def bind(name : String, &block : Array(JSON::Any) -> JSON::Any)
-      @bridge.bind(scoped(name), &block)
-    end
-
-    def bind_async(name : String, &block : Array(JSON::Any) -> JSON::Any)
-      @bridge.bind_async(scoped(name), &block)
-    end
-
-    # ----------------------------
-    # Namespace
-    # ----------------------------
-
-    # Returns a scoped App whose bindings are prefixed with `name`.
-    # Nesting is supported: namespaces compose dot-separated.
-    #
-    #   app.namespace("math") do |math|
-    #     math.namespace("trig") do |trig|   # registers as "math.trig.*"
-    #       trig.bind_typed("sin", Float64) { |x| Math.sin(x) }
-    #     end
-    #   end
-    def namespace(name : String, &)
-      child_prefix = @prefix ? "#{@prefix}.#{name}" : name
-      yield App.new(@bridge, child_prefix)
+    def initialize
+      @bindings = [] of BindingDef
+      @bridge = nil # Injected once webview is created
     end
 
     # ----------------------------
     # Plugin system
     # ----------------------------
 
-    def install(mod : Installable)
-      mod.install(self)
+    def install(*mods : Installable)
+      mods.each do |mod|
+        mod.install(self)
+      end
+    end
+
+    # ----------------------------
+    # Bindings
+    # ----------------------------
+
+    def bind(
+      name : String,
+      namespace : String,
+      args : Array(String),
+      return_type : String,
+      async : Bool,
+      &block : Array(JSON::Any) -> JSON::Any
+    )
+      @bindings << external_binding(name, namespace, args, return_type, async, &block)
     end
 
     # ----------------------------
@@ -47,9 +39,8 @@ module Lune
     # ----------------------------
 
     def emit(event : String, data = nil)
-      name = scoped(event)
       json = data.nil? ? "null" : data.to_json
-      @bridge.eval("window.__lune_emit(#{name.inspect}, #{json})")
+      with_bridge.eval("window.__lune_emit(#{event.inspect}, #{json})")
     end
 
     # ----------------------------
@@ -57,23 +48,38 @@ module Lune
     # ----------------------------
 
     def eval(js : String)
-      @bridge.eval(js)
+      with_bridge.eval(js)
     end
 
     # ----------------------------
     # Internal
     # ----------------------------
 
-    def binding_names : Array(String)
-      @bridge.binding_names
-    end
-
     def close!
-      @bridge.close!
+      with_bridge.close!
     end
 
-    private def scoped(name : String) : String
-      @prefix ? "#{@prefix}.#{name}" : name
+    # Ensure bridge was injected before use
+    private def with_bridge
+      @bridge.not_nil!
+    end
+
+    private def external_binding(
+      name : String,
+      namespace : String,
+      args : Array(String),
+      return_type : String,
+      async : Bool,
+      &block : Array(JSON::Any) -> JSON::Any
+    )
+      BindingDef.new(
+        name: name,
+        namespace: namespace,
+        args: args,
+        return_type: return_type,
+        callback: block,
+        async: async
+      )
     end
   end
 end

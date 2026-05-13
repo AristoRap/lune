@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.3.0] - 2026-05-13
+
+### Breaking changes
+
+- `Lune.run` signature changed — `app` is now the first positional argument and the block yields `Lune::Options` for window configuration instead of `Lune::App` for binding setup. Bindings must be registered on `app` before calling `Lune.run`.
+- `App#bind`, `App#bind_async`, `App#bind_typed`, and `App#namespace` removed. Use `Lune::Bindable` (annotation-driven) or `App#bind(name:, namespace:, args:, return_type:, async:)` directly.
+- JS namespace is now the Crystal class name, not a manually declared string. Method names are camelcased: `greet` → `Greet`, `slow_echo` → `SlowEcho`.
+
+### Added
+
+- `Lune::Runner` — extracted webview lifecycle; enables programmatic navigation via `runner.start(html:)` or `runner.start(url:)`
+- `Lune::Options` — window options as a first-class object (`title`, `width`, `height`, `min_*`, `max_*`, `resizable`, `debug`, `on_navigate`, `on_close`)
+- `Lune::BindingDef` — typed binding descriptor carrying namespace, argument types, and return type
+- `-Dbuild_mode` compile flag — Crystal app runs in a pre-pass to generate `App.js` / `App.d.ts` before frontend bundling, so typed exports are available in production builds
+- `App.d.ts` now contains precise TypeScript signatures derived from Crystal method annotations, not just `Promise<unknown>` stubs
+
+### Changed
+
+- `Lune::Bindable` uses the Crystal class name as the JS namespace; nested namespaces follow `::` (`Math::Trig` → `api.Math.Trig`)
+- `Lune::Runtime` generates structured namespaced JS and typed `.d.ts` from `BindingDef` arrays
+- `Lune::RuntimeBindings` returns `Array(BindingDef)` instead of registering directly on the bridge
+- CLI commands reorganized under `LuneCLI::Commands` module; constants extracted to `constants.cr`
+- `generate_bindings` moved inside `Build#run` so test doubles fully cover the build path
+
+### Specs
+
+- Reorganized under `spec/lune/` and `spec/lune_cli/` mirroring source layout
+- 128 examples covering `App`, `Bridge`, `Runtime`, `RuntimeBindings`, `Runner`, and all CLI commands
+
 ## [0.2.4] - 2026-05-11
 
 ### Fixed

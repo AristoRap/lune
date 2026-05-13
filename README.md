@@ -54,11 +54,11 @@ I don't have any major re-writes planned, but if you use this now, please keep i
 
 **Pre-built binaries** are attached to each [GitHub release](https://github.com/AristoRap/lune/releases):
 
-| Platform | File |
-|---|---|
-| macOS (Apple Silicon) | `lune-darwin-arm64` |
-| macOS (Intel) | `lune-darwin-x86_64` |
-| Linux x86_64 | `lune-linux-x86_64` |
+| Platform              | File                 |
+| --------------------- | -------------------- |
+| macOS (Apple Silicon) | `lune-darwin-arm64`  |
+| macOS (Intel)         | `lune-darwin-x86_64` |
+| Linux x86_64          | `lune-linux-x86_64`  |
 
 Download the binary for your platform, `chmod +x` it, and place it somewhere on your `PATH` (e.g. `/usr/local/bin/lune`).
 
@@ -108,83 +108,123 @@ You still need the CLI for `lune dev` and `lune build` — see [Getting the CLI]
 
 ### `Lune.run`
 
+Create a `Lune::App`, install your bindings, then call `Lune.run`. The block receives an `opts` object for window configuration.
+
 ```crystal
 require "lune"
 
-Lune.run(
-  title:       "My App",
-  assets:      "frontend/dist",   # embedded at compile time
-  width:       1200,
-  height:      800,
-  min_width:   800,
-  min_height:  600,
-  debug:       false,
-  on_load:     -> { puts "page loaded" },
-  on_navigate: ->(url : String) { puts "navigated to #{url}" },
-  on_close:    -> { puts "window closed" },
-) do |app|
-  # register bindings here
+app = Lune::App.new
+app.install(MyModule.new)
+
+Lune.run(app, assets: "frontend/dist") do |opts|
+  opts.title      = "My App"
+  opts.width      = 1200
+  opts.height     = 800
+  opts.min_width  = 800
+  opts.min_height = 600
+  opts.debug      = false
+  opts.on_navigate = ->(url : String) { puts "navigated to #{url}" }
+  opts.on_close    = -> { puts "window closed" }
 end
 ```
+
+**`assets:`** is an optional compile-time keyword that embeds a directory into the binary. Omit it if you're loading from a dev server or an explicit URL (see navigation priority below).
 
 **Navigation priority** (first match wins):
 
-1. `html:` — inline HTML string
-2. `url:` — explicit URL
-3. `LUNE_DEV_URL` env var — set automatically by `lune dev`
-4. `assets:` — directory embedded at compile time, served over a local HTTP server
+1. `LUNE_DEV_URL` env var — set automatically by `lune dev`
+2. `assets:` — directory embedded at compile time, served over a local HTTP server
+3. `html:` / `url:` — for programmatic use via `Lune::Runner` directly (see below)
+
+**Available `opts` properties:**
+
+| Property      | Type               | Default  | Description                             |
+| ------------- | ------------------ | -------- | --------------------------------------- |
+| `title`       | `String`           | `"Lune"` | Window title                            |
+| `width`       | `Int32`            | `1200`   | Initial width                           |
+| `height`      | `Int32`            | `800`    | Initial height                          |
+| `min_width`   | `Int32?`           | `nil`    | Minimum width                           |
+| `min_height`  | `Int32?`           | `nil`    | Minimum height                          |
+| `max_width`   | `Int32?`           | `nil`    | Maximum width                           |
+| `max_height`  | `Int32?`           | `nil`    | Maximum height                          |
+| `resizable`   | `Bool`             | `true`   | Allow resizing; `false` fixes the size  |
+| `debug`       | `Bool`             | `false`  | Enable WebView devtools                 |
+| `on_navigate` | `(String -> Nil)?` | `nil`    | Called on every navigation (URL as arg) |
+| `on_close`    | `(-> Nil)?`        | `nil`    | Called after the window closes          |
+
+### Using `Lune::Runner` directly
+
+For programmatic navigation (`html:` or `url:`) or finer control, use `Runner` instead of the macro:
+
+```crystal
+runner = Lune::Runner.new(app) do |opts|
+  opts.title = "My App"
+end
+
+runner.start(html: "<h1>Hello</h1>")
+# or: runner.start(url: "http://localhost:3000")
+```
 
 ### Binding Crystal to JavaScript
 
-**`bind_typed`** — single typed argument, return is auto-converted:
+#### `Lune::Bindable` — annotation-driven (recommended)
+
+Annotate methods with `@[Lune::Bind]` and include `Lune::Bindable`. The `install` method is generated automatically from your method signatures:
 
 ```crystal
-app.bind_typed("greet", String) { |msg| "Hello, #{msg}!" }
-```
+class GreetModule
+  include Lune::Bindable
 
-**`bind`** — raw `Array(JSON::Any)` args, for multiple positional arguments:
+  @[Lune::Bind]
+  def greet(msg : String) : String
+    "Hello, #{msg}!"
+  end
 
-```crystal
-app.bind("add") do |args|
-  a = args[0].as_i
-  b = args[1].as_i
-  JSON::Any.new((a + b).to_i64)
+  @[Lune::Bind(async: true)]
+  def slow_echo(msg : String) : String
+    sleep 1.second
+    "(delayed) #{msg}"
+  end
+end
+
+app = Lune::App.new
+app.install(GreetModule.new)
+
+Lune.run(app, assets: "frontend/dist") do |opts|
+  opts.title = "My App"
 end
 ```
 
-**`bind_typed` with a struct** — named arguments via a JSON-serializable struct:
+- Argument types are derived from your Crystal method signatures — no manual JSON conversion needed.
+- `async: true` runs the method off the main thread.
+- The **Crystal class name** becomes the JS namespace: `GreetModule` → `api.GreetModule.*`.
+- Crystal method names are camelcased: `slow_echo` → `SlowEcho`.
+
+Nested namespaces work via `::`: a class `Math::Trig` maps to `api.Math.Trig.*` in JS.
+
+#### `Lune::Installable` — manual (low-level)
+
+For full control, implement `install` yourself:
 
 ```crystal
-struct AddArgs
-  include JSON::Serializable
-  getter a : Int32
-  getter b : Int32
-end
+class GreetModule
+  include Lune::Installable
 
-app.bind_typed("add", AddArgs) { |args| args.a + args.b }
-```
-
-**`bind_async`** — same raw signature, runs the block off the main thread:
-
-```crystal
-app.bind_async("slow_echo") do |args|
-  sleep 1.second
-  JSON::Any.new("(delayed) #{args[0].as_s}")
-end
-```
-
-### Namespaces
-
-Group related bindings under a dot-separated prefix:
-
-```crystal
-app.namespace("counter") do |counter|
-  counter.bind_typed("inc", Int32) { |n| n + 1 }
-  counter.bind_typed("dec", Int32) { |n| n - 1 }
+  def install(app : Lune::App)
+    app.bind(
+      name: "greet",
+      namespace: "GreetModule",
+      args: ["String"],
+      return_type: "String",
+      async: false,
+    ) do |args|
+      JSON::Any.new("Hello, #{args[0].as_s}!")
+    end
+  end
 end
 ```
 
-Namespaces compose: `math.trig.sin` registers as `math.trig.sin` in JS.
+`Bindable` includes `Installable`, so both work anywhere an `Installable` is expected.
 
 ### Events (Crystal → JS)
 
@@ -195,15 +235,6 @@ Push events from Crystal to the frontend at any time — from a background fiber
 app.emit("status", "ready")
 app.emit("progress", {step: 3, total: 10})
 
-# namespaced — event name is prefixed automatically
-app.namespace("hash") do |h|
-  h.bind_async("compute") do |args|
-    result = compute(args[0].as_s)
-    h.emit("done", result)   # fires as "hash.done"
-    JSON::Any.new(result)
-  end
-end
-
 # fire from a background fiber
 spawn do
   loop do
@@ -211,49 +242,38 @@ spawn do
     app.emit("tick", Time.utc.to_s)
   end
 end
-```
 
-### Plugin modules
-
-Extract binding sets into reusable `Installable` modules:
-
-```crystal
-class GreetModule
-  include Lune::Installable
-
-  def install(app : Lune::App)
-    app.bind_typed("greet", String) { |msg| "Hello, #{msg}!" }
-  end
-end
-
-Lune.run(title: "My App", assets: "frontend/dist") do |app|
-  app.install(GreetModule.new)
+Lune.run(app, assets: "frontend/dist") do |opts|
+  opts.title = "My App"
 end
 ```
+
+`app.emit` can be called before or after `Lune.run` is entered; events fired before the bridge is ready are silently dropped (bridge is `nil` until the window opens).
 
 ## JavaScript API
 
-Lune generates `<frontend.dir>/lunejs/app/App.js` from your registered bindings (e.g. `ui/lunejs/` if `frontend.dir: ui`). Import `api` for a fully dynamic proxy, or import named stubs directly:
+Lune generates `<frontend.dir>/lunejs/app/App.js` from your registered bindings (e.g. `ui/lunejs/` if `frontend.dir: ui`). Import `api` for a fully dynamic proxy:
 
 ```js
 import api from "../lunejs/app/App.js";
 
-// dynamic proxy — works in both dev and production builds
-const msg = await api.greet("world");
-const next = await api.counter.inc(0);
+// namespace = class name, method name is camelcased
+const msg = await api.GreetModule.Greet("world");
+const echo = await api.GreetModule.SlowEcho("hi");
+```
 
-// named stub — same call, IDE-autocompletable
-import { greet } from "../lunejs/app/App.js";
-const msg = await greet("world");
+Named namespace objects are also exported directly:
+
+```js
+import { GreetModule } from "../lunejs/app/App.js";
+const msg = await GreetModule.Greet("world");
 ```
 
 All bindings return `Promise`. Exceptions thrown in Crystal reject the promise.
 
-> **Note:** Named stubs (`import { greet }`) are only generated at runtime during `lune dev`. In production builds (`lune build`), binding names are not known at bundle time, so named imports will be `undefined`. **Use the `api` proxy for any code that runs in a production build.** Named stubs are still useful for IDE autocomplete during development. A `lune generate` command that pre-declares bindings from Crystal annotations is planned — see the [roadmap](ROADMAP.md).
-
 ### Runtime functions
 
-`runtime.js` also exports built-in system functions:
+`runtime.js` exports built-in system functions:
 
 ```js
 import { quit, openURL, environment } from "../lunejs/runtime/runtime.js";
@@ -300,9 +320,7 @@ off("progress");
 Lune generates `.d.ts` files alongside every JS file it writes:
 
 - `runtime.d.ts` — fully typed declarations for all runtime functions and the `LuneEnvironment` interface
-- `App.d.ts` — name stubs (`Promise<unknown>`) for each registered binding; tells the IDE which calls exist
-
-Binding argument and return types require `lune generate` (see roadmap), which reads Crystal annotations to produce precise types.
+- `App.d.ts` — typed interface per namespace, with the correct Crystal-to-TypeScript type mapping for each binding
 
 ## lune.yml
 
@@ -320,7 +338,7 @@ frontend:
     url: http://localhost:5173
 ```
 
-All keys are optional — omitted values fall back to their defaults. `lune.yml` is the single source of truth for project paths and toolchain commands; there are no CLI flag equivalents.
+`lune.yml` is the single source of truth for project paths and toolchain commands; there are no CLI flag equivalents.
 
 ## CLI
 

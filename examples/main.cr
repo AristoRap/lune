@@ -1,26 +1,32 @@
-require "lune"
+require "../src/lune"
 
 class GreetModule
-  include Lune::Installable
+  include Lune::Bindable
 
-  def install(app : Lune::App)
-    app.bind_typed("greet", String) do |msg|
-      "Hello, #{msg}!"
-    end
+  @[Lune::Bind]
+  def greet(msg : String = "stranger") : String
+    "Hello, #{msg}!"
+  end
+
+  @[Lune::Bind(async: true)]
+  def hello : String
+    "Hello, world!"
   end
 end
 
-Lune.run(
-  title: "myApp",
-  assets: "frontend/dist",
-  width: 1200,
-  height: 800,
-  debug: true
-) do |app|
-  app.install(GreetModule.new)
+app = Lune::App.new
+app.install(
+  GreetModule.new
+)
 
-  app.namespace("counter") do |counter|
-    counter.bind_typed("inc", Int32) { |n| n + 1 }
-    counter.bind_typed("dec", Int32) { |n| n - 1 }
-  end
+# runner = Lune::Runner.new(app) do |opts|
+#   opts.width = 1400
+#   opts.height = 800
+# end
+
+# runner.start
+
+Lune.run(app) do |opts|
+  opts.width = 1400
+  opts.height = 800
 end

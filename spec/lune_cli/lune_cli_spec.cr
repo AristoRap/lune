@@ -1,12 +1,12 @@
 require "spec"
 require "file_utils"
-require "../src/lune_cli"
+require "../spec_helper"
 
-private class RecordingDoctorCommand < LuneCLI::DoctorCommand
+private class RecordingDoctorCommand < LuneCLI::Commands::Doctor
   getter captured_frontend_dir : String = ""
   getter captured_app_entry : String = ""
 
-  def run(frontend_dir : String, app_entry : String, install_hint : String = LuneCLI::DoctorCommand::DEFAULT_INSTALL_CMD, output : IO = STDOUT) : Bool
+  def run(frontend_dir : String, app_entry : String, install_hint : String = LuneCLI::DEFAULT_INSTALL_CMD, output : IO = STDOUT) : Bool
     @captured_frontend_dir = frontend_dir
     @captured_app_entry = app_entry
     true
@@ -68,37 +68,37 @@ describe LuneCLI do
 
   describe "dev command" do
     it "returns nil when both paths exist" do
-      cmd = LuneCLI::DevCommand.new
+      cmd = LuneCLI::Commands::Dev.new
       cmd.validate_paths(frontend_dir: "frontend", app_entry: "spec/fixtures/main.cr").should be_nil
     end
 
     it "rejects a missing app entry" do
-      cmd = LuneCLI::DevCommand.new
+      cmd = LuneCLI::Commands::Dev.new
       cmd.validate_paths(frontend_dir: "frontend", app_entry: "missing_main.cr")
         .should eq("App entry file not found: missing_main.cr")
     end
 
     it "rejects a missing frontend dir" do
-      cmd = LuneCLI::DevCommand.new
+      cmd = LuneCLI::Commands::Dev.new
       cmd.validate_paths(frontend_dir: "missing_frontend", app_entry: "spec/fixtures/main.cr")
         .should eq("Frontend directory not found: missing_frontend")
     end
 
     it "dev_lock_slug is prefixed with dev- and derived from the app entry path" do
-      cmd = LuneCLI::DevCommand.new
+      cmd = LuneCLI::Commands::Dev.new
       slug = cmd.dev_lock_slug("src/main.cr")
       slug.should start_with("dev-")
       slug.size.should be > "dev-".size
     end
 
     it "does not expose a --dev-cmd flag (belongs in lune.yml)" do
-      cmd = LuneCLI::DevCommand.new.to_command
+      cmd = LuneCLI::Commands::Dev.new.to_command
       cmd.flags.lookup("dev-cmd").should be_nil
     end
 
     it "returns false immediately when a dev lock is already held for the same entry" do
       with_tempdir do |lock_dir|
-        cmd = LuneCLI::DevCommand.new
+        cmd = LuneCLI::Commands::Dev.new
         slug = cmd.dev_lock_slug("spec/fixtures/main.cr")
         held = Lune::SingleInstance.acquire(slug, lock_dir)
         held.should_not be_nil
@@ -118,7 +118,7 @@ describe LuneCLI do
 
   describe "build command" do
     it "derives the default output path from the app entry" do
-      cmd = LuneCLI::BuildCommand.new
+      cmd = LuneCLI::Commands::Build.new
 
       expected_output = {% if flag?(:darwin) %}
                           "build/bin/main.app"
@@ -130,24 +130,24 @@ describe LuneCLI do
     end
 
     it "rejects a missing frontend dir" do
-      cmd = LuneCLI::BuildCommand.new
+      cmd = LuneCLI::Commands::Build.new
       cmd.validate_paths(frontend_dir: "missing_frontend", app_entry: "spec/fixtures/main.cr")
         .should eq("Frontend directory not found: missing_frontend")
     end
 
     it "rejects a missing app entry" do
-      cmd = LuneCLI::BuildCommand.new
+      cmd = LuneCLI::Commands::Build.new
       cmd.validate_paths(frontend_dir: "frontend", app_entry: "missing_main.cr")
         .should eq("App entry file not found: missing_main.cr")
     end
 
     it "registers a --release flag" do
-      cmd = LuneCLI::BuildCommand.new.to_command
+      cmd = LuneCLI::Commands::Build.new.to_command
       cmd.flags.lookup("release").should_not be_nil
     end
 
     it "does not expose a --build-cmd flag (belongs in lune.yml)" do
-      cmd = LuneCLI::BuildCommand.new.to_command
+      cmd = LuneCLI::Commands::Build.new.to_command
       cmd.flags.lookup("build-cmd").should be_nil
     end
   end
@@ -159,7 +159,7 @@ describe LuneCLI do
     end
 
     it "version string includes the lune version constant" do
-      LuneCLI::VersionCommand.new.version_string.should eq("lune v#{Lune::VERSION}")
+      LuneCLI::Commands::Version.new.version_string.should eq("lune v#{Lune::VERSION}")
     end
   end
 
@@ -234,11 +234,11 @@ describe LuneCLI do
 
   describe "init command" do
     it "always includes install in shards_install_args" do
-      LuneCLI::InitCommand.new.shards_install_args.should contain("install")
+      LuneCLI::Commands::Init.new.shards_install_args.should contain("install")
     end
 
     it "adds --skip-postinstall only on Windows" do
-      cmd = LuneCLI::InitCommand.new
+      cmd = LuneCLI::Commands::Init.new
       {% if flag?(:win32) %}
         cmd.shards_install_args.should contain("--skip-postinstall")
       {% else %}
@@ -251,7 +251,7 @@ describe LuneCLI do
         shard_yml = File.join(dir, "shard.yml")
         File.write(shard_yml, "name: testapp\nversion: 0.1.0\n")
 
-        LuneCLI::InitCommand.new.inject_dependency(shard_yml)
+        LuneCLI::Commands::Init.new.inject_dependency(shard_yml)
 
         content = File.read(shard_yml)
         expected = "~> #{Lune::VERSION.split(".").first(2).join(".")}"
@@ -262,7 +262,7 @@ describe LuneCLI do
 
   describe "run command" do
     it "derives the built artifact path from the app entry" do
-      cmd = LuneCLI::RunCommand.new
+      cmd = LuneCLI::Commands::Run.new
 
       expected_output = {% if flag?(:darwin) %}
                           "build/bin/main.app"
@@ -275,7 +275,7 @@ describe LuneCLI do
 
     it "returns false immediately when a run lock is already held for the same entry" do
       with_tempdir do |lock_dir|
-        cmd = LuneCLI::RunCommand.new
+        cmd = LuneCLI::Commands::Run.new
         slug = cmd.run_lock_slug("src/main.cr")
         held = Lune::SingleInstance.acquire(slug, lock_dir)
         held.should_not be_nil
@@ -288,8 +288,8 @@ describe LuneCLI do
     end
 
     it "run_lock_slug differs from dev_lock_slug for the same entry" do
-      run_cmd = LuneCLI::RunCommand.new
-      dev_cmd = LuneCLI::DevCommand.new
+      run_cmd = LuneCLI::Commands::Run.new
+      dev_cmd = LuneCLI::Commands::Dev.new
       run_cmd.run_lock_slug("src/main.cr").should_not eq(dev_cmd.dev_lock_slug("src/main.cr"))
     end
   end
@@ -297,7 +297,7 @@ describe LuneCLI do
   describe "doctor command" do
     it "reports frontend deps as failing when node_modules is absent" do
       with_tempdir do |dir|
-        cmd = LuneCLI::DoctorCommand.new
+        cmd = LuneCLI::Commands::Doctor.new
         result = cmd.run(frontend_dir: dir, app_entry: "spec/fixtures/main.cr", output: IO::Memory.new)
         result.should be_false
       end
@@ -306,7 +306,7 @@ describe LuneCLI do
     it "reports app entry as failing when the file does not exist" do
       with_tempdir do |dir|
         Dir.mkdir_p(File.join(dir, "node_modules"))
-        cmd = LuneCLI::DoctorCommand.new
+        cmd = LuneCLI::Commands::Doctor.new
         result = cmd.run(frontend_dir: dir, app_entry: File.join(dir, "nonexistent.cr"), output: IO::Memory.new)
         result.should be_false
       end
@@ -323,24 +323,6 @@ describe LuneCLI do
 
         cmd.captured_frontend_dir.should eq("custom_fe")
         cmd.captured_app_entry.should eq("custom/main.cr")
-      end
-    end
-  end
-
-  describe ".pregen_runtime_js" do
-    it "writes app and runtime JS into frontend_dir/lunejs/" do
-      with_tempdir do |tmpdir|
-        LuneCLI.pregen_runtime_js(tmpdir)
-        File.exists?(File.join(tmpdir, "lunejs", "app", "App.js")).should be_true
-        File.exists?(File.join(tmpdir, "lunejs", "runtime", "runtime.js")).should be_true
-      end
-    end
-
-    it "creates the lunejs dir if it does not exist yet" do
-      with_tempdir do |tmpdir|
-        new_dir = File.join(tmpdir, "brand_new_frontend")
-        LuneCLI.pregen_runtime_js(new_dir)
-        File.exists?(File.join(new_dir, "lunejs", "app", "App.js")).should be_true
       end
     end
   end
