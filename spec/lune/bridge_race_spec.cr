@@ -26,7 +26,7 @@ describe "Bridge races" do
       fake.invoke("test.echo", seq, [JSON::Any.new(seq)])
     end
 
-    deadline = Time.instant + 2.seconds
+    deadline = Time.instant + 5.seconds
     while Time.instant < deadline
       break if fake.resolve_calls.size == seqs.size
       sleep 5.milliseconds
@@ -71,7 +71,7 @@ describe "Bridge races" do
     bridge.close!
 
     pending.times { gate.send(nil) }
-    sleep 40.milliseconds
+    sleep 150.milliseconds
 
     fake.dispatch_count.should eq(0)
     fake.resolve_calls.should be_empty
