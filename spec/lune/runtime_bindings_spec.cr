@@ -61,6 +61,7 @@ describe Lune::RuntimeBindings do
       fake.invoke(Lune.binding_id("runtime", "__lune.openURL"), "seq-2", [
         JSON::Any.new("https://example.com"),
       ])
+      Fiber.yield
 
       _seq, status, _result = fake.resolve_calls[0]
       status.should eq(0)

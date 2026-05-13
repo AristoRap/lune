@@ -191,22 +191,26 @@ describe Lune::Runtime do
       ),
     ]
 
-    Lune::Runtime.write_js(bindings)
+    with_tempdir do |tmpdir|
+      Dir.cd(tmpdir) do
+        Lune::Runtime.write_js(bindings)
 
-    app_path = File.join("frontend", "lunejs", "app", "App.js")
-    runtime_path = File.join("frontend", "lunejs", "runtime", "runtime.js")
+        app_path = File.join("frontend", "lunejs", "app", "App.js")
+        runtime_path = File.join("frontend", "lunejs", "runtime", "runtime.js")
 
-    File.exists?(app_path).should be_true
-    File.exists?(runtime_path).should be_true
+        File.exists?(app_path).should be_true
+        File.exists?(runtime_path).should be_true
 
-    app_js = File.read(app_path)
-    runtime_js = File.read(runtime_path)
+        app_js = File.read(app_path)
+        runtime_js = File.read(runtime_path)
 
-    app_js.includes?("export const alpha = {").should be_true
-    app_js.includes?("export const counter = {").should be_true
-    app_js.includes?("return __lune.call(").should be_true
+        app_js.includes?("export const alpha = {").should be_true
+        app_js.includes?("export const counter = {").should be_true
+        app_js.includes?("return __lune.call(").should be_true
 
-    runtime_js.includes?("export const __lune").should be_true
+        runtime_js.includes?("export const __lune").should be_true
+      end
+    end
   end
 
   it "writes to a custom lunejs_dir" do

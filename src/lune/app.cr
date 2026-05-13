@@ -39,8 +39,9 @@ module Lune
     # ----------------------------
 
     def emit(event : String, data = nil)
+      return unless (b = @bridge)
       json = data.nil? ? "null" : data.to_json
-      with_bridge.dispatch_eval("window.__lune_emit(#{event.inspect}, #{json})")
+      b.dispatch_eval("window.__lune_emit(#{event.inspect}, #{json})")
     end
 
     # ----------------------------

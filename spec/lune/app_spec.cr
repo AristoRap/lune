@@ -163,12 +163,9 @@ describe Lune::App do
       end
     end
 
-    it "raises when emitting without a bridge" do
+    it "silently drops emit when bridge is not yet set" do
       app = Lune::App.new
-
-      expect_raises(NilAssertionError) do
-        app.emit("ready")
-      end
+      app.emit("ready") # must not raise
     end
 
     it "raises when closing without a bridge" do
