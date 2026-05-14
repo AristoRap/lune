@@ -246,6 +246,12 @@ describe LuneCLI do
       {% end %}
     end
 
+    it "registers --force and --skip-existing flags" do
+      cmd = LuneCLI::Commands::Init.new.to_command
+      cmd.flags.lookup("force").should_not be_nil
+      cmd.flags.lookup("skip-existing").should_not be_nil
+    end
+
     it "injects the current major.minor lune version into shard.yml" do
       with_tempdir do |dir|
         shard_yml = File.join(dir, "shard.yml")

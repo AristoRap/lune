@@ -15,6 +15,8 @@ module LuneCLI
         )
         command.flags.bool("skip-install", 's', false, "Skip running shards install and npm install")
         command.flags.string("template", 't', "vanilla", "Template to use [vanilla|vue]")
+        command.flags.bool("force", 'f', false, "Delete the app directory and reinitialize from scratch")
+        command.flags.bool("skip-existing", 'k', false, "Skip existing files instead of failing")
 
         command.on_pre_run do |cmd, args|
           unless args.first?
@@ -26,11 +28,13 @@ module LuneCLI
           app_name = sanitize_app_name(args.first)
           skip_install = cmd.bool_flag("skip-install")
           template = cmd.string_flag("template")
+          force = cmd.bool_flag("force")
+          skip_existing = cmd.bool_flag("skip-existing")
           ctx = Context.new(app_name, skip_install: skip_install, template: template)
 
           Lune.logger.info { "Initializing new Lune app '#{app_name}'..." }
 
-          if run(ctx)
+          if run(ctx, force: force, skip_existing: skip_existing)
             Lune.logger.info { "Done! To get started:" }
             Lune.logger.info { "  cd #{app_name}" }
             Lune.logger.info { "  lune dev" }
@@ -42,11 +46,13 @@ module LuneCLI
         command
       end
 
-      def run(ctx : Context) : Bool
+      def run(ctx : Context, force : Bool = false, skip_existing : Bool = false) : Bool
+        FileUtils.rm_rf(ctx.app_name) if force && Dir.exists?(ctx.app_name)
+
         check_crystal!
         check_node!
 
-        scaffold_crystal(ctx.app_name)
+        scaffold_crystal(ctx.app_name, skip_existing: skip_existing)
         inject_dependency(File.join(ctx.app_name, "shard.yml"))
         scaffold_shared(ctx)
         scaffold_frontend(ctx)
@@ -85,10 +91,12 @@ module LuneCLI
         raise Argy::Error.new("node not found — install it from https://nodejs.org") unless status.success?
       end
 
-      private def scaffold_crystal(app_name : String)
+      private def scaffold_crystal(app_name : String, skip_existing : Bool = false)
         Lune.logger.debug { "Running crystal init app #{app_name}" }
+        crystal_args = ["init", "app", app_name]
+        crystal_args << "--skip-existing" if skip_existing
         status = Process.run(
-          "crystal", ["init", "app", app_name],
+          "crystal", crystal_args,
           input: Process::Redirect::Inherit,
           output: Process::Redirect::Inherit,
           error: Process::Redirect::Inherit
