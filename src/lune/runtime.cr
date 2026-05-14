@@ -249,7 +249,7 @@ module Lune
       when "Hash"
         "Record<string, any>"
       else
-        "unknown"
+        "Record<string, any>"
       end
     end
   end
