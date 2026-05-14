@@ -83,7 +83,8 @@ module Lune
       Lune.logger.error { "Binding execution failed: #{ex.message}" }
       Lune.logger.debug(exception: ex) { "Binding execution failed (stacktrace)" }
       return if closed.try(&.call)
-      wv.dispatch { wv.resolve(seq, 1, {error: ex.message}.to_json) }
+      code = ex.is_a?(Lune::Error) ? ex.code : "error"
+      wv.dispatch { wv.resolve(seq, 1, {code: code, error: ex.message}.to_json) }
     end
   end
 end

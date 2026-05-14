@@ -37,6 +37,11 @@ module Lune
         debug: boolean;
       }
 
+      export interface LuneError {
+        code: string;
+        error: string;
+      }
+
       export declare function on(name: string, cb: (data: unknown) => void): void;
       export declare function once(name: string, cb: (data: unknown) => void): void;
       export declare function off(name: string, cb?: (data: unknown) => void): void;

@@ -14,7 +14,7 @@
 
 - [x] codegen binding registration boilerplate and `.d.ts` from Crystal annotations
 - [ ] Dev error overlay — pipe Crystal compile errors into the webview as an HTML overlay when `lune dev` compilation fails
-- [ ] Structured binding errors — define an error envelope with a `code` field so JS can branch on `e.code` instead of parsing the message string
+- [x] Structured binding errors — define an error envelope with a `code` field so JS can branch on `e.code` instead of parsing the message string
 
 ## Needs C bindings — post-v0.3
 

@@ -232,6 +232,51 @@ end
 
 `Bindable` includes `Installable`, so both work anywhere an `Installable` is expected.
 
+### Raising errors from bindings
+
+When a binding raises an unhandled exception, the JS Promise rejects with an object containing `code` and `error` fields:
+
+```js
+try {
+  await api.MyModule.DoSomething()
+} catch (e) {
+  console.log(e.code)  // "error" for generic exceptions
+  console.log(e.error) // the exception message
+}
+```
+
+To give the JS side a machine-readable code to branch on, raise `Lune::Error` with an explicit code:
+
+```crystal
+class NotFoundError < Lune::Error
+  def initialize(msg : String)
+    super("not_found", msg)
+  end
+end
+
+@[Lune::Bind]
+def find_user(id : Int32) : String
+  raise NotFoundError.new("user #{id} not found") unless id > 0
+  "Alice"
+end
+```
+
+```js
+try {
+  await api.MyModule.FindUser(-1)
+} catch (e) {
+  if (e.code === "not_found") {
+    showNotFoundUI()
+  }
+}
+```
+
+The `LuneError` TypeScript interface is exported from `runtime.d.ts`:
+
+```ts
+import type { LuneError } from "../lunejs/runtime/runtime.js"
+```
+
 ### Events (Crystal → JS)
 
 Push events from Crystal to the frontend at any time — from a background fiber, a timer, or after a binding returns:
