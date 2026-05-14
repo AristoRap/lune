@@ -38,6 +38,8 @@ module Lune
         bridge.register_bindings(runtime_bindings)
         @app.bridge = bridge
 
+        wv.on_load = @options.on_load if @options.on_load
+
         if nav_cb = @options.on_navigate
           wv.bind("__lune_navigate", Webview::JSProc.new { |args|
             nav_cb.call(args[0]?.try(&.as_s) || "")

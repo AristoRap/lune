@@ -4,6 +4,7 @@ require "./generator"
 require "./commands/build"
 require "./commands/check"
 require "./commands/dev"
+require "./commands/dev_error"
 require "./commands/doctor"
 require "./commands/run"
 require "./commands/init"
@@ -32,6 +33,7 @@ module LuneCLI
         Commands::Build.new.to_command,
         Commands::Check.new.to_command,
         Commands::Dev.new.to_command,
+        Commands::DevError.new.to_command,
         Commands::Doctor.new.to_command,
         Commands::Run.new.to_command,
         Commands::Init.new.to_command,

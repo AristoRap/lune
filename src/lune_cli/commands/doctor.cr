@@ -45,7 +45,7 @@ module LuneCLI
         status = Process.run(cmd, args, output: output, error: Process::Redirect::Close)
         version = output.to_s.lines.first?.try(&.strip) || "unknown"
         Check.new(label: label, ok: status.success?, detail: version)
-      rescue
+      rescue File::NotFoundError
         Check.new(label: label, ok: false, detail: "not found")
       end
 
@@ -57,7 +57,7 @@ module LuneCLI
           error: Process::Redirect::Close
         )
         Check.new(label: "shards", ok: status.success?, detail: status.success? ? "ok" : "run `shards install`")
-      rescue
+      rescue File::NotFoundError
         Check.new(label: "shards", ok: false, detail: "shards not found")
       end
 

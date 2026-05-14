@@ -93,4 +93,56 @@ describe "Bridge typed bindings" do
     status.should eq(1)
     JSON.parse(result)["error"].as_s.should contain("Expected 1 argument")
   end
+
+  it "generic exception produces code: \"error\" in the error envelope" do
+    fake = TypedFakeWebview.new
+    bridge = Lune::Bridge.new(fake)
+
+    binding = Lune::BindingDef.new(
+      name: "boom",
+      namespace: "test",
+      args: [] of String,
+      return_type: "Nil",
+      callback: ->(_args : Array(JSON::Any)) : JSON::Any {
+        raise "something went wrong"
+      },
+      internal: false,
+      async: false
+    )
+
+    bridge.register_bindings([binding])
+    fake.invoke("test.boom", "seq-3", [] of JSON::Any)
+
+    _seq, status, result = fake.resolve_calls[0]
+    status.should eq(1)
+    body = JSON.parse(result)
+    body["code"].as_s.should eq("error")
+    body["error"].as_s.should contain("something went wrong")
+  end
+
+  it "Lune::Error subclass uses its code in the error envelope" do
+    fake = TypedFakeWebview.new
+    bridge = Lune::Bridge.new(fake)
+
+    binding = Lune::BindingDef.new(
+      name: "notfound",
+      namespace: "test",
+      args: [] of String,
+      return_type: "Nil",
+      callback: ->(_args : Array(JSON::Any)) : JSON::Any {
+        raise Lune::Error.new("not_found", "record 42 not found")
+      },
+      internal: false,
+      async: false
+    )
+
+    bridge.register_bindings([binding])
+    fake.invoke("test.notfound", "seq-4", [] of JSON::Any)
+
+    _seq, status, result = fake.resolve_calls[0]
+    status.should eq(1)
+    body = JSON.parse(result)
+    body["code"].as_s.should eq("not_found")
+    body["error"].as_s.should eq("record 42 not found")
+  end
 end

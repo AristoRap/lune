@@ -246,6 +246,12 @@ describe LuneCLI do
       {% end %}
     end
 
+    it "registers --force and --skip-existing flags" do
+      cmd = LuneCLI::Commands::Init.new.to_command
+      cmd.flags.lookup("force").should_not be_nil
+      cmd.flags.lookup("skip-existing").should_not be_nil
+    end
+
     it "injects the current major.minor lune version into shard.yml" do
       with_tempdir do |dir|
         shard_yml = File.join(dir, "shard.yml")
@@ -257,6 +263,36 @@ describe LuneCLI do
         expected = "~> #{Lune::VERSION.split(".").first(2).join(".")}"
         content.should contain(expected)
       end
+    end
+  end
+
+  describe "_dev-error command" do
+    it "is registered on the root command" do
+      cmd = LuneCLI.root_command
+      cmd.subcommands.has_key?("_dev-error").should be_true
+    end
+
+    it "is hidden from help output" do
+      cmd = LuneCLI.root_command
+      cmd.subcommands["_dev-error"].hidden.should be_true
+    end
+
+    it "escapes HTML entities in error text" do
+      html = LuneCLI::Commands::DevError.new.build_html("a < b & c > d")
+      html.includes?("&lt;").should be_true
+      html.includes?("&amp;").should be_true
+      html.includes?("&gt;").should be_true
+    end
+
+    it "does not leave raw angle brackets or ampersands in the output" do
+      html = LuneCLI::Commands::DevError.new.build_html("<script>alert('xss')</script>")
+      html.includes?("<script>").should be_false
+      html.includes?("&lt;script&gt;").should be_true
+    end
+
+    it "includes the error message verbatim (after escaping)" do
+      html = LuneCLI::Commands::DevError.new.build_html("syntax error on line 42")
+      html.includes?("syntax error on line 42").should be_true
     end
   end
 

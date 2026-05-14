@@ -37,6 +37,11 @@ module Lune
         debug: boolean;
       }
 
+      export interface LuneError {
+        code: string;
+        error: string;
+      }
+
       export declare function on(name: string, cb: (data: unknown) => void): void;
       export declare function once(name: string, cb: (data: unknown) => void): void;
       export declare function off(name: string, cb?: (data: unknown) => void): void;
@@ -96,15 +101,7 @@ module Lune
       if parts.size == 1
         return String.build do |s|
           s << "{\n"
-
-          bindings.each do |b|
-            fn = b.name.camelcase
-
-            s << "  #{fn}(...args) {\n"
-            s << "    return __lune.call(#{Lune.binding_id(b.namespace, b.name).inspect}, ...args);\n"
-            s << "  },\n"
-          end
-
+          bindings.each { |b| s << b.to_js_stub << "\n" }
           s << "}"
         end
       end
@@ -174,18 +171,7 @@ module Lune
       if parts.size == 1
         return String.build do |s|
           s << "export interface #{head} {\n"
-
-          bindings.each do |b|
-            fn = b.name.camelcase
-            ret = crystal_to_ts(b.return_type)
-
-            params = b.args.each_with_index.map do |t, i|
-              "arg#{i}: #{crystal_to_ts(t)}"
-            end.join(", ")
-
-            s << "  #{fn}(#{params}): Promise<#{ret}>;\n"
-          end
-
+          bindings.each { |b| s << b.to_dts_sig << "\n" }
           s << "}\n"
         end
       end
@@ -234,23 +220,5 @@ module Lune
       end
     end
 
-    # ----------------------------
-    # Helpers
-    # ----------------------------
-    def self.crystal_to_ts(type : String) : String
-      case type
-      when "String" then "string"
-      when "Bool"   then "boolean"
-      when "Nil"    then "void"
-      when "Int32", "Int64", "Float32", "Float64"
-        "number"
-      when "Array"
-        "any[]"
-      when "Hash"
-        "Record<string, any>"
-      else
-        "unknown"
-      end
-    end
   end
 end

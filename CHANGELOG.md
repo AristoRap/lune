@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.3] - 2026-05-14
+
+### Added
+
+- Dev error overlay — when `lune dev` compilation fails, a dedicated error window opens showing the Crystal compiler output. The window is owned by the CLI, stays open while you edit, and closes automatically when the next build succeeds.
+- `lune init --force` (`-f`) — deletes the target directory and reinitializes from scratch.
+- `lune init --skip-existing` (`-k`) — forwards `--skip-existing` to `crystal init` so the command succeeds when run inside an existing Crystal project, skipping any files that are already present.
+
 ## [0.3.0] - 2026-05-13
 
 ### Breaking changes

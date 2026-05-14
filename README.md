@@ -91,7 +91,7 @@ cd my_app
 lune dev
 ```
 
-`lune init` scaffolds a Crystal entry point, a Vite frontend, and a `lune.yml` project config. `lune dev` compiles your Crystal app and starts the frontend dev server together, with hot-reload on source changes. See [examples/main.cr](examples/main.cr) for what the generated entry point looks like.
+`lune init` scaffolds a Crystal entry point, a Vite frontend, and a `lune.yml` project config. `lune dev` compiles your Crystal app and starts the frontend dev server together, with hot-reload on source changes. If compilation fails, a dedicated error window opens showing the Crystal compiler output and closes automatically on the next successful build. See [examples/main.cr](examples/main.cr) for what the generated entry point looks like.
 
 ## Adding Lune to an existing project
 
@@ -129,6 +129,7 @@ Lune.run(app, assets: "frontend/dist") do |opts|
   opts.min_width  = 800
   opts.min_height = 600
   opts.debug      = false
+  opts.on_load     = -> { puts "page loaded" }
   opts.on_navigate = ->(url : String) { puts "navigated to #{url}" }
   opts.on_close    = -> { puts "window closed" }
 end
@@ -155,6 +156,7 @@ end
 | `max_height`  | `Int32?`           | `nil`    | Maximum height                          |
 | `resizable`   | `Bool`             | `true`   | Allow resizing; `false` fixes the size  |
 | `debug`       | `Bool`             | `false`  | Enable WebView devtools                 |
+| `on_load`     | `(-> Nil)?`        | `nil`    | Called once when the page `load` event fires (DOM ready) |
 | `on_navigate` | `(String -> Nil)?` | `nil`    | Called on every navigation (URL as arg) |
 | `on_close`    | `(-> Nil)?`        | `nil`    | Called after the window closes          |
 
@@ -231,6 +233,51 @@ end
 ```
 
 `Bindable` includes `Installable`, so both work anywhere an `Installable` is expected.
+
+### Raising errors from bindings
+
+When a binding raises an unhandled exception, the JS Promise rejects with an object containing `code` and `error` fields:
+
+```js
+try {
+  await api.MyModule.DoSomething()
+} catch (e) {
+  console.log(e.code)  // "error" for generic exceptions
+  console.log(e.error) // the exception message
+}
+```
+
+To give the JS side a machine-readable code to branch on, raise `Lune::Error` with an explicit code:
+
+```crystal
+class NotFoundError < Lune::Error
+  def initialize(msg : String)
+    super("not_found", msg)
+  end
+end
+
+@[Lune::Bind]
+def find_user(id : Int32) : String
+  raise NotFoundError.new("user #{id} not found") unless id > 0
+  "Alice"
+end
+```
+
+```js
+try {
+  await api.MyModule.FindUser(-1)
+} catch (e) {
+  if (e.code === "not_found") {
+    showNotFoundUI()
+  }
+}
+```
+
+The `LuneError` TypeScript interface is exported from `runtime.d.ts`:
+
+```ts
+import type { LuneError } from "../lunejs/runtime/runtime.js"
+```
 
 ### Events (Crystal → JS)
 

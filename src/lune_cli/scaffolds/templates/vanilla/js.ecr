@@ -33,7 +33,6 @@ nameEl?.focus();
 
 document.getElementById("greet-btn")?.addEventListener("click", async () => {
   const name = nameEl?.value?.trim();
-  if (!name) return;
 
   try {
     const msg = await api.Welcome.Greet(name);

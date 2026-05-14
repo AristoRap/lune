@@ -79,25 +79,42 @@ module LuneCLI
         # HOME, CRYSTAL_PATH, and everything else the child process needs.
         env = ENV.to_h.merge({Lune::ENV_DEV_URL => dev_url, Lune::ENV_FRONTEND_DIR => frontend_dir})
         src_dir = File.dirname(app_entry)
+        lune_bin = Process.executable_path || "lune"
+        error_display : Process? = nil
 
         begin
           loop do
             Lune.logger.info { "Compiling #{app_entry}..." }
+            stderr_buf = IO::Memory.new
             compiled = Process.run(
               "crystal",
               ["build", app_entry, "-o", DEV_BINARY, "-Dpreview_mt"],
               env: env,
               input: Process::Redirect::Close,
               output: Process::Redirect::Inherit,
-              error: Process::Redirect::Inherit
+              error: stderr_buf
             )
 
             unless compiled.success?
+              error_text = stderr_buf.to_s
+              STDERR.print(error_text)
+              error_display.try { |p| p.terminate(graceful: false) rescue nil }
+              ed = Process.new(
+                lune_bin, ["_dev-error"],
+                input: Process::Redirect::Pipe,
+                output: Process::Redirect::Inherit,
+                error: Process::Redirect::Inherit
+              )
+              ed.input.print(error_text)
+              ed.input.close
+              error_display = ed
               Lune.logger.error { "Compilation failed, waiting for changes..." }
               watcher.wait_for_change(src_dir)
               next
             end
 
+            error_display.try { |p| p.terminate(graceful: false) rescue nil }
+            error_display = nil
             Lune.logger.info { "Starting app..." }
             app = Process.new(
               "./#{DEV_BINARY}",
@@ -114,8 +131,9 @@ module LuneCLI
             end
           end
         ensure
-          File.delete(DEV_BINARY) rescue nil
-          File.delete("#{DEV_BINARY}.dwarf") rescue nil
+          error_display.try { |p| p.terminate(graceful: false) rescue nil }
+          File.delete?(DEV_BINARY)
+          File.delete?("#{DEV_BINARY}.dwarf")
         end
 
         Lune.logger.info { "App exited. Stopping dev server..." }

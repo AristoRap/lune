@@ -76,6 +76,24 @@ describe Lune::Runtime do
     dts.includes?("export declare const api: Api;").should be_true
   end
 
+  it "maps JSON::Serializable struct args to Record<string, any> in App.d.ts" do
+    bindings = [
+      Lune::BindingDef.new(
+        name: "add",
+        namespace: "math",
+        args: ["AddArgs"],
+        return_type: "Int32",
+        callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(0_i64) },
+        internal: false,
+        async: false
+      ),
+    ]
+
+    dts = Lune::Runtime.generate_app_dts(bindings)
+
+    dts.includes?("arg0: Record<string, any>").should be_true
+  end
+
   it "writes .d.ts files alongside the JS files" do
     with_tempdir do |tmpdir|
       lunejs_dir = File.join(tmpdir, "lunejs")

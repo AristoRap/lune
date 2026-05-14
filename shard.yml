@@ -1,5 +1,5 @@
 name: lune
-version: 0.3.2
+version: 0.3.3
 description: Build native desktop apps with Crystal and a web frontend.
 
 authors:
@@ -14,7 +14,7 @@ dependencies:
     github: naqvis/webview
   argy:
     github: AristoRap/argy
-    version: ~> 0.2
+    version: ~> 0.3
 
 targets:
   lune:

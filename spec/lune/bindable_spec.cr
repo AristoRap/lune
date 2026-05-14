@@ -25,6 +25,38 @@ private class MathModule
 end
 
 describe "Lune::Bindable + App bindings" do
+  it "deserializes a JSON::Serializable struct arg and returns the correct result" do
+    fake = FakeWebview.new
+    bridge = Lune::Bridge.new(fake)
+
+    app = Lune::App.new
+    app.install(MathModule.new)
+    bridge.register_bindings(app.bindings)
+
+    fake.invoke("MathModule.add", "seq-1", [JSON.parse(%q({"a": 3, "b": 4}))])
+
+    fake.resolve_calls.size.should eq(1)
+    _seq, status, result = fake.resolve_calls[0]
+    status.should eq(0)
+    JSON.parse(result).as_i.should eq(7)
+  end
+
+  it "returns an error when a struct arg has the wrong shape" do
+    fake = FakeWebview.new
+    bridge = Lune::Bridge.new(fake)
+
+    app = Lune::App.new
+    app.install(MathModule.new)
+    bridge.register_bindings(app.bindings)
+
+    fake.invoke("MathModule.add", "seq-2", [JSON.parse(%q({"x": 1}))])
+
+    fake.resolve_calls.size.should eq(1)
+    _seq, status, _result = fake.resolve_calls[0]
+    status.should eq(1)
+  end
+
+
   it "registers bindings into App via install" do
     app = Lune::App.new
 
