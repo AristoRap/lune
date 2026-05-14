@@ -24,7 +24,6 @@
 - [x] codegen binding registration boilerplate and `.d.ts` from Crystal annotations
 - [x] Dev error overlay — when `lune dev` compilation fails, the CLI spawns a dedicated error window showing the Crystal compiler output; closes on next successful build
 - [x] Structured binding errors — define an error envelope with a `code` field so JS can branch on `e.code` instead of parsing the message string
-- [ ] Additional templates: Svelte, React+TS
 
 ## Needs C bindings — post-v0.3
 
@@ -40,3 +39,4 @@ These require native platform APIs beyond what `webview.h` exposes.
 ## Random — no timeline
 
 - [ ] Window state persistence — save/restore position+size to `~/.config/<app>/window.json`
+- [ ] Additional templates: Svelte, React+TS
