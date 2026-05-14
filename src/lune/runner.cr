@@ -6,7 +6,7 @@ module Lune
       @app = app
       @lunejs_dir = File.join(ENV.fetch(Lune::ENV_FRONTEND_DIR, Lune::DEFAULT_FRONTEND_DIR), Lune::LUNEJS_SUBDIR)
       @options = Options.new
-      @options.apply(ProjectConfig.load.window)
+      @options.apply(Config.load.window)
       block.call(@options)
     end
 
@@ -35,9 +35,8 @@ module Lune
         bridge = Bridge.new(wv)
         bridge.register_bindings(@app.bindings)
 
-        runtime_bindings = RuntimeBindings.build(on_quit: -> { wv.dispatch { wv.terminate } }, debug: @options.debug)
+        runtime_bindings = Bindings::Runtime.build(on_quit: -> { wv.dispatch { wv.terminate } }, debug: @options.debug)
         bridge.register_bindings(runtime_bindings)
-        bridge.register_bindings(PathBindings.build)
         @app.bridge = bridge
 
         wv.on_load = @options.on_load if @options.on_load
@@ -105,7 +104,7 @@ module Lune
         elsif u = url
           wv.navigate(u)
         elsif dev_url = ENV[Lune::ENV_DEV_URL]?
-          Runtime.write_js(@app.bindings, @lunejs_dir)
+          Lune::Runtime.write_js(@app.bindings, @lunejs_dir)
           wv.navigate(dev_url)
         elsif !Assets.empty?
           s = AssetServer.new

@@ -1,14 +1,14 @@
 require "yaml"
 
 module Lune
-  struct ProjectConfig
+  struct Config
     include YAML::Serializable
 
     getter window : Window = Window.new
 
     def initialize; end
 
-    def self.load(path : String = "lune.yml") : ProjectConfig
+    def self.load(path : String = "lune.yml") : Config
       return new unless File.exists?(path)
       from_yaml(File.read(path))
     rescue YAML::ParseException

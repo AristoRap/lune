@@ -6,14 +6,14 @@ private def make_bridge
   {fake, bridge}
 end
 
-describe Lune::RuntimeBindings do
+describe Lune::Bindings::Runtime do
   describe ".build" do
     it "does not pollute user binding_names" do
       fake, bridge = make_bridge
 
       quit_called = false
 
-      bindings = Lune::RuntimeBindings.build(
+      bindings = Lune::Bindings::Runtime.build(
         on_quit: -> : Nil {
           quit_called = true
           nil
@@ -30,7 +30,7 @@ describe Lune::RuntimeBindings do
 
       quit_called = false
 
-      bindings = Lune::RuntimeBindings.build(
+      bindings = Lune::Bindings::Runtime.build(
         on_quit: -> : Nil {
           quit_called = true
           nil
@@ -48,7 +48,7 @@ describe Lune::RuntimeBindings do
 
       opened_url = ""
 
-      bindings = Lune::RuntimeBindings.build(
+      bindings = Lune::Bindings::Runtime.build(
         on_quit: -> : Nil { },
         on_open_url: ->(url : String) : Nil {
           opened_url = url
@@ -76,7 +76,7 @@ describe Lune::RuntimeBindings do
     it "returns environment with os, arch, and debug fields" do
       fake, bridge = make_bridge
 
-      bindings = Lune::RuntimeBindings.build(
+      bindings = Lune::Bindings::Runtime.build(
         on_quit: -> : Nil { },
         debug: true
       )
@@ -96,7 +96,7 @@ describe Lune::RuntimeBindings do
     it "reflects the debug flag in environment" do
       fake, bridge = make_bridge
 
-      bindings = Lune::RuntimeBindings.build(
+      bindings = Lune::Bindings::Runtime.build(
         on_quit: -> : Nil { },
         debug: false
       )
@@ -111,7 +111,7 @@ describe Lune::RuntimeBindings do
     it "returns a known os value" do
       fake, bridge = make_bridge
 
-      bindings = Lune::RuntimeBindings.build(
+      bindings = Lune::Bindings::Runtime.build(
         on_quit: -> : Nil { }
       )
 
@@ -120,6 +120,46 @@ describe Lune::RuntimeBindings do
 
       env = JSON.parse(fake.resolve_calls[0][2])
       ["darwin", "linux", "windows"].should contain(env["os"].as_s)
+    end
+
+    describe "__lune.homeDir" do
+      it "resolves and matches Path.home" do
+        fake, bridge = make_bridge
+        bridge.register_bindings(Lune::Bindings::Runtime.build(on_quit: -> : Nil { }))
+        fake.invoke("runtime.__lune.homeDir", "seq-6", [] of JSON::Any)
+        _, _, result = fake.resolve_calls[0]
+        JSON.parse(result).as_s.should eq(Path.home.to_s)
+      end
+    end
+
+    describe "__lune.tempDir" do
+      it "resolves and matches Dir.tempdir" do
+        fake, bridge = make_bridge
+        bridge.register_bindings(Lune::Bindings::Runtime.build(on_quit: -> : Nil { }))
+        fake.invoke("runtime.__lune.tempDir", "seq-7", [] of JSON::Any)
+        _, _, result = fake.resolve_calls[0]
+        JSON.parse(result).as_s.should eq(Dir.tempdir)
+      end
+    end
+
+    describe "__lune.downloadsDir" do
+      it "returns a path under the home directory" do
+        fake, bridge = make_bridge
+        bridge.register_bindings(Lune::Bindings::Runtime.build(on_quit: -> : Nil { }))
+        fake.invoke("runtime.__lune.downloadsDir", "seq-8", [] of JSON::Any)
+        _, _, result = fake.resolve_calls[0]
+        JSON.parse(result).as_s.should start_with(Path.home.to_s)
+      end
+    end
+
+    describe "__lune.appDataDir" do
+      it "returns a non-empty string" do
+        fake, bridge = make_bridge
+        bridge.register_bindings(Lune::Bindings::Runtime.build(on_quit: -> : Nil { }))
+        fake.invoke("runtime.__lune.appDataDir", "seq-9", [] of JSON::Any)
+        _, _, result = fake.resolve_calls[0]
+        JSON.parse(result).as_s.should_not be_empty
+      end
     end
   end
 end

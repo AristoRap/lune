@@ -66,7 +66,7 @@ module Lune
       @on_load = nil
     end
 
-    def apply(window : ProjectConfig::Window)
+    def apply(window : Config::Window)
       if t = window.title;      @title      = t end
       if w = window.width;      @width      = w end
       if h = window.height;     @height     = h end

@@ -9,11 +9,11 @@ ensure
   FileUtils.rm_rf(dir) if dir
 end
 
-describe Lune::ProjectConfig do
+describe Lune::Config do
   describe ".load" do
     it "returns a config with nil window fields when no lune.yml exists" do
       Dir.cd(Dir.tempdir) do
-        config = Lune::ProjectConfig.load("nonexistent_lune_#{Random.new.hex}.yml")
+        config = Lune::Config.load("nonexistent_lune_#{Random.new.hex}.yml")
         config.window.title.should be_nil
         config.window.width.should be_nil
         config.window.height.should be_nil
@@ -24,13 +24,13 @@ describe Lune::ProjectConfig do
 
     it "parses window.title" do
       with_lune_yml("window:\n  title: My App") do
-        Lune::ProjectConfig.load.window.title.should eq("My App")
+        Lune::Config.load.window.title.should eq("My App")
       end
     end
 
     it "parses window.width and window.height" do
       with_lune_yml("window:\n  width: 1440\n  height: 900") do
-        config = Lune::ProjectConfig.load
+        config = Lune::Config.load
         config.window.width.should eq(1440)
         config.window.height.should eq(900)
       end
@@ -38,7 +38,7 @@ describe Lune::ProjectConfig do
 
     it "parses window.min_width and window.min_height" do
       with_lune_yml("window:\n  min_width: 800\n  min_height: 600") do
-        config = Lune::ProjectConfig.load
+        config = Lune::Config.load
         config.window.min_width.should eq(800)
         config.window.min_height.should eq(600)
       end
@@ -46,7 +46,7 @@ describe Lune::ProjectConfig do
 
     it "parses window.max_width and window.max_height" do
       with_lune_yml("window:\n  max_width: 1920\n  max_height: 1080") do
-        config = Lune::ProjectConfig.load
+        config = Lune::Config.load
         config.window.max_width.should eq(1920)
         config.window.max_height.should eq(1080)
       end
@@ -54,19 +54,19 @@ describe Lune::ProjectConfig do
 
     it "parses window.resizable false" do
       with_lune_yml("window:\n  resizable: false") do
-        Lune::ProjectConfig.load.window.resizable.should be_false
+        Lune::Config.load.window.resizable.should be_false
       end
     end
 
     it "parses window.debug true" do
       with_lune_yml("window:\n  debug: true") do
-        Lune::ProjectConfig.load.window.debug.should be_true
+        Lune::Config.load.window.debug.should be_true
       end
     end
 
     it "returns nil window fields when lune.yml has no window section" do
       with_lune_yml("name: my_app") do
-        config = Lune::ProjectConfig.load
+        config = Lune::Config.load
         config.window.title.should be_nil
         config.window.width.should be_nil
       end
@@ -74,7 +74,7 @@ describe Lune::ProjectConfig do
 
     it "returns default config on invalid YAML" do
       with_lune_yml(": bad: yaml: [") do
-        config = Lune::ProjectConfig.load
+        config = Lune::Config.load
         config.window.title.should be_nil
       end
     end
@@ -85,7 +85,7 @@ describe Lune::Options do
   describe "#apply" do
     it "leaves all defaults intact when window config is empty" do
       opts = Lune::Options.new
-      opts.apply(Lune::ProjectConfig::Window.new)
+      opts.apply(Lune::Config::Window.new)
       opts.title.should eq("Lune")
       opts.width.should eq(1200)
       opts.height.should eq(800)
@@ -99,7 +99,7 @@ describe Lune::Options do
 
     it "applies title" do
       opts = Lune::Options.new
-      win = Lune::ProjectConfig::Window.new
+      win = Lune::Config::Window.new
       win.title = "My App"
       opts.apply(win)
       opts.title.should eq("My App")
@@ -107,7 +107,7 @@ describe Lune::Options do
 
     it "applies width and height" do
       opts = Lune::Options.new
-      win = Lune::ProjectConfig::Window.new
+      win = Lune::Config::Window.new
       win.width = 1440
       win.height = 900
       opts.apply(win)
@@ -117,7 +117,7 @@ describe Lune::Options do
 
     it "applies min/max dimensions" do
       opts = Lune::Options.new
-      win = Lune::ProjectConfig::Window.new
+      win = Lune::Config::Window.new
       win.min_width = 800
       win.min_height = 600
       win.max_width = 1920
@@ -131,7 +131,7 @@ describe Lune::Options do
 
     it "applies resizable false" do
       opts = Lune::Options.new
-      win = Lune::ProjectConfig::Window.new
+      win = Lune::Config::Window.new
       win.resizable = false
       opts.apply(win)
       opts.resizable.should be_false
@@ -139,7 +139,7 @@ describe Lune::Options do
 
     it "applies debug true" do
       opts = Lune::Options.new
-      win = Lune::ProjectConfig::Window.new
+      win = Lune::Config::Window.new
       win.debug = true
       opts.apply(win)
       opts.debug.should be_true
@@ -148,7 +148,7 @@ describe Lune::Options do
     it "does not apply nil fields — existing value is preserved" do
       opts = Lune::Options.new
       opts.title = "Already Set"
-      opts.apply(Lune::ProjectConfig::Window.new)
+      opts.apply(Lune::Config::Window.new)
       opts.title.should eq("Already Set")
     end
   end
