@@ -24,6 +24,11 @@ module Lune
       export function quit()        { return __lune.call("runtime.__lune.quit"); }
       export function openURL(url)  { return __lune.call("runtime.__lune.openURL", url); }
       export function environment() { return __lune.call("runtime.__lune.environment"); }
+
+      export function homeDir()      { return __lune.call("runtime.__lune.homeDir"); }
+      export function tempDir()      { return __lune.call("runtime.__lune.tempDir"); }
+      export function downloadsDir() { return __lune.call("runtime.__lune.downloadsDir"); }
+      export function appDataDir()   { return __lune.call("runtime.__lune.appDataDir"); }
       JS
     end
 
@@ -49,6 +54,11 @@ module Lune
       export declare function quit(): void;
       export declare function openURL(url: string): void;
       export declare function environment(): LuneEnvironment;
+
+      export declare function homeDir(): Promise<string>;
+      export declare function tempDir(): Promise<string>;
+      export declare function downloadsDir(): Promise<string>;
+      export declare function appDataDir(): Promise<string>;
       DTS
     end
 

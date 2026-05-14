@@ -1,9 +1,11 @@
 require "./lune/asset_server"
 require "./lune/assets"
+require "./lune/config"
 require "./lune/options"
 require "./lune/logger"
+require "./lune/binding_def"
+require "./lune/bindings/*"
 require "./lune/webview"
-require "./lune/bindings"
 require "./lune/error"
 require "./lune/bridge"
 require "./lune/runtime"
@@ -11,11 +13,10 @@ require "./lune/installable"
 require "./lune/bindable"
 require "./lune/app"
 require "./lune/single_instance"
-require "./lune/runtime_bindings"
 require "./lune/runner"
 
 module Lune
-  VERSION = "0.3.3"
+  VERSION = "0.3.4"
 
   # Default frontend directory name (matches the lune.yml default).
   DEFAULT_FRONTEND_DIR = "frontend"

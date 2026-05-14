@@ -10,3 +10,8 @@
 /frontend/*
 lune.yml
 src/main.cr
+
+# VitePress
+/node_modules/
+/website/.vitepress/dist/
+/website/.vitepress/cache/

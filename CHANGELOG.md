@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.4] - 2026-05-14
+
+### Added
+
+- `lune.yml` window defaults — declare `title`, `width`, `height`, `min_width`, `min_height`, `max_width`, `max_height`, `resizable`, `debug` under a `window:` key; values apply before the `Lune.run` opts block, which can still override any of them
+- App paths bridge — `homeDir()`, `tempDir()`, `downloadsDir()`, `appDataDir()` available in JS via `runtime.js`; platform-aware (`appDataDir` returns `~/Library/Application Support` on macOS, `$XDG_DATA_HOME` on Linux, `%APPDATA%` on Windows)
+- VitePress documentation site under `website/`; deployed to GitHub Pages via `.github/workflows/deploy-docs.yml`
+
+### Changed
+
+- `Lune::Config` now refers to project config loaded from `lune.yml`; logger config class renamed to `Lune::LogConfig`
+- Runtime bindings consolidated — path functions merged into `Lune::Bindings::Runtime`; no separate path module
+
 ## [0.3.3] - 2026-05-14
 
 ### Added
@@ -28,7 +41,7 @@
 
 - `Lune::Bindable` uses the Crystal class name as the JS namespace; nested namespaces follow `::` (`Math::Trig` → `api.Math.Trig`)
 - `Lune::Runtime` generates structured namespaced JS and typed `.d.ts` from `BindingDef` arrays
-- `Lune::RuntimeBindings` returns `Array(BindingDef)` instead of registering directly on the bridge
+- `Lune::Bindings::Runtime` returns `Array(BindingDef)` instead of registering directly on the bridge
 - CLI commands reorganized under `LuneCLI::Commands` module; constants extracted to `constants.cr`
 - `generate_bindings` moved inside `Build#run` so test doubles fully cover the build path
 

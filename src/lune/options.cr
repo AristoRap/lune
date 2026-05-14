@@ -65,5 +65,17 @@ module Lune
       @on_close = nil
       @on_load = nil
     end
+
+    def apply(window : Config::Window)
+      if t = window.title;      @title      = t end
+      if w = window.width;      @width      = w end
+      if h = window.height;     @height     = h end
+      if v = window.min_width;  @min_width  = v end
+      if v = window.min_height; @min_height = v end
+      if v = window.max_width;  @max_width  = v end
+      if v = window.max_height; @max_height = v end
+      unless (r = window.resizable).nil?; @resizable = r end
+      unless (d = window.debug).nil?;     @debug     = d end
+    end
   end
 end

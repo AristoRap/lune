@@ -1,7 +1,7 @@
 require "log"
 
 module Lune
-  class Config
+  class LogConfig
     property logger : Log
 
     def initialize(@logger : Log = Lune.default_logger)
@@ -22,13 +22,13 @@ module Lune
     logger.level = Log::Severity::Debug
   end
 
-  @@config = Config.new
+  @@config = LogConfig.new
 
-  def self.config : Config
+  def self.config : LogConfig
     @@config
   end
 
-  def self.configure(&block : Config -> Nil) : Nil
+  def self.configure(&block : LogConfig -> Nil) : Nil
     block.call(@@config)
   end
 
