@@ -78,6 +78,18 @@ describe Lune::Config do
         config.window.title.should be_nil
       end
     end
+
+    it "parses capabilities list" do
+      with_lune_yml("capabilities:\n  - quit\n  - readText") do
+        Lune::Config.load.capabilities.should eq(["quit", "readText"])
+      end
+    end
+
+    it "returns nil capabilities when key is absent" do
+      with_lune_yml("window:\n  title: My App") do
+        Lune::Config.load.capabilities.should be_nil
+      end
+    end
   end
 end
 

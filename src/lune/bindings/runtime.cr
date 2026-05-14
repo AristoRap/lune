@@ -10,9 +10,42 @@ module Lune
         nil
       }
 
+      DEFAULT_READ_CLIPBOARD = -> {
+        output = IO::Memory.new
+        {% if flag?(:darwin) %}
+          Process.run("pbpaste", output: output)
+        {% elsif flag?(:win32) %}
+          Process.run("powershell.exe", ["-NoProfile", "-Command", "Get-Clipboard"], output: output)
+        {% else %}
+          Process.run("xclip", ["-o", "-selection", "clipboard"], output: output)
+        {% end %}
+        output.to_s.chomp
+      }
+
+      DEFAULT_WRITE_CLIPBOARD = ->(text : String) {
+        {% if flag?(:darwin) %}
+          input = IO::Memory.new(text)
+          Process.run("pbcopy", input: input)
+        {% elsif flag?(:win32) %}
+          input = IO::Memory.new(text)
+          Process.run("clip.exe", input: input)
+        {% else %}
+          input = IO::Memory.new(text)
+          Process.run("xclip", ["-i", "-selection", "clipboard"], input: input)
+        {% end %}
+        nil
+      }
+
+      def self.filter(bindings : Array(BindingDef), capabilities : Array(String)?) : Array(BindingDef)
+        return bindings if capabilities.nil?
+        bindings.select { |b| capabilities.includes?(b.name.lchop("__lune.")) }
+      end
+
       def self.build(
         on_quit : -> Nil,
         on_open_url : String -> Nil = DEFAULT_OPEN_URL,
+        on_read_clipboard : -> String = DEFAULT_READ_CLIPBOARD,
+        on_write_clipboard : String -> Nil = DEFAULT_WRITE_CLIPBOARD,
         debug : Bool = false,
       ) : Array(BindingDef)
         [
@@ -120,6 +153,29 @@ module Lune
             },
             internal: true,
             async: false
+          ),
+
+          BindingDef.new(
+            "__lune.clipboardRead",
+            "runtime",
+            [] of String,
+            "String",
+            ->(_args : Array(JSON::Any)) { JSON::Any.new(on_read_clipboard.call) },
+            internal: true,
+            async: true
+          ),
+
+          BindingDef.new(
+            "__lune.clipboardWrite",
+            "runtime",
+            ["String"],
+            "Nil",
+            ->(args : Array(JSON::Any)) {
+              on_write_clipboard.call(args[0].as_s)
+              JSON::Any.new(nil)
+            },
+            internal: true,
+            async: true
           ),
         ]
       end

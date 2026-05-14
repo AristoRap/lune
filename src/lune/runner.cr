@@ -5,8 +5,9 @@ module Lune
     def initialize(app : App, &block : Options -> Nil)
       @app = app
       @lunejs_dir = File.join(ENV.fetch(Lune::ENV_FRONTEND_DIR, Lune::DEFAULT_FRONTEND_DIR), Lune::LUNEJS_SUBDIR)
+      @config = Config.load
       @options = Options.new
-      @options.apply(Config.load.window)
+      @options.apply(@config.window)
       block.call(@options)
     end
 
@@ -36,14 +37,29 @@ module Lune
         bridge.register_bindings(@app.bindings)
 
         runtime_bindings = Bindings::Runtime.build(on_quit: -> { wv.dispatch { wv.terminate } }, debug: @options.debug)
+        runtime_bindings = Bindings::Runtime.filter(runtime_bindings, @config.capabilities)
         bridge.register_bindings(runtime_bindings)
         @app.bridge = bridge
 
-        wv.on_load = @options.on_load if @options.on_load
+        if load_cb = @options.on_load
+          wv.on_load = -> {
+            begin
+              load_cb.call
+            rescue ex
+              Lune.logger.error { "on_load callback failed: #{ex.message}" }
+              Lune.logger.debug(exception: ex) { "on_load callback failed (stacktrace)" }
+            end
+          }
+        end
 
         if nav_cb = @options.on_navigate
           wv.bind("__lune_navigate", Webview::JSProc.new { |args|
-            nav_cb.call(args[0]?.try(&.as_s) || "")
+            begin
+              nav_cb.call(args[0]?.try(&.as_s) || "")
+            rescue ex
+              Lune.logger.error { "on_navigate callback failed: #{ex.message}" }
+              Lune.logger.debug(exception: ex) { "on_navigate callback failed (stacktrace)" }
+            end
             JSON::Any.new(nil)
           })
           wv.init(<<-JS)

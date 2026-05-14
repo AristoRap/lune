@@ -3,10 +3,10 @@
 ## Up next — no C bindings required
 
 - [ ] Window controls at runtime from JS — `minimize()`, `maximize()`, `setTitle()`, `setSize()`, `center()` as runtime bindings via `wv.dispatch` + native handles
-- [ ] Clipboard bridge — `readText()` / `writeText()` from JS via platform commands (`pbpaste`/`pbcopy`, `xclip`, `clip`)
+- [x] Clipboard bridge — `readText()` / `writeText()` from JS via platform commands (`pbpaste`/`pbcopy`, `xclip`, `clip`)
 - [x] App paths bridge — `appDataDir()`, `homeDir()`, `downloadsDir()` etc. from JS via Crystal `Path.home` and platform conventions
 - [x] `lune.yml` window defaults — declare `title`, `width`, `height`, `resizable` in config so apps don't repeat them in the opts block
-- [ ] Capability allowlist — opt-in per-app to which runtime bindings are exposed to JS (security; modelled after Tauri capabilities)
+- [x] Capability allowlist — opt-in per-app to which runtime bindings are exposed to JS (security; modelled after Tauri capabilities)
 - [ ] App icon support — bundle platform icon assets (`.icns` on macOS, `.ico` on Windows, `.png` on Linux) into the `lune build` output
 
 ## v0.2
@@ -24,7 +24,6 @@
 - [x] codegen binding registration boilerplate and `.d.ts` from Crystal annotations
 - [x] Dev error overlay — when `lune dev` compilation fails, the CLI spawns a dedicated error window showing the Crystal compiler output; closes on next successful build
 - [x] Structured binding errors — define an error envelope with a `code` field so JS can branch on `e.code` instead of parsing the message string
-- [ ] Additional templates: Svelte, React+TS
 
 ## Needs C bindings — post-v0.3
 
@@ -40,3 +39,4 @@ These require native platform APIs beyond what `webview.h` exposes.
 ## Random — no timeline
 
 - [ ] Window state persistence — save/restore position+size to `~/.config/<app>/window.json`
+- [ ] Additional templates: Svelte, React+TS

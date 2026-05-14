@@ -5,6 +5,7 @@ module Lune
     include YAML::Serializable
 
     getter window : Window = Window.new
+    getter capabilities : Array(String)? = nil
 
     def initialize; end
 

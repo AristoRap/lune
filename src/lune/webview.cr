@@ -29,9 +29,8 @@ module Webview
     def bind_deferred(name : String, &block : String, Array(JSON::Any) -> Nil)
       ctx = DeferredCtx.new(@w, block)
       boxed = Box.box(ctx)
-      @@deferred_boxes << boxed
 
-      LibWebView.bind(@w, name, ->(id, req, data) {
+      check_error(LibWebView.bind(@w, name, ->(id, req, data) {
         seq = String.new(id)
         cb_ctx = Box(DeferredCtx).unbox(data)
 
@@ -47,7 +46,9 @@ module Webview
         end
 
         cb_ctx.cb.call(seq, args)
-      }, boxed)
+      }, boxed))
+
+      @@deferred_boxes << boxed
     end
 
     # Send a response to a pending JS promise from bind_deferred.

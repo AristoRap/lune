@@ -9,6 +9,7 @@
 **macOS only:** Xcode Command Line Tools are required for the native WebView headers.
 
 **Linux only:** Install WebKit development headers:
+
 ```sh
 # Ubuntu / Debian
 sudo apt install libwebkit2gtk-4.1-dev
@@ -23,11 +24,11 @@ sudo dnf install webkit2gtk4.1-devel
 
 Pre-built binaries are attached to each [GitHub release](https://github.com/AristoRap/lune/releases):
 
-| Platform | File |
-|----------|------|
-| macOS (Apple Silicon) | `lune-darwin-arm64` |
-| macOS (Intel) | `lune-darwin-x86_64` |
-| Linux x86_64 | `lune-linux-x86_64` |
+| Platform              | File                 |
+| --------------------- | -------------------- |
+| macOS (Apple Silicon) | `lune-darwin-arm64`  |
+| macOS (Intel)         | `lune-darwin-x86_64` |
+| Linux x86_64          | `lune-linux-x86_64`  |
 
 Download the binary for your platform, make it executable, and put it on your PATH:
 
@@ -55,7 +56,7 @@ Add it to your `shard.yml`:
 dependencies:
   lune:
     github: AristoRap/lune
-    version: ~> 0.3.3
+    version: ~> 0.3.5
 ```
 
 Then install:
@@ -138,10 +139,10 @@ end
 In your frontend, import the generated API and call it:
 
 ```js
-import api from '../lunejs/app/App.js'
+import api from "../lunejs/app/App.js";
 
-const message = await api.GreetModule.Greet('world')
-console.log(message) // "Hello, world!"
+const message = await api.GreetModule.Greet("world");
+console.log(message); // "Hello, world!"
 ```
 
 ---

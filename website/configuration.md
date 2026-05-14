@@ -10,6 +10,18 @@ Lune reads an optional `lune.yml` file from the root of your project. All keys h
 # App name (optional — used for display only)
 name: my_app
 
+# Allowed runtime bindings (default: all). Omit to expose everything.
+capabilities:
+  - quit
+  - openURL
+  - environment
+  - homeDir
+  - tempDir
+  - downloadsDir
+  - appDataDir
+  - clipboardRead
+  - clipboardWrite
+
 # Crystal entry point (default: src/main.cr)
 app_entry: src/main.cr
 
@@ -140,6 +152,24 @@ window:
 ```
 
 All keys are optional. Omitted keys fall back to the `Lune::Options` defaults (`title: "Lune"`, `width: 1200`, `height: 800`, `resizable: true`, `debug: false`).
+
+---
+
+### `capabilities`
+
+**Type:** `Array(String)?` — **Default:** `nil` (all runtime bindings exposed)
+
+Restricts which built-in runtime bindings are accessible from JavaScript. When omitted, all bindings are available. When set, only the listed names are registered — any others are silently excluded.
+
+Available capability names: `quit`, `openURL`, `environment`, `homeDir`, `tempDir`, `downloadsDir`, `appDataDir`, `clipboardRead`, `clipboardWrite`.
+
+```yaml
+capabilities:
+  - quit
+  - openURL
+  - clipboardRead
+  - clipboardWrite
+```
 
 ---
 
