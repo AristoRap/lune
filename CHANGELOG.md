@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.3] - 2026-05-14
+
+### Added
+
+- Dev error overlay — when `lune dev` compilation fails, a dedicated error window opens showing the Crystal compiler output. The window is owned by the CLI, stays open while you edit, and closes automatically when the next build succeeds.
+
 ## [0.3.0] - 2026-05-13
 
 ### Breaking changes
