@@ -85,7 +85,7 @@ module LuneCLI
         )
         return false unless app_status.success?
 
-        File.delete("#{compiled_output_path}.dwarf") rescue nil
+        File.delete?("#{compiled_output_path}.dwarf")
         finalize_output(app_entry, output_path)
         true
       end

@@ -132,8 +132,8 @@ module LuneCLI
           end
         ensure
           error_display.try { |p| p.terminate(graceful: false) rescue nil }
-          File.delete(DEV_BINARY) rescue nil
-          File.delete("#{DEV_BINARY}.dwarf") rescue nil
+          File.delete?(DEV_BINARY)
+          File.delete?("#{DEV_BINARY}.dwarf")
         end
 
         Lune.logger.info { "App exited. Stopping dev server..." }
