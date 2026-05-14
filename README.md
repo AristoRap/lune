@@ -129,6 +129,7 @@ Lune.run(app, assets: "frontend/dist") do |opts|
   opts.min_width  = 800
   opts.min_height = 600
   opts.debug      = false
+  opts.on_load     = -> { puts "page loaded" }
   opts.on_navigate = ->(url : String) { puts "navigated to #{url}" }
   opts.on_close    = -> { puts "window closed" }
 end
@@ -155,6 +156,7 @@ end
 | `max_height`  | `Int32?`           | `nil`    | Maximum height                          |
 | `resizable`   | `Bool`             | `true`   | Allow resizing; `false` fixes the size  |
 | `debug`       | `Bool`             | `false`  | Enable WebView devtools                 |
+| `on_load`     | `(-> Nil)?`        | `nil`    | Called once when the page `load` event fires (DOM ready) |
 | `on_navigate` | `(String -> Nil)?` | `nil`    | Called on every navigation (URL as arg) |
 | `on_close`    | `(-> Nil)?`        | `nil`    | Called after the window closes          |
 
