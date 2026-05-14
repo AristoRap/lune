@@ -6,6 +6,7 @@ module Lune
       @app = app
       @lunejs_dir = File.join(ENV.fetch(Lune::ENV_FRONTEND_DIR, Lune::DEFAULT_FRONTEND_DIR), Lune::LUNEJS_SUBDIR)
       @options = Options.new
+      @options.apply(ProjectConfig.load.window)
       block.call(@options)
     end
 

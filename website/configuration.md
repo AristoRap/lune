@@ -122,6 +122,27 @@ frontend:
 
 ---
 
+### `window`
+
+All `Lune::Options` properties can also be declared here. Values set in `lune.yml` become the defaults for the window; the opts block in your Crystal code can still override any of them.
+
+```yaml
+window:
+  title: My App       # String   — window title bar text
+  width: 1440         # Int      — initial width in logical pixels
+  height: 900         # Int      — initial height in logical pixels
+  min_width: 900      # Int      — minimum resizable width
+  min_height: 600     # Int      — minimum resizable height
+  max_width: 1920     # Int      — maximum resizable width
+  max_height: 1080    # Int      — maximum resizable height
+  resizable: true     # Bool     — whether the window can be resized
+  debug: false        # Bool     — enable WebView devtools
+```
+
+All keys are optional. Omitted keys fall back to the `Lune::Options` defaults (`title: "Lune"`, `width: 1200`, `height: 800`, `resizable: true`, `debug: false`).
+
+---
+
 ## Example: using pnpm
 
 ```yaml

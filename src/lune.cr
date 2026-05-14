@@ -1,5 +1,6 @@
 require "./lune/asset_server"
 require "./lune/assets"
+require "./lune/config"
 require "./lune/options"
 require "./lune/logger"
 require "./lune/webview"

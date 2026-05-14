@@ -1,6 +1,32 @@
 # Window Configuration
 
-Window properties are set via the `Lune::Options` block passed to `Lune.run`:
+Window properties can be set in two places:
+
+1. **`lune.yml`** — declare defaults for the project (shared via version control)
+2. **The opts block in `Lune.run`** — override at the code level (takes priority)
+
+```yaml
+# lune.yml
+window:
+  title: My App
+  width: 1440
+  height: 900
+```
+
+```crystal
+# src/main.cr — opts block overrides lune.yml values
+Lune.run(app, assets: "frontend/dist") do |opts|
+  opts.debug = true   # override just this one
+end
+```
+
+If a property is set in both, the opts block wins. Properties not set in either use the built-in defaults.
+
+---
+
+## All options
+
+Properties are set via the `Lune::Options` block passed to `Lune.run`:
 
 ```crystal
 Lune.run(app) do |opts|
