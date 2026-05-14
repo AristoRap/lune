@@ -24,7 +24,7 @@ module Lune
 
     # Fix: ensure the block passed to bind_deferred returns Nil
     def register_binding(binding : BindingDef)
-      full_name = Lune.binding_id(binding.namespace, binding.name)
+      full_name = binding.id
       @all_bindings[full_name] = binding
       wv = @wv
 

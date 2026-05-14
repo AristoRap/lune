@@ -1,23 +1,5 @@
 require "../spec_helper"
 
-describe "Lune.binding_id" do
-  it "returns just the name when namespace is empty" do
-    Lune.binding_id("", "greet").should eq("greet")
-  end
-
-  it "joins namespace and name with a dot" do
-    Lune.binding_id("GreetModule", "greet").should eq("GreetModule.greet")
-  end
-
-  it "converts :: separators to dots for nested namespaces" do
-    Lune.binding_id("Foo::Bar", "ping").should eq("Foo.Bar.ping")
-  end
-
-  it "handles deeply nested namespaces" do
-    Lune.binding_id("A::B::C", "x").should eq("A.B.C.x")
-  end
-end
-
 private def make_bridge
   fake = FakeWebview.new
   bridge = Lune::Bridge.new(fake)
@@ -76,7 +58,7 @@ describe Lune::RuntimeBindings do
 
       bridge.register_bindings(bindings)
 
-      fake.invoke(Lune.binding_id("runtime", "__lune.openURL"), "seq-2", [
+      fake.invoke("runtime.__lune.openURL", "seq-2", [
         JSON::Any.new("https://example.com"),
       ])
 
