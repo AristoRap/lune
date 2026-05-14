@@ -37,6 +37,7 @@ module Lune
 
         runtime_bindings = RuntimeBindings.build(on_quit: -> { wv.dispatch { wv.terminate } }, debug: @options.debug)
         bridge.register_bindings(runtime_bindings)
+        bridge.register_bindings(PathBindings.build)
         @app.bridge = bridge
 
         wv.on_load = @options.on_load if @options.on_load

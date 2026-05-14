@@ -83,6 +83,11 @@ export declare function off(name: string, cb?: (data: unknown) => void): void;
 export declare function quit(): void;
 export declare function openURL(url: string): void;
 export declare function environment(): LuneEnvironment;
+
+export declare function homeDir(): Promise<string>;
+export declare function tempDir(): Promise<string>;
+export declare function downloadsDir(): Promise<string>;
+export declare function appDataDir(): Promise<string>;
 ```
 
 ---

@@ -13,6 +13,7 @@ require "./lune/bindable"
 require "./lune/app"
 require "./lune/single_instance"
 require "./lune/runtime_bindings"
+require "./lune/path_bindings"
 require "./lune/runner"
 
 module Lune

@@ -21,6 +21,7 @@ export default defineConfig({
           { text: 'Assets & Build', link: '/guide/assets' },
           { text: 'Bindings', link: '/guide/bindings' },
           { text: 'Error Handling', link: '/guide/error-handling' },
+          { text: 'Runtime Functions', link: '/guide/runtime' },
           { text: 'Events', link: '/guide/events' },
           { text: 'TypeScript', link: '/guide/typescript' },
           { text: 'Window', link: '/guide/window' },
