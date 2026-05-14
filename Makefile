@@ -1,6 +1,6 @@
 SHELL := /bin/sh
 
-.PHONY: help setup test build release deploy dev app copy
+.PHONY: help setup test build release deploy dev app copy patch minor
 
 help:
 	@echo "Targets:"
@@ -11,6 +11,8 @@ help:
 	@echo "  make deploy   # release + copy to /usr/local/bin"
 	@echo "  make dev      # run lune dev via crystal run"
 	@echo "  make app      # run lune build via crystal run"
+	@echo "  make patch    # bump patch version (x.y.Z)"
+	@echo "  make minor    # bump minor version (x.Y.0)"
 
 setup:
 	shards install
@@ -35,3 +37,22 @@ dev:
 
 app:
 	crystal run bin/lune.cr -- build
+
+patch:
+	@current=$$(grep '^version:' shard.yml | sed 's/version: //'); \
+	major=$$(echo $$current | cut -d. -f1); \
+	minor=$$(echo $$current | cut -d. -f2); \
+	patch=$$(echo $$current | cut -d. -f3); \
+	next="$$major.$$minor.$$((patch + 1))"; \
+	sed -i.bak "s/^version: .*/version: $$next/" shard.yml && rm shard.yml.bak; \
+	sed -i.bak "s/VERSION = \".*\"/VERSION = \"$$next\"/" src/lune.cr && rm src/lune.cr.bak; \
+	echo "Bumped $$current → $$next"
+
+minor:
+	@current=$$(grep '^version:' shard.yml | sed 's/version: //'); \
+	major=$$(echo $$current | cut -d. -f1); \
+	minor=$$(echo $$current | cut -d. -f2); \
+	next="$$major.$$((minor + 1)).0"; \
+	sed -i.bak "s/^version: .*/version: $$next/" shard.yml && rm shard.yml.bak; \
+	sed -i.bak "s/VERSION = \".*\"/VERSION = \"$$next\"/" src/lune.cr && rm src/lune.cr.bak; \
+	echo "Bumped $$current → $$next"
