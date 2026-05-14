@@ -14,7 +14,7 @@ dependencies:
     github: naqvis/webview
   argy:
     github: AristoRap/argy
-    version: ~> 0.2
+    version: ~> 0.3
 
 targets:
   lune:
