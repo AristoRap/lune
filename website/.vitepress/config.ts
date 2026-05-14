@@ -1,5 +1,7 @@
 import { defineConfig } from 'vitepress'
 
+const version = '0.3.5'
+
 export default defineConfig({
   title: 'Lune',
   description: 'Build desktop apps with Crystal',
@@ -8,6 +10,7 @@ export default defineConfig({
   themeConfig: {
     logo: '/logo.svg',
     nav: [
+      { text: `v${version}`, link: 'https://github.com/AristoRap/lune/releases' },
       { text: 'Guide', link: '/getting-started' },
       { text: 'CLI', link: '/cli-reference' },
       { text: 'GitHub', link: 'https://github.com/AristoRap/lune' },

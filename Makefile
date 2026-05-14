@@ -1,6 +1,6 @@
 SHELL := /bin/sh
 
-.PHONY: help setup test build release deploy dev app copy patch minor
+.PHONY: help setup test build release deploy dev app copy patch minor web
 
 help:
 	@echo "Targets:"
@@ -13,6 +13,7 @@ help:
 	@echo "  make app      # run lune build via crystal run"
 	@echo "  make patch    # bump patch version (x.y.Z)"
 	@echo "  make minor    # bump minor version (x.Y.0)"
+	@echo "  make web      # run website dev server"
 
 setup:
 	shards install
@@ -38,6 +39,9 @@ dev:
 app:
 	crystal run bin/lune.cr -- build
 
+web:
+	npm run docs:dev
+
 patch:
 	@current=$$(grep '^version:' shard.yml | sed 's/version: //'); \
 	major=$$(echo $$current | cut -d. -f1); \
@@ -47,6 +51,7 @@ patch:
 	sed -i.bak "s/^version: .*/version: $$next/" shard.yml && rm shard.yml.bak; \
 	sed -i.bak "s/VERSION = \".*\"/VERSION = \"$$next\"/" src/lune.cr && rm src/lune.cr.bak; \
 	sed -i.bak "s/version: ~> .*/version: ~> $$next/" website/getting-started.md && rm website/getting-started.md.bak; \
+	sed -i.bak "s/const version = '.*'/const version = '$$next'/" website/.vitepress/config.ts && rm website/.vitepress/config.ts.bak; \
 	echo "Bumped $$current → $$next"
 
 minor:
@@ -57,4 +62,5 @@ minor:
 	sed -i.bak "s/^version: .*/version: $$next/" shard.yml && rm shard.yml.bak; \
 	sed -i.bak "s/VERSION = \".*\"/VERSION = \"$$next\"/" src/lune.cr && rm src/lune.cr.bak; \
 	sed -i.bak "s/version: ~> .*/version: ~> $$next/" website/getting-started.md && rm website/getting-started.md.bak; \
+	sed -i.bak "s/const version = '.*'/const version = '$$next'/" website/.vitepress/config.ts && rm website/.vitepress/config.ts.bak; \
 	echo "Bumped $$current → $$next"
