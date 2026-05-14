@@ -1,0 +1,18 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <rect width="256" height="256" rx="56" fill="#0B0D14"/>
+
+  <!-- Crescent -->
+  <circle cx="128" cy="128" r="92" fill="#AAB6FF"/>
+  <circle cx="160" cy="108" r="92" fill="#0B0D14"/>
+
+  <!-- Wordmark -->
+  <text x="160" y="140"
+        text-anchor="middle"
+        font-family="Space Grotesk, Inter, system-ui, sans-serif"
+        font-size="46"
+        font-weight="500"
+        fill="#EDEFFF"
+        letter-spacing="1.5">
+    Lune
+  </text>
+</svg>

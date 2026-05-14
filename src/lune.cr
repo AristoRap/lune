@@ -15,7 +15,7 @@ require "./lune/runtime_bindings"
 require "./lune/runner"
 
 module Lune
-  VERSION = "0.3.3"
+  VERSION = "0.3.4"
 
   # Default frontend directory name (matches the lune.yml default).
   DEFAULT_FRONTEND_DIR = "frontend"
