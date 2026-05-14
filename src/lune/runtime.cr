@@ -29,6 +29,9 @@ module Lune
       export function tempDir()      { return __lune.call("runtime.__lune.tempDir"); }
       export function downloadsDir() { return __lune.call("runtime.__lune.downloadsDir"); }
       export function appDataDir()   { return __lune.call("runtime.__lune.appDataDir"); }
+
+      export function readText()            { return __lune.call("runtime.__lune.readText"); }
+      export function writeText(text)       { return __lune.call("runtime.__lune.writeText", text); }
       JS
     end
 
@@ -59,6 +62,9 @@ module Lune
       export declare function tempDir(): Promise<string>;
       export declare function downloadsDir(): Promise<string>;
       export declare function appDataDir(): Promise<string>;
+
+      export declare function readText(): Promise<string>;
+      export declare function writeText(text: string): Promise<void>;
       DTS
     end
 

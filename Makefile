@@ -46,6 +46,7 @@ patch:
 	next="$$major.$$minor.$$((patch + 1))"; \
 	sed -i.bak "s/^version: .*/version: $$next/" shard.yml && rm shard.yml.bak; \
 	sed -i.bak "s/VERSION = \".*\"/VERSION = \"$$next\"/" src/lune.cr && rm src/lune.cr.bak; \
+	sed -i.bak "s/version: ~> .*/version: ~> $$next/" website/getting-started.md && rm website/getting-started.md.bak; \
 	echo "Bumped $$current → $$next"
 
 minor:
@@ -55,4 +56,5 @@ minor:
 	next="$$major.$$((minor + 1)).0"; \
 	sed -i.bak "s/^version: .*/version: $$next/" shard.yml && rm shard.yml.bak; \
 	sed -i.bak "s/VERSION = \".*\"/VERSION = \"$$next\"/" src/lune.cr && rm src/lune.cr.bak; \
+	sed -i.bak "s/version: ~> .*/version: ~> $$next/" website/getting-started.md && rm website/getting-started.md.bak; \
 	echo "Bumped $$current → $$next"

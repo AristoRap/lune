@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.5] - 2026-05-14
+
+### Added
+
+- Clipboard bridge — `readText()` and `writeText(text)` available in JS via `runtime.js`; backed by `pbpaste`/`pbcopy` on macOS, `xclip` on Linux, PowerShell/`clip.exe` on Windows
+
 ## [0.3.4] - 2026-05-14
 
 ### Added

@@ -161,5 +161,56 @@ describe Lune::Bindings::Runtime do
         JSON.parse(result).as_s.should_not be_empty
       end
     end
+
+    describe "__lune.readText" do
+      it "resolves with the value returned by on_read_clipboard" do
+        fake, bridge = make_bridge
+
+        bridge.register_bindings(Lune::Bindings::Runtime.build(
+          on_quit: -> : Nil { },
+          on_read_clipboard: -> : String { "clipboard content" }
+        ))
+
+        fake.invoke("runtime.__lune.readText", "seq-10", [] of JSON::Any)
+
+        deadline = Time.instant + 2.seconds
+        while Time.instant < deadline
+          break unless fake.resolve_calls.empty?
+          Fiber.yield
+        end
+
+        _, status, result = fake.resolve_calls[0]
+        status.should eq(0)
+        JSON.parse(result).as_s.should eq("clipboard content")
+      end
+    end
+
+    describe "__lune.writeText" do
+      it "calls on_write_clipboard with the provided text and resolves" do
+        fake, bridge = make_bridge
+
+        written = ""
+
+        bridge.register_bindings(Lune::Bindings::Runtime.build(
+          on_quit: -> : Nil { },
+          on_write_clipboard: ->(text : String) : Nil {
+            written = text
+            nil
+          }
+        ))
+
+        fake.invoke("runtime.__lune.writeText", "seq-11", [JSON::Any.new("hello clipboard")])
+
+        deadline = Time.instant + 2.seconds
+        while Time.instant < deadline
+          break unless fake.resolve_calls.empty?
+          Fiber.yield
+        end
+
+        _, status, _ = fake.resolve_calls[0]
+        status.should eq(0)
+        written.should eq("hello clipboard")
+      end
+    end
   end
 end
