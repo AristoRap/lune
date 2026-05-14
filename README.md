@@ -396,7 +396,7 @@ frontend:
 ## CLI
 
 ```
-lune init [APP_NAME]    Scaffold a new Lune app (--template vanilla|vue)
+lune init [APP_NAME]    Scaffold a new Lune app (--template vanilla|vue, --force, --skip-existing)
 lune dev   (alias: d)   Start frontend dev server + Crystal with hot-reload
 lune check              Type-check without building
 lune build (alias: b)   Build frontend + compile Crystal binary
@@ -410,8 +410,10 @@ lune doctor             Check Crystal, Node, npm, shards, and frontend deps
 Flags:
 
 ```sh
---debug     Enable debug logging (all commands)
---release   Build with Crystal --release optimizations (lune build only)
+--debug           Enable debug logging (all commands)
+--release         Build with Crystal --release optimizations (lune build only)
+--force       -f  Delete the app directory and reinitialize from scratch (lune init only)
+--skip-existing   Skip existing files instead of failing (lune init only)
 ```
 
 All project paths and toolchain commands (`app_entry`, `frontend_dir`, `dev_cmd`, `build_cmd`, `dev_url`) are configured in `lune.yml`, not via CLI flags.
