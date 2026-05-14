@@ -5,8 +5,9 @@ module Lune
     def initialize(app : App, &block : Options -> Nil)
       @app = app
       @lunejs_dir = File.join(ENV.fetch(Lune::ENV_FRONTEND_DIR, Lune::DEFAULT_FRONTEND_DIR), Lune::LUNEJS_SUBDIR)
+      @config = Config.load
       @options = Options.new
-      @options.apply(Config.load.window)
+      @options.apply(@config.window)
       block.call(@options)
     end
 
@@ -36,6 +37,7 @@ module Lune
         bridge.register_bindings(@app.bindings)
 
         runtime_bindings = Bindings::Runtime.build(on_quit: -> { wv.dispatch { wv.terminate } }, debug: @options.debug)
+        runtime_bindings = Bindings::Runtime.filter(runtime_bindings, @config.capabilities)
         bridge.register_bindings(runtime_bindings)
         @app.bridge = bridge
 

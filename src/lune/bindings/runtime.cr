@@ -36,6 +36,11 @@ module Lune
         nil
       }
 
+      def self.filter(bindings : Array(BindingDef), capabilities : Array(String)?) : Array(BindingDef)
+        return bindings if capabilities.nil?
+        bindings.select { |b| capabilities.includes?(b.name.lchop("__lune.")) }
+      end
+
       def self.build(
         on_quit : -> Nil,
         on_open_url : String -> Nil = DEFAULT_OPEN_URL,
@@ -151,7 +156,7 @@ module Lune
           ),
 
           BindingDef.new(
-            "__lune.readText",
+            "__lune.clipboardRead",
             "runtime",
             [] of String,
             "String",
@@ -161,7 +166,7 @@ module Lune
           ),
 
           BindingDef.new(
-            "__lune.writeText",
+            "__lune.clipboardWrite",
             "runtime",
             ["String"],
             "Nil",

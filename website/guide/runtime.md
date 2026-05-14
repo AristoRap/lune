@@ -3,7 +3,7 @@
 Lune exposes built-in JavaScript functions via `runtime.js`. These cover app lifecycle, system integration, and filesystem paths — all backed by Crystal, with no extra dependencies.
 
 ```js
-import { quit, openURL, environment, homeDir, appDataDir, readText, writeText } from '../lunejs/runtime/runtime.js'
+import { quit, openURL, environment, homeDir, appDataDir, clipboardRead, clipboardWrite } from '../lunejs/runtime/runtime.js'
 ```
 
 All functions return a `Promise`. TypeScript declarations are in `runtime.d.ts`.
@@ -101,20 +101,20 @@ const tmp = await tempDir()
 
 ## Clipboard
 
-### `readText()`
+### `clipboardRead()`
 
 Returns the current clipboard text content.
 
 ```js
-const text = await readText()
+const text = await clipboardRead()
 ```
 
-### `writeText(text)`
+### `clipboardWrite(text)`
 
 Writes a string to the clipboard.
 
 ```js
-await writeText('copied!')
+await clipboardWrite('copied!')
 ```
 
 Platform commands used internally: `pbpaste`/`pbcopy` on macOS, `xclip` on Linux, PowerShell/`clip.exe` on Windows.

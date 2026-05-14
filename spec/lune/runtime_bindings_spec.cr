@@ -162,7 +162,25 @@ describe Lune::Bindings::Runtime do
       end
     end
 
-    describe "__lune.readText" do
+    describe ".filter" do
+      it "returns all bindings when capabilities is nil" do
+        bindings = Lune::Bindings::Runtime.build(on_quit: -> : Nil { })
+        Lune::Bindings::Runtime.filter(bindings, nil).size.should eq(bindings.size)
+      end
+
+      it "returns only matching bindings when capabilities is set" do
+        bindings = Lune::Bindings::Runtime.build(on_quit: -> : Nil { })
+        filtered = Lune::Bindings::Runtime.filter(bindings, ["quit", "clipboardRead"])
+        filtered.map(&.name).should eq(["__lune.quit", "__lune.clipboardRead"])
+      end
+
+      it "returns empty array when capabilities list matches nothing" do
+        bindings = Lune::Bindings::Runtime.build(on_quit: -> : Nil { })
+        Lune::Bindings::Runtime.filter(bindings, [] of String).should be_empty
+      end
+    end
+
+    describe "__lune.clipboardRead" do
       it "resolves with the value returned by on_read_clipboard" do
         fake, bridge = make_bridge
 
@@ -171,7 +189,7 @@ describe Lune::Bindings::Runtime do
           on_read_clipboard: -> : String { "clipboard content" }
         ))
 
-        fake.invoke("runtime.__lune.readText", "seq-10", [] of JSON::Any)
+        fake.invoke("runtime.__lune.clipboardRead", "seq-10", [] of JSON::Any)
 
         deadline = Time.instant + 2.seconds
         while Time.instant < deadline
@@ -185,7 +203,7 @@ describe Lune::Bindings::Runtime do
       end
     end
 
-    describe "__lune.writeText" do
+    describe "__lune.clipboardWrite" do
       it "calls on_write_clipboard with the provided text and resolves" do
         fake, bridge = make_bridge
 
@@ -199,7 +217,7 @@ describe Lune::Bindings::Runtime do
           }
         ))
 
-        fake.invoke("runtime.__lune.writeText", "seq-11", [JSON::Any.new("hello clipboard")])
+        fake.invoke("runtime.__lune.clipboardWrite", "seq-11", [JSON::Any.new("hello clipboard")])
 
         deadline = Time.instant + 2.seconds
         while Time.instant < deadline

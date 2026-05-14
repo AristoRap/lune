@@ -5,6 +5,7 @@
 ### Added
 
 - Clipboard bridge — `readText()` and `writeText(text)` available in JS via `runtime.js`; backed by `pbpaste`/`pbcopy` on macOS, `xclip` on Linux, PowerShell/`clip.exe` on Windows
+- Capability allowlist — declare `capabilities:` in `lune.yml` to restrict which runtime bindings are exposed to JS; omit the key to allow all (default)
 
 ## [0.3.4] - 2026-05-14
 
