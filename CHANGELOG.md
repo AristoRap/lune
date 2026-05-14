@@ -1,10 +1,18 @@
 # Changelog
 
+## [0.3.6] - 2026-05-14
+
+### Fixed
+
+- Capability names corrected throughout — `readText`/`writeText` renamed to `clipboardRead`/`clipboardWrite` in ROADMAP, changelog, and specs
+- Config spec and runtime bindings spec updated to use correct capability names
+- Added spec for invalid capability names — unknown names are silently ignored, only real binding names are exposed
+
 ## [0.3.5] - 2026-05-14
 
 ### Added
 
-- Clipboard bridge — `readText()` and `writeText(text)` available in JS via `runtime.js`; backed by `pbpaste`/`pbcopy` on macOS, `xclip` on Linux, PowerShell/`clip.exe` on Windows
+- Clipboard bridge — `clipboardRead()` and `clipboardWrite(text)` available in JS via `runtime.js`; backed by `pbpaste`/`pbcopy` on macOS, `xclip` on Linux, PowerShell/`clip.exe` on Windows
 - Capability allowlist — declare `capabilities:` in `lune.yml` to restrict which runtime bindings are exposed to JS; omit the key to allow all (default)
 - Website version badge — nav bar now shows the current version linking to GitHub releases; `make patch`/`make minor` keep it in sync
 

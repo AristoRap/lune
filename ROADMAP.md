@@ -3,7 +3,7 @@
 ## Up next — no C bindings required
 
 - [ ] Window controls at runtime from JS — `minimize()`, `maximize()`, `setTitle()`, `setSize()`, `center()` as runtime bindings via `wv.dispatch` + native handles
-- [x] Clipboard bridge — `readText()` / `writeText()` from JS via platform commands (`pbpaste`/`pbcopy`, `xclip`, `clip`)
+- [x] Clipboard bridge — `clipboardRead()` / `clipboardWrite()` from JS via platform commands (`pbpaste`/`pbcopy`, `xclip`, `clip`)
 - [x] App paths bridge — `appDataDir()`, `homeDir()`, `downloadsDir()` etc. from JS via Crystal `Path.home` and platform conventions
 - [x] `lune.yml` window defaults — declare `title`, `width`, `height`, `resizable` in config so apps don't repeat them in the opts block
 - [x] Capability allowlist — opt-in per-app to which runtime bindings are exposed to JS (security; modelled after Tauri capabilities)

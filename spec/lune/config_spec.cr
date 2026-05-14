@@ -80,8 +80,8 @@ describe Lune::Config do
     end
 
     it "parses capabilities list" do
-      with_lune_yml("capabilities:\n  - quit\n  - readText") do
-        Lune::Config.load.capabilities.should eq(["quit", "readText"])
+      with_lune_yml("capabilities:\n  - quit\n  - clipboardRead") do
+        Lune::Config.load.capabilities.should eq(["quit", "clipboardRead"])
       end
     end
 

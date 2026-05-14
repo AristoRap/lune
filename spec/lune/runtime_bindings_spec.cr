@@ -178,6 +178,12 @@ describe Lune::Bindings::Runtime do
         bindings = Lune::Bindings::Runtime.build(on_quit: -> : Nil { })
         Lune::Bindings::Runtime.filter(bindings, [] of String).should be_empty
       end
+
+      it "silently ignores invalid capability names and only returns real matches" do
+        bindings = Lune::Bindings::Runtime.build(on_quit: -> : Nil { })
+        filtered = Lune::Bindings::Runtime.filter(bindings, ["quit", "readText", "nonexistent"])
+        filtered.map(&.name).should eq(["__lune.quit"])
+      end
     end
 
     describe "__lune.clipboardRead" do
