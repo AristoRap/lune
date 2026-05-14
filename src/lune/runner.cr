@@ -41,11 +41,25 @@ module Lune
         bridge.register_bindings(runtime_bindings)
         @app.bridge = bridge
 
-        wv.on_load = @options.on_load if @options.on_load
+        if load_cb = @options.on_load
+          wv.on_load = -> {
+            begin
+              load_cb.call
+            rescue ex
+              Lune.logger.error { "on_load callback failed: #{ex.message}" }
+              Lune.logger.debug(exception: ex) { "on_load callback failed (stacktrace)" }
+            end
+          }
+        end
 
         if nav_cb = @options.on_navigate
           wv.bind("__lune_navigate", Webview::JSProc.new { |args|
-            nav_cb.call(args[0]?.try(&.as_s) || "")
+            begin
+              nav_cb.call(args[0]?.try(&.as_s) || "")
+            rescue ex
+              Lune.logger.error { "on_navigate callback failed: #{ex.message}" }
+              Lune.logger.debug(exception: ex) { "on_navigate callback failed (stacktrace)" }
+            end
             JSON::Any.new(nil)
           })
           wv.init(<<-JS)
