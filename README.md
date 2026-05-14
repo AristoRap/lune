@@ -3,7 +3,13 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Crystal](https://img.shields.io/badge/crystal-%3E%3D%201.20.0-black?logo=crystal)](https://crystal-lang.org)
 
-# <img src="assets/lune-logo.svg" width="120" />
+<div style="width: 100%; background: #0B0D14; border-radius: 12px;">
+  <p align="center">
+    <img src="assets/lune-logo.svg"  />
+  </p>
+</div>
+
+# Lune
 
 Build native desktop apps with Crystal and a web frontend.
 
