@@ -6,6 +6,13 @@
 
 - Clipboard bridge — `readText()` and `writeText(text)` available in JS via `runtime.js`; backed by `pbpaste`/`pbcopy` on macOS, `xclip` on Linux, PowerShell/`clip.exe` on Windows
 - Capability allowlist — declare `capabilities:` in `lune.yml` to restrict which runtime bindings are exposed to JS; omit the key to allow all (default)
+- Website version badge — nav bar now shows the current version linking to GitHub releases; `make patch`/`make minor` keep it in sync
+
+### Fixed
+
+- `bind_deferred` (`src/lune/webview.cr`) now wraps `LibWebView.bind` in `check_error` — a duplicate or failed binding name raises `Webview::Error` immediately rather than silently installing nothing and leaving the JS promise permanently pending
+- `@@deferred_boxes << boxed` moved to after `check_error` — on a failed bind the GC-protection box is never stored, so it is collected instead of accumulating as an unreachable entry
+- `on_load` and `on_navigate` user callbacks in `runner.cr` are now wrapped in `begin/rescue` before being passed into the webview's C bind callback — an exception from user code can no longer cross the C FFI boundary (undefined behaviour); failures are logged at `error` level with a `debug`-level stacktrace, matching the pattern in `bridge.cr`
 
 ## [0.3.4] - 2026-05-14
 
