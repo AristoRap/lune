@@ -48,8 +48,8 @@ jobs:
 
       - name: Run all specs
         if: ${{ !matrix.compile_check_only }}
-        run: crystal spec ${{ matrix.spec_flags }}
+        run: crystal spec -D lune_native_test_mock ${{ matrix.spec_flags }}
 
       - name: Type-check (Windows — webview linking not supported in CI)
         if: ${{ matrix.compile_check_only }}
-        run: crystal build src/lune_cli.cr ${{ matrix.spec_flags }} --no-codegen
+        run: crystal build src/lune_cli.cr -D lune_native_test_mock ${{ matrix.spec_flags }} --no-codegen
