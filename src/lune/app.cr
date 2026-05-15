@@ -35,6 +35,10 @@ module Lune
       @bindings << add_binding(namespace, method, args, return_type, async, runtime, &block)
     end
 
+    def register(binding : Binding)
+      @bindings << binding
+    end
+
     # ----------------------------
     # Events
     # ----------------------------

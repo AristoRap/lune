@@ -34,7 +34,7 @@ module Lune
 
         def initialize(
           @on_read : -> String = DEFAULT_READ,
-          @on_write : String -> Nil = DEFAULT_WRITE
+          @on_write : String -> Nil = DEFAULT_WRITE,
         )
         end
 
@@ -44,30 +44,29 @@ module Lune
         end
 
         private def read(app : Lune::App)
-          app.bind(
+          app.register(Lune::RuntimeBinding.new(
             namespace: "runtime",
             method: "__lune.clipboardRead",
             args: [] of String,
             return_type: "String",
+            callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(@on_read.call) },
             async: true,
-            runtime: true
-          ) do |_args|
-            JSON::Any.new(@on_read.call)
-          end
+          ))
         end
 
         private def write(app : Lune::App)
-          app.bind(
+          app.register(Lune::RuntimeBinding.new(
             namespace: "runtime",
             method: "__lune.clipboardWrite",
             args: ["String"],
             return_type: "Nil",
+            callback: ->(args : Array(JSON::Any)) {
+              @on_write.call(args[0].as_s)
+              JSON::Any.new(nil)
+            },
             async: true,
-            runtime: true
-          ) do |args|
-            @on_write.call(args[0].as_s)
-            JSON::Any.new(nil)
-          end
+            arg_names: ["text"],
+          ))
         end
       end
     end

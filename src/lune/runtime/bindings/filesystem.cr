@@ -14,63 +14,53 @@ module Lune
         end
 
         private def home_dir(app : Lune::App)
-          app.bind(
+          app.register(Lune::RuntimeBinding.new(
             namespace: "runtime",
             method: "__lune.homeDir",
             args: [] of String,
             return_type: "String",
-            async: false,
-            runtime: true
-          ) do |_args|
-            JSON::Any.new(Path.home.to_s)
-          end
+            callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(Path.home.to_s) },
+          ))
         end
 
         private def temp_dir(app : Lune::App)
-          app.bind(
+          app.register(Lune::RuntimeBinding.new(
             namespace: "runtime",
             method: "__lune.tempDir",
             args: [] of String,
             return_type: "String",
-            async: false,
-            runtime: true
-          ) do |_args|
-            JSON::Any.new(Dir.tempdir)
-          end
+            callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(Dir.tempdir) },
+          ))
         end
 
         private def downloads_dir(app : Lune::App)
-          app.bind(
+          app.register(Lune::RuntimeBinding.new(
             namespace: "runtime",
             method: "__lune.downloadsDir",
             args: [] of String,
             return_type: "String",
-            async: false,
-            runtime: true
-          ) do |_args|
-            JSON::Any.new(Path.home.join("Downloads").to_s)
-          end
+            callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(Path.home.join("Downloads").to_s) },
+          ))
         end
 
         private def app_data_dir(app : Lune::App)
-          app.bind(
+          app.register(Lune::RuntimeBinding.new(
             namespace: "runtime",
             method: "__lune.appDataDir",
             args: [] of String,
             return_type: "String",
-            async: false,
-            runtime: true
-          ) do |_args|
-            path =
-              {% if flag?(:darwin) %}
-                Path.home.join("Library", "Application Support").to_s
-              {% elsif flag?(:win32) %}
-                ENV["APPDATA"]? || Path.home.to_s
-              {% else %}
-                ENV["XDG_DATA_HOME"]? || Path.home.join(".local", "share").to_s
-              {% end %}
-            JSON::Any.new(path)
-          end
+            callback: ->(_args : Array(JSON::Any)) {
+              path =
+                {% if flag?(:darwin) %}
+                  Path.home.join("Library", "Application Support").to_s
+                {% elsif flag?(:win32) %}
+                  ENV["APPDATA"]? || Path.home.to_s
+                {% else %}
+                  ENV["XDG_DATA_HOME"]? || Path.home.join(".local", "share").to_s
+                {% end %}
+              JSON::Any.new(path)
+            },
+          ))
         end
       end
     end

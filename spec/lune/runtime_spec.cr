@@ -1,16 +1,22 @@
 require "../spec_helper"
 require "file_utils"
 
+private def runtime_bindings
+  app = Lune::App.new
+  Lune::Runtime::Bindings.register_stubs(app)
+  app.bindings.select(&.internal?)
+end
+
 describe Lune::Runtime do
   it "generates runtime transport code" do
-    js = Lune::Runtime::Generator.generate_runtime_js
+    js = Lune::Runtime::Generator.generate_runtime_js([] of Lune::Binding)
 
     js.includes?("__lune").should be_true
     js.includes?("export const __lune").should be_true
   end
 
   it "exports on, once, off event bus helpers" do
-    js = Lune::Runtime::Generator.generate_runtime_js
+    js = Lune::Runtime::Generator.generate_runtime_js([] of Lune::Binding)
 
     js.includes?("export function on").should be_true
     js.includes?("export function once").should be_true
@@ -20,7 +26,7 @@ describe Lune::Runtime do
   end
 
   it "exports quit, openURL, environment runtime functions" do
-    js = Lune::Runtime::Generator.generate_runtime_js
+    js = Lune::Runtime::Generator.generate_runtime_js(runtime_bindings)
 
     js.includes?("export function quit").should be_true
     js.includes?("export function openURL").should be_true
@@ -31,7 +37,7 @@ describe Lune::Runtime do
   end
 
   it "generates runtime.d.ts with typed declarations" do
-    dts = Lune::Runtime::Generator.generate_runtime_dts
+    dts = Lune::Runtime::Generator.generate_runtime_dts(runtime_bindings)
 
     dts.includes?("LuneEnvironment").should be_true
     dts.includes?("export declare function quit").should be_true
