@@ -215,9 +215,9 @@ When the window closes, the current frame is written to a JSON file. On the next
 
 The state file is stored under the app's config directory, derived from the window `title`:
 
-| Platform | Path |
-| -------- | ---- |
-| macOS    | `~/Library/Application Support/<appname>/window.json` |
+| Platform | Path                                                                           |
+| -------- | ------------------------------------------------------------------------------ |
+| macOS    | `~/Library/Application Support/<appname>/window.json`                          |
 | Linux    | `$XDG_CONFIG_HOME/<appname>/window.json` (falls back to `~/.config/<appname>`) |
 
 `<appname>` is derived from `opts.title` — lowercased, spaces replaced with hyphens, non-alphanumeric characters removed. For example, `"My App"` → `my-app`.
