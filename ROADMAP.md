@@ -2,7 +2,6 @@
 
 ## Up next — no C bindings required
 
-- [ ] Window controls at runtime from JS — `minimize()`, `maximize()`, `setTitle()`, `setSize()`, `center()` as runtime bindings via `wv.dispatch` + native handles
 - [x] Clipboard bridge — `clipboardRead()` / `clipboardWrite()` from JS via platform commands (`pbpaste`/`pbcopy`, `xclip`, `clip`)
 - [x] App paths bridge — `appDataDir()`, `homeDir()`, `downloadsDir()` etc. from JS via Crystal `Path.home` and platform conventions
 - [x] `lune.yml` window defaults — declare `title`, `width`, `height`, `resizable` in config so apps don't repeat them in the opts block
@@ -25,16 +24,18 @@
 - [x] Dev error overlay — when `lune dev` compilation fails, the CLI spawns a dedicated error window showing the Crystal compiler output; closes on next successful build
 - [x] Structured binding errors — define an error envelope with a `code` field so JS can branch on `e.code` instead of parsing the message string
 
-## Needs C bindings — post-v0.3
+## v0.4 — Native platform features (built-in)
 
-These require native platform APIs beyond what `webview.h` exposes.
-
-- [ ] Native file dialogs (NSOpenPanel / GetOpenFileName / GTK)
-- [ ] System tray
-- [ ] Native menus
-- [ ] OS notifications
+- [x] Window controls — `minimize()`, `maximize()`, `center()`, `setTitle()`, `setSize()`
+- [x] Native file dialogs — `openFile()`, `saveFile()` via NSOpenPanel / NSSavePanel (macOS), GTK3 (Linux)
+- [x] System tray — show/hide/swap icon + click/menu callbacks → JS events
+- [x] OS notifications — `notify(title, body)`; macOS falls back to osascript when running unbundled
+- [x] Screen info — `screenInfo()` returns width, height, scale factor
+- [x] macOS support
+- [x] Linux support
+- [ ] Windows support
+- [ ] Native menus — context menus and menu bar menus
 - [ ] Multiple windows
-- [ ] Screen info / DPI queries
 
 ## Random — no timeline
 

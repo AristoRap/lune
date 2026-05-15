@@ -5,11 +5,17 @@ module Lune
 
   module Bindable
     include Installable
+    getter app : Lune::App
+
+    def initialize
+      @app = Lune::App.new
+    end
 
     macro included
       def install(app : Lune::App)
         {% verbatim do %}
           {% begin %}
+            @app = app
             {% for m in @type.methods %}
               {% if ann = m.annotation(Lune::Bind) %}
               {% async = ann[:async] && ann[:async].id == "true" ? true : false %}

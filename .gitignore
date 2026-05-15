@@ -5,6 +5,7 @@
 !/bin/lune.cr
 /.shards/
 *.dwarf
+*.o
 /.lune-dev
 /shard.lock
 /frontend/*

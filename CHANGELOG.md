@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.4.0] - 2026-05-15
+
+### Added
+
+- Native platform features are now built into Lune — window controls, file dialogs, system tray, notifications, and screen info ship out of the box with no extra shard required
+- macOS native bindings via ObjC (`NSWindow`, `NSOpenPanel`, `NSSavePanel`, `UNUserNotificationCenter`, `NSStatusBar`, `NSScreen`)
+- Linux native bindings via GTK3/libnotify (`GtkWindow`, `GtkFileChooserDialog`, `GtkStatusIcon`, `libnotify`, `GdkMonitor`)
+- `minimize()`, `maximize()`, `center()`, `setTitle(title)`, `setSize(width, height)` — native window controls from JS
+- `openFile(prompt)`, `saveFile(prompt, defaultName)` — native file picker and save dialogs
+- `trayShow(iconPath)`, `trayHide()`, `traySetIcon(path)`, `traySetMenu(items)` — system tray icon and context menu
+- `notify(title, body)` — native OS notifications; macOS falls back to `osascript` for unbundled binaries
+- `screenInfo()` — returns primary display width, height, and pixel scale factor
+- `opts.on_tray_click` and `opts.on_menu_click` added to `Lune::Options` for wiring tray events from Crystal
+- All native bindings auto-registered by `Runner` — no manual `on_window_ready` wiring required
+- Native JS functions exported from `runtime.js`
+- 45 new specs for native bindings, all passing via `lune_native_test_mock` compile flag
+- `@app` injected into `Lune::Bindable` at install time — call `@app.emit` directly from any bound method without constructor arguments
+
 ## [0.3.6] - 2026-05-14
 
 ### Fixed

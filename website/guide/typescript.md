@@ -122,16 +122,16 @@ Then rename your entry point from `.js` to `.ts` and update `vite.config.js` to 
 ## Importing with types
 
 ```ts
-import api from '../lunejs/app/App.js'
-import { on, environment } from '../lunejs/runtime/runtime.js'
-import type { LuneError } from '../lunejs/runtime/runtime.js'
+import api from "../lunejs/app/App.js";
+import { on, environment } from "../lunejs/runtime/runtime.js";
+import type { LuneError } from "../lunejs/runtime/runtime.js";
 
 // Fully typed — autocomplete works here
-const result = await api.FileModule.Read('/tmp/hello.txt')
+const result = await api.FileModule.Read("/tmp/hello.txt");
 
 // environment() returns LuneEnvironment
-const env = await environment()
-if (env.os === 'darwin') {
+const env = await environment();
+if (env.os === "darwin") {
   // macOS-specific code
 }
 ```
@@ -144,14 +144,14 @@ Events carry `unknown` data by default. Cast or validate at the call site:
 
 ```ts
 interface ProgressEvent {
-  done: number
-  total: number
+  done: number;
+  total: number;
 }
 
-on('progress', (data) => {
-  const { done, total } = data as ProgressEvent
-  updateProgressBar(done / total)
-})
+on("progress", (data) => {
+  const { done, total } = data as ProgressEvent;
+  updateProgressBar(done / total);
+});
 ```
 
 ---
@@ -161,17 +161,17 @@ on('progress', (data) => {
 Use the `LuneError` interface from `runtime.d.ts`:
 
 ```ts
-import type { LuneError } from '../lunejs/runtime/runtime.js'
+import type { LuneError } from "../lunejs/runtime/runtime.js";
 
 function isLuneError(e: unknown): e is LuneError {
-  return typeof e === 'object' && e !== null && 'code' in e
+  return typeof e === "object" && e !== null && "code" in e;
 }
 
 try {
-  await api.FileModule.Read('/nonexistent')
+  await api.FileModule.Read("/nonexistent");
 } catch (e) {
   if (isLuneError(e)) {
-    console.error(`[${e.code}] ${e.error}`)
+    console.error(`[${e.code}] ${e.error}`);
   }
 }
 ```

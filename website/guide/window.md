@@ -38,8 +38,6 @@ end
 
 ---
 
-## All options
-
 ### `title`
 
 **Type:** `String` — **Default:** `"Lune"`
@@ -123,6 +121,22 @@ opts.debug = {{ flag?(:debug) }}
 
 ## Lifecycle callbacks
 
+### `on_window_ready`
+
+**Type:** `(Void* -> Nil)?` — **Default:** `nil`
+
+Called once immediately after the native window is created, before any page navigation begins. The webview exists and bindings are registered, but no content has loaded yet. Use this for one-time Crystal-side setup that must happen before the first page render. The callback receives the native window handle as a `Void*`.
+
+```crystal
+opts.on_window_ready = ->(_handle : Void*) {
+  puts "Window open, about to navigate"
+}
+```
+
+> **vs `on_load`:** `on_window_ready` fires on the Crystal side as soon as the native window is alive. `on_load` fires later, after the frontend page's `load` event — i.e. once the DOM is fully ready. Use `on_window_ready` for setup work that should not wait for the frontend; use `on_load` to interact with the frontend.
+
+---
+
 ### `on_load`
 
 **Type:** `(-> Nil)?` — **Default:** `nil`
@@ -167,6 +181,30 @@ opts.on_close = -> {
 
 ---
 
+### `on_tray_click`
+
+**Type:** `(-> Nil)?` — **Default:** `nil`
+
+Called when the system tray icon is clicked and no context menu is attached. See [Runtime Functions](./runtime#system-tray) for the full tray API.
+
+```crystal
+opts.on_tray_click = -> { app.emit("trayClick", nil) }
+```
+
+---
+
+### `on_menu_click`
+
+**Type:** `(String -> Nil)?` — **Default:** `nil`
+
+Called when a tray context menu item is selected. Receives the item's `id`. See [Runtime Functions](./runtime#system-tray) for the full tray API.
+
+```crystal
+opts.on_menu_click = ->(id : String) { app.emit("trayMenuClick", id) }
+```
+
+---
+
 ## Full example
 
 ```crystal
@@ -179,8 +217,16 @@ Lune.run(app) do |opts|
   opts.resizable  = true
   opts.debug      = {{ flag?(:debug) }}
 
+  opts.on_window_ready = ->(_handle : Void*) {
+    puts "Window created"
+  }
+
   opts.on_load = -> {
     app.emit("ready", nil)
+  }
+
+  opts.on_navigate = ->(url : String) {
+    puts "Navigated to: #{url}"
   }
 
   opts.on_close = -> {

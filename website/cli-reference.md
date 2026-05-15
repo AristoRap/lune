@@ -2,7 +2,7 @@
 
 The `lune` CLI manages your app's full lifecycle — scaffolding, development, building, and running.
 
-After `shards install`, the binary is available at `./bin/lune`.
+Install the CLI via a pre-built binary or `make deploy` — see [Getting Started](./getting-started#install-the-cli).
 
 ---
 
@@ -10,8 +10,8 @@ After `shards install`, the binary is available at `./bin/lune`.
 
 These flags are accepted by all commands:
 
-| Flag | Description |
-|------|-------------|
+| Flag      | Description                  |
+| --------- | ---------------------------- |
 | `--debug` | Enable verbose debug logging |
 
 ---
@@ -26,18 +26,18 @@ lune init <APP_NAME> [flags]
 
 **Arguments:**
 
-| Argument | Description |
-|----------|-------------|
+| Argument   | Description                                                                                                                                  |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | `APP_NAME` | Name of the app to create (required). Used as the directory name and Crystal project name. Spaces and slashes are replaced with underscores. |
 
 **Flags:**
 
-| Flag | Short | Default | Description |
-|------|-------|---------|-------------|
-| `--template` | `-t` | `vanilla` | Frontend template to use. Options: `vanilla`, `vue` |
-| `--force` | `-f` | `false` | Delete and reinitialize the app directory from scratch |
-| `--skip-existing` | `-k` | `false` | Skip files that already exist instead of failing |
-| `--skip-install` | `-s` | `false` | Skip running `shards install` and `npm install` after scaffolding |
+| Flag              | Short | Default   | Description                                                       |
+| ----------------- | ----- | --------- | ----------------------------------------------------------------- |
+| `--template`      | `-t`  | `vanilla` | Frontend template to use. Options: `vanilla`, `vue`               |
+| `--force`         | `-f`  | `false`   | Delete and reinitialize the app directory from scratch            |
+| `--skip-existing` | `-k`  | `false`   | Skip files that already exist instead of failing                  |
+| `--skip-install`  | `-s`  | `false`   | Skip running `shards install` and `npm install` after scaffolding |
 
 **Examples:**
 
@@ -75,7 +75,7 @@ Alias: `d`
 **Example:**
 
 ```sh
-./bin/lune dev
+lune dev
 ```
 
 ---
@@ -92,9 +92,9 @@ Alias: `b`
 
 **Flags:**
 
-| Flag | Short | Default | Description |
-|------|-------|---------|-------------|
-| `--release` | `-r` | `false` | Compile with Crystal's `--release` optimizations (slower compile, faster runtime) |
+| Flag        | Short | Default | Description                                                                       |
+| ----------- | ----- | ------- | --------------------------------------------------------------------------------- |
+| `--release` | `-r`  | `false` | Compile with Crystal's `--release` optimizations (slower compile, faster runtime) |
 
 **What it does:**
 
@@ -111,10 +111,10 @@ Alias: `b`
 
 ```sh
 # Development build
-./bin/lune build
+lune build
 
 # Optimized release build
-./bin/lune build --release
+lune build --release
 ```
 
 ---
@@ -155,14 +155,14 @@ lune doctor
 
 Checks for:
 
-| Check | What it verifies |
-|-------|-----------------|
-| `crystal` | Crystal is installed and reports a version |
-| `node` | Node.js is installed |
-| `npm` | npm is installed |
-| `shards` | `shards check` passes (all deps installed) |
+| Check           | What it verifies                                    |
+| --------------- | --------------------------------------------------- |
+| `crystal`       | Crystal is installed and reports a version          |
+| `node`          | Node.js is installed                                |
+| `npm`           | npm is installed                                    |
+| `shards`        | `shards check` passes (all deps installed)          |
 | `frontend deps` | `node_modules` directory exists in the frontend dir |
-| `app entry` | The configured Crystal entry file exists |
+| `app entry`     | The configured Crystal entry file exists            |
 
 **Example output:**
 

@@ -56,7 +56,7 @@ Add it to your `shard.yml`:
 dependencies:
   lune:
     github: AristoRap/lune
-    version: ~> 0.3.6
+    version: ~> 0.4.0
 ```
 
 Then install:
@@ -65,21 +65,14 @@ Then install:
 shards install
 ```
 
-This also installs the `lune` CLI to `./bin/lune`.
-
 ---
 
 ## Create a new app
 
 ```sh
-./bin/lune init my_app
-```
-
-Choose a template when prompted, or pass it directly:
-
-```sh
-./bin/lune init my_app --template vue      # Vue 3 + Vite
-./bin/lune init my_app --template vanilla  # Vanilla JS + Vite
+lune init my_app                          # defaults to vanilla template
+lune init my_app --template vue           # Vue 3 + Vite
+lune init my_app --template vanilla       # Vanilla JS + Vite
 ```
 
 This scaffolds a ready-to-run project:
@@ -103,7 +96,7 @@ my_app/
 
 ```sh
 cd my_app
-./bin/lune dev
+lune dev
 ```
 
 This starts both your Vite dev server and the Crystal backend. The app opens in a native window. Saving frontend files hot-reloads the UI; saving Crystal files triggers a recompile and refresh.
@@ -150,13 +143,13 @@ console.log(message); // "Hello, world!"
 ## Build for production
 
 ```sh
-./bin/lune build
+lune build
 ```
 
 Or with optimizations:
 
 ```sh
-./bin/lune build --release
+lune build --release
 ```
 
 This builds the frontend with Vite, then compiles the Crystal binary with the frontend embedded via the `assets:` argument in your `Lune.run` call. The output is a single self-contained executable in `build/`.

@@ -41,6 +41,25 @@ module Lune
         bridge.register_bindings(runtime_bindings)
         @app.bridge = bridge
 
+        handle = wv.native_handle(Webview::NativeHandleKind::UI_WINDOW)
+
+        native_bindings = Bindings::Native.build(
+          handle,
+          on_tray_click: @options.on_tray_click,
+          on_menu_click: @options.on_menu_click
+        )
+        native_bindings = Bindings::Runtime.filter(native_bindings, @config.capabilities)
+        bridge.register_bindings(native_bindings)
+
+        if window_ready_cb = @options.on_window_ready
+          begin
+            window_ready_cb.call(handle)
+          rescue ex
+            Lune.logger.error { "on_window_ready callback failed: #{ex.message}" }
+            Lune.logger.debug(exception: ex) { "on_window_ready callback failed (stacktrace)" }
+          end
+        end
+
         if load_cb = @options.on_load
           wv.on_load = -> {
             begin

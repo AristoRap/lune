@@ -23,17 +23,17 @@ The payload can be any Crystal value that serializes to JSON — strings, number
 Import `on`, `once`, or `off` from `runtime.js`:
 
 ```js
-import { on, once, off } from '../lunejs/runtime/runtime.js'
+import { on, once, off } from "../lunejs/runtime/runtime.js";
 
 // Persistent listener
-on('status-changed', (status) => {
-  console.log('New status:', status)
-})
+on("status-changed", (status) => {
+  console.log("New status:", status);
+});
 
 // One-shot listener — fires once, then removes itself
-once('connected', () => {
-  showWelcomeMessage()
-})
+once("connected", () => {
+  showWelcomeMessage();
+});
 ```
 
 ---
@@ -41,15 +41,15 @@ once('connected', () => {
 ## Removing listeners
 
 ```js
-const handler = (data) => console.log(data)
+const handler = (data) => console.log(data);
 
-on('tick', handler)
+on("tick", handler);
 
 // Later, remove this specific handler
-off('tick', handler)
+off("tick", handler);
 
 // Remove ALL handlers for this event
-off('tick')
+off("tick");
 ```
 
 ---
@@ -75,12 +75,12 @@ end
 ```
 
 ```js
-on('progress', ({ done, total, path }) => {
-  progressBar.value = done / total
-  statusLabel.textContent = `Processing ${path}...`
-})
+on("progress", ({ done, total, path }) => {
+  progressBar.value = done / total;
+  statusLabel.textContent = `Processing ${path}...`;
+});
 
-await api.Files.ProcessFiles(selectedPaths)
+await api.Files.ProcessFiles(selectedPaths);
 ```
 
 ### Real-time updates
@@ -118,16 +118,16 @@ app.emit("notification", {
 The runtime type declarations are in `runtime.d.ts`. The event callback receives `unknown` by default — cast to your expected type:
 
 ```ts
-import { on } from '../lunejs/runtime/runtime.js'
+import { on } from "../lunejs/runtime/runtime.js";
 
 interface Progress {
-  done: number
-  total: number
-  path: string
+  done: number;
+  total: number;
+  path: string;
 }
 
-on('progress', (data) => {
-  const p = data as Progress
-  console.log(`${p.done}/${p.total}`)
-})
+on("progress", (data) => {
+  const p = data as Progress;
+  console.log(`${p.done}/${p.total}`);
+});
 ```

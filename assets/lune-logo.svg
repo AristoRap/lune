@@ -3,10 +3,10 @@
 
   <!-- Crescent -->
   <circle cx="128" cy="128" r="92" fill="#AAB6FF"/>
-  <circle cx="160" cy="108" r="92" fill="#0B0D14"/>
+  <circle cx="170" cy="100" r="80" fill="#0B0D14"/>
 
   <!-- Wordmark -->
-  <text x="160" y="140"
+  <text x="170" y="130"
         text-anchor="middle"
         font-family="Space Grotesk, Inter, system-ui, sans-serif"
         font-size="46"
@@ -16,3 +16,4 @@
     Lune
   </text>
 </svg>
+

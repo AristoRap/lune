@@ -127,5 +127,13 @@ describe Lune::Options do
       opts.on_load.not_nil!.call
       called.should be_true
     end
+
+    it "accepts an on_window_ready callback and calls it with a Void*" do
+      opts = Lune::Options.new
+      received : Void*? = nil
+      opts.on_window_ready = ->(h : Void*) { received = h; nil }
+      opts.on_window_ready.not_nil!.call(Pointer(Void).null)
+      received.should eq(Pointer(Void).null)
+    end
   end
 end

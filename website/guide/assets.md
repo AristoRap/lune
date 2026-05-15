@@ -51,9 +51,9 @@ Serving over a real `http://` origin — rather than a `file://` URI or inline `
 
 In production (`lune build` / `lune run`), `LUNE_DEV_URL` is not set, so the embedded assets are served.
 
-| Mode | Frontend source |
-|------|----------------|
-| `lune dev` | Vite dev server (`LUNE_DEV_URL`) |
+| Mode                      | Frontend source                      |
+| ------------------------- | ------------------------------------ |
+| `lune dev`                | Vite dev server (`LUNE_DEV_URL`)     |
 | `lune build` / `lune run` | Embedded files via local HTTP server |
 
 You do not need to change any code between dev and production — the same `Lune.run(app, assets: "frontend/dist")` call handles both.
@@ -62,11 +62,14 @@ You do not need to change any code between dev and production — the same `Lune
 
 ## Navigation priority
 
-`Lune.run` resolves the WebView URL using this priority order (first match wins):
+`Lune::Runner` resolves the WebView URL using this priority order (first match wins):
 
-1. **`LUNE_DEV_URL` env var** — set automatically by `lune dev`; points to the Vite dev server
-2. **`assets:`** — directory embedded at compile time, served over a local HTTP server
-3. **`url:` / `html:`** — explicit URL or inline HTML string, used via `Lune::Runner` directly (see [How It Works](./how-it-works))
+1. **`html:`** — inline HTML string passed to `runner.start`
+2. **`url:`** — explicit URL passed to `runner.start`
+3. **`LUNE_DEV_URL` env var** — set automatically by `lune dev`; points to the Vite dev server
+4. **`assets:`** — directory embedded at compile time, served over a local HTTP server
+
+When using the `Lune.run` macro, only LUNE_DEV_URL and `assets:` apply — the macro always calls `runner.start` with no arguments. `html:` and `url:` are only available when using `Lune::Runner` directly (see [How It Works](./how-it-works)).
 
 ---
 
@@ -86,15 +89,15 @@ This means `frontend/dist/` must exist before step 3. If you compile Crystal man
 
 The embedded HTTP server recognises these content types automatically:
 
-| Extension | MIME type |
-|-----------|-----------|
-| `.html` | `text/html; charset=utf-8` |
-| `.js`, `.mjs` | `application/javascript` |
-| `.css` | `text/css` |
-| `.json` | `application/json` |
-| `.png`, `.jpg`, `.gif`, `.webp` | `image/*` |
-| `.svg` | `image/svg+xml` |
-| `.ico` | `image/x-icon` |
-| `.woff`, `.woff2`, `.ttf`, `.eot` | `font/*` |
-| `.map` | `application/json` |
-| anything else | `application/octet-stream` |
+| Extension                         | MIME type                  |
+| --------------------------------- | -------------------------- |
+| `.html`                           | `text/html; charset=utf-8` |
+| `.js`, `.mjs`                     | `application/javascript`   |
+| `.css`                            | `text/css`                 |
+| `.json`                           | `application/json`         |
+| `.png`, `.jpg`, `.gif`, `.webp`   | `image/*`                  |
+| `.svg`                            | `image/svg+xml`            |
+| `.ico`                            | `image/x-icon`             |
+| `.woff`, `.woff2`, `.ttf`, `.eot` | `font/*`                   |
+| `.map`                            | `application/json`         |
+| anything else                     | `application/octet-stream` |

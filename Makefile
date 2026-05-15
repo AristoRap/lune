@@ -19,7 +19,7 @@ setup:
 	shards install
 
 test:
-	crystal spec
+	crystal spec -D lune_native_test_mock
 
 build:
 	$(MAKE) test && shards build

@@ -50,6 +50,17 @@ module Lune
     # Called once when the page's `load` event fires (i.e. the DOM is ready).
     property on_load : (-> Nil)?
 
+    # Called once immediately after the native window is created, before any
+    # page navigation begins. Receives the platform-specific native window
+    # handle (NSWindow* on macOS, GtkWindow* on Linux, HWND on Windows).
+    property on_window_ready : (Void* -> Nil)?
+
+    # Called when the tray icon is clicked (no menu attached).
+    property on_tray_click : (-> Nil)?
+
+    # Called when a tray context menu item is selected. Receives the item id.
+    property on_menu_click : (String -> Nil)?
+
     def initialize
       @title = "Lune"
       @width = 1200
@@ -64,6 +75,9 @@ module Lune
       @on_navigate = nil
       @on_close = nil
       @on_load = nil
+      @on_window_ready = nil
+      @on_tray_click = nil
+      @on_menu_click = nil
     end
 
     def apply(window : Config::Window)

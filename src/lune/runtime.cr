@@ -32,6 +32,24 @@ module Lune
 
       export function clipboardRead()        { return __lune.call("runtime.__lune.clipboardRead"); }
       export function clipboardWrite(text)  { return __lune.call("runtime.__lune.clipboardWrite", text); }
+
+      // Native platform bindings
+      export function minimize()             { return __lune.call("runtime.__lune.minimize"); }
+      export function maximize()             { return __lune.call("runtime.__lune.maximize"); }
+      export function center()               { return __lune.call("runtime.__lune.center"); }
+      export function setTitle(title)        { return __lune.call("runtime.__lune.setTitle", title); }
+      export function setSize(width, height) { return __lune.call("runtime.__lune.setSize", width, height); }
+
+      export function openFile(prompt)           { return __lune.call("runtime.__lune.openFile", prompt); }
+      export function saveFile(prompt, filename) { return __lune.call("runtime.__lune.saveFile", prompt, filename); }
+
+      export function trayShow(iconPath) { return __lune.call("runtime.__lune.trayShow", iconPath); }
+      export function trayHide()         { return __lune.call("runtime.__lune.trayHide"); }
+      export function traySetIcon(path)  { return __lune.call("runtime.__lune.traySetIcon", path); }
+      export function traySetMenu(items) { return __lune.call("runtime.__lune.traySetMenu", JSON.stringify(items)); }
+
+      export function notify(title, body) { return __lune.call("runtime.__lune.notify", title, body); }
+      export function screenInfo()        { return __lune.call("runtime.__lune.screenInfo"); }
       JS
     end
 
@@ -65,6 +83,26 @@ module Lune
 
       export declare function clipboardRead(): Promise<string>;
       export declare function clipboardWrite(text: string): Promise<void>;
+
+      // Native platform bindings
+      export declare function minimize(): Promise<void>;
+      export declare function maximize(): Promise<void>;
+      export declare function center(): Promise<void>;
+      export declare function setTitle(title: string): Promise<void>;
+      export declare function setSize(width: number, height: number): Promise<void>;
+
+      export declare function openFile(prompt: string): Promise<string>;
+      export declare function saveFile(prompt: string, defaultName: string): Promise<string>;
+
+      export declare function trayShow(iconPath: string): Promise<void>;
+      export declare function trayHide(): Promise<void>;
+      export declare function traySetIcon(path: string): Promise<void>;
+      export declare function traySetMenu(items: { id: string; label: string }[]): Promise<void>;
+
+      export declare function notify(title: string, body: string): Promise<void>;
+
+      export interface ScreenInfo { width: number; height: number; scale: number; }
+      export declare function screenInfo(): Promise<ScreenInfo>;
       DTS
     end
 

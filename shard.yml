@@ -1,9 +1,9 @@
 name: lune
-version: 0.3.6
+version: 0.4.0
 description: Build native desktop apps with Crystal and a web frontend.
 
 authors:
-  - Aristotelis Rapai <aristotelisrapai@gmail.com>
+  - Aristotelis Rapai <aristorap.dev@gmail.com>
 
 crystal: ">= 1.20.0"
 

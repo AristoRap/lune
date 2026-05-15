@@ -18,26 +18,57 @@ module LuneCLI
       end
 
       def build_html(error_text : String) : String
-        escaped = error_text
-          .gsub("&", "&amp;")
-          .gsub("<", "&lt;")
-          .gsub(">", "&gt;")
+        escaped = HTML.escape(error_text)
 
         <<-HTML
         <!DOCTYPE html>
         <html>
         <head>
           <meta charset="utf-8">
+
           <style>
-            * { box-sizing: border-box; margin: 0; padding: 0; }
-            body { background: #130a0a; color: #fca5a5; font: 13px/1.6 ui-monospace, "Cascadia Code", monospace; }
-            header { padding: 14px 20px; background: #1f0f0f; border-bottom: 1px solid #3b1515; color: #f87171; font-weight: 600; letter-spacing: .02em; }
-            pre { padding: 18px 20px; white-space: pre-wrap; word-break: break-all; color: #fecaca; }
+            :root {
+              --bg: #0f0f12;
+              --panel: #16161c;
+              --border: #2a2a35;
+              --text: #e5e7eb;
+              --muted: #9ca3af;
+              --error: #f87171;
+            }
+
+            * {
+              box-sizing: border-box;
+            }
+
+            body {
+              margin: 0;
+              background: var(--bg);
+              color: var(--text);
+              font: 13px/1.55 ui-monospace, SFMono-Regular,
+                    Menlo, Consolas, monospace;
+            }
+
+            header {
+              padding: 12px 16px;
+              border-bottom: 1px solid var(--border);
+              background: var(--panel);
+              color: var(--error);
+              font-weight: 600;
+            }
+
+            pre {
+              margin: 0;
+              padding: 16px;
+              white-space: pre-wrap;
+              overflow-wrap: anywhere;
+              tab-size: 2;
+            }
           </style>
         </head>
+
         <body>
-          <header>Crystal compilation error</header>
-          <pre>#{escaped}</pre>
+          <header>Compilation failed</header>
+          <pre><code>#{escaped}</code></pre>
         </body>
         </html>
         HTML

@@ -19,18 +19,10 @@ Lune wraps a native WebView and lets you call Crystal code from JavaScript over 
 
 ## Documentation
 
-Full docs live at the project website (run `npm run docs:dev` locally from the repo):
+Full docs live at the project `website` folder
 
-- [Getting Started](website/getting-started.md)
-- [How It Works](website/guide/how-it-works.md)
-- [Bindings](website/guide/bindings.md)
-- [Assets & Build](website/guide/assets.md)
-- [Error Handling](website/guide/error-handling.md)
-- [Events](website/guide/events.md)
-- [TypeScript](website/guide/typescript.md)
-- [Window Configuration](website/guide/window.md)
-- [CLI Reference](website/cli-reference.md)
-- [Configuration (lune.yml)](website/configuration.md)
+- visit [Lune Docs](https://aristorap.github.io/lune/), or
+- run `npm run docs:dev` locally from the repo (also, `make web`)
 
 ## Quick start
 
@@ -44,10 +36,10 @@ Pre-built CLI binaries are on the [releases page](https://github.com/AristoRap/l
 
 ## Platform support
 
-| Platform | Dev | Build |
-|----------|-----|-------|
-| macOS    | ✅  | ✅    |
-| Linux    | ✅  | ✅    |
+| Platform | Dev                      | Build       |
+| -------- | ------------------------ | ----------- |
+| macOS    | ✅                       | ✅          |
+| Linux    | ✅                       | ✅          |
 | Windows  | ⚠️ requires manual setup | ⚠️ untested |
 
 ### Windows

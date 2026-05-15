@@ -10,8 +10,8 @@ All rejected promises carry an object with two fields:
 
 ```ts
 interface LuneError {
-  code: string   // machine-readable error code
-  error: string  // human-readable message
+  code: string; // machine-readable error code
+  error: string; // human-readable message
 }
 ```
 
@@ -37,10 +37,10 @@ end
 
 ```js
 try {
-  await api.Math.divide(10, 0)
+  await api.Math.divide(10, 0);
 } catch (e) {
-  console.log(e.code)   // "error"
-  console.log(e.error)  // "division by zero"
+  console.log(e.code); // "error"
+  console.log(e.error); // "division by zero"
 }
 ```
 
@@ -79,14 +79,14 @@ In JavaScript, branch on `code`:
 
 ```js
 try {
-  const user = await api.Users.getUser(99)
+  const user = await api.Users.getUser(99);
 } catch (e) {
-  if (e.code === 'not_found') {
-    showNotFoundMessage()
-  } else if (e.code === 'unauthorized') {
-    redirectToLogin()
+  if (e.code === "not_found") {
+    showNotFoundMessage();
+  } else if (e.code === "unauthorized") {
+    redirectToLogin();
   } else {
-    console.error('Unexpected error:', e.error)
+    console.error("Unexpected error:", e.error);
   }
 }
 ```
@@ -98,16 +98,16 @@ try {
 If you are using TypeScript, define a type guard for `LuneError`:
 
 ```ts
-import type { LuneError } from '../lunejs/runtime/runtime.js'
+import type { LuneError } from "../lunejs/runtime/runtime.js";
 
 function isLuneError(e: unknown): e is LuneError {
-  return typeof e === 'object' && e !== null && 'code' in e && 'error' in e
+  return typeof e === "object" && e !== null && "code" in e && "error" in e;
 }
 
 try {
-  await api.Users.getUser(99)
+  await api.Users.getUser(99);
 } catch (e) {
-  if (isLuneError(e) && e.code === 'not_found') {
+  if (isLuneError(e) && e.code === "not_found") {
     // handle
   }
 }

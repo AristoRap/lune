@@ -61,7 +61,7 @@ module Lune
     end
 
     # Ensure bridge was injected before use
-    private def with_bridge
+    def with_bridge
       @bridge.not_nil!
     end
 

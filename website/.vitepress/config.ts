@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitepress'
 
-const version = '0.3.6'
+const version = '0.4.0'
 
 export default defineConfig({
   title: 'Lune',
@@ -8,7 +8,7 @@ export default defineConfig({
   base: '/lune/',
   cleanUrls: true,
   themeConfig: {
-    logo: '/logo.svg',
+    logo: '/lune.svg',
     nav: [
       { text: `v${version}`, link: 'https://github.com/AristoRap/lune/releases' },
       { text: 'Guide', link: '/getting-started' },

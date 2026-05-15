@@ -83,10 +83,10 @@ All binding calls return a `Promise` on the JavaScript side. Sync Crystal method
 
 Lune runs in two modes:
 
-| Mode | Trigger | JS files |
-|------|---------|----------|
-| Dev | `lune dev` startup | Written to `frontend/lunejs/` before dev server starts |
-| Build | `lune build` → pre-pass | Crystal binary runs with `-Dbuild_mode`, writes files, exits, then Vite builds |
+| Mode  | Trigger                 | JS files                                                                                                     |
+| ----- | ----------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Dev   | `lune dev` startup      | Written to `frontend/lunejs/` by the Crystal app after the dev server is ready, before the WebView navigates |
+| Build | `lune build` → pre-pass | Crystal binary runs with `-Dbuild_mode`, writes files, exits, then Vite builds                               |
 
 The generated files live at:
 
@@ -135,6 +135,7 @@ runner.start(html: "<h1>Hello</h1>")
 ```
 
 `runner.start` accepts:
+
 - `html:` — render an inline HTML string (useful for tests and simple apps)
 - `url:` — navigate to an explicit URL
 

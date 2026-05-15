@@ -36,10 +36,10 @@ app.install(MathModule.new)
 In JavaScript:
 
 ```js
-import api from '../lunejs/app/App.js'
+import api from "../lunejs/app/App.js";
 
-const result = await api.MathModule.Add(2, 3)    // 5
-const upper  = await api.MathModule.ToUpper('hello')  // "HELLO"
+const result = await api.MathModule.Add(2, 3); // 5
+const upper = await api.MathModule.ToUpper("hello"); // "HELLO"
 ```
 
 All binding calls return a `Promise`, regardless of whether the Crystal method is synchronous.
@@ -50,10 +50,10 @@ All binding calls return a `Promise`, regardless of whether the Crystal method i
 
 Crystal methods use `snake_case`. Lune converts them to `PascalCase` (upper camel case) using Crystal's built-in `camelcase`:
 
-| Crystal | JavaScript |
-|---------|------------|
-| `greet` | `Greet` |
-| `slow_echo` | `SlowEcho` |
+| Crystal         | JavaScript    |
+| --------------- | ------------- |
+| `greet`         | `Greet`       |
+| `slow_echo`     | `SlowEcho`    |
 | `get_user_name` | `GetUserName` |
 
 ---
@@ -74,7 +74,7 @@ end
 ```
 
 ```js
-await api.Database.Queries.FindUser(42)
+await api.Database.Queries.FindUser(42);
 ```
 
 ---
@@ -83,15 +83,15 @@ await api.Database.Queries.FindUser(42)
 
 Lune maps Crystal types to TypeScript types for the generated `.d.ts` file:
 
-| Crystal | TypeScript |
-|---------|------------|
-| `String` | `string` |
-| `Bool` | `boolean` |
-| `Int32`, `Int64`, `Float32`, `Float64` | `number` |
-| `Nil` | `void` |
-| `Array` | `any[]` |
-| `Hash` | `Record<string, any>` |
-| Custom struct/class | `Record<string, any>` |
+| Crystal                                | TypeScript            |
+| -------------------------------------- | --------------------- |
+| `String`                               | `string`              |
+| `Bool`                                 | `boolean`             |
+| `Int32`, `Int64`, `Float32`, `Float64` | `number`              |
+| `Nil`                                  | `void`                |
+| `Array`                                | `any[]`               |
+| `Hash`                                 | `Record<string, any>` |
+| Custom struct/class                    | `Record<string, any>` |
 
 Custom types must be JSON-serializable. Add `include JSON::Serializable` to your structs:
 
@@ -112,6 +112,28 @@ class UserModule
   end
 end
 ```
+
+---
+
+## Emitting events from a binding
+
+Every class that includes `Lune::Bindable` gets an `@app` instance variable injected automatically when `app.install` is called. Use it to push events back to the frontend from inside a bound method:
+
+```crystal
+class ProcessModule
+  include Lune::Bindable
+
+  @[Lune::Bind(async: true)]
+  def run(paths : Array(String)) : Nil
+    paths.each_with_index do |path, i|
+      do_work(path)
+      @app.emit("progress", {"done" => i + 1, "total" => paths.size})
+    end
+  end
+end
+```
+
+No constructor argument needed — `@app` is set by the framework at install time. You can call `@app.emit` anywhere in the class, including background fibers spawned from a binding.
 
 ---
 
@@ -139,18 +161,18 @@ From JavaScript the call is identical — it still returns a `Promise`. The diff
 The default export is `api`, an object containing all registered namespaces:
 
 ```js
-import api from '../lunejs/app/App.js'
+import api from "../lunejs/app/App.js";
 
-await api.GreetModule.Greet('world')
+await api.GreetModule.Greet("world");
 ```
 
 Named exports are also available for each top-level namespace, which can be more convenient:
 
 ```js
-import { GreetModule, MathModule } from '../lunejs/app/App.js'
+import { GreetModule, MathModule } from "../lunejs/app/App.js";
 
-await GreetModule.Greet('world')
-await MathModule.Add(1, 2)
+await GreetModule.Greet("world");
+await MathModule.Add(1, 2);
 ```
 
 Both import styles refer to the same underlying stubs.
