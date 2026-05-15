@@ -8,7 +8,7 @@ require "./lune/bindings/*"
 require "./lune/webview"
 require "./lune/error"
 require "./lune/bridge"
-require "./lune/runtime"
+require "./lune/runtime/generator"
 require "./lune/installable"
 require "./lune/bindable"
 require "./lune/app"
@@ -45,7 +45,7 @@ module Lune
       ::Lune.logger.info { "Running in build mode" }
       appl = {{ app }}
       lunejs_dir = File.join(ENV.fetch(Lune::ENV_FRONTEND_DIR, Lune::DEFAULT_FRONTEND_DIR), Lune::LUNEJS_SUBDIR)
-      ::Lune::Runtime.write_js(appl.bindings, lunejs_dir)
+      ::Lune::Runtime::Generator.write_js(appl.bindings, lunejs_dir)
     {% else %}
       runner = ::Lune::Runner.new({{ app }}) do |opts|
         {% if block %}

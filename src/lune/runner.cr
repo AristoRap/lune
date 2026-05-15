@@ -139,7 +139,7 @@ module Lune
         elsif u = url
           wv.navigate(u)
         elsif dev_url = ENV[Lune::ENV_DEV_URL]?
-          Lune::Runtime.write_js(@app.bindings, @lunejs_dir)
+          Lune::Runtime::Generator.write_js(@app.bindings, @lunejs_dir)
           wv.navigate(dev_url)
         elsif !Assets.empty?
           s = AssetServer.new

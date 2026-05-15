@@ -27,7 +27,7 @@ describe "Race checks" do
         end
 
         40.times do
-          js = Lune::Runtime.generate_app_js(bindings)
+          js = Lune::Runtime::Generator.generate_app_js(bindings)
           generated.send(js)
         end
       end
@@ -52,7 +52,7 @@ describe "Race checks" do
           )
         end
 
-        app_js == Lune::Runtime.generate_app_js(expected_bindings)
+        app_js == Lune::Runtime::Generator.generate_app_js(expected_bindings)
       end
 
       coherent.should be_true

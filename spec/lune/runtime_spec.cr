@@ -3,14 +3,14 @@ require "file_utils"
 
 describe Lune::Runtime do
   it "generates runtime transport code" do
-    js = Lune::Runtime.generate_runtime_js
+    js = Lune::Runtime::Generator.generate_runtime_js
 
     js.includes?("__lune").should be_true
     js.includes?("export const __lune").should be_true
   end
 
   it "exports on, once, off event bus helpers" do
-    js = Lune::Runtime.generate_runtime_js
+    js = Lune::Runtime::Generator.generate_runtime_js
 
     js.includes?("export function on").should be_true
     js.includes?("export function once").should be_true
@@ -20,7 +20,7 @@ describe Lune::Runtime do
   end
 
   it "exports quit, openURL, environment runtime functions" do
-    js = Lune::Runtime.generate_runtime_js
+    js = Lune::Runtime::Generator.generate_runtime_js
 
     js.includes?("export function quit").should be_true
     js.includes?("export function openURL").should be_true
@@ -31,7 +31,7 @@ describe Lune::Runtime do
   end
 
   it "generates runtime.d.ts with typed declarations" do
-    dts = Lune::Runtime.generate_runtime_dts
+    dts = Lune::Runtime::Generator.generate_runtime_dts
 
     dts.includes?("LuneEnvironment").should be_true
     dts.includes?("export declare function quit").should be_true
@@ -64,7 +64,7 @@ describe Lune::Runtime do
       ),
     ]
 
-    dts = Lune::Runtime.generate_app_dts(bindings)
+    dts = Lune::Runtime::Generator.generate_app_dts(bindings)
 
     dts.includes?("export interface alpha").should be_true
     dts.includes?("export interface counter").should be_true
@@ -89,7 +89,7 @@ describe Lune::Runtime do
       ),
     ]
 
-    dts = Lune::Runtime.generate_app_dts(bindings)
+    dts = Lune::Runtime::Generator.generate_app_dts(bindings)
 
     dts.includes?("arg0: Record<string, any>").should be_true
   end
@@ -110,7 +110,7 @@ describe Lune::Runtime do
         ),
       ]
 
-      Lune::Runtime.write_js(bindings, lunejs_dir)
+      Lune::Runtime::Generator.write_js(bindings, lunejs_dir)
 
       File.exists?(File.join(lunejs_dir, "runtime", "runtime.d.ts")).should be_true
       File.exists?(File.join(lunejs_dir, "app", "App.d.ts")).should be_true
@@ -139,7 +139,7 @@ describe Lune::Runtime do
       ),
     ]
 
-    js = Lune::Runtime.generate_app_js(bindings)
+    js = Lune::Runtime::Generator.generate_app_js(bindings)
 
     js.includes?("import { __lune }").should be_true
     js.includes?("return __lune.call(").should be_true
@@ -172,7 +172,7 @@ describe Lune::Runtime do
       ),
     ]
 
-    js = Lune::Runtime.generate_app_js(bindings)
+    js = Lune::Runtime::Generator.generate_app_js(bindings)
 
     js.includes?("export const api").should be_true
     js.includes?("export default api").should be_true
@@ -181,7 +181,7 @@ describe Lune::Runtime do
   end
 
   it "generates app API code even with no bindings" do
-    js = Lune::Runtime.generate_app_js([] of Lune::BindingDef)
+    js = Lune::Runtime::Generator.generate_app_js([] of Lune::BindingDef)
 
     js.includes?("export const api").should be_true
     js.includes?("export default api").should be_true
@@ -211,7 +211,7 @@ describe Lune::Runtime do
 
     with_tempdir do |tmpdir|
       Dir.cd(tmpdir) do
-        Lune::Runtime.write_js(bindings)
+        Lune::Runtime::Generator.write_js(bindings)
 
         app_path = File.join("frontend", "lunejs", "app", "App.js")
         runtime_path = File.join("frontend", "lunejs", "runtime", "runtime.js")
@@ -247,7 +247,7 @@ describe Lune::Runtime do
         ),
       ]
 
-      Lune::Runtime.write_js(bindings, lunejs_dir)
+      Lune::Runtime::Generator.write_js(bindings, lunejs_dir)
 
       app_path = File.join(lunejs_dir, "app", "App.js")
       runtime_path = File.join(lunejs_dir, "runtime", "runtime.js")
@@ -262,7 +262,7 @@ describe Lune::Runtime do
     with_tempdir do |tmpdir|
       lunejs_dir = File.join(tmpdir, "lunejs")
 
-      Lune::Runtime.write_js([
+      Lune::Runtime::Generator.write_js([
         Lune::BindingDef.new(
           name: "ping",
           namespace: "alpha",
@@ -279,7 +279,7 @@ describe Lune::Runtime do
 
       sleep 100.milliseconds
 
-      Lune::Runtime.write_js([
+      Lune::Runtime::Generator.write_js([
         Lune::BindingDef.new(
           name: "ping",
           namespace: "alpha",
@@ -300,7 +300,7 @@ describe Lune::Runtime do
     with_tempdir do |tmpdir|
       lunejs_dir = File.join(tmpdir, "lunejs")
 
-      Lune::Runtime.write_js([
+      Lune::Runtime::Generator.write_js([
         Lune::BindingDef.new(
           name: "ping",
           namespace: "alpha",
@@ -317,7 +317,7 @@ describe Lune::Runtime do
 
       sleep 100.milliseconds
 
-      Lune::Runtime.write_js([
+      Lune::Runtime::Generator.write_js([
         Lune::BindingDef.new(
           name: "ping",
           namespace: "alpha",
