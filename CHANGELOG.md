@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.4.1] - 2026-05-15
+
+### Changed
+
+- All built-in capabilities (lifecycle, filesystem, clipboard, window controls, dialogs, tray, notifications, screen) are now implemented as `Lune::Installable` classes — the same interface used by user modules. `Bindings::Native.build` and `Bindings::Runtime.build` factory methods are gone.
+- `app.bind` parameter renamed: `name:` → `method:` for consistency with `Lune::Binding`
+- `Lune::BindingDef` renamed to `Lune::Binding`
+
+---
+
 ## [0.4.0] - 2026-05-15
 
 ### Added
