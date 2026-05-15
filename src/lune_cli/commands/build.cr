@@ -27,7 +27,7 @@ module LuneCLI
           output_path = output_path_for(config.app_entry)
 
           Lune.logger.info { "Building frontend assets..." }
-          success = run(frontend_dir: config.frontend.dir, app_entry: config.app_entry, output_path: output_path, release: release, build_cmd: config.frontend.build || DEFAULT_BUILD_CMD)
+          success = run(frontend_dir: config.frontend.dir, app_entry: config.app_entry, output_path: output_path, release: release, build_cmd: config.frontend.build || DEFAULT_BUILD_CMD, icon: config.icon)
 
           if success
             Lune.logger.info { "Built app: #{output_path}" }
@@ -55,7 +55,7 @@ module LuneCLI
         nil
       end
 
-      def run(frontend_dir : String, app_entry : String, output_path : String, release : Bool = false, build_cmd : String = DEFAULT_BUILD_CMD) : Bool
+      def run(frontend_dir : String, app_entry : String, output_path : String, release : Bool = false, build_cmd : String = DEFAULT_BUILD_CMD, icon : String? = nil) : Bool
         LuneCLI::Generator.generate_bindings(app_entry, frontend_dir)
 
         build_parts = build_cmd.split(' ', remove_empty: true)
@@ -86,7 +86,7 @@ module LuneCLI
         return false unless app_status.success?
 
         File.delete?("#{compiled_output_path}.dwarf")
-        finalize_output(app_entry, output_path)
+        finalize_output(app_entry, output_path, icon)
         true
       end
 
@@ -112,15 +112,33 @@ module LuneCLI
         {% end %}
       end
 
-      private def finalize_output(app_entry : String, output_path : String) : Nil
+      private def finalize_output(app_entry : String, output_path : String, icon : String? = nil) : Nil
         {% if flag?(:darwin) %}
+          icon_name = nil
+          if src = icon
+            if File.exists?(src)
+              icon_name = File.basename(src)
+              FileUtils.cp(src, File.join(output_path, "Contents", "Resources", icon_name))
+            else
+              Lune.logger.warn { "Icon file not found: #{src}" }
+            end
+          end
           plist_path = File.join(output_path, "Contents", "Info.plist")
-          File.write(plist_path, info_plist_for(app_entry))
+          File.write(plist_path, info_plist_for(app_entry, icon_name))
+        {% elsif flag?(:linux) %}
+          if src = icon
+            if File.exists?(src)
+              FileUtils.cp(src, File.join(File.dirname(output_path), File.basename(src)))
+            else
+              Lune.logger.warn { "Icon file not found: #{src}" }
+            end
+          end
         {% end %}
       end
 
-      private def info_plist_for(app_entry : String) : String
+      private def info_plist_for(app_entry : String, icon_name : String? = nil) : String
         app_name = app_name_for(app_entry)
+        icon_entry = icon_name ? "\n  <key>CFBundleIconFile</key>\n  <string>#{icon_name}</string>" : ""
         <<-XML
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -143,7 +161,7 @@ module LuneCLI
           <key>CFBundleVersion</key>
           <string>#{Lune::VERSION}</string>
           <key>NSHighResolutionCapable</key>
-          <true/>
+          <true/>#{icon_entry}
         </dict>
         </plist>
         XML
