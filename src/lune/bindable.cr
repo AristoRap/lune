@@ -5,11 +5,7 @@ module Lune
 
   module Bindable
     include Installable
-    getter app : Lune::App
-
-    def initialize
-      @app = Lune::App.new
-    end
+    getter app : Lune::App = Lune::App.new
 
     macro included
       def install(app : Lune::App)
