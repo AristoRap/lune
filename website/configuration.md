@@ -68,10 +68,10 @@ Path to the app icon asset, relative to the project root. Used by `lune build` t
 icon: assets/icon.icns
 ```
 
-| Platform | Expected format | Where it ends up |
-| -------- | --------------- | ---------------- |
+| Platform | Expected format | Where it ends up                                                                            |
+| -------- | --------------- | ------------------------------------------------------------------------------------------- |
 | macOS    | `.icns`         | `MyApp.app/Contents/Resources/<filename>`, registered as `CFBundleIconFile` in `Info.plist` |
-| Linux    | `.png`          | Copied next to the binary |
+| Linux    | `.png`          | Copied next to the binary                                                                   |
 
 If the file is missing at build time, a warning is logged and the build continues without an icon. On macOS, `iconutil` (ships with Xcode) converts a `.iconset` folder to `.icns`:
 
