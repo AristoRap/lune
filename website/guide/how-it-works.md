@@ -58,6 +58,8 @@ The `Lune::Bindable` module uses Crystal macros to inspect annotated methods at 
 
 When you call `app.install(MyModule.new)`, the generated `install` method fires. Each binding is registered with the `Bridge`, which wires a WebView binding callback — a JavaScript-callable function backed by native code.
 
+Lune's own built-in capabilities (lifecycle, filesystem, clipboard, window controls, dialogs, tray, notifications, screen) are registered the same way — as `Installable` classes that call `app.bind` internally. There is no separate path for built-in vs user bindings.
+
 ### 4. JavaScript stub generation
 
 Lune writes two files into `frontend/lunejs/`:
