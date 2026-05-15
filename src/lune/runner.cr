@@ -74,6 +74,11 @@ module Lune
           end
         end
 
+        window_app_name = WindowState.app_name(@options.title)
+        if saved = WindowState.load(window_app_name)
+          Native::Window.set_frame(handle, saved[:x], saved[:y], saved[:width], saved[:height])
+        end
+
         if load_cb = @options.on_load
           wv.on_load = -> {
             begin
@@ -153,7 +158,8 @@ module Lune
         elsif u = url
           wv.navigate(u)
         elsif dev_url = ENV[Lune::ENV_DEV_URL]?
-          Lune::Runtime::Generator.write_js(@app.bindings, @lunejs_dir)
+          all_bindings = @app.bindings + runtime_app.bindings + native_app.bindings
+          Lune::Runtime::Generator.write_js(all_bindings, @lunejs_dir)
           wv.navigate(dev_url)
         elsif !Assets.empty?
           s = AssetServer.new
@@ -165,6 +171,9 @@ module Lune
         end
 
         wv.run
+
+        x, y, width, height = Native::Window.get_frame(handle)
+        WindowState.save(window_app_name, x, y, width, height)
 
         asset_server.try(&.stop)
         bridge.close!

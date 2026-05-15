@@ -10,6 +10,9 @@ Lune reads an optional `lune.yml` file from the root of your project. All keys h
 # App name (optional — used for display only)
 name: my_app
 
+# Path to the app icon asset, relative to the project root (optional)
+icon: assets/icon.icns
+
 # Allowed runtime bindings (default: all). Omit to expose everything.
 capabilities:
   - quit
@@ -52,6 +55,29 @@ frontend:
 **Type:** `String?` — **Default:** `nil`
 
 Optional display name for the app. Not used by the CLI toolchain — you can safely omit it.
+
+---
+
+### `icon`
+
+**Type:** `String?` — **Default:** `nil`
+
+Path to the app icon asset, relative to the project root. Used by `lune build` to bundle the icon into the platform output. Has no effect during `lune dev`.
+
+```yaml
+icon: assets/icon.icns
+```
+
+| Platform | Expected format | Where it ends up                                                                            |
+| -------- | --------------- | ------------------------------------------------------------------------------------------- |
+| macOS    | `.icns`         | `MyApp.app/Contents/Resources/<filename>`, registered as `CFBundleIconFile` in `Info.plist` |
+| Linux    | `.png`          | Copied next to the binary                                                                   |
+
+If the file is missing at build time, a warning is logged and the build continues without an icon. On macOS, `iconutil` (ships with Xcode) converts a `.iconset` folder to `.icns`:
+
+```sh
+iconutil -c icns MyApp.iconset -o assets/icon.icns
+```
 
 ---
 

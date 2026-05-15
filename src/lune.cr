@@ -4,6 +4,7 @@ require "./lune/config"
 require "./lune/options"
 require "./lune/logger"
 require "./lune/binding"
+require "./lune/runtime_binding"
 require "./lune/native/*"
 require "./lune/webview"
 require "./lune/error"
@@ -13,11 +14,12 @@ require "./lune/installable"
 require "./lune/bindable"
 require "./lune/app"
 require "./lune/runtime/bindings/*"
+require "./lune/window_state"
 require "./lune/single_instance"
 require "./lune/runner"
 
 module Lune
-  VERSION = "0.4.1"
+  VERSION = "0.4.2"
 
   # Default frontend directory name (matches the lune.yml default).
   DEFAULT_FRONTEND_DIR = "frontend"
@@ -28,7 +30,6 @@ module Lune
   # Environment variables written by the CLI and read by the compiled app.
   ENV_DEV_URL      = "LUNE_DEV_URL"
   ENV_FRONTEND_DIR = "LUNE_FRONTEND_DIR"
-  ENV_PREGEN       = "LUNE_PREGEN"
 
   # Navigation priority (first match wins):
   #   1. html:   — inline HTML string (useful for tests and simple apps)
@@ -46,7 +47,9 @@ module Lune
       ::Lune.logger.info { "Running in build mode" }
       appl = {{ app }}
       lunejs_dir = File.join(ENV.fetch(Lune::ENV_FRONTEND_DIR, Lune::DEFAULT_FRONTEND_DIR), Lune::LUNEJS_SUBDIR)
-      ::Lune::Runtime::Generator.write_js(appl.bindings, lunejs_dir)
+      stubs_app = ::Lune::App.new
+      ::Lune::Runtime::Bindings.register_stubs(stubs_app)
+      ::Lune::Runtime::Generator.write_js(appl.bindings + stubs_app.bindings, lunejs_dir)
     {% else %}
       runner = ::Lune::Runner.new({{ app }}) do |opts|
         {% if block %}

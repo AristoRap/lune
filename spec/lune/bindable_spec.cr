@@ -56,6 +56,22 @@ describe "Lune::Bindable + App bindings" do
     status.should eq(1)
   end
 
+  it "returns an error when arg count does not match" do
+    fake = FakeWebview.new
+    bridge = Lune::Bridge.new(fake)
+
+    app = Lune::App.new
+    app.install(MathModule.new)
+    bridge.register_bindings(app.bindings)
+
+    fake.invoke("MathModule.add", "seq-3", [] of JSON::Any)
+
+    fake.resolve_calls.size.should eq(1)
+    _seq, status, result = fake.resolve_calls[0]
+    status.should eq(1)
+    JSON.parse(result)["error"].as_s.should contain("expected 1 arg(s), got 0")
+  end
+
   it "registers bindings into App via install" do
     app = Lune::App.new
 
@@ -64,6 +80,14 @@ describe "Lune::Bindable + App bindings" do
     app.bindings.size.should eq(1)
     app.bindings.first.method.should eq("greet")
     app.bindings.first.namespace.should eq("GreetModule")
+  end
+
+  it "captures real param names from the Crystal method signature" do
+    app = Lune::App.new
+    app.install(GreetModule.new)
+
+    b = app.bindings.first
+    b.to_dts_sig.should eq("  Greet(msg: string): Promise<string>;")
   end
 
   it "supports multiple modules in one app" do

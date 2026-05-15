@@ -56,6 +56,8 @@ Crystal methods use `snake_case`. Lune converts them to `PascalCase` (upper came
 | `slow_echo`     | `SlowEcho`    |
 | `get_user_name` | `GetUserName` |
 
+Parameter names are preserved as-is in the generated `.d.ts`. A method `def greet(name : String)` produces `Greet(name: string)`.
+
 ---
 
 ## Namespaces

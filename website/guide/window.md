@@ -205,6 +205,41 @@ opts.on_menu_click = ->(id : String) { app.emit("trayMenuClick", id) }
 
 ---
 
+## Window state persistence
+
+Lune automatically saves and restores the window's position and size. No configuration required — it just works.
+
+When the window closes, the current frame is written to a JSON file. On the next launch, that file is read and the window is restored to the same position and size before the page loads.
+
+### Storage location
+
+The state file is stored under the app's config directory, derived from the window `title`:
+
+| Platform | Path                                                                           |
+| -------- | ------------------------------------------------------------------------------ |
+| macOS    | `~/Library/Application Support/<appname>/window.json`                          |
+| Linux    | `$XDG_CONFIG_HOME/<appname>/window.json` (falls back to `~/.config/<appname>`) |
+
+`<appname>` is derived from `opts.title` — lowercased, spaces replaced with hyphens, non-alphanumeric characters removed. For example, `"My App"` → `my-app`.
+
+### First launch
+
+On the first launch no file exists yet, so the window opens at the size and position specified by `opts.width` / `opts.height` (or the `lune.yml` defaults). After the window is closed for the first time, persistence kicks in on every subsequent launch.
+
+### Example
+
+```crystal
+Lune.run(app) do |opts|
+  opts.title  = "My App"   # → stored at .../my-app/window.json
+  opts.width  = 1280
+  opts.height = 800
+end
+```
+
+After the user resizes and moves the window, the next launch will reopen it at exactly the same position and size, regardless of what `opts.width` and `opts.height` say.
+
+---
+
 ## Full example
 
 ```crystal

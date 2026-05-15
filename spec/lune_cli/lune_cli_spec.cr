@@ -2,6 +2,12 @@ require "spec"
 require "file_utils"
 require "../spec_helper"
 
+private class ExposedBuildCommand < LuneCLI::Commands::Build
+  def call_png_to_icns(path : String) : String?
+    png_to_icns(path)
+  end
+end
+
 private class RecordingDoctorCommand < LuneCLI::Commands::Doctor
   getter captured_frontend_dir : String = ""
   getter captured_app_entry : String = ""
@@ -150,6 +156,16 @@ describe LuneCLI do
       cmd = LuneCLI::Commands::Build.new.to_command
       cmd.flags.lookup("build-cmd").should be_nil
     end
+
+    {% if flag?(:darwin) %}
+    it "png_to_icns converts a PNG to a .icns file" do
+      cmd = ExposedBuildCommand.new
+      result = cmd.call_png_to_icns("spec/fixtures/icon.png")
+      result.should_not be_nil
+      File.exists?(result.not_nil!).should be_true
+      File.extname(result.not_nil!).should eq(".icns")
+    end
+    {% end %}
   end
 
   describe "version command" do
@@ -205,6 +221,18 @@ describe LuneCLI do
           config.frontend.dev.cmd.should be_nil
           config.frontend.dev.url.should eq("http://localhost:5173")
         end
+      end
+
+      it "loads icon from lune.yml" do
+        with_tempdir do |dir|
+          path = File.join(dir, "lune.yml")
+          File.write(path, "icon: assets/icon.icns\n")
+          LuneCLI::Config.load(path).icon.should eq("assets/icon.icns")
+        end
+      end
+
+      it "icon defaults to nil when not set" do
+        LuneCLI::Config.load("nonexistent_lune.yml").icon.should be_nil
       end
 
       it "returns defaults when the file is invalid YAML" do

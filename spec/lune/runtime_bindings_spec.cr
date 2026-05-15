@@ -184,6 +184,42 @@ describe "Lune::Runtime::Bindings" do
     end
   end
 
+  describe ".register_stubs" do
+    it "registers all runtime binding classes" do
+      app = Lune::App.new
+      Lune::Runtime::Bindings.register_stubs(app)
+
+      methods = app.bindings.map(&.method)
+
+      methods.should contain("__lune.quit")
+      methods.should contain("__lune.environment")
+      methods.should contain("__lune.openURL")
+      methods.should contain("__lune.homeDir")
+      methods.should contain("__lune.clipboardRead")
+      methods.should contain("__lune.clipboardWrite")
+      methods.should contain("__lune.minimize")
+      methods.should contain("__lune.openFile")
+      methods.should contain("__lune.trayShow")
+      methods.should contain("__lune.traySetMenu")
+      methods.should contain("__lune.notify")
+      methods.should contain("__lune.screenInfo")
+    end
+
+    it "marks every stub binding as internal" do
+      app = Lune::App.new
+      Lune::Runtime::Bindings.register_stubs(app)
+
+      app.bindings.all?(&.internal?).should be_true
+    end
+
+    it "registers 28 bindings total" do
+      app = Lune::App.new
+      Lune::Runtime::Bindings.register_stubs(app)
+
+      app.bindings.size.should eq(28)
+    end
+  end
+
   describe ".filter" do
     it "returns all bindings when capabilities is nil" do
       app = Lune::App.new

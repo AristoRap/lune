@@ -21,6 +21,7 @@ module Lune
                   args: {{ m.args.map(&.restriction.stringify) }} of String,
                   return_type: {{ m.return_type.stringify }},
                   async: {{ async }},
+                  arg_names: {{ m.args.map(&.name.stringify) }} of String,
                 ) do |__args|
                   raise ArgumentError.new("expected {{ m.args.size }} arg(s), got #{__args.size}") unless __args.size == {{ m.args.size }}
                   {% for arg, i in m.args %}

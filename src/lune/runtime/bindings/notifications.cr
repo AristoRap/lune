@@ -11,17 +11,17 @@ module Lune
         end
 
         private def notify(app : Lune::App)
-          app.bind(
+          app.register(Lune::RuntimeBinding.new(
             namespace: "runtime",
             method: "__lune.notify",
             args: ["String", "String"],
             return_type: "Nil",
-            async: false,
-            runtime: true
-          ) do |args|
-            Lune::Native::Notify.show(args[0].as_s, args[1].as_s)
-            JSON::Any.new(nil)
-          end
+            callback: ->(args : Array(JSON::Any)) {
+              Lune::Native::Notify.show(args[0].as_s, args[1].as_s)
+              JSON::Any.new(nil)
+            },
+            arg_names: ["title", "body"],
+          ))
         end
       end
     end

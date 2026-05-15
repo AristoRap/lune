@@ -6,6 +6,7 @@ module LuneCLI
 
     getter name : String? = nil
     getter app_entry : String = "src/main.cr"
+    getter icon : String? = nil
     getter frontend : Frontend = Frontend.new
 
     def initialize; end

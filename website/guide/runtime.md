@@ -15,30 +15,36 @@ All functions return a `Promise`. TypeScript declarations are in `runtime.d.ts`.
 
 ## Quick reference
 
-| Function         | Signature                       | Returns                    | macOS | Linux | Windows |
-| ---------------- | ------------------------------- | -------------------------- | :---: | :---: | :-----: |
-| `quit`           | `quit()`                        | `Promise<void>`            |   ✓   |   ✓   |    ✓    |
-| `openURL`        | `openURL(url)`                  | `Promise<void>`            |   ✓   |   ✓   |    ✓    |
-| `environment`    | `environment()`                 | `Promise<LuneEnvironment>` |   ✓   |   ✓   |    ✓    |
-| `homeDir`        | `homeDir()`                     | `Promise<string>`          |   ✓   |   ✓   |    ✓    |
-| `appDataDir`     | `appDataDir()`                  | `Promise<string>`          |   ✓   |   ✓   |    ✓    |
-| `downloadsDir`   | `downloadsDir()`                | `Promise<string>`          |   ✓   |   ✓   |    ✓    |
-| `tempDir`        | `tempDir()`                     | `Promise<string>`          |   ✓   |   ✓   |    ✓    |
-| `clipboardRead`  | `clipboardRead()`               | `Promise<string>`          |   ✓   |   ✓   |    ✓    |
-| `clipboardWrite` | `clipboardWrite(text)`          | `Promise<void>`            |   ✓   |   ✓   |    ✓    |
-| `minimize`       | `minimize()`                    | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
-| `maximize`       | `maximize()`                    | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
-| `center`         | `center()`                      | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
-| `setTitle`       | `setTitle(title)`               | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
-| `setSize`        | `setSize(width, height)`        | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
-| `openFile`       | `openFile(prompt)`              | `Promise<string>`          |   ✓   |   ✓   |   tbd   |
-| `saveFile`       | `saveFile(prompt, defaultName)` | `Promise<string>`          |   ✓   |   ✓   |   tbd   |
-| `trayShow`       | `trayShow(iconPath)`            | `Promise<void>`            |   ✓   |  ✓ ¹  |   tbd   |
-| `trayHide`       | `trayHide()`                    | `Promise<void>`            |   ✓   |  ✓ ¹  |   tbd   |
-| `traySetIcon`    | `traySetIcon(path)`             | `Promise<void>`            |   ✓   |  ✓ ¹  |   tbd   |
-| `traySetMenu`    | `traySetMenu(items)`            | `Promise<void>`            |   ✓   |  ✓ ¹  |   tbd   |
-| `notify`         | `notify(title, body)`           | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
-| `screenInfo`     | `screenInfo()`                  | `Promise<ScreenInfo>`      |   ✓   |   ✓   |   tbd   |
+| Function          | Signature                         | Returns                    | macOS | Linux | Windows |
+| ----------------- | --------------------------------- | -------------------------- | :---: | :---: | :-----: |
+| `quit`            | `quit()`                          | `Promise<void>`            |   ✓   |   ✓   |    ✓    |
+| `openURL`         | `openURL(url)`                    | `Promise<void>`            |   ✓   |   ✓   |    ✓    |
+| `environment`     | `environment()`                   | `Promise<LuneEnvironment>` |   ✓   |   ✓   |    ✓    |
+| `homeDir`         | `homeDir()`                       | `Promise<string>`          |   ✓   |   ✓   |    ✓    |
+| `appDataDir`      | `appDataDir()`                    | `Promise<string>`          |   ✓   |   ✓   |    ✓    |
+| `downloadsDir`    | `downloadsDir()`                  | `Promise<string>`          |   ✓   |   ✓   |    ✓    |
+| `tempDir`         | `tempDir()`                       | `Promise<string>`          |   ✓   |   ✓   |    ✓    |
+| `clipboardRead`   | `clipboardRead()`                 | `Promise<string>`          |   ✓   |   ✓   |    ✓    |
+| `clipboardWrite`  | `clipboardWrite(text)`            | `Promise<void>`            |   ✓   |   ✓   |    ✓    |
+| `minimize`        | `minimize()`                      | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
+| `maximize`        | `maximize()`                      | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
+| `center`          | `center()`                        | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
+| `setTitle`        | `setTitle(title)`                 | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
+| `setSize`         | `setSize(width, height)`          | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
+| `openFile`        | `openFile(prompt)`                | `Promise<string>`          |   ✓   |   ✓   |   tbd   |
+| `openDir`         | `openDir(prompt)`                 | `Promise<string>`          |   ✓   |   ✓   |   tbd   |
+| `openFiles`       | `openFiles(prompt)`               | `Promise<string[]>`        |   ✓   |   ✓   |   tbd   |
+| `saveFile`        | `saveFile(prompt, defaultName)`   | `Promise<string>`          |   ✓   |   ✓   |   tbd   |
+| `messageInfo`     | `messageInfo(title, message)`     | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
+| `messageWarning`  | `messageWarning(title, message)`  | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
+| `messageError`    | `messageError(title, message)`    | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
+| `messageQuestion` | `messageQuestion(title, message)` | `Promise<string>`          |   ✓   |   ✓   |   tbd   |
+| `trayShow`        | `trayShow(iconPath)`              | `Promise<void>`            |   ✓   |  ✓ ¹  |   tbd   |
+| `trayHide`        | `trayHide()`                      | `Promise<void>`            |   ✓   |  ✓ ¹  |   tbd   |
+| `traySetIcon`     | `traySetIcon(path)`               | `Promise<void>`            |   ✓   |  ✓ ¹  |   tbd   |
+| `traySetMenu`     | `traySetMenu(items)`              | `Promise<void>`            |   ✓   |  ✓ ¹  |   tbd   |
+| `notify`          | `notify(title, body)`             | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
+| `screenInfo`      | `screenInfo()`                    | `Promise<ScreenInfo>`      |   ✓   |   ✓   |   tbd   |
 
 ¹ Requires XWayland on Wayland compositors.
 
@@ -227,6 +233,24 @@ const path = await openFile("Select an image");
 // "/Users/alice/Pictures/photo.jpg"  or  ""
 ```
 
+### `openDir(prompt)`
+
+Shows a native folder picker. Returns the selected directory path, or `""` if cancelled.
+
+```js
+const dir = await openDir("Choose a folder");
+// "/Users/alice/Documents"  or  ""
+```
+
+### `openFiles(prompt)`
+
+Shows a native open-files dialog that allows selecting multiple files. Returns an array of paths (empty array if cancelled).
+
+```js
+const paths = await openFiles("Select images");
+// ["/Users/alice/a.jpg", "/Users/alice/b.jpg"]  or  []
+```
+
 ### `saveFile(prompt, defaultName)`
 
 Shows a native save dialog. Returns the chosen path, or `""` if cancelled.
@@ -234,6 +258,41 @@ Shows a native save dialog. Returns the chosen path, or `""` if cancelled.
 ```js
 const dest = await saveFile("Export as", "report.csv");
 // "/Users/alice/Desktop/report.csv"  or  ""
+```
+
+### `messageInfo(title, message)`
+
+Shows an informational message dialog.
+
+```js
+await messageInfo("Done", "Your file has been saved.");
+```
+
+### `messageWarning(title, message)`
+
+Shows a warning message dialog.
+
+```js
+await messageWarning("Low disk space", "You are running low on storage.");
+```
+
+### `messageError(title, message)`
+
+Shows an error message dialog.
+
+```js
+await messageError("Export failed", "Could not write to the selected path.");
+```
+
+### `messageQuestion(title, message)`
+
+Shows a yes/no confirmation dialog. Returns `"Yes"` or `"No"`.
+
+```js
+const answer = await messageQuestion("Confirm", "Delete this file?");
+if (answer === "Yes") {
+  // proceed
+}
 ```
 
 ---

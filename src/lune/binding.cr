@@ -10,6 +10,7 @@ module Lune
       @callback : Proc(Array(JSON::Any), JSON::Any),
       internal : Bool = false,
       async : Bool = false,
+      @arg_names : Array(String) = [] of String,
     )
       @internal = internal
       @async = async
@@ -32,9 +33,18 @@ module Lune
     end
 
     def to_dts_sig : String
-      ret = Lune::Runtime::Generator.crystal_to_ts(@return_type)
-      params = @args.each_with_index.map { |t, i| "arg#{i}: #{Lune::Runtime::Generator.crystal_to_ts(t)}" }.join(", ")
-      "  #{js_func_name}(#{params}): Promise<#{ret}>;"
+      "  #{js_func_name}(#{dts_params}): Promise<#{dts_return_type}>;"
+    end
+
+    def dts_return_type
+      Lune::Runtime::Generator.crystal_to_ts(@return_type)
+    end
+
+    def dts_params
+      @args.each_with_index.map { |t, i|
+        name = @arg_names.empty? ? "arg#{i}" : @arg_names[i]
+        "#{name}: #{Lune::Runtime::Generator.crystal_to_ts(t)}"
+      }.join(", ")
     end
 
     def internal?

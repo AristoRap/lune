@@ -102,6 +102,26 @@ describe Lune::App do
     end
   end
 
+  describe "#register" do
+    it "accepts a pre-built binding directly" do
+      app = Lune::App.new
+
+      rb = Lune::RuntimeBinding.new(
+        namespace: "runtime",
+        method: "__lune.ping",
+        args: [] of String,
+        return_type: "String",
+        callback: ->(_a : Array(JSON::Any)) { JSON::Any.new("ok") }
+      )
+
+      app.register(rb)
+
+      app.bindings.size.should eq(1)
+      app.bindings.first.method.should eq("__lune.ping")
+      app.bindings.first.internal?.should be_true
+    end
+  end
+
   describe "#emit" do
     it "emits an event through the bridge" do
       app = Lune::App.new
