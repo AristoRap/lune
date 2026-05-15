@@ -6,61 +6,43 @@ private def make_bridge
   {fake, bridge}
 end
 
-describe Lune::Bindings::Runtime do
-  describe ".build" do
-    it "does not pollute user binding_names" do
+private def install(app : Lune::App, *mods : Lune::Installable)
+  app.install(*mods)
+  app.bindings
+end
+
+describe "Lune::Runtime::Bindings" do
+  describe Lune::Runtime::Bindings::Lifecycle do
+    it "does not pollute user bindings" do
       fake, bridge = make_bridge
-
-      quit_called = false
-
-      bindings = Lune::Bindings::Runtime.build(
-        on_quit: -> : Nil {
-          quit_called = true
-          nil
-        },
-        debug: false
-      )
-
-      bridge.register_bindings(bindings)
-      bridge.all_bindings.values.reject(&.internal).should be_empty
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Lifecycle.new(on_quit: -> { }))
+      bridge.register_bindings(app.bindings)
+      bridge.all_bindings.values.reject(&.internal?).should be_empty
     end
 
     it "invokes on_quit when __lune.quit is called" do
       fake, bridge = make_bridge
-
       quit_called = false
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Lifecycle.new(on_quit: -> { quit_called = true; nil }))
+      bridge.register_bindings(app.bindings)
 
-      bindings = Lune::Bindings::Runtime.build(
-        on_quit: -> : Nil {
-          quit_called = true
-          nil
-        }
-      )
-
-      bridge.register_bindings(bindings)
       fake.invoke("runtime.__lune.quit", "seq-1", [] of JSON::Any)
-
       quit_called.should be_true
     end
 
     it "registers __lune.openURL and passes the url to on_open_url" do
       fake, bridge = make_bridge
-
       opened_url = ""
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Lifecycle.new(
+        on_quit: -> { },
+        on_open_url: ->(url : String) { opened_url = url; nil }
+      ))
+      bridge.register_bindings(app.bindings)
 
-      bindings = Lune::Bindings::Runtime.build(
-        on_quit: -> : Nil { },
-        on_open_url: ->(url : String) : Nil {
-          opened_url = url
-          nil
-        }
-      )
-
-      bridge.register_bindings(bindings)
-
-      fake.invoke("runtime.__lune.openURL", "seq-2", [
-        JSON::Any.new("https://example.com"),
-      ])
+      fake.invoke("runtime.__lune.openURL", "seq-2", [JSON::Any.new("https://example.com")])
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -75,18 +57,13 @@ describe Lune::Bindings::Runtime do
 
     it "returns environment with os, arch, and debug fields" do
       fake, bridge = make_bridge
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Lifecycle.new(on_quit: -> { }, debug: true))
+      bridge.register_bindings(app.bindings)
 
-      bindings = Lune::Bindings::Runtime.build(
-        on_quit: -> : Nil { },
-        debug: true
-      )
-
-      bridge.register_bindings(bindings)
       fake.invoke("runtime.__lune.environment", "seq-3", [] of JSON::Any)
-
       _seq, status, result = fake.resolve_calls[0]
       status.should eq(0)
-
       env = JSON.parse(result)
       env["os"].as_s.should be_a(String)
       env["arch"].as_s.should be_a(String)
@@ -95,146 +72,146 @@ describe Lune::Bindings::Runtime do
 
     it "reflects the debug flag in environment" do
       fake, bridge = make_bridge
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Lifecycle.new(on_quit: -> { }, debug: false))
+      bridge.register_bindings(app.bindings)
 
-      bindings = Lune::Bindings::Runtime.build(
-        on_quit: -> : Nil { },
-        debug: false
-      )
-
-      bridge.register_bindings(bindings)
       fake.invoke("runtime.__lune.environment", "seq-4", [] of JSON::Any)
-
       env = JSON.parse(fake.resolve_calls[0][2])
       env["debug"].as_bool.should be_false
     end
 
     it "returns a known os value" do
       fake, bridge = make_bridge
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Lifecycle.new(on_quit: -> { }))
+      bridge.register_bindings(app.bindings)
 
-      bindings = Lune::Bindings::Runtime.build(
-        on_quit: -> : Nil { }
-      )
-
-      bridge.register_bindings(bindings)
       fake.invoke("runtime.__lune.environment", "seq-5", [] of JSON::Any)
-
       env = JSON.parse(fake.resolve_calls[0][2])
       ["darwin", "linux", "windows"].should contain(env["os"].as_s)
     end
+  end
 
-    describe "__lune.homeDir" do
-      it "resolves and matches Path.home" do
-        fake, bridge = make_bridge
-        bridge.register_bindings(Lune::Bindings::Runtime.build(on_quit: -> : Nil { }))
-        fake.invoke("runtime.__lune.homeDir", "seq-6", [] of JSON::Any)
-        _, _, result = fake.resolve_calls[0]
-        JSON.parse(result).as_s.should eq(Path.home.to_s)
-      end
+  describe Lune::Runtime::Bindings::Filesystem do
+    it "__lune.homeDir resolves and matches Path.home" do
+      fake, bridge = make_bridge
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Filesystem.new)
+      bridge.register_bindings(app.bindings)
+
+      fake.invoke("runtime.__lune.homeDir", "seq-6", [] of JSON::Any)
+      _, _, result = fake.resolve_calls[0]
+      JSON.parse(result).as_s.should eq(Path.home.to_s)
     end
 
-    describe "__lune.tempDir" do
-      it "resolves and matches Dir.tempdir" do
-        fake, bridge = make_bridge
-        bridge.register_bindings(Lune::Bindings::Runtime.build(on_quit: -> : Nil { }))
-        fake.invoke("runtime.__lune.tempDir", "seq-7", [] of JSON::Any)
-        _, _, result = fake.resolve_calls[0]
-        JSON.parse(result).as_s.should eq(Dir.tempdir)
-      end
+    it "__lune.tempDir resolves and matches Dir.tempdir" do
+      fake, bridge = make_bridge
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Filesystem.new)
+      bridge.register_bindings(app.bindings)
+
+      fake.invoke("runtime.__lune.tempDir", "seq-7", [] of JSON::Any)
+      _, _, result = fake.resolve_calls[0]
+      JSON.parse(result).as_s.should eq(Dir.tempdir)
     end
 
-    describe "__lune.downloadsDir" do
-      it "returns a path under the home directory" do
-        fake, bridge = make_bridge
-        bridge.register_bindings(Lune::Bindings::Runtime.build(on_quit: -> : Nil { }))
-        fake.invoke("runtime.__lune.downloadsDir", "seq-8", [] of JSON::Any)
-        _, _, result = fake.resolve_calls[0]
-        JSON.parse(result).as_s.should start_with(Path.home.to_s)
-      end
+    it "__lune.downloadsDir returns a path under the home directory" do
+      fake, bridge = make_bridge
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Filesystem.new)
+      bridge.register_bindings(app.bindings)
+
+      fake.invoke("runtime.__lune.downloadsDir", "seq-8", [] of JSON::Any)
+      _, _, result = fake.resolve_calls[0]
+      JSON.parse(result).as_s.should start_with(Path.home.to_s)
     end
 
-    describe "__lune.appDataDir" do
-      it "returns a non-empty string" do
-        fake, bridge = make_bridge
-        bridge.register_bindings(Lune::Bindings::Runtime.build(on_quit: -> : Nil { }))
-        fake.invoke("runtime.__lune.appDataDir", "seq-9", [] of JSON::Any)
-        _, _, result = fake.resolve_calls[0]
-        JSON.parse(result).as_s.should_not be_empty
+    it "__lune.appDataDir returns a non-empty string" do
+      fake, bridge = make_bridge
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Filesystem.new)
+      bridge.register_bindings(app.bindings)
+
+      fake.invoke("runtime.__lune.appDataDir", "seq-9", [] of JSON::Any)
+      _, _, result = fake.resolve_calls[0]
+      JSON.parse(result).as_s.should_not be_empty
+    end
+  end
+
+  describe Lune::Runtime::Bindings::Clipboard do
+    it "__lune.clipboardRead resolves with the value returned by on_read" do
+      fake, bridge = make_bridge
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Clipboard.new(
+        on_read: -> : String { "clipboard content" }
+      ))
+      bridge.register_bindings(app.bindings)
+
+      fake.invoke("runtime.__lune.clipboardRead", "seq-10", [] of JSON::Any)
+
+      deadline = Time.instant + 2.seconds
+      while Time.instant < deadline
+        break unless fake.resolve_calls.empty?
+        Fiber.yield
       end
+
+      _, status, result = fake.resolve_calls[0]
+      status.should eq(0)
+      JSON.parse(result).as_s.should eq("clipboard content")
     end
 
-    describe ".filter" do
-      it "returns all bindings when capabilities is nil" do
-        bindings = Lune::Bindings::Runtime.build(on_quit: -> : Nil { })
-        Lune::Bindings::Runtime.filter(bindings, nil).size.should eq(bindings.size)
+    it "__lune.clipboardWrite calls on_write with the provided text and resolves" do
+      fake, bridge = make_bridge
+      written = ""
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Clipboard.new(
+        on_write: ->(text : String) { written = text; nil }
+      ))
+      bridge.register_bindings(app.bindings)
+
+      fake.invoke("runtime.__lune.clipboardWrite", "seq-11", [JSON::Any.new("hello clipboard")])
+
+      deadline = Time.instant + 2.seconds
+      while Time.instant < deadline
+        break unless fake.resolve_calls.empty?
+        Fiber.yield
       end
 
-      it "returns only matching bindings when capabilities is set" do
-        bindings = Lune::Bindings::Runtime.build(on_quit: -> : Nil { })
-        filtered = Lune::Bindings::Runtime.filter(bindings, ["quit", "clipboardRead"])
-        filtered.map(&.name).should eq(["__lune.quit", "__lune.clipboardRead"])
-      end
+      _, status, _ = fake.resolve_calls[0]
+      status.should eq(0)
+      written.should eq("hello clipboard")
+    end
+  end
 
-      it "returns empty array when capabilities list matches nothing" do
-        bindings = Lune::Bindings::Runtime.build(on_quit: -> : Nil { })
-        Lune::Bindings::Runtime.filter(bindings, [] of String).should be_empty
-      end
-
-      it "silently ignores invalid capability names and only returns real matches" do
-        bindings = Lune::Bindings::Runtime.build(on_quit: -> : Nil { })
-        filtered = Lune::Bindings::Runtime.filter(bindings, ["quit", "readText", "nonexistent"])
-        filtered.map(&.name).should eq(["__lune.quit"])
-      end
+  describe ".filter" do
+    it "returns all bindings when capabilities is nil" do
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Lifecycle.new(on_quit: -> { }))
+      Lune::Runtime::Bindings.filter(app.bindings, nil).size.should eq(app.bindings.size)
     end
 
-    describe "__lune.clipboardRead" do
-      it "resolves with the value returned by on_read_clipboard" do
-        fake, bridge = make_bridge
-
-        bridge.register_bindings(Lune::Bindings::Runtime.build(
-          on_quit: -> : Nil { },
-          on_read_clipboard: -> : String { "clipboard content" }
-        ))
-
-        fake.invoke("runtime.__lune.clipboardRead", "seq-10", [] of JSON::Any)
-
-        deadline = Time.instant + 2.seconds
-        while Time.instant < deadline
-          break unless fake.resolve_calls.empty?
-          Fiber.yield
-        end
-
-        _, status, result = fake.resolve_calls[0]
-        status.should eq(0)
-        JSON.parse(result).as_s.should eq("clipboard content")
-      end
+    it "returns only matching bindings when capabilities is set" do
+      app = Lune::App.new
+      app.install(
+        Lune::Runtime::Bindings::Lifecycle.new(on_quit: -> { }),
+        Lune::Runtime::Bindings::Clipboard.new
+      )
+      filtered = Lune::Runtime::Bindings.filter(app.bindings, ["quit", "clipboardRead"])
+      filtered.map(&.method).should eq(["__lune.quit", "__lune.clipboardRead"])
     end
 
-    describe "__lune.clipboardWrite" do
-      it "calls on_write_clipboard with the provided text and resolves" do
-        fake, bridge = make_bridge
+    it "returns empty array when capabilities list matches nothing" do
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Lifecycle.new(on_quit: -> { }))
+      Lune::Runtime::Bindings.filter(app.bindings, [] of String).should be_empty
+    end
 
-        written = ""
-
-        bridge.register_bindings(Lune::Bindings::Runtime.build(
-          on_quit: -> : Nil { },
-          on_write_clipboard: ->(text : String) : Nil {
-            written = text
-            nil
-          }
-        ))
-
-        fake.invoke("runtime.__lune.clipboardWrite", "seq-11", [JSON::Any.new("hello clipboard")])
-
-        deadline = Time.instant + 2.seconds
-        while Time.instant < deadline
-          break unless fake.resolve_calls.empty?
-          Fiber.yield
-        end
-
-        _, status, _ = fake.resolve_calls[0]
-        status.should eq(0)
-        written.should eq("hello clipboard")
-      end
+    it "silently ignores invalid capability names and only returns real matches" do
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Lifecycle.new(on_quit: -> { }))
+      filtered = Lune::Runtime::Bindings.filter(app.bindings, ["quit", "readText", "nonexistent"])
+      filtered.map(&.method).should eq(["__lune.quit"])
     end
   end
 end

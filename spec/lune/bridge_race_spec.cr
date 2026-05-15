@@ -6,9 +6,9 @@ describe "Bridge races" do
 
     bridge = Lune::Bridge.new(fake)
 
-    binding = Lune::BindingDef.new(
-      name: "echo",
+    binding = Lune::Binding.new(
       namespace: "test",
+      method: "echo",
       args: [] of String,
       return_type: "JSON",
       callback: ->(args : Array(JSON::Any)) : JSON::Any {
@@ -48,9 +48,9 @@ describe "Bridge races" do
     gate = Channel(Nil).new
     pending = 30
 
-    binding = Lune::BindingDef.new(
-      name: "slow",
+    binding = Lune::Binding.new(
       namespace: "test",
+      method: "slow",
       args: [] of String,
       return_type: "JSON",
       callback: ->(args : Array(JSON::Any)) : JSON::Any {

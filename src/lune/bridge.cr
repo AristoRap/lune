@@ -2,11 +2,11 @@ require "json"
 
 module Lune
   class Bridge
-    getter all_bindings : Hash(String, BindingDef)
+    getter all_bindings : Hash(String, Binding)
 
     def initialize(@wv : WebviewLike)
       @closed = Atomic(Bool).new(false)
-      @all_bindings = {} of String => BindingDef
+      @all_bindings = {} of String => Binding
     end
 
     def close!
@@ -16,14 +16,14 @@ module Lune
     # -----------------------------------
     # Sync bindings
     # -----------------------------------
-    def register_bindings(bindings : Array(BindingDef))
+    def register_bindings(bindings : Array(Binding))
       bindings.each do |binding|
         register_binding(binding)
       end
     end
 
     # Fix: ensure the block passed to bind_deferred returns Nil
-    def register_binding(binding : BindingDef)
+    def register_binding(binding : Binding)
       full_name = binding.id
       @all_bindings[full_name] = binding
       wv = @wv
@@ -52,7 +52,7 @@ module Lune
     # -----------------------------------
 
     private def execute_binding(
-      binding : BindingDef,
+      binding : Binding,
       wv : WebviewLike,
       seq : String,
       args : Array(JSON::Any),

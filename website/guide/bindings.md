@@ -205,8 +205,8 @@ class MyPlugin
 
   def install(app : Lune::App)
     app.bind(
-      name: "ping",
       namespace: "MyPlugin",
+      method: "ping",
       args: [] of String,
       return_type: "String",
       async: false,
@@ -217,4 +217,4 @@ class MyPlugin
 end
 ```
 
-This is rarely needed — prefer `Lune::Bindable` for most cases.
+This is rarely needed for application code — prefer `Lune::Bindable` for most cases. Internally, Lune uses `Lune::Installable` for all of its own built-in capabilities (lifecycle, filesystem, clipboard, window controls, dialogs, tray, notifications, screen), so the interface is well-exercised.

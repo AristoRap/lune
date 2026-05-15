@@ -52,11 +52,13 @@ end
 
 ### 2. Macro expansion (compile time)
 
-The `Lune::Bindable` module uses Crystal macros to inspect annotated methods at compile time. For each `@[Lune::Bind]` method it generates a call to `app.bind(...)` that registers the method name, namespace, argument types, and return type as a `BindingDef`.
+The `Lune::Bindable` module uses Crystal macros to inspect annotated methods at compile time. For each `@[Lune::Bind]` method it generates a call to `app.bind(...)` that registers the method name, namespace, argument types, and return type as a `Binding`.
 
 ### 3. Registration (runtime)
 
 When you call `app.install(MyModule.new)`, the generated `install` method fires. Each binding is registered with the `Bridge`, which wires a WebView binding callback — a JavaScript-callable function backed by native code.
+
+Lune's own built-in capabilities (lifecycle, filesystem, clipboard, window controls, dialogs, tray, notifications, screen) are registered the same way — as `Installable` classes that call `app.bind` internally. There is no separate path for built-in vs user bindings.
 
 ### 4. JavaScript stub generation
 

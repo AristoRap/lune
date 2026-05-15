@@ -43,8 +43,8 @@ describe Lune::App do
       app = Lune::App.new
 
       app.bind(
-        name: "sum",
         namespace: "math",
+        method: "sum",
         args: ["a", "b"],
         return_type: "number",
         async: false
@@ -56,7 +56,7 @@ describe Lune::App do
 
       binding = app.bindings.first
 
-      binding.name.should eq("sum")
+      binding.method.should eq("sum")
       binding.namespace.should eq("math")
       binding.args.should eq(["a", "b"])
       binding.return_type.should eq("number")
@@ -67,8 +67,8 @@ describe Lune::App do
       app = Lune::App.new
 
       app.bind(
-        name: "fetch",
         namespace: "api",
+        method: "fetch",
         args: ["url"],
         return_type: "object",
         async: true
@@ -83,8 +83,8 @@ describe Lune::App do
       app = Lune::App.new
 
       app.bind(
-        name: "echo",
         namespace: "util",
+        method: "echo",
         args: ["value"],
         return_type: "string",
         async: false

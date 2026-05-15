@@ -15,9 +15,9 @@ describe "Race checks" do
     binding_sets.each do |names|
       spawn do
         bindings = names.map do |name|
-          Lune::BindingDef.new(
-            name: name,
+          Lune::Binding.new(
             namespace: "test",
+            method: name,
             args: [] of String,
             return_type: "void",
             callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(nil) },
@@ -27,7 +27,7 @@ describe "Race checks" do
         end
 
         40.times do
-          js = Lune::Runtime.generate_app_js(bindings)
+          js = Lune::Runtime::Generator.generate_app_js(bindings)
           generated.send(js)
         end
       end
@@ -41,9 +41,9 @@ describe "Race checks" do
     results.each do |app_js|
       coherent = binding_sets.any? do |names|
         expected_bindings = names.map do |name|
-          Lune::BindingDef.new(
-            name: name,
+          Lune::Binding.new(
             namespace: "test",
+            method: name,
             args: [] of String,
             return_type: "void",
             callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(nil) },
@@ -52,7 +52,7 @@ describe "Race checks" do
           )
         end
 
-        app_js == Lune::Runtime.generate_app_js(expected_bindings)
+        app_js == Lune::Runtime::Generator.generate_app_js(expected_bindings)
       end
 
       coherent.should be_true

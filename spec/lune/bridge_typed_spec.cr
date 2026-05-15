@@ -38,9 +38,9 @@ describe "Bridge typed bindings" do
     fake = TypedFakeWebview.new
     bridge = Lune::Bridge.new(fake)
 
-    binding = Lune::BindingDef.new(
-      name: "inc",
+    binding = Lune::Binding.new(
       namespace: "test",
+      method: "inc",
       args: ["Int32"],
       return_type: "Int32",
       callback: ->(args : Array(JSON::Any)) : JSON::Any {
@@ -67,9 +67,9 @@ describe "Bridge typed bindings" do
     fake = TypedFakeWebview.new
     bridge = Lune::Bridge.new(fake)
 
-    binding = Lune::BindingDef.new(
-      name: "inc",
+    binding = Lune::Binding.new(
       namespace: "test",
+      method: "inc",
       args: ["Int32"],
       return_type: "Int32",
       callback: ->(args : Array(JSON::Any)) : JSON::Any {
@@ -98,9 +98,9 @@ describe "Bridge typed bindings" do
     fake = TypedFakeWebview.new
     bridge = Lune::Bridge.new(fake)
 
-    binding = Lune::BindingDef.new(
-      name: "boom",
+    binding = Lune::Binding.new(
       namespace: "test",
+      method: "boom",
       args: [] of String,
       return_type: "Nil",
       callback: ->(_args : Array(JSON::Any)) : JSON::Any {
@@ -124,9 +124,9 @@ describe "Bridge typed bindings" do
     fake = TypedFakeWebview.new
     bridge = Lune::Bridge.new(fake)
 
-    binding = Lune::BindingDef.new(
-      name: "notfound",
+    binding = Lune::Binding.new(
       namespace: "test",
+      method: "notfound",
       args: [] of String,
       return_type: "Nil",
       callback: ->(_args : Array(JSON::Any)) : JSON::Any {

@@ -1,11 +1,11 @@
 module Lune
   class App
-    getter bindings = [] of BindingDef
+    getter bindings = [] of Binding
     getter title
     property bridge : Bridge?
 
     def initialize
-      @bindings = [] of BindingDef
+      @bindings = [] of Binding
       @bridge = nil # Injected once webview is created
     end
 
@@ -24,14 +24,15 @@ module Lune
     # ----------------------------
 
     def bind(
-      name : String,
       namespace : String,
+      method : String,
       args : Array(String),
       return_type : String,
       async : Bool,
+      runtime : Bool = false,
       &block : Array(JSON::Any) -> JSON::Any
     )
-      @bindings << external_binding(name, namespace, args, return_type, async, &block)
+      @bindings << add_binding(namespace, method, args, return_type, async, runtime, &block)
     end
 
     # ----------------------------
@@ -65,21 +66,23 @@ module Lune
       @bridge.not_nil!
     end
 
-    private def external_binding(
-      name : String,
+    private def add_binding(
       namespace : String,
+      method : String,
       args : Array(String),
       return_type : String,
       async : Bool,
+      runtime : Bool = false,
       &block : Array(JSON::Any) -> JSON::Any
     )
-      BindingDef.new(
-        name: name,
+      Binding.new(
         namespace: namespace,
+        method: method,
         args: args,
         return_type: return_type,
         callback: block,
-        async: async
+        async: async,
+        internal: runtime
       )
     end
   end

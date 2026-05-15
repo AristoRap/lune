@@ -36,19 +36,33 @@ module Lune
         bridge = Bridge.new(wv)
         bridge.register_bindings(@app.bindings)
 
-        runtime_bindings = Bindings::Runtime.build(on_quit: -> { wv.dispatch { wv.terminate } }, debug: @options.debug)
-        runtime_bindings = Bindings::Runtime.filter(runtime_bindings, @config.capabilities)
+        runtime_app = App.new
+        runtime_app.install(
+          Runtime::Bindings::Lifecycle.new(
+            on_quit: -> { wv.dispatch { wv.terminate } },
+            debug: @options.debug
+          ),
+          Runtime::Bindings::Filesystem.new,
+          Runtime::Bindings::Clipboard.new
+        )
+        runtime_bindings = Runtime::Bindings.filter(runtime_app.bindings, @config.capabilities)
         bridge.register_bindings(runtime_bindings)
         @app.bridge = bridge
 
         handle = wv.native_handle(Webview::NativeHandleKind::UI_WINDOW)
 
-        native_bindings = Bindings::Native.build(
-          handle,
-          on_tray_click: @options.on_tray_click,
-          on_menu_click: @options.on_menu_click
+        native_app = App.new
+        native_app.install(
+          Runtime::Bindings::Window.new(handle),
+          Runtime::Bindings::Tray.new(
+            on_tray_click: @options.on_tray_click,
+            on_menu_click: @options.on_menu_click
+          ),
+          Runtime::Bindings::Dialogs.new,
+          Runtime::Bindings::Notifications.new,
+          Runtime::Bindings::Screen.new
         )
-        native_bindings = Bindings::Runtime.filter(native_bindings, @config.capabilities)
+        native_bindings = Runtime::Bindings.filter(native_app.bindings, @config.capabilities)
         bridge.register_bindings(native_bindings)
 
         if window_ready_cb = @options.on_window_ready
@@ -139,7 +153,7 @@ module Lune
         elsif u = url
           wv.navigate(u)
         elsif dev_url = ENV[Lune::ENV_DEV_URL]?
-          Lune::Runtime.write_js(@app.bindings, @lunejs_dir)
+          Lune::Runtime::Generator.write_js(@app.bindings, @lunejs_dir)
           wv.navigate(dev_url)
         elsif !Assets.empty?
           s = AssetServer.new
