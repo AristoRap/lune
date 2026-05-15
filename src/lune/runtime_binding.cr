@@ -7,7 +7,7 @@ module Lune
       @return_type : String,
       @callback : Proc(Array(JSON::Any), JSON::Any),
       async : Bool = false,
-      @arg_names : Array(String)? = nil,
+      @arg_names : Array(String) = [] of String,
       @ts_return_type : String? = nil,
     )
       @internal = true
@@ -33,7 +33,7 @@ module Lune
     end
 
     private def resolved_arg_names : Array(String)
-      @arg_names || Array(String).new(@args.size) { |i| "arg#{i}" }
+      @arg_names.empty? ? Array(String).new(@args.size) { |i| "arg#{i}" } : @arg_names
     end
   end
 end

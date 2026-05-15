@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- `generate_runtime_js` and `generate_runtime_dts` are now derived dynamically from `RuntimeBinding` instances instead of hardcoded heredoc strings. Each built-in binding carries its own arg names and optional `ts_return_type`, so the generated `runtime.js` and `runtime.d.ts` are always in sync with the registered bindings.
+- Added `Lune::RuntimeBinding < Binding` subclass for runtime/internal bindings — overrides `to_js_stub` and `to_dts_sig` to emit `export function` / `export declare function` style output, and strips the `__lune.` prefix for JS function names.
+- Added `App#register` to accept a pre-built `Binding` directly, bypassing `app.bind`.
+- `TraySetMenuBinding < RuntimeBinding` handles the `JSON.stringify` call and `{ id, label }[]` TypeScript arg type for `traySetMenu`.
+- The `@[Lune::Bind]` macro now extracts real Crystal parameter names and passes them into the generated `.d.ts` signatures. `greet(msg: string)` instead of `greet(arg0: string)`.
+
+---
+
 ## [0.4.1] - 2026-05-15
 
 ### Changed

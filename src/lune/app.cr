@@ -30,9 +30,10 @@ module Lune
       return_type : String,
       async : Bool,
       runtime : Bool = false,
+      arg_names : Array(String) = [] of String,
       &block : Array(JSON::Any) -> JSON::Any
     )
-      @bindings << add_binding(namespace, method, args, return_type, async, runtime, &block)
+      @bindings << add_binding(namespace, method, args, return_type, async, runtime, arg_names, &block)
     end
 
     def register(binding : Binding)
@@ -77,6 +78,7 @@ module Lune
       return_type : String,
       async : Bool,
       runtime : Bool = false,
+      arg_names : Array(String) = [] of String,
       &block : Array(JSON::Any) -> JSON::Any
     )
       Binding.new(
@@ -86,7 +88,8 @@ module Lune
         return_type: return_type,
         callback: block,
         async: async,
-        internal: runtime
+        internal: runtime,
+        arg_names: arg_names
       )
     end
   end
