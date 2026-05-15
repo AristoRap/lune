@@ -32,8 +32,7 @@ module Lune
     {% elsif flag?(:linux) %}
       {% system("cd '#{__DIR__}/../../../ext/native/linux' && gcc -c notify.c -o notify.o `pkg-config --cflags libnotify` 2>/dev/null") %}
 
-      @[Link(ldflags: "#{__DIR__}/../../../ext/native/linux/notify.o")]
-      @[Link(ldflags: "`pkg-config --libs libnotify`")]
+      @[Link(ldflags: "#{__DIR__}/../../../ext/native/linux/notify.o `pkg-config --libs libnotify`")]
       lib LibNativeNotify
         fun show_notification(title : LibC::Char*, body : LibC::Char*) : Void
       end
