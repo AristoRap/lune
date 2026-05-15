@@ -36,8 +36,16 @@ module Lune
         bridge = Bridge.new(wv)
         bridge.register_bindings(@app.bindings)
 
-        runtime_bindings = Bindings::Runtime.build(on_quit: -> { wv.dispatch { wv.terminate } }, debug: @options.debug)
-        runtime_bindings = Bindings::Runtime.filter(runtime_bindings, @config.capabilities)
+        runtime_app = App.new
+        runtime_app.install(
+          Runtime::Bindings::Lifecycle.new(
+            on_quit: -> { wv.dispatch { wv.terminate } },
+            debug: @options.debug
+          ),
+          Runtime::Bindings::Filesystem.new,
+          Runtime::Bindings::Clipboard.new
+        )
+        runtime_bindings = Runtime::Bindings.filter(runtime_app.bindings, @config.capabilities)
         bridge.register_bindings(runtime_bindings)
         @app.bridge = bridge
 
@@ -54,7 +62,7 @@ module Lune
           Runtime::Bindings::Notifications.new,
           Runtime::Bindings::Screen.new
         )
-        native_bindings = Bindings::Runtime.filter(native_app.bindings, @config.capabilities)
+        native_bindings = Runtime::Bindings.filter(native_app.bindings, @config.capabilities)
         bridge.register_bindings(native_bindings)
 
         if window_ready_cb = @options.on_window_ready
