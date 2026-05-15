@@ -1,5 +1,4 @@
 require "file_utils"
-require "./window"
 
 module Lune
   module Runtime

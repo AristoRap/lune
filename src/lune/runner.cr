@@ -43,12 +43,18 @@ module Lune
 
         handle = wv.native_handle(Webview::NativeHandleKind::UI_WINDOW)
 
-        native_bindings = Bindings::Native.build(
-          handle,
-          on_tray_click: @options.on_tray_click,
-          on_menu_click: @options.on_menu_click
+        native_app = App.new
+        native_app.install(
+          Runtime::Bindings::Window.new(handle),
+          Runtime::Bindings::Tray.new(
+            on_tray_click: @options.on_tray_click,
+            on_menu_click: @options.on_menu_click
+          ),
+          Runtime::Bindings::Dialogs.new,
+          Runtime::Bindings::Notifications.new,
+          Runtime::Bindings::Screen.new
         )
-        native_bindings = Bindings::Runtime.filter(native_bindings, @config.capabilities)
+        native_bindings = Bindings::Runtime.filter(native_app.bindings, @config.capabilities)
         bridge.register_bindings(native_bindings)
 
         if window_ready_cb = @options.on_window_ready

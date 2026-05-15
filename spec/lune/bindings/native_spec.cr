@@ -1,6 +1,20 @@
 require "../../spec_helper"
 
-describe Lune::Bindings::Native do
+private def install_all(handle, on_tray_click = nil, on_menu_click = nil)
+  app = Lune::App.new
+  app.install(
+    Lune::Runtime::Bindings::Window.new(handle),
+    Lune::Runtime::Bindings::Tray.new(on_tray_click: on_tray_click, on_menu_click: on_menu_click),
+    Lune::Runtime::Bindings::Dialogs.new,
+    Lune::Runtime::Bindings::Notifications.new,
+    Lune::Runtime::Bindings::Screen.new
+  )
+  app.bindings
+end
+
+handle = Pointer(Void).null
+
+describe "Lune::Runtime::Bindings (native)" do
   before_each do
     Lune::Native::WindowMock.reset
     Lune::Native::DialogMock.reset
@@ -9,16 +23,13 @@ describe Lune::Bindings::Native do
     Lune::Native::ScreenMock.reset
   end
 
-  handle = Pointer(Void).null
-
-  describe ".build" do
-    it "returns an Array(Lune::Binding)" do
-      bindings = Lune::Bindings::Native.build(handle)
-      bindings.should be_a(Array(Lune::Binding))
+  describe "all classes together" do
+    it "returns Array(Lune::Binding)" do
+      install_all(handle).should be_a(Array(Lune::Binding))
     end
 
     it "includes all expected capability names" do
-      names = Lune::Bindings::Native.build(handle).map(&.method)
+      names = install_all(handle).map(&.method)
       names.should contain("__lune.minimize")
       names.should contain("__lune.maximize")
       names.should contain("__lune.center")
@@ -35,17 +46,17 @@ describe Lune::Bindings::Native do
     end
 
     it "marks all bindings as internal" do
-      Lune::Bindings::Native.build(handle).each do |b|
-        b.internal?.should be_true
-      end
+      install_all(handle).each { |b| b.internal?.should be_true }
     end
   end
 
-  describe "window binding callbacks" do
+  describe Lune::Runtime::Bindings::Window do
     it "minimize binding calls Window.minimize" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
-      bridge.register_bindings(Lune::Bindings::Native.build(handle))
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Window.new(handle))
+      bridge.register_bindings(app.bindings)
 
       wv.invoke("runtime.__lune.minimize", "seq1", [] of JSON::Any)
       Lune::Native::WindowMock.calls.should contain(:minimize)
@@ -54,7 +65,9 @@ describe Lune::Bindings::Native do
     it "maximize binding calls Window.maximize" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
-      bridge.register_bindings(Lune::Bindings::Native.build(handle))
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Window.new(handle))
+      bridge.register_bindings(app.bindings)
 
       wv.invoke("runtime.__lune.maximize", "seq2", [] of JSON::Any)
       Lune::Native::WindowMock.calls.should contain(:maximize)
@@ -63,7 +76,9 @@ describe Lune::Bindings::Native do
     it "setTitle binding forwards the title" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
-      bridge.register_bindings(Lune::Bindings::Native.build(handle))
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Window.new(handle))
+      bridge.register_bindings(app.bindings)
 
       wv.invoke("runtime.__lune.setTitle", "seq3", [JSON::Any.new("My App")])
       Lune::Native::WindowMock.last_title.should eq("My App")
@@ -72,7 +87,9 @@ describe Lune::Bindings::Native do
     it "setSize binding forwards width and height" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
-      bridge.register_bindings(Lune::Bindings::Native.build(handle))
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Window.new(handle))
+      bridge.register_bindings(app.bindings)
 
       wv.invoke("runtime.__lune.setSize", "seq4", [JSON::Any.new(1920_i64), JSON::Any.new(1080_i64)])
       Lune::Native::WindowMock.last_size.should eq({1920, 1080})
@@ -81,19 +98,23 @@ describe Lune::Bindings::Native do
     it "center binding calls Window.center" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
-      bridge.register_bindings(Lune::Bindings::Native.build(handle))
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Window.new(handle))
+      bridge.register_bindings(app.bindings)
 
       wv.invoke("runtime.__lune.center", "seq5", [] of JSON::Any)
       Lune::Native::WindowMock.calls.should contain(:center)
     end
   end
 
-  describe "dialog binding callbacks" do
+  describe Lune::Runtime::Bindings::Dialogs do
     it "openFile binding returns the selected path" do
       Lune::Native::DialogMock.stub_open("/home/user/file.txt")
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
-      bridge.register_bindings(Lune::Bindings::Native.build(handle))
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Dialogs.new)
+      bridge.register_bindings(app.bindings)
 
       wv.invoke("runtime.__lune.openFile", "seq6", [JSON::Any.new("Pick")])
       Lune::Native::DialogMock.calls.map(&.method).should contain(:open_file)
@@ -104,7 +125,9 @@ describe Lune::Bindings::Native do
       Lune::Native::DialogMock.stub_save("/home/user/out.csv")
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
-      bridge.register_bindings(Lune::Bindings::Native.build(handle))
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Dialogs.new)
+      bridge.register_bindings(app.bindings)
 
       wv.invoke("runtime.__lune.saveFile", "seq7", [JSON::Any.new("Save"), JSON::Any.new("data.csv")])
       Lune::Native::DialogMock.calls.map(&.method).should contain(:save_file)
@@ -112,11 +135,13 @@ describe Lune::Bindings::Native do
     end
   end
 
-  describe "tray binding callbacks" do
+  describe Lune::Runtime::Bindings::Tray do
     it "trayShow binding calls Tray.show" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
-      bridge.register_bindings(Lune::Bindings::Native.build(handle))
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Tray.new)
+      bridge.register_bindings(app.bindings)
 
       wv.invoke("runtime.__lune.trayShow", "seq8", [JSON::Any.new("/icon.png")])
       Lune::Native::TrayMock.calls.should contain(:show)
@@ -125,7 +150,9 @@ describe Lune::Bindings::Native do
     it "trayHide binding calls Tray.hide" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
-      bridge.register_bindings(Lune::Bindings::Native.build(handle))
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Tray.new)
+      bridge.register_bindings(app.bindings)
 
       wv.invoke("runtime.__lune.trayHide", "seq9", [] of JSON::Any)
       Lune::Native::TrayMock.calls.should contain(:hide)
@@ -134,7 +161,9 @@ describe Lune::Bindings::Native do
     it "traySetIcon binding calls Tray.set_icon" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
-      bridge.register_bindings(Lune::Bindings::Native.build(handle))
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Tray.new)
+      bridge.register_bindings(app.bindings)
 
       wv.invoke("runtime.__lune.traySetIcon", "seq10", [JSON::Any.new("/new.png")])
       Lune::Native::TrayMock.calls.should contain(:set_icon)
@@ -145,7 +174,9 @@ describe Lune::Bindings::Native do
       menu_cb = ->(id : String) { clicked_id = id; nil }
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
-      bridge.register_bindings(Lune::Bindings::Native.build(handle, on_menu_click: menu_cb))
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Tray.new(on_menu_click: menu_cb))
+      bridge.register_bindings(app.bindings)
 
       json = %([{"id":"open","label":"Open"},{"id":"---","label":""},{"id":"quit","label":"Quit"}])
       wv.invoke("runtime.__lune.traySetMenu", "seq14", [JSON::Any.new(json)])
@@ -155,11 +186,13 @@ describe Lune::Bindings::Native do
     end
   end
 
-  describe "notify binding callbacks" do
+  describe Lune::Runtime::Bindings::Notifications do
     it "notify binding calls Notify.show" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
-      bridge.register_bindings(Lune::Bindings::Native.build(handle))
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Notifications.new)
+      bridge.register_bindings(app.bindings)
 
       wv.invoke("runtime.__lune.notify", "seq11", [JSON::Any.new("Hello"), JSON::Any.new("World")])
       Lune::Native::NotifyMock.calls.should contain(:show)
@@ -168,12 +201,14 @@ describe Lune::Bindings::Native do
     end
   end
 
-  describe "screen binding callbacks" do
+  describe Lune::Runtime::Bindings::Screen do
     it "screenInfo binding returns width, height, and scale" do
       Lune::Native::ScreenMock.stub_info(2560, 1440, 2.0)
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
-      bridge.register_bindings(Lune::Bindings::Native.build(handle))
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Screen.new)
+      bridge.register_bindings(app.bindings)
 
       wv.invoke("runtime.__lune.screenInfo", "seq12", [] of JSON::Any)
       resolved = wv.resolve_calls.find { |r| r[0] == "seq12" }.not_nil![2]
@@ -185,7 +220,9 @@ describe Lune::Bindings::Native do
     it "screenInfo binding calls Screen.info" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
-      bridge.register_bindings(Lune::Bindings::Native.build(handle))
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Screen.new)
+      bridge.register_bindings(app.bindings)
 
       wv.invoke("runtime.__lune.screenInfo", "seq13", [] of JSON::Any)
       Lune::Native::ScreenMock.calls.should contain(:info)

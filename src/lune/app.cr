@@ -29,9 +29,10 @@ module Lune
       args : Array(String),
       return_type : String,
       async : Bool,
+      runtime : Bool = false,
       &block : Array(JSON::Any) -> JSON::Any
     )
-      @bindings << external_binding(namespace, method, args, return_type, async, &block)
+      @bindings << add_binding(namespace, method, args, return_type, async, runtime, &block)
     end
 
     # ----------------------------
@@ -65,12 +66,13 @@ module Lune
       @bridge.not_nil!
     end
 
-    private def external_binding(
+    private def add_binding(
       namespace : String,
       method : String,
       args : Array(String),
       return_type : String,
       async : Bool,
+      runtime : Bool = false,
       &block : Array(JSON::Any) -> JSON::Any
     )
       Binding.new(
@@ -79,7 +81,8 @@ module Lune
         args: args,
         return_type: return_type,
         callback: block,
-        async: async
+        async: async,
+        internal: runtime
       )
     end
   end
