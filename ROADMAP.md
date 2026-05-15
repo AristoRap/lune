@@ -39,5 +39,5 @@
 
 ## Random — no timeline
 
-- [ ] Window state persistence — save/restore position+size to `~/.config/<app>/window.json`
+- [x] Window state persistence — save/restore position+size to `~/.config/<app>/window.json`
 - [ ] Additional templates: Svelte, React+TS

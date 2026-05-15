@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Window state persistence — window position and size are saved on close and restored on the next launch. State is stored at `~/Library/Application Support/<appname>/window.json` (macOS) or `~/.config/<appname>/window.json` (Linux), where `<appname>` is derived from the window title. Zero configuration required.
+
 ### Changed
 
 - `generate_runtime_js` and `generate_runtime_dts` are now derived dynamically from `RuntimeBinding` instances instead of hardcoded heredoc strings. Each built-in binding carries its own arg names and optional `ts_return_type`, so the generated `runtime.js` and `runtime.d.ts` are always in sync with the registered bindings.

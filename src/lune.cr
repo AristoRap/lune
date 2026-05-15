@@ -14,6 +14,7 @@ require "./lune/installable"
 require "./lune/bindable"
 require "./lune/app"
 require "./lune/runtime/bindings/*"
+require "./lune/window_state"
 require "./lune/single_instance"
 require "./lune/runner"
 
