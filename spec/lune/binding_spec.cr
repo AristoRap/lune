@@ -55,9 +55,21 @@ describe Lune::Binding do
       sig.should eq("  Ping(): Promise<string>;")
     end
 
-    it "maps Crystal args to TypeScript parameter types" do
+    it "maps Crystal args to TypeScript parameter types using arg0..argN fallback" do
       sig = make_bd(method: "add", namespace: "math", args: ["Int32", "String"], return_type: "Int32").to_dts_sig
       sig.should eq("  Add(arg0: number, arg1: string): Promise<number>;")
+    end
+
+    it "uses arg_names when provided" do
+      bd = Lune::Binding.new(
+        method: "add",
+        namespace: "math",
+        args: ["Int32", "String"],
+        return_type: "Int32",
+        callback: ->(_a : Array(JSON::Any)) { JSON::Any.new(0_i64) },
+        arg_names: ["n", "label"]
+      )
+      bd.to_dts_sig.should eq("  Add(n: number, label: string): Promise<number>;")
     end
 
     it "maps Nil return to void" do

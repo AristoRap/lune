@@ -66,6 +66,14 @@ describe "Lune::Bindable + App bindings" do
     app.bindings.first.namespace.should eq("GreetModule")
   end
 
+  it "captures real param names from the Crystal method signature" do
+    app = Lune::App.new
+    app.install(GreetModule.new)
+
+    b = app.bindings.first
+    b.to_dts_sig.should eq("  Greet(msg: string): Promise<string>;")
+  end
+
   it "supports multiple modules in one app" do
     app = Lune::App.new
 
