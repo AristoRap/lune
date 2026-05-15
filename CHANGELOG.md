@@ -6,6 +6,7 @@
 
 - Window state persistence — window position and size are saved on close and restored on the next launch. State is stored at `~/Library/Application Support/<appname>/window.json` (macOS) or `~/.config/<appname>/window.json` (Linux), where `<appname>` is derived from the window title. Zero configuration required.
 - App icon support — set `icon:` in `lune.yml` to bundle an icon into the `lune build` output. macOS accepts `.icns` or `.png` (auto-converted via `sips`/`iconutil`); Linux accepts `.png`.
+- Extended file dialogs — `openDir(prompt)` for folder selection, `openFiles(prompt)` for multi-file selection, `messageInfo`, `messageWarning`, `messageError` for native alert dialogs, and `messageQuestion` for yes/no confirmation (returns `"Yes"` or `"No"`).
 
 ### Changed
 

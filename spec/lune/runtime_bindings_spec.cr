@@ -212,11 +212,11 @@ describe "Lune::Runtime::Bindings" do
       app.bindings.all?(&.internal?).should be_true
     end
 
-    it "registers 22 bindings total" do
+    it "registers 28 bindings total" do
       app = Lune::App.new
       Lune::Runtime::Bindings.register_stubs(app)
 
-      app.bindings.size.should eq(22)
+      app.bindings.size.should eq(28)
     end
   end
 

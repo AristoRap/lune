@@ -36,7 +36,13 @@ describe "Lune::Runtime::Bindings (native)" do
       names.should contain("__lune.setTitle")
       names.should contain("__lune.setSize")
       names.should contain("__lune.openFile")
+      names.should contain("__lune.openDir")
+      names.should contain("__lune.openFiles")
       names.should contain("__lune.saveFile")
+      names.should contain("__lune.messageInfo")
+      names.should contain("__lune.messageWarning")
+      names.should contain("__lune.messageError")
+      names.should contain("__lune.messageQuestion")
       names.should contain("__lune.trayShow")
       names.should contain("__lune.trayHide")
       names.should contain("__lune.traySetIcon")
@@ -132,6 +138,60 @@ describe "Lune::Runtime::Bindings (native)" do
       wv.invoke("runtime.__lune.saveFile", "seq7", [JSON::Any.new("Save"), JSON::Any.new("data.csv")])
       Lune::Native::DialogMock.calls.map(&.method).should contain(:save_file)
       wv.resolve_calls.find { |r| r[0] == "seq7" }.not_nil![2].should contain("/home/user/out.csv")
+    end
+
+    it "openDir binding returns the selected directory" do
+      Lune::Native::DialogMock.stub_open_dir("/home/user/docs")
+      wv = FakeWebview.new
+      bridge = Lune::Bridge.new(wv)
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Dialogs.new)
+      bridge.register_bindings(app.bindings)
+
+      wv.invoke("runtime.__lune.openDir", "seq8a", [JSON::Any.new("Pick folder")])
+      Lune::Native::DialogMock.calls.map(&.method).should contain(:open_dir)
+      wv.resolve_calls.find { |r| r[0] == "seq8a" }.not_nil![2].should contain("/home/user/docs")
+    end
+
+    it "openFiles binding returns a JSON array of paths" do
+      Lune::Native::DialogMock.stub_open_files(["/a/one.txt", "/b/two.txt"])
+      wv = FakeWebview.new
+      bridge = Lune::Bridge.new(wv)
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Dialogs.new)
+      bridge.register_bindings(app.bindings)
+
+      wv.invoke("runtime.__lune.openFiles", "seq8b", [JSON::Any.new("Pick files")])
+      Lune::Native::DialogMock.calls.map(&.method).should contain(:open_files)
+      result = JSON.parse(wv.resolve_calls.find { |r| r[0] == "seq8b" }.not_nil![2])
+      result.as_a.map(&.as_s).should eq(["/a/one.txt", "/b/two.txt"])
+    end
+
+    it "messageInfo binding resolves with nil" do
+      wv = FakeWebview.new
+      bridge = Lune::Bridge.new(wv)
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Dialogs.new)
+      bridge.register_bindings(app.bindings)
+
+      wv.invoke("runtime.__lune.messageInfo", "seq8c", [JSON::Any.new("Title"), JSON::Any.new("Hello")])
+      Lune::Native::DialogMock.calls.map(&.method).should contain(:message)
+      _, status, _ = wv.resolve_calls.find { |r| r[0] == "seq8c" }.not_nil!
+      status.should eq(0)
+    end
+
+    it "messageQuestion binding returns Yes or No" do
+      Lune::Native::DialogMock.stub_message("Yes")
+      wv = FakeWebview.new
+      bridge = Lune::Bridge.new(wv)
+      app = Lune::App.new
+      app.install(Lune::Runtime::Bindings::Dialogs.new)
+      bridge.register_bindings(app.bindings)
+
+      wv.invoke("runtime.__lune.messageQuestion", "seq8d", [JSON::Any.new("Confirm"), JSON::Any.new("Are you sure?")])
+      result = wv.resolve_calls.find { |r| r[0] == "seq8d" }.not_nil!
+      result[1].should eq(0)
+      JSON.parse(result[2]).as_s.should eq("Yes")
     end
   end
 
