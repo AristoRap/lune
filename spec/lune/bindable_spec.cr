@@ -56,14 +56,13 @@ describe "Lune::Bindable + App bindings" do
     status.should eq(1)
   end
 
-
   it "registers bindings into App via install" do
     app = Lune::App.new
 
     app.install(GreetModule.new)
 
     app.bindings.size.should eq(1)
-    app.bindings.first.name.should eq("greet")
+    app.bindings.first.method.should eq("greet")
     app.bindings.first.namespace.should eq("GreetModule")
   end
 
@@ -73,7 +72,7 @@ describe "Lune::Bindable + App bindings" do
     app.install(GreetModule.new)
     app.install(MathModule.new)
 
-    names = app.bindings.map(&.name).sort
+    names = app.bindings.map(&.method).sort
     namespaces = app.bindings.map(&.namespace).sort
 
     names.should eq(["add", "greet"])

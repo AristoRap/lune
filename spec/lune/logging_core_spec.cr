@@ -36,9 +36,9 @@ describe "Lune core logging" do
     with_logger(logger) do
       in_blank_project do
         Lune::Runtime::Generator.write_js([
-          Lune::BindingDef.new(
-            name: "ping",
+          Lune::Binding.new(
             namespace: "test",
+            method: "ping",
             args: [] of String,
             return_type: "void",
             callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(nil) },
@@ -62,8 +62,8 @@ describe "Lune core logging" do
       app = Lune::App.new
 
       app.bind(
-        name: "boom",
         namespace: "test",
+        method: "boom",
         args: [] of String,
         return_type: "void",
         async: false

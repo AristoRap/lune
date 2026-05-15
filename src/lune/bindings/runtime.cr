@@ -36,9 +36,9 @@ module Lune
         nil
       }
 
-      def self.filter(bindings : Array(BindingDef), capabilities : Array(String)?) : Array(BindingDef)
+      def self.filter(bindings : Array(Binding), capabilities : Array(String)?) : Array(Binding)
         return bindings if capabilities.nil?
-        bindings.select { |b| capabilities.includes?(b.name.lchop("__lune.")) }
+        bindings.select { |b| capabilities.includes?(b.method.lchop("__lune.")) }
       end
 
       def self.build(
@@ -47,14 +47,14 @@ module Lune
         on_read_clipboard : -> String = DEFAULT_READ_CLIPBOARD,
         on_write_clipboard : String -> Nil = DEFAULT_WRITE_CLIPBOARD,
         debug : Bool = false,
-      ) : Array(BindingDef)
+      ) : Array(Binding)
         [
-          BindingDef.new(
-            "__lune.quit",
-            "runtime",
-            [] of String,
-            "Nil",
-            ->(args : Array(JSON::Any)) {
+          Binding.new(
+            namespace: "runtime",
+            method: "__lune.quit",
+            args: [] of String,
+            return_type: "Nil",
+            callback: ->(args : Array(JSON::Any)) {
               on_quit.call
               JSON::Any.new(nil)
             },
@@ -62,12 +62,12 @@ module Lune
             async: false
           ),
 
-          BindingDef.new(
-            "__lune.openURL",
-            "runtime",
-            ["String"],
-            "Nil",
-            ->(args : Array(JSON::Any)) {
+          Binding.new(
+            namespace: "runtime",
+            method: "__lune.openURL",
+            args: ["String"],
+            return_type: "Nil",
+            callback: ->(args : Array(JSON::Any)) {
               on_open_url.call(args[0].as_s)
               JSON::Any.new(nil)
             },
@@ -75,12 +75,12 @@ module Lune
             async: true
           ),
 
-          BindingDef.new(
-            "__lune.environment",
-            "runtime",
-            [] of String,
-            "JSON",
-            ->(_args : Array(JSON::Any)) {
+          Binding.new(
+            namespace: "runtime",
+            method: "__lune.environment",
+            args: [] of String,
+            return_type: "JSON",
+            callback: ->(_args : Array(JSON::Any)) {
               os =
                 {% if flag?(:darwin) %}
                   "darwin"
@@ -103,44 +103,44 @@ module Lune
             async: false
           ),
 
-          BindingDef.new(
-            "__lune.homeDir",
-            "runtime",
-            [] of String,
-            "String",
-            ->(_args : Array(JSON::Any)) { JSON::Any.new(Path.home.to_s) },
+          Binding.new(
+            namespace: "runtime",
+            method: "__lune.homeDir",
+            args: [] of String,
+            return_type: "String",
+            callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(Path.home.to_s) },
             internal: true,
             async: false
           ),
 
-          BindingDef.new(
-            "__lune.tempDir",
-            "runtime",
-            [] of String,
-            "String",
-            ->(_args : Array(JSON::Any)) { JSON::Any.new(Dir.tempdir) },
+          Binding.new(
+            namespace: "runtime",
+            method: "__lune.tempDir",
+            args: [] of String,
+            return_type: "String",
+            callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(Dir.tempdir) },
             internal: true,
             async: false
           ),
 
-          BindingDef.new(
-            "__lune.downloadsDir",
-            "runtime",
-            [] of String,
-            "String",
-            ->(_args : Array(JSON::Any)) {
+          Binding.new(
+            namespace: "runtime",
+            method: "__lune.downloadsDir",
+            args: [] of String,
+            return_type: "String",
+            callback: ->(_args : Array(JSON::Any)) {
               JSON::Any.new(Path.home.join("Downloads").to_s)
             },
             internal: true,
             async: false
           ),
 
-          BindingDef.new(
-            "__lune.appDataDir",
-            "runtime",
-            [] of String,
-            "String",
-            ->(_args : Array(JSON::Any)) {
+          Binding.new(
+            namespace: "runtime",
+            method: "__lune.appDataDir",
+            args: [] of String,
+            return_type: "String",
+            callback: ->(_args : Array(JSON::Any)) {
               path =
                 {% if flag?(:darwin) %}
                   Path.home.join("Library", "Application Support").to_s
@@ -155,22 +155,22 @@ module Lune
             async: false
           ),
 
-          BindingDef.new(
-            "__lune.clipboardRead",
-            "runtime",
-            [] of String,
-            "String",
-            ->(_args : Array(JSON::Any)) { JSON::Any.new(on_read_clipboard.call) },
+          Binding.new(
+            namespace: "runtime",
+            method: "__lune.clipboardRead",
+            args: [] of String,
+            return_type: "String",
+            callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(on_read_clipboard.call) },
             internal: true,
             async: true
           ),
 
-          BindingDef.new(
-            "__lune.clipboardWrite",
-            "runtime",
-            ["String"],
-            "Nil",
-            ->(args : Array(JSON::Any)) {
+          Binding.new(
+            namespace: "runtime",
+            method: "__lune.clipboardWrite",
+            args: ["String"],
+            return_type: "Nil",
+            callback: ->(args : Array(JSON::Any)) {
               on_write_clipboard.call(args[0].as_s)
               JSON::Any.new(nil)
             },

@@ -52,7 +52,7 @@ end
 
 ### 2. Macro expansion (compile time)
 
-The `Lune::Bindable` module uses Crystal macros to inspect annotated methods at compile time. For each `@[Lune::Bind]` method it generates a call to `app.bind(...)` that registers the method name, namespace, argument types, and return type as a `BindingDef`.
+The `Lune::Bindable` module uses Crystal macros to inspect annotated methods at compile time. For each `@[Lune::Bind]` method it generates a call to `app.bind(...)` that registers the method name, namespace, argument types, and return type as a `Binding`.
 
 ### 3. Registration (runtime)
 

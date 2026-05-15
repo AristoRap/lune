@@ -205,8 +205,8 @@ class MyPlugin
 
   def install(app : Lune::App)
     app.bind(
-      name: "ping",
       namespace: "MyPlugin",
+      method: "ping",
       args: [] of String,
       return_type: "String",
       async: false,

@@ -16,8 +16,8 @@ module Lune
               {% if ann = m.annotation(Lune::Bind) %}
               {% async = ann[:async] && ann[:async].id == "true" ? true : false %}
                 app.bind(
-                  name: {{ m.name.stringify }},
                   namespace: {{ @type.name.stringify }},
+                  method: {{ m.name.stringify }},
                   args: {{ m.args.map(&.restriction.stringify) }} of String,
                   return_type: {{ m.return_type.stringify }},
                   async: {{ async }},

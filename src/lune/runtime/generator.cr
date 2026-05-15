@@ -111,8 +111,8 @@ module Lune
       # ----------------------------
       # App JS
       # ----------------------------
-      def self.generate_app_js(bindings : Array(BindingDef)) : String
-        grouped = Hash(String, Array(BindingDef)).new { |h, k| h[k] = [] of BindingDef }
+      def self.generate_app_js(bindings : Array(Binding)) : String
+        grouped = Hash(String, Array(Binding)).new { |h, k| h[k] = [] of Binding }
 
         bindings.each do |b|
           grouped[b.namespace] << b
@@ -148,7 +148,7 @@ module Lune
       # ----------------------------
       # Namespace builder
       # ----------------------------
-      private def self.build_namespace(parts : Array(String), bindings : Array(BindingDef)) : String
+      private def self.build_namespace(parts : Array(String), bindings : Array(Binding)) : String
         head = parts.first
 
         # ----------------------------
@@ -178,8 +178,8 @@ module Lune
       # ----------------------------
       # App DTS
       # ----------------------------
-      def self.generate_app_dts(bindings : Array(BindingDef)) : String
-        grouped = Hash(String, Array(BindingDef)).new { |h, k| h[k] = [] of BindingDef }
+      def self.generate_app_dts(bindings : Array(Binding)) : String
+        grouped = Hash(String, Array(Binding)).new { |h, k| h[k] = [] of Binding }
 
         bindings.each do |b|
           grouped[b.namespace] << b
@@ -218,7 +218,7 @@ module Lune
         DTS
       end
 
-      private def self.build_dts_namespace(parts : Array(String), bindings : Array(BindingDef)) : String
+      private def self.build_dts_namespace(parts : Array(String), bindings : Array(Binding)) : String
         head = parts.first
 
         # ----------------------------
@@ -256,7 +256,7 @@ module Lune
         true
       end
 
-      def self.write_js(bindings : Array(BindingDef), lunejs_dir : String = LUNEJS_DIR)
+      def self.write_js(bindings : Array(Binding), lunejs_dir : String = LUNEJS_DIR)
         app_path = File.join(lunejs_dir, "app", "App.js")
         app_dts_path = File.join(lunejs_dir, "app", "App.d.ts")
         runtime_path = File.join(lunejs_dir, "runtime", "runtime.js")
@@ -273,6 +273,18 @@ module Lune
 
         if runtime_changed || app_changed
           Lune.logger.info { "Lune JS written → #{app_path}, #{runtime_path}" }
+        end
+      end
+
+      def self.crystal_to_ts(type : String) : String
+        case type
+        when "String"                               then "string"
+        when "Bool"                                 then "boolean"
+        when "Nil"                                  then "void"
+        when "Int32", "Int64", "Float32", "Float64" then "number"
+        when "Array"                                then "any[]"
+        when "Hash"                                 then "Record<string, any>"
+        else                                             "Record<string, any>"
         end
       end
     end

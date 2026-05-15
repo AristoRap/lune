@@ -22,7 +22,7 @@ describe Lune::Bindings::Runtime do
       )
 
       bridge.register_bindings(bindings)
-      bridge.all_bindings.values.reject(&.internal).should be_empty
+      bridge.all_bindings.values.reject(&.internal?).should be_empty
     end
 
     it "invokes on_quit when __lune.quit is called" do
@@ -171,7 +171,7 @@ describe Lune::Bindings::Runtime do
       it "returns only matching bindings when capabilities is set" do
         bindings = Lune::Bindings::Runtime.build(on_quit: -> : Nil { })
         filtered = Lune::Bindings::Runtime.filter(bindings, ["quit", "clipboardRead"])
-        filtered.map(&.name).should eq(["__lune.quit", "__lune.clipboardRead"])
+        filtered.map(&.method).should eq(["__lune.quit", "__lune.clipboardRead"])
       end
 
       it "returns empty array when capabilities list matches nothing" do
@@ -182,7 +182,7 @@ describe Lune::Bindings::Runtime do
       it "silently ignores invalid capability names and only returns real matches" do
         bindings = Lune::Bindings::Runtime.build(on_quit: -> : Nil { })
         filtered = Lune::Bindings::Runtime.filter(bindings, ["quit", "readText", "nonexistent"])
-        filtered.map(&.name).should eq(["__lune.quit"])
+        filtered.map(&.method).should eq(["__lune.quit"])
       end
     end
 

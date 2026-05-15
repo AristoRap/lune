@@ -12,13 +12,13 @@ describe Lune::Bindings::Native do
   handle = Pointer(Void).null
 
   describe ".build" do
-    it "returns an Array(Lune::BindingDef)" do
+    it "returns an Array(Lune::Binding)" do
       bindings = Lune::Bindings::Native.build(handle)
-      bindings.should be_a(Array(Lune::BindingDef))
+      bindings.should be_a(Array(Lune::Binding))
     end
 
     it "includes all expected capability names" do
-      names = Lune::Bindings::Native.build(handle).map(&.name)
+      names = Lune::Bindings::Native.build(handle).map(&.method)
       names.should contain("__lune.minimize")
       names.should contain("__lune.maximize")
       names.should contain("__lune.center")
@@ -36,7 +36,7 @@ describe Lune::Bindings::Native do
 
     it "marks all bindings as internal" do
       Lune::Bindings::Native.build(handle).each do |b|
-        b.internal.should be_true
+        b.internal?.should be_true
       end
     end
   end
