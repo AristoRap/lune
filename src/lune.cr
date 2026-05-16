@@ -2,6 +2,7 @@ require "./lune/asset_server"
 require "./lune/assets"
 require "./lune/config"
 require "./lune/options"
+require "./lune/menu_shortcut"
 require "./lune/logger"
 require "./lune/binding"
 require "./lune/runtime_binding"
@@ -20,7 +21,7 @@ require "./lune/single_instance"
 require "./lune/runner"
 
 module Lune
-  VERSION = "0.5.1"
+  VERSION = "0.6.0"
 
   # Default frontend directory name (matches the lune.yml default).
   DEFAULT_FRONTEND_DIR = "frontend"
