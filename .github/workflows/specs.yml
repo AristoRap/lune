@@ -4,7 +4,17 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - "website/**"
+      - "package.json"
+      - "package-lock.json"
+      - "**.md"
   pull_request:
+    paths-ignore:
+      - "website/**"
+      - "package.json"
+      - "package-lock.json"
+      - "**.md"
 
 jobs:
   specs:
