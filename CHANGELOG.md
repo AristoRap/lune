@@ -2,6 +2,10 @@
 
 ## [0.4.3] - 2026-05-16
 
+### Fixed
+
+- Traffic lights (close/minimize/zoom) were unresponsive when both `mac.full_size_content` and `enable_file_drop` (or `on_file_drop`) were active at the same time. With `NSWindowStyleMaskFullSizeContentView` the content view spans the titlebar, so the drop overlay's hit-test was claiming traffic-light clicks. The overlay now explicitly passes through clicks that land on any standard window button.
+
 ### Added
 
 - Default macOS menu bar — App, Edit, and Window menus are set up automatically so Lune apps feel like proper macOS citizens out of the box. The app name in the menu is taken from `opts.title`. No configuration required.

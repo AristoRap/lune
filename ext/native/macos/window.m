@@ -103,11 +103,18 @@ typedef void (*LuneDragPosCallback)(int x, int y, void *userdata);
 - (BOOL)isOpaque { return NO; }
 
 // Must return self so the drag system's hit-test can locate this view.
-// The check against contentView.frame excludes the title bar so traffic
-// lights are never intercepted regardless of window style.
+// Exclude points outside the content view, and also explicitly pass through
+// clicks on the standard window buttons — with NSWindowStyleMaskFullSizeContentView
+// the content view spans the titlebar, so the frame check alone isn't enough.
 - (NSView *)hitTest:(NSPoint)point {
     if (self.window && !NSPointInRect(point, self.window.contentView.frame))
         return nil;
+    NSWindowButton btns[] = { NSWindowCloseButton, NSWindowMiniaturizeButton, NSWindowZoomButton };
+    for (int i = 0; i < 3; i++) {
+        NSButton *btn = [self.window standardWindowButton:btns[i]];
+        if (btn && NSPointInRect(point, [self.superview convertRect:btn.bounds fromView:btn]))
+            return nil;
+    }
     return self;
 }
 
