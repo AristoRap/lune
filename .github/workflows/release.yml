@@ -41,7 +41,7 @@ jobs:
         run: shards install
 
       - name: Build release binary
-        run: shards build --release
+        run: shards build --release -Dpreview_mt -Dexecution_context
 
       - name: Stage artifact
         run: cp bin/lune ${{ matrix.artifact }}

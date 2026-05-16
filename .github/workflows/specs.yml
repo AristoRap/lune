@@ -25,11 +25,11 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            spec_flags: ""
+            spec_flags: "-Dpreview_mt -Dexecution_context"
           - os: macos-latest
-            spec_flags: ""
+            spec_flags: "-Dpreview_mt -Dexecution_context"
           - os: windows-latest
-            spec_flags: "-Dpreview_mt"
+            spec_flags: "-Dpreview_mt -Dexecution_context"
             compile_check_only: true
 
     steps:
