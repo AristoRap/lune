@@ -61,6 +61,8 @@ make test    # crystal spec
 make deploy  # build release binary → /usr/local/bin/lune
 ```
 
+> **Windows:** Run the underlying commands directly (`shards install`, `shards build --release`, etc.).
+
 ## Contributing
 
 1. Fork it (<https://github.com/aristorap/lune/fork>)
