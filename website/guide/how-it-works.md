@@ -16,7 +16,7 @@ Lune connects a Crystal backend to a web frontend running inside a native WebVie
 │  │   import api from '../lunejs/app/App.js'          │  │
 │  │   await api.MyModule.doSomething(args)  ──────────┼──┼──┐
 │  └───────────────────────────────────────────────────┘  │  │
-│                    ↕ events (bidirectional)              │  │
+│                    ↕ events (bidirectional)             │  │
 │          app.emit() · app.on()  ↔  emit() · on()        │  │ binding call
 │  ┌────────────────────────────────────────────────────┐ │  │
 │  │  Crystal App                                       │ │  │
