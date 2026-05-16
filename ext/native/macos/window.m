@@ -77,11 +77,16 @@ void start_window_drag(void *window) {
 
 // ── File drop ─────────────────────────────────────────────────────────────────
 
-typedef void (*LuneDropCallback)(const char *paths_json, void *userdata);
+// Callback fired on drop: JSON string {"x":N,"y":N,"paths":[...]}
+typedef void (*LuneDropCallback)(const char *json, void *userdata);
+// Callback fired on every drag move: (x, y) in CSS pixels, or (-1,-1) on exit
+typedef void (*LuneDragPosCallback)(int x, int y, void *userdata);
 
 @interface LuneDropView : NSView <NSDraggingDestination>
-@property (nonatomic) LuneDropCallback dropCallback;
-@property (nonatomic) void *dropUserdata;
+@property (nonatomic) LuneDropCallback  dropCallback;
+@property (nonatomic) void             *dropUserdata;
+@property (nonatomic) LuneDragPosCallback posCallback;
+@property (nonatomic) void             *posUserdata;
 @end
 
 @implementation LuneDropView
@@ -98,7 +103,7 @@ typedef void (*LuneDropCallback)(const char *paths_json, void *userdata);
 - (BOOL)isOpaque { return NO; }
 
 // Must return self so the drag system's hit-test can locate this view.
-// The check against contentView.frame excludes the title bar, so traffic
+// The check against contentView.frame excludes the title bar so traffic
 // lights are never intercepted regardless of window style.
 - (NSView *)hitTest:(NSPoint)point {
     if (self.window && !NSPointInRect(point, self.window.contentView.frame))
@@ -115,16 +120,37 @@ typedef void (*LuneDropCallback)(const char *paths_json, void *userdata);
 - (void)rightMouseUp:(NSEvent *)e   { [self.window.contentView rightMouseUp:e]; }
 - (void)scrollWheel:(NSEvent *)e    { [self.window.contentView scrollWheel:e]; }
 
+- (NSPoint)_dropCSSPoint:(id<NSDraggingInfo>)sender {
+    NSView *cv = self.window.contentView;
+    NSPoint loc = [cv convertPoint:sender.draggingLocation fromView:nil];
+    // WKWebView is flipped (isFlipped=YES, origin top-left), so convertPoint already
+    // gives viewport coordinates. Only flip if the view uses bottom-left origin.
+    CGFloat y = cv.isFlipped ? loc.y : cv.bounds.size.height - loc.y;
+    return NSMakePoint(loc.x, y);
+}
+
 - (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender {
     if (![[sender.draggingPasteboard types] containsObject:NSPasteboardTypeFileURL])
         return NSDragOperationNone;
+    if (self.posCallback) {
+        NSPoint p = [self _dropCSSPoint:sender];
+        self.posCallback((int)p.x, (int)p.y, self.posUserdata);
+    }
     return NSDragOperationCopy;
 }
 
 - (NSDragOperation)draggingUpdated:(id<NSDraggingInfo>)sender {
     if (![[sender.draggingPasteboard types] containsObject:NSPasteboardTypeFileURL])
         return NSDragOperationNone;
+    if (self.posCallback) {
+        NSPoint p = [self _dropCSSPoint:sender];
+        self.posCallback((int)p.x, (int)p.y, self.posUserdata);
+    }
     return NSDragOperationCopy;
+}
+
+- (void)draggingExited:(id<NSDraggingInfo>)sender {
+    if (self.posCallback) self.posCallback(-1, -1, self.posUserdata);
 }
 
 - (BOOL)prepareForDragOperation:(id<NSDraggingInfo>)sender { return YES; }
@@ -135,15 +161,20 @@ typedef void (*LuneDropCallback)(const char *paths_json, void *userdata);
                                                options:@{NSPasteboardURLReadingFileURLsOnlyKey: @YES}];
     if (!urls.count) return NO;
 
-    NSMutableString *json = [NSMutableString stringWithString:@"["];
+    NSPoint p = [self _dropCSSPoint:sender];
+
+    NSMutableString *pathsJson = [NSMutableString stringWithString:@"["];
     for (NSUInteger i = 0; i < urls.count; i++) {
         NSString *path = urls[i].path;
         path = [path stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"];
         path = [path stringByReplacingOccurrencesOfString:@"\"" withString:@"\\\""];
-        if (i > 0) [json appendString:@","];
-        [json appendFormat:@"\"%@\"", path];
+        if (i > 0) [pathsJson appendString:@","];
+        [pathsJson appendFormat:@"\"%@\"", path];
     }
-    [json appendString:@"]"];
+    [pathsJson appendString:@"]"];
+
+    NSString *json = [NSString stringWithFormat:@"{\"x\":%d,\"y\":%d,\"paths\":%@}",
+                      (int)p.x, (int)p.y, pathsJson];
 
     if (self.dropCallback)
         self.dropCallback([json UTF8String], self.dropUserdata);
@@ -152,21 +183,27 @@ typedef void (*LuneDropCallback)(const char *paths_json, void *userdata);
 
 @end
 
-void setup_file_drop(void *window, LuneDropCallback callback, void *userdata) {
+// Prevents the WKWebView from intercepting file drags before our overlay sees them.
+// Equivalent to Wails' DisableWebViewDrop. Safe to call independently of setup_file_drop.
+void disable_webview_drop(void *window) {
     NSWindow *w = (__bridge NSWindow *)window;
-
-    // Unregister the WKWebView from all drag types. Without this it intercepts
-    // every file drag before our overlay can see it (the same reason Wails has
-    // a DisableWebViewDrop option).
     [w.contentView unregisterDraggedTypes];
+}
+
+void setup_file_drop(void *window,
+                     LuneDropCallback     drop_callback,  void *drop_userdata,
+                     LuneDragPosCallback  pos_callback,   void *pos_userdata) {
+    NSWindow *w = (__bridge NSWindow *)window;
 
     // Add the overlay as a sibling of the WKWebView (in the frame view) so it
     // sits above the webview in z-order and genuinely receives drag hit-tests.
     NSView *host = w.contentView.superview ?: w.contentView;
     LuneDropView *dropView = [[LuneDropView alloc] initWithFrame:host.bounds];
     dropView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-    dropView.dropCallback = callback;
-    dropView.dropUserdata = userdata;
+    dropView.dropCallback  = drop_callback;
+    dropView.dropUserdata  = drop_userdata;
+    dropView.posCallback   = pos_callback;
+    dropView.posUserdata   = pos_userdata;
     [host addSubview:dropView positioned:NSWindowAbove relativeTo:nil];
 }
 

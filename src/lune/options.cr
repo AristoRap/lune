@@ -102,8 +102,25 @@ module Lune
     # Called when a tray context menu item is selected. Receives the item id.
     property on_menu_click : (String -> Nil)?
 
-    # Called when the user drops files onto the window. Receives an array of absolute file paths.
-    property on_file_drop : (Array(String) -> Nil)?
+    # Enables native file drop. When true the webview's own drop handling is disabled
+    # and the `fileDrop` event is emitted to JS on every drop.
+    property enable_file_drop : Bool = false
+
+    # Disables the webview's built-in drag handling without setting up a drop target.
+    # Prevents files from accidentally opening/navigating in the webview.
+    property disable_webview_drop : Bool = false
+
+    # CSS custom property that marks an element as a drop zone.
+    # e.g. "--lune-drop-target". Elements with this property set to `drop_value`
+    # receive the class `lune-drop-target-active` while a file is dragged over them.
+    property drop_zone : String = ""
+
+    # CSS value that activates drop zone highlighting. Defaults to "drop".
+    property drop_value : String = "drop"
+
+    # Optional Crystal-side callback fired on drop. Receives (x, y, paths).
+    # `enable_file_drop` must be true (or set alongside this callback) for drops to work.
+    property on_file_drop : ((Int32, Int32, Array(String)) -> Nil)?
 
     # CSS custom property name that marks an element as a window drag handle.
     # When non-empty, any element with this property set to `drag_value` (and its
@@ -134,10 +151,14 @@ module Lune
       @on_close = nil
       @on_load = nil
       @on_window_ready = nil
-      @on_tray_click = nil
-      @on_menu_click = nil
-      @on_file_drop = nil
-      @drag_zone = ""
+      @on_tray_click         = nil
+      @on_menu_click         = nil
+      @enable_file_drop      = false
+      @disable_webview_drop  = false
+      @drop_zone             = ""
+      @drop_value            = "drop"
+      @on_file_drop          = nil
+      @drag_zone             = ""
       @drag_value = "drag"
       @disable_context_menu = false
       @mac = MacOptions.new

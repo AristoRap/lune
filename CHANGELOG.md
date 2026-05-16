@@ -14,7 +14,11 @@
 - `opts.mac.always_on_top` — keeps the window above all other windows, including those from other apps.
 - `opts.drag_zone` / `opts.drag_value` — CSS custom property-based drag zones. Set `drag_zone` to a CSS property name (e.g. `"--lune-draggable"`) and any element with that property set to `drag_value` (default `"drag"`) becomes a window drag handle. Detection walks up the DOM tree so marking a container makes all its children draggable.
 - `opts.disable_context_menu` — suppresses the browser's built-in right-click context menu across the entire window.
-- `opts.on_file_drop` — callback fired when the user drops one or more files onto the window. Receives an array of absolute file paths. Setting this option automatically registers the window as a drop target on macOS and Linux.
+- `opts.enable_file_drop` — registers the window as a native drop target. The WebView's own drag handling is automatically suppressed so dropped files don't navigate the page.
+- `opts.disable_webview_drop` — disables WebView drag handling without setting up a drop target, preventing accidental file opens without enabling the full drop API.
+- `opts.drop_zone` / `opts.drop_value` — CSS custom property-based drop zones. Elements with the named property set to `drop_value` receive the `lune-drop-target-active` class while a file is held over them. Position tracking is driven natively so the class updates work even though the WebView's own dragover events are suppressed.
+- `opts.on_file_drop` — Crystal callback fired on drop. Signature changed to `(Int32, Int32, Array(String)) -> Nil` — receives the drop position in logical pixels alongside the file paths. Setting this callback automatically enables file drop.
+- `onFileDrop(cb)` / `onFileDropOff()` — JS runtime helpers for subscribing to file drops from the frontend. The event payload is `{ x, y, paths }`, consistent with the Crystal callback.
 
 ---
 

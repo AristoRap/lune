@@ -43,5 +43,5 @@
 ## Random — no timeline
 
 - [x] Window state persistence — save/restore position+size to `~/.config/<app>/window.json`
-- [x] Drag and drop — `opts.on_file_drop` callback fires with an array of absolute paths when the user drops files onto the window (macOS + Linux)
+- [x] Drag and drop — `enable_file_drop`, CSS drop zones (`drop_zone`/`drop_value`), `disable_webview_drop`, `on_file_drop(x, y, paths)` Crystal callback, and `onFileDrop`/`onFileDropOff` JS helpers (macOS + Linux)
 - [ ] Additional templates: Svelte, React+TS

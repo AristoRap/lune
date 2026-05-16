@@ -19,7 +19,7 @@ module Lune
           @@mock_frame = {0, 0, 1200, 800}
           @@last_full_size_content = nil
           @@last_appearance = nil
-          @@last_drop_cb = nil
+          @@last_drop_cb    = nil
         end
 
         def self.mock_frame=(f : Tuple(Int32, Int32, Int32, Int32))
@@ -39,16 +39,18 @@ module Lune
           @@last_frame = {x, y, w, h}
         end
         @@last_appearance : Int32? = nil
-        @@last_drop_cb : (Array(String) -> Nil)? = nil
+        @@last_drop_cb : ((Int32, Int32, Array(String)) -> Nil)? = nil
         class_getter last_appearance, last_drop_cb
 
-        def self.record_setup_file_drop(cb : Array(String) -> Nil)
+        def self.record_disable_webview_drop; @@calls << :disable_webview_drop; end
+
+        def self.record_setup_file_drop(cb : (Int32, Int32, Array(String)) -> Nil)
           @@calls << :setup_file_drop
           @@last_drop_cb = cb
         end
 
-        def self.simulate_drop(paths : Array(String))
-          @@last_drop_cb.try(&.call(paths))
+        def self.simulate_drop(x : Int32, y : Int32, paths : Array(String))
+          @@last_drop_cb.try(&.call(x, y, paths))
         end
 
         def self.record_set_titlebar_transparent(full_size_content : Bool)
@@ -93,8 +95,12 @@ module Lune
         fun set_appearance(window : Void*, mode : LibC::Int) : Void
         fun set_content_protection(window : Void*, enabled : LibC::Int) : Void
         fun set_always_on_top(window : Void*, enabled : LibC::Int) : Void
-        alias DropCallback = (LibC::Char*, Void*) -> Void
-        fun setup_file_drop(window : Void*, callback : DropCallback, userdata : Void*) : Void
+        alias DropCallback    = (LibC::Char*, Void*) -> Void
+        alias DragPosCallback = (LibC::Int, LibC::Int, Void*) -> Void
+        fun disable_webview_drop(window : Void*) : Void
+        fun setup_file_drop(window : Void*,
+                            drop_cb : DropCallback, drop_ud : Void*,
+                            pos_cb : DragPosCallback, pos_ud : Void*) : Void
       end
     {% elsif flag?(:linux) %}
       {% system("cd '#{__DIR__}/../../../ext/native/linux' && gcc -c window.c -o window.o `pkg-config --cflags gtk+-3.0` 2>/dev/null") %}
@@ -115,25 +121,55 @@ module Lune
         fun center(window : Void*) : Void
         fun get_frame(window : Void*) : Frame
         fun set_frame(window : Void*, x : LibC::Int, y : LibC::Int, width : LibC::Int, height : LibC::Int) : Void
-        alias DropCallback = (LibC::Char*, Void*) -> Void
-        fun setup_file_drop(window : Void*, callback : DropCallback, userdata : Void*) : Void
+        alias DropCallback    = (LibC::Char*, Void*) -> Void
+        alias DragPosCallback = (LibC::Int, LibC::Int, Void*) -> Void
+        fun disable_webview_drop(window : Void*) : Void
+        fun setup_file_drop(window : Void*,
+                            drop_cb : DropCallback, drop_ud : Void*,
+                            pos_cb : DragPosCallback, pos_ud : Void*) : Void
       end
     {% end %}
 
     module Window
-      # Kept at class level so GC never collects the boxed callback while the window is open.
-      @@drop_box : Pointer(Void) = Pointer(Void).null
+      # Kept at class level so GC never collects boxed callbacks while the window is live.
+      @@drop_box    : Pointer(Void) = Pointer(Void).null
+      @@drop_pos_box : Pointer(Void) = Pointer(Void).null
 
-      def self.setup_file_drop(handle : Void*, on_drop : Array(String) -> Nil)
+      def self.disable_webview_drop(handle : Void*)
+        {% if flag?(:lune_native_test_mock) %}
+          WindowMock.record_disable_webview_drop
+        {% elsif flag?(:darwin) || flag?(:linux) %}
+          LibNativeWindow.disable_webview_drop(handle)
+        {% end %}
+      end
+
+      # on_drop  receives (x, y, paths) — coordinates in CSS pixels (origin top-left)
+      # on_pos   receives (x, y) on each drag-move, or (-1, -1) when the drag exits
+      def self.setup_file_drop(handle : Void*,
+                               on_drop : (Int32, Int32, Array(String)) -> Nil,
+                               on_pos : (Int32, Int32) -> Nil)
         {% if flag?(:lune_native_test_mock) %}
           WindowMock.record_setup_file_drop(on_drop)
         {% elsif flag?(:darwin) || flag?(:linux) %}
           @@drop_box = Box.box(on_drop)
-          LibNativeWindow.setup_file_drop(handle, ->(json_ptr : LibC::Char*, data : Void*) {
-            return if data.null?
-            paths = Array(String).from_json(String.new(json_ptr))
-            Box(Proc(Array(String), Nil)).unbox(data).call(paths)
-          }, @@drop_box)
+          @@drop_pos_box = Box.box(on_pos)
+          LibNativeWindow.setup_file_drop(
+            handle,
+            ->(json_ptr : LibC::Char*, data : Void*) {
+              return if data.null?
+              parsed = JSON.parse(String.new(json_ptr))
+              x     = parsed["x"].as_i
+              y     = parsed["y"].as_i
+              paths = parsed["paths"].as_a.map(&.as_s)
+              Box(Proc(Int32, Int32, Array(String), Nil)).unbox(data).call(x, y, paths)
+            },
+            @@drop_box,
+            ->(x : LibC::Int, y : LibC::Int, data : Void*) {
+              return if data.null?
+              Box(Proc(Int32, Int32, Nil)).unbox(data).call(x.to_i32, y.to_i32)
+            },
+            @@drop_pos_box
+          )
         {% end %}
       end
 

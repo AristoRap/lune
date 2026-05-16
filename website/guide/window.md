@@ -193,23 +193,135 @@ opts.on_close = -> {
 
 ---
 
-### `on_file_drop`
+---
 
-**Type:** `(Array(String) -> Nil)?` — **Default:** `nil`
+## File drop
 
-Called when the user drops one or more files onto the window. The callback receives an array of absolute file paths. When this option is set, the window is automatically registered as a drop target — no other configuration required.
+Lune provides a complete drag-and-drop file API modelled after Wails: a boolean to enable native drops, separate control to suppress the WebView's built-in drag handling, CSS-based drop zones for per-element highlighting, and JS helpers for subscribing to drops.
+
+### `enable_file_drop`
+
+**Type:** `Bool` — **Default:** `false`
+
+When `true`, registers the window as a native drop target. The WebView's own drag handling is automatically disabled so dropped files don't open or navigate. The `fileDrop` event is emitted to the frontend on every drop.
 
 ```crystal
-opts.on_file_drop = ->(paths : Array(String)) {
-  app.emit("fileDrop", paths)
+opts.enable_file_drop = true
+```
+
+---
+
+### `disable_webview_drop`
+
+**Type:** `Bool` — **Default:** `false`
+
+Disables the WebView's built-in drag handling without setting up a drop target. Prevents files from accidentally opening or navigating inside the WebView when `enable_file_drop` is not needed.
+
+```crystal
+opts.disable_webview_drop = true
+```
+
+---
+
+### `drop_zone` / `drop_value`
+
+**Type:** `String` — **Defaults:** `""` / `"drop"`
+
+Mark specific elements as drop targets using a CSS custom property. Set `drop_zone` to a CSS custom property name; any element with that property equal to `drop_value` gets the class `lune-drop-target-active` while a file is dragged over it.
+
+```crystal
+opts.enable_file_drop = true
+opts.drop_zone        = "--lune-drop-target"
+opts.drop_value       = "drop"   # default — can be omitted
+```
+
+```css
+.upload-area {
+  --lune-drop-target: drop;
+}
+
+.upload-area.lune-drop-target-active {
+  border: 2px dashed #007aff;
+  background: rgba(0, 122, 255, 0.08);
 }
 ```
 
-```typescript
-// frontend
-on("fileDrop", (paths: string[]) => {
-  console.log("Dropped:", paths)
-})
+Requires `enable_file_drop = true`. The `lune-drop-target-active` class is added and removed in real time as the pointer moves.
+
+---
+
+### `on_file_drop`
+
+**Type:** `((Int32, Int32, Array(String)) -> Nil)?` — **Default:** `nil`
+
+Crystal-side callback fired when the user drops files. Receives the drop position in logical pixels and an array of absolute file paths. Setting this callback also enables file drop automatically — `enable_file_drop` does not need to be set separately.
+
+```crystal
+opts.on_file_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
+  puts "Dropped #{paths.size} file(s) at (#{x}, #{y})"
+  app.emit("fileDrop", {"x" => x, "y" => y, "paths" => paths})
+}
+```
+
+---
+
+### JS helpers — `onFileDrop` / `onFileDropOff`
+
+Convenience wrappers around the event bus for subscribing to file drops from the frontend.
+
+```js
+import { onFileDrop, onFileDropOff } from "../lunejs/runtime/runtime.js";
+
+onFileDrop((x, y, paths) => {
+  console.log("Dropped at", x, y, paths);
+});
+
+// later — unsubscribe all drop listeners
+onFileDropOff();
+```
+
+TypeScript signature:
+
+```ts
+declare function onFileDrop(cb: (x: number, y: number, paths: string[]) => void): void;
+declare function onFileDropOff(): void;
+```
+
+These are shorthand for `on("fileDrop", ...)` / `off("fileDrop")` — you can also use the generic event bus directly if you prefer.
+
+---
+
+### Full file drop example
+
+```crystal
+Lune.run(app, assets: "frontend/dist") do |opts|
+  opts.enable_file_drop = true
+  opts.drop_zone        = "--lune-drop-target"
+
+  opts.on_file_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
+    puts "Dropped: #{paths.inspect}"
+  }
+end
+```
+
+```css
+.drop-area {
+  --lune-drop-target: drop;
+  border: 2px dashed transparent;
+  transition: border-color 0.15s;
+}
+
+.drop-area.lune-drop-target-active {
+  border-color: #007aff;
+}
+```
+
+```js
+import { onFileDrop } from "../lunejs/runtime/runtime.js";
+
+onFileDrop((x, y, paths) => {
+  paths.forEach((p) => console.log("File:", p));
+});
 ```
 
 ---
@@ -465,8 +577,9 @@ Lune.run(app) do |opts|
     puts "Navigated to: #{url}"
   }
 
-  opts.on_file_drop = ->(paths : Array(String)) {
-    app.emit("fileDrop", paths)
+  opts.enable_file_drop = true
+  opts.on_file_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
+    app.emit("fileDrop", {"x" => x, "y" => y, "paths" => paths})
   }
 
   opts.on_close = -> {

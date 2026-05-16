@@ -109,17 +109,36 @@ describe Lune::Native::Window do
     end
   end
 
+  describe ".disable_webview_drop" do
+    it "records the call" do
+      Lune::Native::Window.disable_webview_drop(handle)
+      Lune::Native::WindowMock.calls.should contain(:disable_webview_drop)
+    end
+  end
+
   describe ".setup_file_drop" do
     it "records the call" do
-      Lune::Native::Window.setup_file_drop(handle, ->(paths : Array(String)) { nil })
+      Lune::Native::Window.setup_file_drop(
+        handle,
+        ->(x : Int32, y : Int32, paths : Array(String)) { nil },
+        ->(x : Int32, y : Int32) { nil }
+      )
       Lune::Native::WindowMock.calls.should contain(:setup_file_drop)
     end
 
-    it "stores the callback and simulate_drop invokes it" do
-      received = [] of String
-      Lune::Native::Window.setup_file_drop(handle, ->(paths : Array(String)) { received = paths; nil })
-      Lune::Native::WindowMock.simulate_drop(["/tmp/a.txt", "/tmp/b.txt"])
-      received.should eq(["/tmp/a.txt", "/tmp/b.txt"])
+    it "stores the callback and simulate_drop invokes it with x, y, paths" do
+      received_x = 0
+      received_y = 0
+      received_paths = [] of String
+      Lune::Native::Window.setup_file_drop(
+        handle,
+        ->(x : Int32, y : Int32, paths : Array(String)) { received_x = x; received_y = y; received_paths = paths; nil },
+        ->(x : Int32, y : Int32) { nil }
+      )
+      Lune::Native::WindowMock.simulate_drop(42, 99, ["/tmp/a.txt", "/tmp/b.txt"])
+      received_x.should eq(42)
+      received_y.should eq(99)
+      received_paths.should eq(["/tmp/a.txt", "/tmp/b.txt"])
     end
   end
 end
