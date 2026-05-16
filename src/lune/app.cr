@@ -65,6 +65,10 @@ module Lune
       @event_once_handlers.delete(event)
     end
 
+    def async(name : String = "lune-task", &block : ->) : Nil
+      Fiber::ExecutionContext::Isolated.new(name, &block)
+    end
+
     def dispatch_event(event : String, data : JSON::Any)
       @event_handlers[event]?.try(&.each(&.call(data)))
       @event_once_handlers.delete(event).try(&.each(&.call(data)))

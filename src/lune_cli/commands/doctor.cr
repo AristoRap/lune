@@ -25,7 +25,7 @@ module LuneCLI
 
       def run(frontend_dir : String, app_entry : String, install_hint : String = DEFAULT_INSTALL_CMD, output : IO = STDOUT) : Bool
         checks = [
-          check_tool("crystal", ["--version"]),
+          check_crystal,
           check_tool("node", ["--version"]),
           check_tool(NPM_CMD, ["--version"], label: "npm"),
           check_shards,
@@ -39,6 +39,25 @@ module LuneCLI
       end
 
       private record Check, label : String, ok : Bool, detail : String
+
+      CRYSTAL_MIN = SemanticVersion.parse("1.20.1")
+
+      private def check_crystal : Check
+        output = IO::Memory.new
+        status = Process.run("crystal", ["--version"], output: output, error: Process::Redirect::Close)
+        return Check.new(label: "crystal", ok: false, detail: "not found") unless status.success?
+
+        version_line = output.to_s.lines.first?.try(&.strip) || "unknown"
+        version_str = version_line[/Crystal (\d+\.\d+\.\d+)/, 1]?
+        return Check.new(label: "crystal", ok: true, detail: version_line) unless version_str
+
+        installed = SemanticVersion.parse(version_str)
+        ok = installed >= CRYSTAL_MIN
+        detail = ok ? version_line : "#{version_line} — Lune requires >= #{CRYSTAL_MIN} (-Dexecution_context)"
+        Check.new(label: "crystal", ok: ok, detail: detail)
+      rescue File::NotFoundError
+        Check.new(label: "crystal", ok: false, detail: "not found")
+      end
 
       private def check_tool(cmd : String, args : Array(String), label : String = cmd) : Check
         output = IO::Memory.new

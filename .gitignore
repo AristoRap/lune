@@ -15,6 +15,9 @@
 exampleapp/lib/
 exampleapp/.shards/
 exampleapp/shard.lock
+exampleapp/build/
+exampleapp/.lune-dev
+exampleapp/*.dwarf
 exampleapp/frontend/node_modules/
 exampleapp/frontend/dist/
 exampleapp/frontend/lunejs/

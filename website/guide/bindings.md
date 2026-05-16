@@ -141,7 +141,7 @@ No constructor argument needed — `@app` is set by the framework at install tim
 
 ## Async bindings
 
-By default, binding callbacks block the calling fiber. For operations that may take time (file I/O, network, sleep), use `async: true` to run the method in a separate fiber:
+By default, binding callbacks run on the main thread. For operations that may take time (file I/O, network, sleep), use `async: true` to run the method on a dedicated OS thread:
 
 ```crystal
 class FileModule
@@ -154,7 +154,32 @@ class FileModule
 end
 ```
 
-From JavaScript the call is identical — it still returns a `Promise`. The difference is that async bindings don't block the WebView event loop, so the UI stays responsive during long operations.
+From JavaScript the call is identical — it still returns a `Promise`. The difference is that async bindings run on a real OS thread via `Fiber::ExecutionContext::Isolated`, so `sleep`, `Channel`, HTTP, and other blocking operations all work correctly and the UI stays responsive.
+
+---
+
+## Background tasks
+
+Because Lune's native event loop owns the main thread, plain `spawn` does **not** work for long-running background tasks — fibers spawned into the default (single-threaded cooperative) context never get scheduled while the window is open.
+
+Use `app.async` instead:
+
+```crystal
+app.async do
+  loop do
+    app.emit("tick", Time.utc.to_rfc3339)
+    sleep 1.second
+  end
+end
+
+Lune.run(app, ...) { ... }
+```
+
+`app.async` starts a `Fiber::ExecutionContext::Isolated` — a real OS thread with its own Crystal scheduler — so `sleep`, channels, and IO all work as expected. An optional name helps with debugging:
+
+```crystal
+app.async("live-clock") { ... }
+```
 
 ---
 

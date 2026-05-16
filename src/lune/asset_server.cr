@@ -24,7 +24,12 @@ module Lune
       server = @server
       ready = Channel(Nil).new
 
-      spawn do
+      # HTTP::Server spawns a fiber per connection. Those fibers must land on
+      # real OS threads — not the default concurrent context whose thread is
+      # blocked in the native event loop. Parallel gives them a small thread
+      # pool; Isolated runs the accept loop and forwards spawns there.
+      pool = Fiber::ExecutionContext::Parallel.new("lune-assets-pool", 2)
+      Fiber::ExecutionContext::Isolated.new("lune-assets", spawn_context: pool) do
         ready.send(nil)
         server.listen
       end

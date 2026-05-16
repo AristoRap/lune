@@ -49,7 +49,7 @@ import { emit } from "../lunejs/runtime/runtime.js";
 
 await emit("search", { query: input.value });
 await emit("user-action", "button-clicked");
-await emit("ready");  // no payload
+await emit("ready"); // no payload
 ```
 
 `emit` is async — it resolves once Crystal has received the event.
@@ -176,10 +176,10 @@ searchInput.addEventListener("input", (e) => {
 });
 ```
 
-### Real-time updates from a background fiber
+### Real-time updates from a background task
 
 ```crystal
-spawn do
+app.async do
   loop do
     app.emit("cpu-usage", system_cpu_percent)
     sleep 1.second
@@ -209,9 +209,19 @@ emit("frontend-ready");
 
 ## Timing
 
-`app.emit` is safe to call at any point — from background fibers or inside binding callbacks. Events emitted before the WebView has opened are silently dropped; emit from `on_load` or in response to a JS event to guarantee delivery.
+`app.emit` is safe to call from anywhere — `app.async` background tasks, async binding callbacks, or the main thread. Events emitted before the WebView has opened are silently dropped; emit from `on_load` or in response to a JS event to guarantee delivery.
 
-Crystal `app.on` handlers run in a background fiber spawned from the webview thread. Long-running handlers won't block the UI, but access to shared state should be appropriately guarded.
+Crystal `app.on` handlers run synchronously on the webview main thread. Keep them short. For anything long-running, dispatch the work to a background task:
+
+```crystal
+app.on("search") do |data|
+  query = data["query"].as_s
+  app.async do
+    results = run_search(query)
+    app.emit("results", results.map(&.to_h))
+  end
+end
+```
 
 ---
 
@@ -236,5 +246,6 @@ on("search-results", (data) => {
   renderResults(results);
 });
 
-const search = (query: string) => emit("search", { query } satisfies SearchPayload);
+const search = (query: string) =>
+  emit("search", { query } satisfies SearchPayload);
 ```

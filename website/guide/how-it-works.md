@@ -79,7 +79,7 @@ When frontend code calls `api.MyModule.Greet("world")`:
 2. The Bridge deserializes them and dispatches to the Crystal method
 3. The return value is serialized as JSON and resolves the `Promise`
 
-All binding calls return a `Promise` on the JavaScript side. Sync Crystal methods resolve immediately; `async: true` methods run in a Crystal fiber.
+All binding calls return a `Promise` on the JavaScript side. Sync Crystal methods resolve immediately on the webview main thread; `async: true` methods run on a dedicated OS thread via `Fiber::ExecutionContext::Isolated`, so `sleep`, channels, and blocking IO all work without freezing the UI.
 
 ---
 
@@ -103,6 +103,22 @@ frontend/lunejs/
     ├── runtime.js   # quit, openURL, environment, on/once/off/emit
     └── runtime.d.ts # TypeScript declarations
 ```
+
+---
+
+## Threading model
+
+Lune's native event loop (AppKit on macOS, GTK on Linux) owns the **main OS thread** for the lifetime of the app. This has consequences for how Crystal concurrency works:
+
+| Context                         | Runs on                     | Notes                                                      |
+| ------------------------------- | --------------------------- | ---------------------------------------------------------- |
+| Sync binding callbacks          | Main thread                 | Keep fast — blocks the UI while running                    |
+| `async: true` binding callbacks | Dedicated `Isolated` thread | Full Crystal scheduler: sleep, channels, IO                |
+| `app.on` event handlers         | Main thread                 | Keep fast — dispatched synchronously on the webview thread |
+| `app.async { }` tasks           | Dedicated `Isolated` thread | Use for timers, pollers, and anything long-running         |
+| Asset HTTP server               | `Parallel` thread pool      | Serves embedded files in production builds                 |
+
+**`spawn` does not work.** Crystal's default cooperative scheduler runs on the main thread, which is permanently blocked by the native event loop. Fibers spawned there are never scheduled. Use `app.async` for background work instead.
 
 ---
 
@@ -159,17 +175,17 @@ The event bus is bidirectional. Crystal pushes to JS via `app.emit`; JS pushes t
 
 ```crystal
 # Crystal → JS
-spawn do
+app.async do
   loop do
     app.emit("tick", Time.utc.to_s)
     sleep 1.second
   end
 end
 
-# Crystal listening for JS events
+# Crystal listening for JS events — dispatch heavy work to app.async
 app.on("search") do |data|
-  results = run_search(data["query"].as_s)
-  app.emit("results", results.map(&.to_h))
+  query = data["query"].as_s
+  app.async { app.emit("results", run_search(query).map(&.to_h)) }
 end
 ```
 

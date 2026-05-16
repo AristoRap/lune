@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.5.0] - 2026-05-16
+
+### Breaking
+
+- **Manual `crystal build` now requires `-Dpreview_mt -Dexecution_context`** — `lune dev` and `lune build` pass both flags automatically, but any manual compilation will fail without them.
+- **`async: true` binding callbacks now run in true parallel on separate OS threads** — if multiple async bindings access shared Crystal state concurrently, that state must be thread-safe (use `Mutex` or `Atomic`). Previously async bindings silently never ran, so this was not a concern in practice.
+- **Crystal >= 1.20.1 required** (previously >= 1.20.0).
+
+### Added
+
+- `app.async(name = "lune-task") { ... }` — runs a block on a dedicated OS thread (`Fiber::ExecutionContext::Isolated`). Use this for background timers, pollers, and any long-running work instead of `spawn`, which does not work in Lune apps (the native event loop owns the main thread permanently).
+- `lune doctor` now validates that Crystal >= 1.20.1 is installed and reports the installed version with a clear error if it falls short.
+- `make clean` target removes build artifacts for the lune binary and the example app.
+
+### Changed
+
+- `async: true` binding callbacks now run on a dedicated OS thread via `Fiber::ExecutionContext::Isolated` instead of a cooperative fiber. `sleep`, `Channel`, HTTP, and all blocking IO work correctly inside async bindings.
+- `Bridge#dispatch_eval` (used by `app.emit`) now silently drops calls after the bridge is closed, preventing a crash when a background task emits after the window is closed.
+- Production asset server (`AssetServer`) runs its HTTP accept loop on an `Isolated` thread and handles per-connection fibers on a `Parallel` pool, so embedded assets load correctly in production builds.
+- Compilation flags `-Dpreview_mt -Dexecution_context` are now required and passed automatically by `lune dev`, `lune build`, and `make test`/`make build`/`make release`. Manual `crystal build` invocations must include both flags.
+- Minimum Crystal version raised to `>= 1.20.1` (required for `Fiber::ExecutionContext`).
+- Example app clock migrated from `spawn` to `app.async("clock")`.
+
+### Fixed
+
+- Async bindings on macOS/Linux were silently broken — spawned fibers never executed because the main thread was permanently blocked in the AppKit/GTK event loop. The fix uses real OS threads.
+- Production builds showed a blank webview because the embedded asset HTTP server's connection-handling fibers could not be scheduled. Fixed by running the server on a `Parallel` execution context.
+
+---
+
 ## [0.4.5] - 2026-05-16
 
 ### Added

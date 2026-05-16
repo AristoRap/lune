@@ -10,7 +10,7 @@ app.on("ping") do |data|
 end
 
 # live clock
-spawn do
+app.async("clock") do
   loop do
     app.emit("tick", Time.utc.to_rfc3339)
     sleep 1.second

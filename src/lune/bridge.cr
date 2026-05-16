@@ -43,6 +43,7 @@ module Lune
     end
 
     def dispatch_eval(js : String)
+      return if @closed.get
       wv = @wv
       wv.dispatch { wv.eval(js) }
     end
@@ -58,7 +59,7 @@ module Lune
       args : Array(JSON::Any),
     )
       if binding.async
-        spawn do
+        Fiber::ExecutionContext::Isolated.new("lune-async") do
           dispatch_result(wv, seq, closed: -> { @closed.get }) do
             binding.callback.call(args)
           end

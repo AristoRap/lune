@@ -303,12 +303,47 @@ describe Lune::App do
       app.emit("ready") # must not raise
     end
 
+    it "silently drops emit after bridge is closed" do
+      app = Lune::App.new
+      bridge = MockBridge.new
+      app.bridge = bridge
+      bridge.close!
+
+      app.emit("after-close") # must not raise or dispatch
+      bridge.last_eval.should eq("")
+    end
+
     it "raises when closing without a bridge" do
       app = Lune::App.new
 
       expect_raises(NilAssertionError) do
         app.close!
       end
+    end
+  end
+
+  describe "#async" do
+    it "runs the block on a separate OS thread without blocking the caller" do
+      app = Lune::App.new
+      started = Channel(Nil).new(1)
+      gate = Channel(Nil).new
+
+      app.async do
+        started.send(nil)
+        gate.receive
+      end
+
+      started.receive # proves the block is running concurrently
+      gate.send(nil)
+    end
+
+    it "accepts an optional name and still runs the block" do
+      app = Lune::App.new
+      done = Channel(Nil).new(1)
+
+      app.async("spec-task") { done.send(nil) }
+
+      done.receive
     end
   end
 end

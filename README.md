@@ -1,7 +1,7 @@
 [![Specs](https://github.com/AristoRap/lune/actions/workflows/specs.yml/badge.svg)](https://github.com/AristoRap/lune/actions/workflows/specs.yml)
 [![Version](https://img.shields.io/github/v/tag/AristoRap/lune?label=version)](https://github.com/AristoRap/lune/tags)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Crystal](https://img.shields.io/badge/crystal-%3E%3D%201.20.0-black?logo=crystal)](https://crystal-lang.org)
+[![Crystal](https://img.shields.io/badge/crystal-%3E%3D%201.20.1-black?logo=crystal)](https://crystal-lang.org)
 
 <div style="width: 100%; background: #0B0D14; border-radius: 12px;">
   <p align="center">
@@ -16,6 +16,8 @@ Build native desktop apps with Crystal and a web frontend.
 Lune wraps a native WebView and lets you call Crystal code from JavaScript over a typed bridge — no servers, no IPC boilerplate. Think Wails or Tauri, but for Crystal.
 
 > **v0.x notice:** Both the library and CLI APIs may change before 1.0. If you use this now, expect occasional breaking changes.
+
+> **Experimental Crystal flags:** Lune requires `-Dpreview_mt -Dexecution_context` at compile time. The `lune` CLI passes these automatically. If you compile your app manually (`crystal build`), you must include both flags. These unlock Crystal's multi-threading execution context API — the mechanism Lune uses to run `async:` bindings on real OS threads without blocking the native GUI event loop.
 
 ## Documentation
 

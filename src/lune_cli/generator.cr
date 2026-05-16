@@ -2,7 +2,7 @@ module LuneCLI
   module Generator
     def self.generate_bindings(app_entry : String, frontend_dir : String)
       env = ENV.to_h.merge({Lune::ENV_FRONTEND_DIR => frontend_dir})
-      crystal_args = ["run", app_entry, "-Dpreview_mt", "-Dbuild_mode"]
+      crystal_args = ["run", app_entry, "-Dpreview_mt", "-Dbuild_mode", "-Dexecution_context"]
 
       app_status = Process.run(
         "crystal",

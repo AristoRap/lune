@@ -73,7 +73,7 @@ module LuneCLI
         compiled_output_path = compiled_output_path_for(app_entry, output_path)
         prepare_output_path(output_path, compiled_output_path)
 
-        crystal_args = ["build", app_entry, "-Dpreview_mt", "-o", compiled_output_path]
+        crystal_args = ["build", app_entry, "-Dpreview_mt", "-Dexecution_context", "-o", compiled_output_path]
         crystal_args << "--release" if release
 
         app_status = Process.run(

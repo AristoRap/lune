@@ -1,6 +1,6 @@
 SHELL := /bin/sh
 
-.PHONY: help setup test build release copy deploy dev app run patch minor web
+.PHONY: help setup test build release copy deploy dev app run patch minor web clean
 
 help:
 	@echo "Source:"
@@ -10,6 +10,7 @@ help:
 	@echo "  make release  test + build CLI binary (--release)"
 	@echo "  make copy     copy binary to /usr/local/bin"
 	@echo "  make deploy   release + copy"
+	@echo "  make clean    remove build artifacts"
 	@echo "  make patch    bump patch version (x.y.Z)"
 	@echo "  make minor    bump minor version (x.Y.0)"
 	@echo ""
@@ -26,20 +27,26 @@ help:
 setup:
 	shards install
 
+CRYSTAL_FLAGS := -Dpreview_mt -Dexecution_context
+
 test:
-	crystal spec -D lune_native_test_mock
+	crystal spec -D lune_native_test_mock $(CRYSTAL_FLAGS)
 
 build:
-	$(MAKE) test && shards build
+	$(MAKE) test && shards build $(CRYSTAL_FLAGS)
 
 release:
-	$(MAKE) test && shards build --release
+	$(MAKE) test && shards build --release $(CRYSTAL_FLAGS)
 
 copy:
 	cp ./bin/lune /usr/local/bin/lune
 
 deploy:
 	$(MAKE) release && $(MAKE) copy
+
+clean:
+	rm -rf bin/lune bin/lune.dwarf
+	rm -rf exampleapp/build exampleapp/.lune-dev exampleapp/*.dwarf
 
 patch:
 	@current=$$(grep '^version:' shard.yml | sed 's/version: //'); \

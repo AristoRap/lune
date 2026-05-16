@@ -2,9 +2,30 @@
 
 ## Prerequisites
 
-- **Crystal** >= 1.20.0 — [install](https://crystal-lang.org/install/)
+- **Crystal** >= 1.20.1 — [install](https://crystal-lang.org/install/)
 - **Node.js** >= 18 and **npm** — [install](https://nodejs.org/)
 - **shards** — ships with Crystal
+
+::: warning Experimental Crystal flags required
+Lune compiles with `-Dpreview_mt -Dexecution_context`. These flags enable Crystal's multi-threading execution context API, which Lune uses to run `async:` bindings on real OS threads without blocking the native GUI event loop.
+
+The `lune` CLI passes both flags automatically for `lune dev` and `lune build`. If you ever invoke `crystal build` directly, add both flags yourself:
+
+```sh
+crystal build src/main.cr -Dpreview_mt -Dexecution_context -o build/my_app
+```
+
+**`spawn` does not work for background tasks.** The native event loop owns the main thread, so fibers in the default cooperative context are never scheduled while the window is open. Use `app.async` for any long-running background work:
+
+```crystal
+app.async do
+  loop do
+    app.emit("tick", Time.utc.to_rfc3339)
+    sleep 1.second
+  end
+end
+```
+:::
 
 **macOS only:** Xcode Command Line Tools are required for the native WebView headers.
 
@@ -57,7 +78,7 @@ Add it to your `shard.yml`:
 dependencies:
   lune:
     github: AristoRap/lune
-    version: ~> 0.4.5
+    version: ~> 0.5.0
 ```
 
 Then install:

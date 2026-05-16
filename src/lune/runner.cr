@@ -164,7 +164,7 @@ module Lune
         app_ref = @app
         wv.bind("__lune_js_emit", Webview::JSProc.new { |args|
           event = args[0]?.try(&.as_s) || ""
-          data  = args[1]? || JSON::Any.new(nil)
+          data = args[1]? || JSON::Any.new(nil)
           app_ref.dispatch_event(event, data)
           JSON::Any.new(nil)
         })
