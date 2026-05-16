@@ -1,0 +1,251 @@
+require "../spec_helper"
+
+describe Lune::MenuItem do
+  describe "defaults" do
+    it "generates a unique id per instance" do
+      a = Lune::MenuItem.new
+      b = Lune::MenuItem.new
+      a.id.should_not eq(b.id)
+    end
+
+    it "defaults to Text kind" do
+      Lune::MenuItem.new.kind.should eq(Lune::MenuItem::Kind::Text)
+    end
+
+    it "defaults enabled to true" do
+      Lune::MenuItem.new.enabled.should be_true
+    end
+
+    it "defaults checked to false" do
+      Lune::MenuItem.new.checked.should be_false
+    end
+
+    it "defaults shortcut to nil" do
+      Lune::MenuItem.new.shortcut.should be_nil
+    end
+
+    it "defaults children to empty" do
+      Lune::MenuItem.new.children.should be_empty
+    end
+
+    it "defaults callback to nil" do
+      Lune::MenuItem.new.callback.should be_nil
+    end
+
+    it "defaults checked_callback to nil" do
+      Lune::MenuItem.new.checked_callback.should be_nil
+    end
+  end
+
+  describe "mutable properties" do
+    it "allows label mutation" do
+      item = Lune::MenuItem.new(label: "Old")
+      item.label = "New"
+      item.label.should eq("New")
+    end
+
+    it "allows enabled mutation" do
+      item = Lune::MenuItem.new
+      item.enabled = false
+      item.enabled.should be_false
+    end
+
+    it "allows checked mutation" do
+      item = Lune::MenuItem.new(kind: Lune::MenuItem::Kind::Checkbox)
+      item.checked = true
+      item.checked.should be_true
+    end
+  end
+end
+
+describe Lune::MenuGroup do
+  describe "#item" do
+    it "appends a Text item and returns it" do
+      g = Lune::MenuGroup.new("File")
+      item = g.item("New") { }
+      g.items.size.should eq(1)
+      g.items.first.should be(item)
+      item.kind.should eq(Lune::MenuItem::Kind::Text)
+      item.label.should eq("New")
+    end
+
+    it "stores the click callback" do
+      called = false
+      g = Lune::MenuGroup.new("File")
+      item = g.item("New") { called = true }
+      item.callback.not_nil!.call
+      called.should be_true
+    end
+
+    it "sets shortcut" do
+      g = Lune::MenuGroup.new("File")
+      item = g.item("New", shortcut: "cmd+n") { }
+      item.shortcut.should eq("cmd+n")
+    end
+
+    it "respects enabled: false" do
+      g = Lune::MenuGroup.new("File")
+      item = g.item("Grayed", enabled: false) { }
+      item.enabled.should be_false
+    end
+  end
+
+  describe "#separator" do
+    it "appends a Separator item and returns it" do
+      g = Lune::MenuGroup.new("File")
+      sep = g.separator
+      g.items.size.should eq(1)
+      sep.kind.should eq(Lune::MenuItem::Kind::Separator)
+    end
+  end
+
+  describe "#checkbox" do
+    it "appends a Checkbox item and returns it" do
+      g = Lune::MenuGroup.new("View")
+      item = g.checkbox("Dark Mode") { |_| }
+      item.kind.should eq(Lune::MenuItem::Kind::Checkbox)
+      item.checked.should be_false
+    end
+
+    it "respects initial checked state" do
+      g = Lune::MenuGroup.new("View")
+      item = g.checkbox("Sidebar", checked: true) { |_| }
+      item.checked.should be_true
+    end
+
+    it "stores the checked callback" do
+      received = false
+      g = Lune::MenuGroup.new("View")
+      item = g.checkbox("Dark Mode") { |on| received = on }
+      item.checked_callback.not_nil!.call(true)
+      received.should be_true
+    end
+  end
+
+  describe "#radio" do
+    it "appends a Radio item and returns it" do
+      g = Lune::MenuGroup.new("View")
+      item = g.radio("Light") { }
+      item.kind.should eq(Lune::MenuItem::Kind::Radio)
+    end
+
+    it "respects selected: true" do
+      g = Lune::MenuGroup.new("View")
+      item = g.radio("Dark", selected: true) { }
+      item.checked.should be_true
+    end
+
+    it "stores the callback" do
+      called = false
+      g = Lune::MenuGroup.new("View")
+      item = g.radio("Light") { called = true }
+      item.callback.not_nil!.call
+      called.should be_true
+    end
+  end
+
+  describe "#submenu" do
+    it "appends a Submenu item with children" do
+      g = Lune::MenuGroup.new("File")
+      sub = g.submenu("Recent") do |r|
+        r.item("doc.txt") { }
+        r.item("readme.md") { }
+      end
+      sub.kind.should eq(Lune::MenuItem::Kind::Submenu)
+      sub.label.should eq("Recent")
+      sub.children.size.should eq(2)
+      g.items.first.should be(sub)
+    end
+  end
+
+  it "accumulates items in order" do
+    g = Lune::MenuGroup.new("File")
+    a = g.item("New") { }
+    g.separator
+    b = g.item("Open") { }
+    g.items.map(&.object_id).should eq([a, g.items[1], b].map(&.object_id))
+    g.items[1].kind.should eq(Lune::MenuItem::Kind::Separator)
+  end
+end
+
+describe Lune::MenuOptions do
+  describe "#app_menu" do
+    it "appends a RoleApp item" do
+      m = Lune::MenuOptions.new
+      item = m.app_menu
+      item.kind.should eq(Lune::MenuItem::Kind::RoleApp)
+      m.top_level.first.should be(item)
+    end
+  end
+
+  describe "#edit_menu" do
+    it "appends a RoleEdit item" do
+      m = Lune::MenuOptions.new
+      item = m.edit_menu
+      item.kind.should eq(Lune::MenuItem::Kind::RoleEdit)
+      m.top_level.first.should be(item)
+    end
+  end
+
+  describe "#submenu" do
+    it "appends a Submenu item and yields a MenuGroup" do
+      m = Lune::MenuOptions.new
+      file_item = m.submenu("File") do |f|
+        f.item("New") { }
+        f.separator
+        f.item("Quit") { }
+      end
+      file_item.kind.should eq(Lune::MenuItem::Kind::Submenu)
+      file_item.label.should eq("File")
+      file_item.children.size.should eq(3)
+      m.top_level.size.should eq(1)
+    end
+  end
+
+  describe "#any?" do
+    it "returns false when empty" do
+      Lune::MenuOptions.new.any?.should be_false
+    end
+
+    it "returns true after adding items" do
+      m = Lune::MenuOptions.new
+      m.app_menu
+      m.any?.should be_true
+    end
+  end
+
+  it "preserves top-level order" do
+    m = Lune::MenuOptions.new
+    app = m.app_menu
+    file = m.submenu("File") { }
+    edit = m.edit_menu
+    m.top_level.map(&.object_id).should eq([app, file, edit].map(&.object_id))
+  end
+end
+
+describe Lune::Options do
+  describe "#menu" do
+    it "exposes a MenuOptions instance" do
+      Lune::Options.new.menu.should be_a(Lune::MenuOptions)
+    end
+
+    it "is empty by default" do
+      Lune::Options.new.menu.any?.should be_false
+    end
+
+    it "mutations via block are retained" do
+      opts = Lune::Options.new
+      opts.menu do |m|
+        m.app_menu
+        m.submenu("File") do |f|
+          f.item("Quit") { }
+        end
+        m.edit_menu
+      end
+      opts.menu.top_level.size.should eq(3)
+      opts.menu.top_level[0].kind.should eq(Lune::MenuItem::Kind::RoleApp)
+      opts.menu.top_level[1].kind.should eq(Lune::MenuItem::Kind::Submenu)
+      opts.menu.top_level[2].kind.should eq(Lune::MenuItem::Kind::RoleEdit)
+    end
+  end
+end

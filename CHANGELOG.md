@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.6.0] - 2026-05-17
+
+### Added
+
+- `opts.menu { |m| }` — user-configurable macOS menu bar. Replaces the default menu when set; falls back to the standard App + Edit + Window menus when omitted.
+  - `m.app_menu` / `m.edit_menu` — role menus wired to native macOS selectors (About, Services, Quit; Undo, Redo, Copy, Paste, etc.).
+  - `m.submenu(label) { |f| }` — top-level custom submenu with its own item builder.
+  - `f.item(label, shortcut:, enabled:) { }` — text item with optional keyboard shortcut and per-item callback block.
+  - `f.separator` — horizontal separator.
+  - `f.checkbox(label, checked:, shortcut:) { |on| }` — toggle item; block receives new `Bool` state.
+  - `f.radio(label, selected:, shortcut:) { }` — radio item; adjacent radio items form a group automatically.
+  - `f.submenu(label) { }` — nested submenu at any depth.
+- `app.update_menu` — re-applies the current menu after mutating `MenuItem` properties (`label`, `enabled`, `checked`) at runtime.
+- `app.set_menu { |m| }` — replaces the entire menu bar at runtime.
+- `Lune::MenuShortcut` — pure-Crystal shortcut parser: converts strings like `"cmd+n"`, `"cmd+shift+z"`, `"cmd+f1"` into the key character and `NSEventModifierFlags` bitmask used by `NSMenuItem`.
+
+---
+
 ## [0.5.1] - 2026-05-16
 
 ### Breaking

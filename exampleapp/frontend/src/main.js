@@ -92,8 +92,11 @@ const sections = [
 
       <div class="card">
         <div class="card-label">Live clock — Crystal → JS</div>
-        <div class="clock" id="clock">—</div>
-        <p class="hint">Crystal emits <code>"tick"</code> every second from a background fiber.</p>
+        <div class="clock-row">
+          <div class="clock" id="clock">—</div>
+          <span class="badge badge--stopped" id="clock-badge" hidden>Stopped</span>
+        </div>
+        <p class="hint">Crystal emits <code>"tick"</code> every second. Use <code>File → Pause Clock</code> to toggle.</p>
       </div>
 
       <div class="card">
@@ -130,12 +133,16 @@ const sections = [
       </div>
     `,
     init(el) {
+      const clockBadge = el.querySelector("#clock-badge");
       const tickH = (ts) => {
         el.querySelector("#clock").textContent = new Date(
           ts,
         ).toLocaleTimeString();
       };
       on("tick", tickH);
+
+      const pauseH = (paused) => { clockBadge.hidden = !paused; };
+      on("clockPaused", pauseH);
 
       const pongLog = el.querySelector("#pong-log");
       const pongH = (data) => {
@@ -194,6 +201,7 @@ const sections = [
         off("pong", pongH);
         off("fileProgress", progH);
         off("fileDrop", dropH);
+        off("clockPaused", pauseH);
       };
     },
   },

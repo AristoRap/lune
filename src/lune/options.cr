@@ -1,3 +1,5 @@
+require "uuid"
+
 module Lune
   # Controls the macOS window appearance. Used within `opts.mac { |m| }`.
   enum MacAppearance
@@ -118,6 +120,153 @@ module Lune
     def initialize; end
   end
 
+  # A single item in a menu or submenu.
+  #
+  # Obtained by calling builder methods on `MenuGroup` or `MenuOptions` —
+  # keep the returned reference to mutate `enabled`, `checked`, or `label`
+  # before calling `app.update_menu`.
+  class MenuItem
+    enum Kind
+      Text
+      Separator
+      Checkbox
+      Radio
+      Submenu
+      RoleApp   # macOS standard application menu (About, Services, Hide, Quit)
+      RoleEdit  # macOS standard edit menu (Undo, Redo, Cut, Copy, Paste, Select All)
+    end
+
+    getter id : String
+    property label : String
+    property kind : Kind
+    property shortcut : String?
+    property enabled : Bool
+    property checked : Bool
+    getter children : Array(MenuItem)
+    getter callback : (-> Nil)?
+    getter checked_callback : (Bool -> Nil)?
+
+    def initialize(
+      @label : String = "",
+      @kind : Kind = Kind::Text,
+      @shortcut : String? = nil,
+      @enabled : Bool = true,
+      @checked : Bool = false,
+      @children : Array(MenuItem) = [] of MenuItem,
+      @callback : (-> Nil)? = nil,
+      @checked_callback : (Bool -> Nil)? = nil
+    )
+      @id = UUID.random.to_s
+    end
+  end
+
+  # Builder for the items inside one top-level menu (e.g. "File", "View").
+  # Obtained by yielding from `MenuOptions#submenu`.
+  class MenuGroup
+    getter label : String
+    getter items : Array(MenuItem)
+
+    def initialize(@label : String)
+      @items = [] of MenuItem
+    end
+
+    # Adds a clickable text item. Returns the `MenuItem` so you can hold a
+    # reference for later mutation (e.g. toggling `enabled`).
+    def item(label : String, shortcut : String? = nil, enabled : Bool = true, &cb : -> Nil) : MenuItem
+      m = MenuItem.new(label: label, shortcut: shortcut, enabled: enabled, callback: cb)
+      @items << m
+      m
+    end
+
+    def separator : MenuItem
+      m = MenuItem.new(kind: MenuItem::Kind::Separator)
+      @items << m
+      m
+    end
+
+    # Adds a checkbox item. The block receives the new `Bool` checked state.
+    def checkbox(label : String, checked : Bool = false, shortcut : String? = nil, &cb : Bool -> Nil) : MenuItem
+      m = MenuItem.new(
+        label: label, kind: MenuItem::Kind::Checkbox,
+        checked: checked, shortcut: shortcut, checked_callback: cb
+      )
+      @items << m
+      m
+    end
+
+    # Adds a radio item. Adjacent radio items form a group automatically.
+    # The block fires when this item is selected.
+    def radio(label : String, selected : Bool = false, shortcut : String? = nil, &cb : -> Nil) : MenuItem
+      m = MenuItem.new(
+        label: label, kind: MenuItem::Kind::Radio,
+        checked: selected, shortcut: shortcut, callback: cb
+      )
+      @items << m
+      m
+    end
+
+    # Adds a nested submenu. Returns the parent `MenuItem` (kind Submenu).
+    def submenu(label : String, &block : MenuGroup ->) : MenuItem
+      g = MenuGroup.new(label)
+      yield g
+      m = MenuItem.new(label: label, kind: MenuItem::Kind::Submenu, children: g.items)
+      @items << m
+      m
+    end
+  end
+
+  # Application menu bar configuration, built via `opts.menu { |m| }`.
+  #
+  # ```
+  # Lune.run(app) do |opts|
+  #   opts.menu do |m|
+  #     m.app_menu
+  #     m.submenu "File" do |file|
+  #       file.item("New", shortcut: "cmd+n") { }
+  #       file.separator
+  #       file.item("Quit", shortcut: "cmd+q") { app.quit }
+  #     end
+  #     m.edit_menu
+  #   end
+  # end
+  # ```
+  class MenuOptions
+    getter top_level : Array(MenuItem)
+
+    def initialize
+      @top_level = [] of MenuItem
+    end
+
+    # Inserts the standard macOS application menu (About, Services, Hide, Quit).
+    # Should be the first item per macOS convention.
+    def app_menu : MenuItem
+      m = MenuItem.new(kind: MenuItem::Kind::RoleApp)
+      @top_level << m
+      m
+    end
+
+    # Inserts the standard macOS edit menu (Undo, Redo, Cut, Copy, Paste, Select All).
+    def edit_menu : MenuItem
+      m = MenuItem.new(kind: MenuItem::Kind::RoleEdit)
+      @top_level << m
+      m
+    end
+
+    # Adds a top-level submenu and yields its `MenuGroup` builder.
+    # Returns the `MenuItem` (kind Submenu) that was appended.
+    def submenu(label : String, &block : MenuGroup ->) : MenuItem
+      g = MenuGroup.new(label)
+      yield g
+      m = MenuItem.new(label: label, kind: MenuItem::Kind::Submenu, children: g.items)
+      @top_level << m
+      m
+    end
+
+    def any? : Bool
+      !@top_level.empty?
+    end
+  end
+
   # Configuration passed to `Lune.run` via its block parameter.
   #
   # ```
@@ -185,10 +334,11 @@ module Lune
     # handle (NSWindow* on macOS, GtkWindow* on Linux, HWND on Windows).
     property on_window_ready : (Void* -> Nil)? = nil
 
-    getter drop : DropOptions = DropOptions.new
-    getter drag : DragOptions = DragOptions.new
-    getter tray : TrayOptions = TrayOptions.new
-    getter mac  : MacOptions  = MacOptions.new
+    getter drop : DropOptions  = DropOptions.new
+    getter drag : DragOptions  = DragOptions.new
+    getter tray : TrayOptions  = TrayOptions.new
+    getter mac  : MacOptions   = MacOptions.new
+    getter menu : MenuOptions  = MenuOptions.new
 
     def drop(& : DropOptions ->)
       yield @drop
@@ -204,6 +354,10 @@ module Lune
 
     def mac(& : MacOptions ->)
       yield @mac
+    end
+
+    def menu(& : MenuOptions ->)
+      yield @menu
     end
 
     def initialize; end

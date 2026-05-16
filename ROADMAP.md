@@ -1,9 +1,9 @@
 # Lune Roadmap
 
-## Now — v0.5.x
+## Now — v0.6.x
 
 - [ ] Windows support
-- [ ] User-configurable menu bar — `app.menu { ... }` API to add/replace menu bar items from Crystal
+- [x] User-configurable menu bar — `opts.menu { }` / `app.update_menu` / `app.set_menu`
 - [ ] Context menus
 - [ ] Multiple windows
 
@@ -11,7 +11,8 @@
 
 - [ ] App icon support on Windows — `.ico` bundled into `lune build`
 - [ ] Additional templates: Svelte, React+TS
+- [ ] Notifications in production builds — `UNUserNotificationCenter` requires a bundle identifier; silently dropped when running as a raw binary from `lune build`
 
 ---
 
-_v0.2 – v0.5.1 shipped: event bus, runtime JS/TS API, codegen bindings, dev error overlay, tray, file dialogs, drag-and-drop, window controls, notifications, screen info, app paths, clipboard, window state persistence, capability allowlist, app icons, default menu bar, example app, real async via OS threads, options API grouped into nested blocks. See [CHANGELOG.md](CHANGELOG.md) for details._
+_v0.2 – v0.6.0 shipped: event bus, runtime JS/TS API, codegen bindings, dev error overlay, tray, file dialogs, drag-and-drop, window controls, notifications, screen info, app paths, clipboard, window state persistence, capability allowlist, app icons, default menu bar, example app, real async via OS threads, options API grouped into nested blocks, user-configurable menu bar. See [CHANGELOG.md](CHANGELOG.md) for details._

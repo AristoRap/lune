@@ -48,10 +48,16 @@ module Lune
         runtime_bindings = Runtime::Bindings.filter(runtime_app.bindings, @config.capabilities)
         bridge.register_bindings(runtime_bindings)
         @app.bridge = bridge
+        @app.title = @options.title
 
         handle = wv.native_handle(Webview::NativeHandleKind::UI_WINDOW)
 
-        Native::Menu.setup_default(@options.title)
+        if @options.menu.any?
+          @app.menu_options = @options.menu
+          Native::Menu.set_from_options(@options.menu, @options.title)
+        else
+          Native::Menu.setup_default(@options.title)
+        end
 
         mac = @options.mac
         {% if flag?(:darwin) %}
