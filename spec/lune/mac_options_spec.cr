@@ -27,18 +27,20 @@ describe Lune::MacOptions do
     end
   end
 
-  describe "via opts.mac" do
+  describe "via opts.mac block" do
     it "is accessible from Options" do
       Lune::Options.new.mac.should be_a(Lune::MacOptions)
     end
 
-    it "mutations are retained" do
+    it "mutations via block are retained" do
       opts = Lune::Options.new
-      opts.mac.full_size_content = true
-      opts.mac.hide_title = true
-      opts.mac.appearance = Lune::MacAppearance::Dark
-      opts.mac.content_protection = true
-      opts.mac.always_on_top = true
+      opts.mac do |m|
+        m.full_size_content = true
+        m.hide_title        = true
+        m.appearance        = Lune::MacAppearance::Dark
+        m.content_protection = true
+        m.always_on_top     = true
+      end
 
       opts.mac.full_size_content.should be_true
       opts.mac.hide_title.should be_true
@@ -54,35 +56,5 @@ describe Lune::MacAppearance do
     Lune::MacAppearance::Auto.value.should eq(0)
     Lune::MacAppearance::Dark.value.should eq(1)
     Lune::MacAppearance::Light.value.should eq(2)
-  end
-end
-
-describe "drag_zone on Options" do
-  it "defaults to empty string" do
-    Lune::Options.new.drag_zone.should be_empty
-  end
-
-  it "drag_value defaults to drag" do
-    Lune::Options.new.drag_value.should eq("drag")
-  end
-
-  it "can be set" do
-    opts = Lune::Options.new
-    opts.drag_zone = "--lune-draggable"
-    opts.drag_value = "drag"
-    opts.drag_zone.should eq("--lune-draggable")
-    opts.drag_value.should eq("drag")
-  end
-end
-
-describe "disable_context_menu on Options" do
-  it "defaults to false" do
-    Lune::Options.new.disable_context_menu.should be_false
-  end
-
-  it "can be enabled" do
-    opts = Lune::Options.new
-    opts.disable_context_menu = true
-    opts.disable_context_menu.should be_true
   end
 end

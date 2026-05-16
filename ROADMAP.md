@@ -14,4 +14,4 @@
 
 ---
 
-_v0.2 – v0.5.0 shipped: event bus, runtime JS/TS API, codegen bindings, dev error overlay, tray, file dialogs, drag-and-drop, window controls, notifications, screen info, app paths, clipboard, window state persistence, capability allowlist, app icons, default menu bar, example app, real async via OS threads. See [CHANGELOG.md](CHANGELOG.md) for details._
+_v0.2 – v0.5.1 shipped: event bus, runtime JS/TS API, codegen bindings, dev error overlay, tray, file dialogs, drag-and-drop, window controls, notifications, screen info, app paths, clipboard, window state persistence, capability allowlist, app icons, default menu bar, example app, real async via OS threads, options API grouped into nested blocks. See [CHANGELOG.md](CHANGELOG.md) for details._

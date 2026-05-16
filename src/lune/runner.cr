@@ -67,8 +67,8 @@ module Lune
         native_app.install(
           Runtime::Bindings::Window.new(handle),
           Runtime::Bindings::Tray.new(
-            on_tray_click: @options.on_tray_click,
-            on_menu_click: @options.on_menu_click
+            on_tray_click: @options.tray.on_click,
+            on_menu_click: @options.tray.on_menu_click
           ),
           Runtime::Bindings::Dialogs.new,
           Runtime::Bindings::Notifications.new,
@@ -78,7 +78,7 @@ module Lune
         bridge.register_bindings(native_bindings)
 
         {% if flag?(:darwin) %}
-          unless @options.drag_zone.empty?
+          unless @options.drag.zone.empty?
             Native::Window.setup_drag_monitor
             drag_handle = handle
             wv.bind("__lune_start_window_drag", Webview::JSProc.new { |_args|
@@ -102,16 +102,16 @@ module Lune
           Native::Window.set_frame(handle, saved[:x], saved[:y], saved[:width], saved[:height])
         end
 
-        should_drop = @options.enable_file_drop || @options.on_file_drop != nil
+        should_drop = @options.drop.enabled || @options.drop.on_drop != nil
 
-        if should_drop || @options.disable_webview_drop
+        if should_drop || @options.drop.disable_webview_drop
           Native::Window.disable_webview_drop(handle)
         end
 
         if should_drop
-          user_cb = @options.on_file_drop
+          user_cb = @options.drop.on_drop
           app_ref = @app
-          use_drop_zones = !@options.drop_zone.empty?
+          use_drop_zones = !@options.drop.zone.empty?
           wv_ref = wv
 
           on_pos : (Int32, Int32) -> Nil = if use_drop_zones
@@ -174,14 +174,14 @@ module Lune
         wv.init(Runtime::Scripts::DISABLE_CONTEXT_MENU) if @options.disable_context_menu
 
         {% if flag?(:darwin) %}
-          unless @options.drag_zone.empty?
-            wv.init(Runtime::Scripts.drag_zone(@options.drag_zone, @options.drag_value))
+          unless @options.drag.zone.empty?
+            wv.init(Runtime::Scripts.drag_zone(@options.drag.zone, @options.drag.value))
           end
         {% end %}
 
         if should_drop
-          drop_prop = @options.drop_zone.empty? ? nil : @options.drop_zone
-          drop_val = @options.drop_zone.empty? ? nil : @options.drop_value
+          drop_prop = @options.drop.zone.empty? ? nil : @options.drop.zone
+          drop_val = @options.drop.zone.empty? ? nil : @options.drop.value
           wv.init(Runtime::Scripts.file_drop(drop_prop, drop_val))
         end
 

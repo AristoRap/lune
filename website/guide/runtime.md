@@ -346,8 +346,10 @@ Wire click/menu events in Crystal via `opts`:
 
 ```crystal
 Lune.run(app, assets: "frontend/dist") do |opts|
-  opts.on_tray_click = -> { app.emit("trayClick", nil) }
-  opts.on_menu_click = ->(id : String) { app.emit("trayMenuClick", id) }
+  opts.tray do |t|
+    t.on_click      = -> { app.emit("trayClick", nil) }
+    t.on_menu_click = ->(id : String) { app.emit("trayMenuClick", id) }
+  end
 end
 ```
 

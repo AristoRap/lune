@@ -53,26 +53,6 @@ describe Lune::Options do
     it "has no on_load callback" do
       Lune::Options.new.on_load.should be_nil
     end
-
-    it "has no on_file_drop callback" do
-      Lune::Options.new.on_file_drop.should be_nil
-    end
-
-    it "enable_file_drop defaults to false" do
-      Lune::Options.new.enable_file_drop.should be_false
-    end
-
-    it "disable_webview_drop defaults to false" do
-      Lune::Options.new.disable_webview_drop.should be_false
-    end
-
-    it "drop_zone defaults to empty string" do
-      Lune::Options.new.drop_zone.should be_empty
-    end
-
-    it "drop_value defaults to drop" do
-      Lune::Options.new.drop_value.should eq("drop")
-    end
   end
 
   describe "assignment" do
@@ -155,17 +135,129 @@ describe Lune::Options do
       opts.on_window_ready.not_nil!.call(Pointer(Void).null)
       received.should eq(Pointer(Void).null)
     end
+  end
+end
 
-    it "accepts an on_file_drop callback and calls it with x, y, paths" do
+describe Lune::DropOptions do
+  describe "defaults" do
+    it "enabled is false" do
+      Lune::DropOptions.new.enabled.should be_false
+    end
+
+    it "disable_webview_drop is false" do
+      Lune::DropOptions.new.disable_webview_drop.should be_false
+    end
+
+    it "zone defaults to empty string" do
+      Lune::DropOptions.new.zone.should be_empty
+    end
+
+    it "value defaults to drop" do
+      Lune::DropOptions.new.value.should eq("drop")
+    end
+
+    it "has no on_drop callback" do
+      Lune::DropOptions.new.on_drop.should be_nil
+    end
+  end
+
+  describe "via opts.drop block" do
+    it "is accessible from Options" do
+      Lune::Options.new.drop.should be_a(Lune::DropOptions)
+    end
+
+    it "mutations via block are retained" do
+      opts = Lune::Options.new
+      opts.drop do |d|
+        d.enabled = true
+        d.zone = "--lune-drop-target"
+        d.value = "file"
+      end
+      opts.drop.enabled.should be_true
+      opts.drop.zone.should eq("--lune-drop-target")
+      opts.drop.value.should eq("file")
+    end
+
+    it "accepts an on_drop callback and calls it with x, y, paths" do
       opts = Lune::Options.new
       received_x = 0; received_y = 0; received_paths = [] of String
-      opts.on_file_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
-        received_x = x; received_y = y; received_paths = paths; nil
-      }
-      opts.on_file_drop.not_nil!.call(10, 20, ["/tmp/photo.png"])
+      opts.drop do |d|
+        d.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
+          received_x = x; received_y = y; received_paths = paths; nil
+        }
+      end
+      opts.drop.on_drop.not_nil!.call(10, 20, ["/tmp/photo.png"])
       received_x.should eq(10)
       received_y.should eq(20)
       received_paths.should eq(["/tmp/photo.png"])
     end
+  end
+end
+
+describe Lune::DragOptions do
+  describe "defaults" do
+    it "zone defaults to empty string" do
+      Lune::DragOptions.new.zone.should be_empty
+    end
+
+    it "value defaults to drag" do
+      Lune::DragOptions.new.value.should eq("drag")
+    end
+  end
+
+  describe "via opts.drag block" do
+    it "is accessible from Options" do
+      Lune::Options.new.drag.should be_a(Lune::DragOptions)
+    end
+
+    it "mutations via block are retained" do
+      opts = Lune::Options.new
+      opts.drag do |d|
+        d.zone = "--lune-draggable"
+        d.value = "drag"
+      end
+      opts.drag.zone.should eq("--lune-draggable")
+      opts.drag.value.should eq("drag")
+    end
+  end
+end
+
+describe Lune::TrayOptions do
+  describe "defaults" do
+    it "has no on_click callback" do
+      Lune::TrayOptions.new.on_click.should be_nil
+    end
+
+    it "has no on_menu_click callback" do
+      Lune::TrayOptions.new.on_menu_click.should be_nil
+    end
+  end
+
+  describe "via opts.tray block" do
+    it "is accessible from Options" do
+      Lune::Options.new.tray.should be_a(Lune::TrayOptions)
+    end
+
+    it "mutations via block are retained" do
+      opts = Lune::Options.new
+      clicked = false
+      opts.tray do |t|
+        t.on_click = -> { clicked = true; nil }
+      end
+      opts.tray.on_click.not_nil!.call
+      clicked.should be_true
+    end
+  end
+end
+
+describe "disable_context_menu on Options" do
+  it "defaults to false" do
+    Lune::Options.new.disable_context_menu.should be_false
+  end
+
+  it "can be enabled" do
+    opts = Lune::Options.new
+    opts.disable_context_menu = true
+    opts.disable_context_menu.should be_true
   end
 end

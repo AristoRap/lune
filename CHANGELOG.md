@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.5.1] - 2026-05-16
+
+### Breaking
+
+- **Grouped options now use nested blocks** — `opts.drop { |d| }`, `opts.drag { |d| }`, `opts.tray { |t| }`, and `opts.mac { |m| }` replace the old flat properties on `Options`. Direct setter calls (e.g. `opts.on_tray_click =`, `opts.drag_zone =`, `opts.enable_file_drop =`) no longer exist.
+  - `opts.on_tray_click` → `opts.tray { |t| t.on_click = ... }`
+  - `opts.on_menu_click` → `opts.tray { |t| t.on_menu_click = ... }`
+  - `opts.enable_file_drop` → `opts.drop { |d| d.enabled = true }`
+  - `opts.on_file_drop` → `opts.drop { |d| d.on_drop = ... }`
+  - `opts.drop_zone` / `opts.drop_value` → `opts.drop { |d| d.zone = ...; d.value = ... }`
+  - `opts.disable_webview_drop` → `opts.drop { |d| d.disable_webview_drop = true }`
+  - `opts.drag_zone` / `opts.drag_value` → `opts.drag { |d| d.zone = ...; d.value = ... }`
+
+### Added
+
+- `Lune::DropOptions` class — groups file drop configuration (`enabled`, `disable_webview_drop`, `zone`, `value`, `on_drop`).
+- `Lune::DragOptions` class — groups window drag-handle configuration (`zone`, `value`).
+- `Lune::TrayOptions` class — groups tray callbacks (`on_click`, `on_menu_click`).
+- `Options` default values are now declared at the property level — `initialize` is a single no-op, removing the large explicit initializer.
+
+---
+
 ## [0.5.0] - 2026-05-16
 
 ### Breaking

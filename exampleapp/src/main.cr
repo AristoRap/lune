@@ -21,13 +21,23 @@ Lune.run(app, assets: "frontend/dist") do |opts|
   opts.title = "Lune Example"
   opts.width = 1100
   opts.height = 740
-  opts.mac.full_size_content = true
-  opts.drag_zone = "--lune-draggable"
   opts.disable_context_menu = true
 
-  opts.enable_file_drop = true
-  opts.drop_zone = "--lune-drop-target"
+  opts.mac do |m|
+    m.full_size_content = true
+  end
 
-  opts.on_tray_click = -> { app.emit("trayEvent", "click") }
-  opts.on_menu_click = ->(id : String) { app.emit("trayEvent", id) }
+  opts.drag do |d|
+    d.zone = "--lune-draggable"
+  end
+
+  opts.drop do |d|
+    d.enabled = true
+    d.zone = "--lune-drop-target"
+  end
+
+  opts.tray do |t|
+    t.on_click      = -> { app.emit("trayEvent", "click") }
+    t.on_menu_click = ->(id : String) { app.emit("trayEvent", id) }
+  end
 end
