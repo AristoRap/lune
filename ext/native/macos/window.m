@@ -21,6 +21,40 @@ void set_background_transparent(void *window) {
     w.opaque = NO;
 }
 
+// ── Title bar ─────────────────────────────────────────────────────────────────
+
+void hide_title(void *window) {
+    NSWindow *w = (__bridge NSWindow *)window;
+    w.titleVisibility = NSWindowTitleHidden;
+}
+
+// ── Appearance ────────────────────────────────────────────────────────────────
+// mode: 0 = auto (system default), 1 = dark, 2 = light
+
+void set_appearance(void *window, int mode) {
+    NSWindow *w = (__bridge NSWindow *)window;
+    NSAppearance *appearance = nil;
+    if (mode == 1)
+        appearance = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
+    else if (mode == 2)
+        appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+    w.appearance = appearance;
+}
+
+// ── Content protection ────────────────────────────────────────────────────────
+
+void set_content_protection(void *window, BOOL enabled) {
+    NSWindow *w = (__bridge NSWindow *)window;
+    w.sharingType = enabled ? NSWindowSharingNone : NSWindowSharingReadOnly;
+}
+
+// ── Always on top ─────────────────────────────────────────────────────────────
+
+void set_always_on_top(void *window, BOOL enabled) {
+    NSWindow *w = (__bridge NSWindow *)window;
+    w.level = enabled ? NSFloatingWindowLevel : NSNormalWindowLevel;
+}
+
 // ── Drag zones ────────────────────────────────────────────────────────────────
 
 // Stores the last left-mousedown event so performWindowDragWithEvent: can use

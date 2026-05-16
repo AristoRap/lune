@@ -248,11 +248,11 @@ Lune automatically sets up a standard macOS menu bar when your app starts. No co
 
 The default menu bar includes:
 
-| Menu | Items |
-| ---- | ----- |
+| Menu           | Items                                                     |
+| -------------- | --------------------------------------------------------- |
 | **[App name]** | About, Services, Hide / Hide Others / Show All, Quit (⌘Q) |
-| **Edit** | Undo (⌘Z), Redo (⇧⌘Z), Cut, Copy, Paste, Select All |
-| **Window** | Minimize (⌘M), Zoom, Bring All to Front |
+| **Edit**       | Undo (⌘Z), Redo (⇧⌘Z), Cut, Copy, Paste, Select All       |
+| **Window**     | Minimize (⌘M), Zoom, Bring All to Front                   |
 
 The app name in the menu bar is taken from `opts.title` (or the `title` set in `lune.yml`).
 
@@ -260,44 +260,52 @@ The app name in the menu bar is taken from `opts.title` (or the `title` set in `
 
 ---
 
+## Window drag zones
+
+CSS custom property-based drag handles — cross-platform concept, macOS implementation.
+
+Set `drag_zone` to a CSS custom property name and any element with that property set to `drag_value` becomes a handle for dragging the window. Essential when using a custom title bar without the native one.
+
+```crystal
+opts.drag_zone  = "--lune-draggable"
+opts.drag_value = "drag"   # default — can be omitted
+```
+
+Then mark any element as a drag handle:
+
+```css
+.titlebar {
+  --lune-draggable: drag;
+}
+```
+
+Or inline:
+
+```html
+<div style="--lune-draggable: drag">...</div>
+```
+
+Drag detection walks up the DOM tree, so marking a container makes all its children draggable too.
+
+---
+
 ## macOS window appearance
 
 **Supported:** macOS — **Not applicable:** Linux, Windows
 
-macOS-specific options are grouped under `opts.mac` to keep them clearly separate from cross-platform settings.
-
-```crystal
-Lune.run(app, assets: "frontend/dist") do |opts|
-  opts.mac.titlebar_transparent = true
-  opts.mac.full_size_content    = true
-  opts.mac.transparent          = true
-  opts.mac.drag_zone            = "--lune-draggable"
-end
-```
-
-### `mac.titlebar_transparent`
-
-**Type:** `Bool` — **Default:** `false`
-
-Makes the title bar background transparent. The window controls (traffic lights) remain visible. Usually paired with `full_size_content`.
-
-```crystal
-opts.mac.titlebar_transparent = true
-```
-
----
+macOS-specific options live under `opts.mac`.
 
 ### `mac.full_size_content`
 
 **Type:** `Bool` — **Default:** `false`
 
-Extends the content view to fill the entire window frame, including the area behind the title bar. Implies a transparent title bar — you do not need to set `titlebar_transparent` separately.
+Extends the content view to fill the entire window frame including the area behind the title bar, and makes the title bar itself transparent. The window controls (traffic lights) remain visible.
 
 ```crystal
 opts.mac.full_size_content = true
 ```
 
-> Use `padding-top` or `env(safe-area-inset-top)` in CSS to push content below the traffic lights when using this option.
+> Use `padding-top` in CSS to push content below the traffic lights when using this option.
 
 ---
 
@@ -323,32 +331,57 @@ opts.mac.transparent = true
 
 ---
 
-### `mac.drag_zone` / `mac.drag_value`
+### `mac.hide_title`
 
-**Types:** `String` — **Defaults:** `""` / `"drag"`
+**Type:** `Bool` — **Default:** `false`
 
-Enables CSS-driven drag zones. Set `drag_zone` to a CSS custom property name; any element (or its ancestors) that has that property set to `drag_value` becomes a handle for dragging the window. This is essential when using `full_size_content` without a native title bar.
+Hides the window title text while keeping the title bar (and traffic lights) visible. Commonly combined with `full_size_content` for a clean custom header where the traffic lights float over your content.
 
 ```crystal
-opts.mac.drag_zone  = "--lune-draggable"
-opts.mac.drag_value = "drag"   # default — can be omitted
+opts.mac.hide_title = true
 ```
 
-Then mark any element as a drag handle in CSS:
+---
 
-```css
-.titlebar {
-  --lune-draggable: drag;
-}
+### `mac.appearance`
+
+**Type:** `Lune::MacAppearance` — **Default:** `Auto`
+
+Forces a specific appearance mode for the window regardless of the system setting.
+
+| Value                  | Effect                                          |
+| ---------------------- | ----------------------------------------------- |
+| `MacAppearance::Auto`  | Follows the system dark/light setting (default) |
+| `MacAppearance::Dark`  | Forces dark mode                                |
+| `MacAppearance::Light` | Forces light mode                               |
+
+```crystal
+opts.mac.appearance = Lune::MacAppearance::Dark
 ```
 
-Or inline:
+---
 
-```html
-<div style="--lune-draggable: drag">...</div>
+### `mac.content_protection`
+
+**Type:** `Bool` — **Default:** `false`
+
+Prevents the window content from appearing in screenshots, screen recordings, or screen sharing. The window shows as a black rectangle to capturing software.
+
+```crystal
+opts.mac.content_protection = true
 ```
 
-Drag detection walks up the DOM tree from the element under the cursor, so marking a container makes all its children draggable too.
+---
+
+### `mac.always_on_top`
+
+**Type:** `Bool` — **Default:** `false`
+
+Keeps the window above all other windows, including those from other apps. Useful for utility apps, overlays, and floating toolbars.
+
+```crystal
+opts.mac.always_on_top = true
+```
 
 ---
 
@@ -358,17 +391,13 @@ Drag detection walks up the DOM tree from the element under the cursor, so marki
 Lune.run(app, assets: "frontend/dist") do |opts|
   opts.title = "My App"
 
-  opts.mac.full_size_content = true   # content under title bar (implies transparent title bar)
-  opts.mac.transparent       = true   # clear background for backdrop-filter
-  opts.mac.drag_zone         = "--lune-draggable"
-end
-```
+  opts.drag_zone = "--lune-draggable"
 
-```css
-/* Mark the title bar as a drag zone — layout and styling are up to you */
-.titlebar {
-  --lune-draggable: drag;
-}
+  opts.mac.full_size_content = true
+  opts.mac.transparent       = true
+  opts.mac.hide_title        = true
+  opts.mac.appearance        = Lune::MacAppearance::Dark
+end
 ```
 
 ---
@@ -385,9 +414,11 @@ Lune.run(app) do |opts|
   opts.resizable  = true
   opts.debug      = {{ flag?(:debug) }}
 
+  opts.drag_zone = "--lune-draggable"
+
   opts.mac.full_size_content = true
   opts.mac.transparent       = true
-  opts.mac.drag_zone         = "--lune-draggable"
+  opts.mac.hide_title        = true
 
   opts.on_window_ready = ->(_handle : Void*) {
     puts "Window created"

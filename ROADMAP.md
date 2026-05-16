@@ -43,4 +43,5 @@
 ## Random — no timeline
 
 - [x] Window state persistence — save/restore position+size to `~/.config/<app>/window.json`
+- [ ] Drag and drop — `EnableFileDrop` / `CSSDropProperty` / `CSSDropValue` to accept files dragged from the OS into the app and fire a JS event with the dropped paths
 - [ ] Additional templates: Svelte, React+TS

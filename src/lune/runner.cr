@@ -55,12 +55,12 @@ module Lune
 
         mac = @options.mac
         {% if flag?(:darwin) %}
-          if mac.titlebar_transparent || mac.full_size_content
-            Native::Window.set_titlebar_transparent(handle, mac.full_size_content)
-          end
-          if mac.transparent
-            Native::Window.set_background_transparent(handle)
-          end
+          Native::Window.set_titlebar_transparent(handle, true) if mac.full_size_content
+          Native::Window.set_background_transparent(handle) if mac.transparent
+          Native::Window.hide_title(handle) if mac.hide_title
+          Native::Window.set_appearance(handle, mac.appearance.value) unless mac.appearance.auto?
+          Native::Window.set_content_protection(handle, true) if mac.content_protection
+          Native::Window.set_always_on_top(handle, true) if mac.always_on_top
         {% end %}
 
         native_app = App.new
@@ -78,15 +78,15 @@ module Lune
         bridge.register_bindings(native_bindings)
 
         {% if flag?(:darwin) %}
-          unless mac.drag_zone.empty?
+          unless @options.drag_zone.empty?
             Native::Window.setup_drag_monitor
             drag_handle = handle
             wv.bind("__lune_start_window_drag", Webview::JSProc.new { |_args|
               Native::Window.start_window_drag(drag_handle)
               JSON::Any.new(nil)
             })
-            drag_css_var = mac.drag_zone
-            drag_css_val = mac.drag_value
+            drag_css_var = @options.drag_zone
+            drag_css_val = @options.drag_value
             wv.init(<<-JS)
               (function(){
                 document.addEventListener('mousedown', function(e) {

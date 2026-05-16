@@ -79,4 +79,33 @@ describe Lune::Native::Window do
       Lune::Native::WindowMock.calls.should contain(:start_window_drag)
     end
   end
+
+  describe ".hide_title" do
+    it "records the call" do
+      Lune::Native::Window.hide_title(handle)
+      Lune::Native::WindowMock.calls.should contain(:hide_title)
+    end
+  end
+
+  describe ".set_appearance" do
+    it "records the call with the mode value" do
+      Lune::Native::Window.set_appearance(handle, 1)
+      Lune::Native::WindowMock.calls.should contain(:set_appearance)
+      Lune::Native::WindowMock.last_appearance.should eq(1)
+    end
+  end
+
+  describe ".set_content_protection" do
+    it "records the call" do
+      Lune::Native::Window.set_content_protection(handle, true)
+      Lune::Native::WindowMock.calls.should contain(:set_content_protection)
+    end
+  end
+
+  describe ".set_always_on_top" do
+    it "records the call" do
+      Lune::Native::Window.set_always_on_top(handle, true)
+      Lune::Native::WindowMock.calls.should contain(:set_always_on_top)
+    end
+  end
 end

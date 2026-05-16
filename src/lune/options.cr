@@ -1,33 +1,41 @@
 module Lune
+  # Controls the macOS window appearance. Used with `opts.mac.appearance`.
+  enum MacAppearance
+    Auto  # follows the system setting (default)
+    Dark
+    Light
+  end
+
   # macOS-specific window options, accessible via `opts.mac`.
   #
   # ```
   # Lune.run(app) do |opts|
-  #   opts.mac.titlebar_transparent = true
-  #   opts.mac.full_size_content    = true
-  #   opts.mac.transparent          = true
-  #   opts.mac.drag_zone            = "--lune-draggable"
+  #   opts.mac.full_size_content = true
+  #   opts.mac.transparent       = true
+  #   opts.mac.appearance        = Lune::MacAppearance::Dark
   # end
   # ```
   class MacOptions
-    # Makes the title bar background transparent. Usually paired with `full_size_content`.
-    property titlebar_transparent : Bool = false
-
-    # Extends the content view to fill the entire window, including under the title bar.
-    # Implies `titlebar_transparent`.
+    # Extends the content view to fill the entire window including under the title bar,
+    # and makes the title bar itself transparent. The traffic lights remain visible.
     property full_size_content : Bool = false
 
     # Clears the window and webview background so CSS `backdrop-filter` effects
     # (e.g. blur) show through to whatever is behind the window.
     property transparent : Bool = false
 
-    # CSS custom property name that marks an element as a drag zone.
-    # When non-empty, elements (and their descendants) with this CSS property
-    # set to `drag_value` can be used to drag the window. Example: `"--lune-draggable"`.
-    property drag_zone : String = ""
+    # Hides the window title text while keeping the title bar (and traffic lights) visible.
+    # Commonly combined with `full_size_content` for a clean custom header.
+    property hide_title : Bool = false
 
-    # CSS value that triggers window dragging. Defaults to `"drag"`.
-    property drag_value : String = "drag"
+    # Forces a specific appearance mode for the window. Defaults to `Auto` (system setting).
+    property appearance : MacAppearance = MacAppearance::Auto
+
+    # Prevents the window content from being captured by screenshots or screen recording.
+    property content_protection : Bool = false
+
+    # Keeps the window above all other windows, including those from other apps.
+    property always_on_top : Bool = false
 
     def initialize; end
   end
@@ -94,6 +102,14 @@ module Lune
     # Called when a tray context menu item is selected. Receives the item id.
     property on_menu_click : (String -> Nil)?
 
+    # CSS custom property name that marks an element as a window drag handle.
+    # When non-empty, any element with this property set to `drag_value` (and its
+    # descendants) can be used to drag the window. Example: `"--lune-draggable"`.
+    property drag_zone : String = ""
+
+    # CSS value that activates drag behaviour. Defaults to `"drag"`.
+    property drag_value : String = "drag"
+
     # macOS-specific window options.
     getter mac : MacOptions = MacOptions.new
 
@@ -114,6 +130,8 @@ module Lune
       @on_window_ready = nil
       @on_tray_click = nil
       @on_menu_click = nil
+      @drag_zone = ""
+      @drag_value = "drag"
       @mac = MacOptions.new
     end
 
