@@ -46,8 +46,8 @@ Generates:
 
 ```ts
 export interface FileModule {
-  Read(arg0: string): Promise<string>;
-  Exists(arg0: string): Promise<boolean>;
+  Read(path: string): Promise<string>;
+  Exists(path: string): Promise<boolean>;
 }
 
 export interface Api {
