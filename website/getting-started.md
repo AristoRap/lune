@@ -24,11 +24,12 @@ sudo dnf install webkit2gtk4.1-devel
 
 Pre-built binaries are attached to each [GitHub release](https://github.com/AristoRap/lune/releases):
 
-| Platform              | File                 |
-| --------------------- | -------------------- |
-| macOS (Apple Silicon) | `lune-darwin-arm64`  |
-| macOS (Intel)         | `lune-darwin-x86_64` |
-| Linux x86_64          | `lune-linux-x86_64`  |
+| Platform              | File                |
+| --------------------- | ------------------- |
+| macOS (Apple Silicon) | `lune-darwin-arm64` |
+| Linux x86_64          | `lune-linux-x86_64` |
+
+> **macOS Intel (x86_64):** No pre-built binary is available — the GitHub Actions Intel runner is currently unreliable. Build from source instead (see below).
 
 Download the binary for your platform, make it executable, and put it on your PATH:
 

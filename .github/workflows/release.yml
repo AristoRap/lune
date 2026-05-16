@@ -20,8 +20,9 @@ jobs:
             artifact: lune-linux-x86_64
           - os: macos-latest
             artifact: lune-darwin-arm64
-          - os: macos-13
-            artifact: lune-darwin-x86_64
+          # macos-13 (Intel) runner is unreliable on GitHub Actions — commented out until a stable solution is found
+          # - os: macos-13
+          #   artifact: lune-darwin-x86_64
 
     steps:
       - name: Checkout
