@@ -102,6 +102,9 @@ module Lune
     # Called when a tray context menu item is selected. Receives the item id.
     property on_menu_click : (String -> Nil)?
 
+    # Called when the user drops files onto the window. Receives an array of absolute file paths.
+    property on_file_drop : (Array(String) -> Nil)?
+
     # CSS custom property name that marks an element as a window drag handle.
     # When non-empty, any element with this property set to `drag_value` (and its
     # descendants) can be used to drag the window. Example: `"--lune-draggable"`.
@@ -133,6 +136,7 @@ module Lune
       @on_window_ready = nil
       @on_tray_click = nil
       @on_menu_click = nil
+      @on_file_drop = nil
       @drag_zone = ""
       @drag_value = "drag"
       @disable_context_menu = false

@@ -118,6 +118,10 @@ module Lune
           Native::Window.set_frame(handle, saved[:x], saved[:y], saved[:width], saved[:height])
         end
 
+        if drop_cb = @options.on_file_drop
+          Native::Window.setup_file_drop(handle, drop_cb)
+        end
+
         if load_cb = @options.on_load
           wv.on_load = -> {
             begin
@@ -150,6 +154,15 @@ module Lune
 
         if @options.disable_context_menu
           wv.init("document.addEventListener('contextmenu',function(e){e.preventDefault();});")
+        end
+
+        if @options.on_file_drop
+          wv.init(<<-JS)
+            (function(){
+              document.addEventListener('dragover', function(e){ e.preventDefault(); }, false);
+              document.addEventListener('drop',     function(e){ e.preventDefault(); }, false);
+            })();
+          JS
         end
 
         wv.init(<<-JS)

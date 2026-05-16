@@ -6,10 +6,15 @@
 
 - Default macOS menu bar — App, Edit, and Window menus are set up automatically so Lune apps feel like proper macOS citizens out of the box. The app name in the menu is taken from `opts.title`. No configuration required.
 - `opts.mac` — macOS-specific window options grouped under a dedicated `MacOptions` struct, keeping them clearly separate from cross-platform settings.
-- `opts.mac.titlebar_transparent` — makes the title bar background transparent.
-- `opts.mac.full_size_content` — extends the content view to fill the entire window frame including the area behind the title bar. Implies a transparent title bar.
+- `opts.mac.full_size_content` — extends the content view to fill the entire window frame including the area behind the title bar, and makes the title bar itself transparent. The traffic lights remain visible.
 - `opts.mac.transparent` — clears the window and WebView backgrounds so CSS `backdrop-filter` effects can sample whatever is behind the window, enabling frosted-glass / "mirror" style UIs.
-- `opts.mac.drag_zone` / `opts.mac.drag_value` — CSS custom property-based drag zones. Set `drag_zone` to a CSS property name (e.g. `"--lune-draggable"`) and any element with that property set to `drag_value` (default `"drag"`) becomes a window drag handle. Detection walks up the DOM tree, so marking a container makes all its children draggable.
+- `opts.mac.hide_title` — hides the window title text while keeping the title bar and traffic lights visible. Commonly combined with `full_size_content` for a clean custom header.
+- `opts.mac.appearance` — forces a specific appearance mode (`MacAppearance::Auto` / `Dark` / `Light`) regardless of the system setting.
+- `opts.mac.content_protection` — prevents the window from appearing in screenshots, screen recordings, or screen sharing.
+- `opts.mac.always_on_top` — keeps the window above all other windows, including those from other apps.
+- `opts.drag_zone` / `opts.drag_value` — CSS custom property-based drag zones. Set `drag_zone` to a CSS property name (e.g. `"--lune-draggable"`) and any element with that property set to `drag_value` (default `"drag"`) becomes a window drag handle. Detection walks up the DOM tree so marking a container makes all its children draggable.
+- `opts.disable_context_menu` — suppresses the browser's built-in right-click context menu across the entire window.
+- `opts.on_file_drop` — callback fired when the user drops one or more files onto the window. Receives an array of absolute file paths. Setting this option automatically registers the window as a drop target on macOS and Linux.
 
 ---
 

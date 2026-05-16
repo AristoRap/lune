@@ -108,4 +108,18 @@ describe Lune::Native::Window do
       Lune::Native::WindowMock.calls.should contain(:set_always_on_top)
     end
   end
+
+  describe ".setup_file_drop" do
+    it "records the call" do
+      Lune::Native::Window.setup_file_drop(handle, ->(paths : Array(String)) { nil })
+      Lune::Native::WindowMock.calls.should contain(:setup_file_drop)
+    end
+
+    it "stores the callback and simulate_drop invokes it" do
+      received = [] of String
+      Lune::Native::Window.setup_file_drop(handle, ->(paths : Array(String)) { received = paths; nil })
+      Lune::Native::WindowMock.simulate_drop(["/tmp/a.txt", "/tmp/b.txt"])
+      received.should eq(["/tmp/a.txt", "/tmp/b.txt"])
+    end
+  end
 end

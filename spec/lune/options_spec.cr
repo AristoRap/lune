@@ -53,6 +53,10 @@ describe Lune::Options do
     it "has no on_load callback" do
       Lune::Options.new.on_load.should be_nil
     end
+
+    it "has no on_file_drop callback" do
+      Lune::Options.new.on_file_drop.should be_nil
+    end
   end
 
   describe "assignment" do
@@ -134,6 +138,14 @@ describe Lune::Options do
       opts.on_window_ready = ->(h : Void*) { received = h; nil }
       opts.on_window_ready.not_nil!.call(Pointer(Void).null)
       received.should eq(Pointer(Void).null)
+    end
+
+    it "accepts an on_file_drop callback and calls it with paths" do
+      opts = Lune::Options.new
+      received = [] of String
+      opts.on_file_drop = ->(paths : Array(String)) { received = paths; nil }
+      opts.on_file_drop.not_nil!.call(["/tmp/photo.png"])
+      received.should eq(["/tmp/photo.png"])
     end
   end
 end

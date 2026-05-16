@@ -19,6 +19,7 @@ module Lune
           @@mock_frame = {0, 0, 1200, 800}
           @@last_full_size_content = nil
           @@last_appearance = nil
+          @@last_drop_cb = nil
         end
 
         def self.mock_frame=(f : Tuple(Int32, Int32, Int32, Int32))
@@ -38,7 +39,17 @@ module Lune
           @@last_frame = {x, y, w, h}
         end
         @@last_appearance : Int32? = nil
-        class_getter last_appearance
+        @@last_drop_cb : (Array(String) -> Nil)? = nil
+        class_getter last_appearance, last_drop_cb
+
+        def self.record_setup_file_drop(cb : Array(String) -> Nil)
+          @@calls << :setup_file_drop
+          @@last_drop_cb = cb
+        end
+
+        def self.simulate_drop(paths : Array(String))
+          @@last_drop_cb.try(&.call(paths))
+        end
 
         def self.record_set_titlebar_transparent(full_size_content : Bool)
           @@calls << :set_titlebar_transparent
@@ -82,6 +93,8 @@ module Lune
         fun set_appearance(window : Void*, mode : LibC::Int) : Void
         fun set_content_protection(window : Void*, enabled : LibC::Int) : Void
         fun set_always_on_top(window : Void*, enabled : LibC::Int) : Void
+        alias DropCallback = (LibC::Char*, Void*) -> Void
+        fun setup_file_drop(window : Void*, callback : DropCallback, userdata : Void*) : Void
       end
     {% elsif flag?(:linux) %}
       {% system("cd '#{__DIR__}/../../../ext/native/linux' && gcc -c window.c -o window.o `pkg-config --cflags gtk+-3.0` 2>/dev/null") %}
@@ -102,10 +115,28 @@ module Lune
         fun center(window : Void*) : Void
         fun get_frame(window : Void*) : Frame
         fun set_frame(window : Void*, x : LibC::Int, y : LibC::Int, width : LibC::Int, height : LibC::Int) : Void
+        alias DropCallback = (LibC::Char*, Void*) -> Void
+        fun setup_file_drop(window : Void*, callback : DropCallback, userdata : Void*) : Void
       end
     {% end %}
 
     module Window
+      # Kept at class level so GC never collects the boxed callback while the window is open.
+      @@drop_box : Pointer(Void) = Pointer(Void).null
+
+      def self.setup_file_drop(handle : Void*, on_drop : Array(String) -> Nil)
+        {% if flag?(:lune_native_test_mock) %}
+          WindowMock.record_setup_file_drop(on_drop)
+        {% elsif flag?(:darwin) || flag?(:linux) %}
+          @@drop_box = Box.box(on_drop)
+          LibNativeWindow.setup_file_drop(handle, ->(json_ptr : LibC::Char*, data : Void*) {
+            return if data.null?
+            paths = Array(String).from_json(String.new(json_ptr))
+            Box(Proc(Array(String), Nil)).unbox(data).call(paths)
+          }, @@drop_box)
+        {% end %}
+      end
+
       def self.minimize(handle : Void*)
         {% if flag?(:lune_native_test_mock) %}
           WindowMock.record_minimize

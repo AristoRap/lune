@@ -75,6 +75,103 @@ void start_window_drag(void *window) {
         [w performWindowDragWithEvent:_last_mousedown];
 }
 
+// ── File drop ─────────────────────────────────────────────────────────────────
+
+typedef void (*LuneDropCallback)(const char *paths_json, void *userdata);
+
+@interface LuneDropView : NSView <NSDraggingDestination>
+@property (nonatomic) LuneDropCallback dropCallback;
+@property (nonatomic) void *dropUserdata;
+@end
+
+@implementation LuneDropView
+
+- (instancetype)initWithFrame:(NSRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        [self registerForDraggedTypes:@[NSPasteboardTypeFileURL]];
+        self.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    }
+    return self;
+}
+
+- (BOOL)isOpaque { return NO; }
+
+// Must return self so the drag system's hit-test can locate this view.
+// The check against contentView.frame excludes the title bar, so traffic
+// lights are never intercepted regardless of window style.
+- (NSView *)hitTest:(NSPoint)point {
+    if (self.window && !NSPointInRect(point, self.window.contentView.frame))
+        return nil;
+    return self;
+}
+
+// Forward regular mouse/scroll events to the WKWebView so all normal web
+// interactions (click, scroll, text-selection) continue to work.
+- (void)mouseDown:(NSEvent *)e      { [self.window.contentView mouseDown:e]; }
+- (void)mouseUp:(NSEvent *)e        { [self.window.contentView mouseUp:e]; }
+- (void)mouseDragged:(NSEvent *)e   { [self.window.contentView mouseDragged:e]; }
+- (void)rightMouseDown:(NSEvent *)e { [self.window.contentView rightMouseDown:e]; }
+- (void)rightMouseUp:(NSEvent *)e   { [self.window.contentView rightMouseUp:e]; }
+- (void)scrollWheel:(NSEvent *)e    { [self.window.contentView scrollWheel:e]; }
+
+- (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender {
+    if (![[sender.draggingPasteboard types] containsObject:NSPasteboardTypeFileURL])
+        return NSDragOperationNone;
+    return NSDragOperationCopy;
+}
+
+- (NSDragOperation)draggingUpdated:(id<NSDraggingInfo>)sender {
+    if (![[sender.draggingPasteboard types] containsObject:NSPasteboardTypeFileURL])
+        return NSDragOperationNone;
+    return NSDragOperationCopy;
+}
+
+- (BOOL)prepareForDragOperation:(id<NSDraggingInfo>)sender { return YES; }
+
+- (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
+    NSPasteboard *pb = sender.draggingPasteboard;
+    NSArray<NSURL *> *urls = [pb readObjectsForClasses:@[NSURL.class]
+                                               options:@{NSPasteboardURLReadingFileURLsOnlyKey: @YES}];
+    if (!urls.count) return NO;
+
+    NSMutableString *json = [NSMutableString stringWithString:@"["];
+    for (NSUInteger i = 0; i < urls.count; i++) {
+        NSString *path = urls[i].path;
+        path = [path stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"];
+        path = [path stringByReplacingOccurrencesOfString:@"\"" withString:@"\\\""];
+        if (i > 0) [json appendString:@","];
+        [json appendFormat:@"\"%@\"", path];
+    }
+    [json appendString:@"]"];
+
+    if (self.dropCallback)
+        self.dropCallback([json UTF8String], self.dropUserdata);
+    return YES;
+}
+
+@end
+
+void setup_file_drop(void *window, LuneDropCallback callback, void *userdata) {
+    NSWindow *w = (__bridge NSWindow *)window;
+
+    // Unregister the WKWebView from all drag types. Without this it intercepts
+    // every file drag before our overlay can see it (the same reason Wails has
+    // a DisableWebViewDrop option).
+    [w.contentView unregisterDraggedTypes];
+
+    // Add the overlay as a sibling of the WKWebView (in the frame view) so it
+    // sits above the webview in z-order and genuinely receives drag hit-tests.
+    NSView *host = w.contentView.superview ?: w.contentView;
+    LuneDropView *dropView = [[LuneDropView alloc] initWithFrame:host.bounds];
+    dropView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    dropView.dropCallback = callback;
+    dropView.dropUserdata = userdata;
+    [host addSubview:dropView positioned:NSWindowAbove relativeTo:nil];
+}
+
+// ── Window controls ────────────────────────────────────────────────────────────
+
 void minimize(void *window) {
     NSWindow *w = (__bridge NSWindow *)window;
     [w miniaturize:nil];

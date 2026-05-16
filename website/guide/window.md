@@ -193,6 +193,27 @@ opts.on_close = -> {
 
 ---
 
+### `on_file_drop`
+
+**Type:** `(Array(String) -> Nil)?` — **Default:** `nil`
+
+Called when the user drops one or more files onto the window. The callback receives an array of absolute file paths. When this option is set, the window is automatically registered as a drop target — no other configuration required.
+
+```crystal
+opts.on_file_drop = ->(paths : Array(String)) {
+  app.emit("fileDrop", paths)
+}
+```
+
+```typescript
+// frontend
+on("fileDrop", (paths: string[]) => {
+  console.log("Dropped:", paths)
+})
+```
+
+---
+
 ### `on_tray_click`
 
 **Type:** `(-> Nil)?` — **Default:** `nil`
@@ -442,6 +463,10 @@ Lune.run(app) do |opts|
 
   opts.on_navigate = ->(url : String) {
     puts "Navigated to: #{url}"
+  }
+
+  opts.on_file_drop = ->(paths : Array(String)) {
+    app.emit("fileDrop", paths)
   }
 
   opts.on_close = -> {
