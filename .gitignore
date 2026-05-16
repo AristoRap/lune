@@ -6,11 +6,18 @@
 /.shards/
 *.dwarf
 *.o
-/.lune-dev
+.lune-dev
 /shard.lock
-/frontend/*
-lune.yml
-src/main.cr
+/lune.yml
+/src/main.cr
+
+# exampleapp — commit source, ignore generated/installed dirs
+exampleapp/lib/
+exampleapp/.shards/
+exampleapp/shard.lock
+exampleapp/frontend/node_modules/
+exampleapp/frontend/dist/
+exampleapp/frontend/lunejs/
 
 # VitePress
 /node_modules/
