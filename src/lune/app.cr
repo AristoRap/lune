@@ -6,7 +6,9 @@ module Lune
 
     def initialize
       @bindings = [] of Binding
-      @bridge = nil # Injected once webview is created
+      @bridge = nil
+      @event_handlers = {} of String => Array(Proc(JSON::Any, Nil))
+      @event_once_handlers = {} of String => Array(Proc(JSON::Any, Nil))
     end
 
     # ----------------------------
@@ -48,6 +50,24 @@ module Lune
       return unless (b = @bridge)
       json = data.nil? ? "null" : data.to_json
       b.dispatch_eval("window.__lune_emit(#{event.inspect}, #{json})")
+    end
+
+    def on(event : String, &block : JSON::Any -> Nil)
+      (@event_handlers[event] ||= [] of Proc(JSON::Any, Nil)) << block
+    end
+
+    def once(event : String, &block : JSON::Any -> Nil)
+      (@event_once_handlers[event] ||= [] of Proc(JSON::Any, Nil)) << block
+    end
+
+    def off(event : String)
+      @event_handlers.delete(event)
+      @event_once_handlers.delete(event)
+    end
+
+    def dispatch_event(event : String, data : JSON::Any)
+      @event_handlers[event]?.try(&.each(&.call(data)))
+      @event_once_handlers.delete(event).try(&.each(&.call(data)))
     end
 
     # ----------------------------

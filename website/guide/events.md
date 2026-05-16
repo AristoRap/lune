@@ -1,10 +1,12 @@
 # Events
 
-Bindings let the frontend call Crystal. Events go the other direction — Crystal pushes data to the frontend at any time, without the frontend having to poll.
+Lune has a unified, bidirectional event bus. Crystal can push events to the frontend, and the frontend can push events back to Crystal — using the same event names on both sides.
 
 ---
 
-## Emitting from Crystal
+## Crystal → JavaScript
+
+### Emitting from Crystal
 
 Call `app.emit` with an event name and an optional payload:
 
@@ -16,9 +18,7 @@ app.emit("file-saved")  # no payload
 
 The payload can be any Crystal value that serializes to JSON — strings, numbers, booleans, arrays, hashes, or `JSON::Serializable` structs.
 
----
-
-## Listening in JavaScript
+### Listening in JavaScript
 
 Import `on`, `once`, or `off` from `runtime.js`:
 
@@ -38,25 +38,98 @@ once("connected", () => {
 
 ---
 
+## JavaScript → Crystal
+
+### Emitting from JavaScript
+
+Import `emit` from `runtime.js` and call it with an event name and an optional payload:
+
+```js
+import { emit } from "../lunejs/runtime/runtime.js";
+
+await emit("search", { query: input.value });
+await emit("user-action", "button-clicked");
+await emit("ready");  // no payload
+```
+
+`emit` is async — it resolves once Crystal has received the event.
+
+### Listening in Crystal
+
+Register handlers on the `app` object using `on`, `once`, or `off`:
+
+```crystal
+# Persistent handler
+app.on("search") do |data|
+  query = data["query"].as_s
+  results = search_index(query)
+  app.emit("results", results)
+end
+
+# One-shot handler — fires once, then removes itself
+app.once("ready") do |_|
+  puts "Frontend is ready"
+end
+
+# Remove all handlers for an event
+app.off("search")
+```
+
+The `data` argument is a `JSON::Any` — use `.as_s`, `.as_i`, `.as_a`, `[]`, etc. to extract values.
+
+---
+
+## Unified event bus
+
+Crystal-emitted events are received by JS listeners; JS-emitted events are received by Crystal listeners. The names live in one shared namespace, so you can design clean back-and-forth flows without separate channels:
+
+```crystal
+# Crystal side
+app.on("search") do |data|
+  results = run_search(data["query"].as_s)
+  app.emit("results", results)   # reply on the same logical channel
+end
+```
+
+```js
+// JS side
+on("results", (data) => renderList(data));
+
+searchButton.addEventListener("click", () => {
+  emit("search", { query: input.value });
+});
+```
+
+---
+
 ## Removing listeners
+
+**JavaScript:**
 
 ```js
 const handler = (data) => console.log(data);
 
 on("tick", handler);
 
-// Later, remove this specific handler
+// Remove this specific handler
 off("tick", handler);
 
 // Remove ALL handlers for this event
 off("tick");
 ```
 
+**Crystal:**
+
+```crystal
+# off removes all Crystal-side handlers for the event
+app.off("search")
+```
+
 ---
 
 ## Common patterns
 
-### Progress reporting
+### Progress reporting (Crystal → JS)
 
 Run a long task in a fiber and stream progress back:
 
@@ -83,9 +156,27 @@ on("progress", ({ done, total, path }) => {
 await api.Files.ProcessFiles(selectedPaths);
 ```
 
-### Real-time updates
+### Search / command dispatch (JS → Crystal → JS)
 
-Emit from background fibers or timers, completely independent of binding calls:
+The frontend emits a request; Crystal handles it and emits back the response:
+
+```crystal
+app.on("search") do |data|
+  query   = data["query"].as_s
+  results = search_index(query)
+  app.emit("search-results", results.map(&.to_h))
+end
+```
+
+```js
+on("search-results", (results) => renderResults(results));
+
+searchInput.addEventListener("input", (e) => {
+  emit("search", { query: e.target.value });
+});
+```
+
+### Real-time updates from a background fiber
 
 ```crystal
 spawn do
@@ -96,38 +187,54 @@ spawn do
 end
 ```
 
-### App-level notifications
+### Signalling from JS when the frontend is ready
 
 ```crystal
-app.emit("notification", {
-  "title"   => "Download complete",
-  "message" => "file.zip saved to Downloads",
-})
+app.once("frontend-ready") do |_|
+  # Safe to emit initial data — frontend is listening
+  app.emit("config", load_config.to_h)
+end
+```
+
+```js
+import { emit, on } from "../lunejs/runtime/runtime.js";
+
+on("config", (cfg) => applyConfig(cfg));
+
+// After your app has mounted and listeners are registered
+emit("frontend-ready");
 ```
 
 ---
 
 ## Timing
 
-`app.emit` is safe to call at any point — before `Lune.run`, from background fibers, or inside binding callbacks. However, events emitted before the WebView window has opened (i.e. before the bridge is initialized) are silently dropped. In practice, emit from `on_load` or after the window is visible to guarantee delivery.
+`app.emit` is safe to call at any point — from background fibers or inside binding callbacks. Events emitted before the WebView has opened are silently dropped; emit from `on_load` or in response to a JS event to guarantee delivery.
+
+Crystal `app.on` handlers run in a background fiber spawned from the webview thread. Long-running handlers won't block the UI, but access to shared state should be appropriately guarded.
 
 ---
 
 ## TypeScript
 
-The runtime type declarations are in `runtime.d.ts`. The event callback receives `unknown` by default — cast to your expected type:
+All event functions are declared in `runtime.d.ts`. Callbacks receive `unknown` by default — cast to your expected type:
 
 ```ts
-import { on } from "../lunejs/runtime/runtime.js";
+import { on, emit } from "../lunejs/runtime/runtime.js";
 
-interface Progress {
-  done: number;
-  total: number;
-  path: string;
+interface SearchPayload {
+  query: string;
 }
 
-on("progress", (data) => {
-  const p = data as Progress;
-  console.log(`${p.done}/${p.total}`);
+interface SearchResult {
+  title: string;
+  url: string;
+}
+
+on("search-results", (data) => {
+  const results = data as SearchResult[];
+  renderResults(results);
 });
+
+const search = (query: string) => emit("search", { query } satisfies SearchPayload);
 ```

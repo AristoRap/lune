@@ -1,10 +1,26 @@
 # Changelog
 
-## [0.4.3] - 2026-05-16
+## [0.4.5] - 2026-05-16
+
+### Added
+
+- Bidirectional event bus — `app.on`, `app.once`, `app.off`, and `app.dispatch_event` on the Crystal side let the app listen for events emitted from JavaScript. `emit(name, data?)` in `runtime.js` / `runtime.d.ts` is the JS counterpart. Both sides share a single event-name namespace, making request/response and notification patterns straightforward.
+
+---
+
+## [0.4.4] - 2026-05-16
+
+### Changed
+
+- Runner inline `wv.init` JavaScript extracted into a dedicated `Lune::Runtime::Scripts` module with private methods per concern (`keyboard_shortcuts`, `event_bus`, `drag_zone`, `file_drop`). No behaviour change — internal cleanup only.
 
 ### Fixed
 
 - Traffic lights (close/minimize/zoom) were unresponsive when both `mac.full_size_content` and `enable_file_drop` (or `on_file_drop`) were active at the same time. With `NSWindowStyleMaskFullSizeContentView` the content view spans the titlebar, so the drop overlay's hit-test was claiming traffic-light clicks. The overlay now explicitly passes through clicks that land on any standard window button.
+
+---
+
+## [0.4.3] - 2026-05-16
 
 ### Added
 

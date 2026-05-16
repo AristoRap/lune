@@ -34,7 +34,7 @@ All functions return a `Promise`. TypeScript declarations are in `runtime.d.ts`.
 | `openFile`        | `openFile(prompt)`                | `Promise<string>`          |   ✓   |   ✓   |   tbd   |
 | `openDir`         | `openDir(prompt)`                 | `Promise<string>`          |   ✓   |   ✓   |   tbd   |
 | `openFiles`       | `openFiles(prompt)`               | `Promise<string[]>`        |   ✓   |   ✓   |   tbd   |
-| `saveFile`        | `saveFile(prompt, defaultName)`   | `Promise<string>`          |   ✓   |   ✓   |   tbd   |
+| `saveFile`        | `saveFile(prompt, filename)`      | `Promise<string>`          |   ✓   |   ✓   |   tbd   |
 | `messageInfo`     | `messageInfo(title, message)`     | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
 | `messageWarning`  | `messageWarning(title, message)`  | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
 | `messageError`    | `messageError(title, message)`    | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
@@ -251,7 +251,7 @@ const paths = await openFiles("Select images");
 // ["/Users/alice/a.jpg", "/Users/alice/b.jpg"]  or  []
 ```
 
-### `saveFile(prompt, defaultName)`
+### `saveFile(prompt, filename)`
 
 Shows a native save dialog. Returns the chosen path, or `""` if cancelled.
 
@@ -408,4 +408,4 @@ interface ScreenInfo {
 
 ## Events
 
-For pushing data from Crystal to the frontend, see the [Events](./events) guide (`on`, `once`, `off`).
+The event bus is bidirectional. See the [Events](./events) guide for `on`, `once`, `off`, and `emit` — both Crystal→JS and JS→Crystal directions.

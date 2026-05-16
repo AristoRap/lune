@@ -25,6 +25,19 @@ describe Lune::Runtime do
     js.includes?("__lune_off").should be_true
   end
 
+  it "exports emit for JS-to-Crystal events" do
+    js = Lune::Runtime::Generator.generate_runtime_js([] of Lune::Binding)
+
+    js.includes?("export function emit").should be_true
+    js.includes?("__lune_js_emit").should be_true
+  end
+
+  it "declares emit in runtime.d.ts" do
+    dts = Lune::Runtime::Generator.generate_runtime_dts([] of Lune::Binding)
+
+    dts.includes?("export declare function emit").should be_true
+  end
+
   it "exports quit, openURL, environment runtime functions" do
     js = Lune::Runtime::Generator.generate_runtime_js(runtime_bindings)
 
