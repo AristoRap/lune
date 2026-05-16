@@ -1,0 +1,13 @@
+---
+name: exampleapp
+version: 0.1.0
+authors:
+  - Aristotelis Rapai <aristorap.dev@gmail.com>
+targets:
+  exampleapp:
+    main: src/exampleapp.cr
+crystal: ">= 1.20.0"
+license: MIT
+dependencies:
+  lune:
+    path: ..

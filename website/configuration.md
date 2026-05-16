@@ -17,11 +17,6 @@ icon: assets/icon.icns
 capabilities:
   - quit
   - openURL
-  - environment
-  - homeDir
-  - tempDir
-  - downloadsDir
-  - appDataDir
   - clipboardRead
   - clipboardWrite
 
@@ -187,7 +182,7 @@ All keys are optional. Omitted keys fall back to the `Lune::Options` defaults (`
 
 Restricts which built-in runtime bindings are accessible from JavaScript. When omitted, all bindings are available. When set, only the listed names are registered — any others are silently excluded.
 
-Available capability names: `quit`, `openURL`, `environment`, `homeDir`, `tempDir`, `downloadsDir`, `appDataDir`, `clipboardRead`, `clipboardWrite`.
+Available capability names: `quit`, `openURL`, `environment`, `homeDir`, `tempDir`, `downloadsDir`, `appDataDir`, `clipboardRead`, `clipboardWrite`, `minimize`, `maximize`, `center`, `setTitle`, `setSize`, `openFile`, `openDir`, `openFiles`, `saveFile`, `messageInfo`, `messageWarning`, `messageError`, `messageQuestion`, `trayShow`, `trayHide`, `traySetIcon`, `traySetMenu`, `notify`, `screenInfo`.
 
 ```yaml
 capabilities:

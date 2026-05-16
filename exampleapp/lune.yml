@@ -1,0 +1,9 @@
+name: exampleapp
+app_entry: src/main.cr
+frontend:
+  dir: frontend
+  install: npm install
+  build: npm run build
+  dev:
+    cmd: npm run dev
+    url: http://localhost:5173

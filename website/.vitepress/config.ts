@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitepress'
 
-const version = '0.4.4'
+const version = '0.4.5'
 
 export default defineConfig({
   title: 'Lune',

@@ -174,6 +174,121 @@ describe Lune::App do
     end
   end
 
+  describe "#on" do
+    it "registers a handler that fires when dispatch_event is called" do
+      app = Lune::App.new
+      received = [] of JSON::Any
+
+      app.on("ping") { |data| received << data }
+      app.dispatch_event("ping", JSON::Any.new("hello"))
+
+      received.size.should eq(1)
+      received.first.as_s.should eq("hello")
+    end
+
+    it "registers multiple handlers for the same event" do
+      app = Lune::App.new
+      count = 0
+
+      app.on("ping") { |_| count += 1 }
+      app.on("ping") { |_| count += 1 }
+      app.dispatch_event("ping", JSON::Any.new(nil))
+
+      count.should eq(2)
+    end
+
+    it "does not fire for a different event name" do
+      app = Lune::App.new
+      fired = false
+
+      app.on("ping") { |_| fired = true }
+      app.dispatch_event("pong", JSON::Any.new(nil))
+
+      fired.should be_false
+    end
+
+    it "keeps firing on repeated dispatches" do
+      app = Lune::App.new
+      count = 0
+
+      app.on("tick") { |_| count += 1 }
+      app.dispatch_event("tick", JSON::Any.new(nil))
+      app.dispatch_event("tick", JSON::Any.new(nil))
+      app.dispatch_event("tick", JSON::Any.new(nil))
+
+      count.should eq(3)
+    end
+  end
+
+  describe "#once" do
+    it "fires exactly once then removes itself" do
+      app = Lune::App.new
+      count = 0
+
+      app.once("ping") { |_| count += 1 }
+      app.dispatch_event("ping", JSON::Any.new(nil))
+      app.dispatch_event("ping", JSON::Any.new(nil))
+
+      count.should eq(1)
+    end
+
+    it "passes data to the handler" do
+      app = Lune::App.new
+      received = [] of JSON::Any
+
+      app.once("ping") { |data| received << data }
+      app.dispatch_event("ping", JSON::Any.new("only-once"))
+
+      received.first.as_s.should eq("only-once")
+    end
+  end
+
+  describe "#off" do
+    it "removes all persistent handlers for an event" do
+      app = Lune::App.new
+      count = 0
+
+      app.on("ping") { |_| count += 1 }
+      app.off("ping")
+      app.dispatch_event("ping", JSON::Any.new(nil))
+
+      count.should eq(0)
+    end
+
+    it "removes once handlers too" do
+      app = Lune::App.new
+      count = 0
+
+      app.once("ping") { |_| count += 1 }
+      app.off("ping")
+      app.dispatch_event("ping", JSON::Any.new(nil))
+
+      count.should eq(0)
+    end
+
+    it "is a no-op for an event with no handlers" do
+      app = Lune::App.new
+      app.off("nonexistent") # must not raise
+    end
+  end
+
+  describe "#dispatch_event" do
+    it "does nothing when no handlers are registered" do
+      app = Lune::App.new
+      app.dispatch_event("ping", JSON::Any.new(nil)) # must not raise
+    end
+
+    it "passes raw JSON::Any to handlers" do
+      app = Lune::App.new
+      received = nil
+
+      app.on("data") { |d| received = d }
+      app.dispatch_event("data", JSON.parse(%({"x": 1})))
+
+      received.not_nil!["x"].as_i.should eq(1)
+    end
+  end
+
   describe "bridge requirements" do
     it "raises when calling eval without a bridge" do
       app = Lune::App.new

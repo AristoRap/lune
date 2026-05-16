@@ -37,7 +37,7 @@ end
 
 ```js
 try {
-  await api.Math.divide(10, 0);
+  await api.Math.Divide(10, 0);
 } catch (e) {
   console.log(e.code); // "error"
   console.log(e.error); // "division by zero"
@@ -79,7 +79,7 @@ In JavaScript, branch on `code`:
 
 ```js
 try {
-  const user = await api.Users.getUser(99);
+  const user = await api.Users.GetUser(99);
 } catch (e) {
   if (e.code === "not_found") {
     showNotFoundMessage();
@@ -105,7 +105,7 @@ function isLuneError(e: unknown): e is LuneError {
 }
 
 try {
-  await api.Users.getUser(99);
+  await api.Users.GetUser(99);
 } catch (e) {
   if (isLuneError(e) && e.code === "not_found") {
     // handle

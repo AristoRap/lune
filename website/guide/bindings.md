@@ -119,7 +119,7 @@ end
 
 ## Emitting events from a binding
 
-Every class that includes `Lune::Bindable` gets an `@app` instance variable injected automatically when `app.install` is called. Use it to push events back to the frontend from inside a bound method:
+Every class that includes `Lune::Bindable` gets an `@app` instance variable injected automatically when `app.install` is called. Use it to interact with the event bus from inside a bound method:
 
 ```crystal
 class ProcessModule
@@ -135,7 +135,7 @@ class ProcessModule
 end
 ```
 
-No constructor argument needed — `@app` is set by the framework at install time. You can call `@app.emit` anywhere in the class, including background fibers spawned from a binding.
+No constructor argument needed — `@app` is set by the framework at install time. The full event bus API is available: `@app.emit`, `@app.on`, `@app.once`, and `@app.off` — all usable anywhere in the class, including background fibers spawned from a binding. See the [Events](./events) guide for the complete API.
 
 ---
 

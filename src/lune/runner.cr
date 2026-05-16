@@ -161,6 +161,14 @@ module Lune
           })
         end
 
+        app_ref = @app
+        wv.bind("__lune_js_emit", Webview::JSProc.new { |args|
+          event = args[0]?.try(&.as_s) || ""
+          data  = args[1]? || JSON::Any.new(nil)
+          app_ref.dispatch_event(event, data)
+          JSON::Any.new(nil)
+        })
+
         wv.init(Runtime::Scripts.core)
         wv.init(Runtime::Scripts::NAVIGATION) if @options.on_navigate
         wv.init(Runtime::Scripts::DISABLE_CONTEXT_MENU) if @options.disable_context_menu

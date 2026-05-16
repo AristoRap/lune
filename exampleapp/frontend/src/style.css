@@ -1,0 +1,330 @@
+:root {
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-size: 14px;
+  color-scheme: dark;
+  color: rgba(255, 255, 255, 0.87);
+  background: #111;
+  -webkit-font-smoothing: antialiased;
+  --accent: #a78bfa;
+  --accent-dim: rgba(167, 139, 250, 0.12);
+  --border: rgba(255, 255, 255, 0.08);
+  --muted: rgba(255, 255, 255, 0.38);
+  --sidebar-bg: #181818;
+  --titlebar-h: 52px;
+  --sidebar-w: 168px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── titlebar (drag zone) ────────────────────────────── */
+
+#titlebar {
+  height: var(--titlebar-h);
+  background: var(--sidebar-bg);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+/* ── layout ──────────────────────────────────────────── */
+
+#shell {
+  display: flex;
+  height: calc(100vh - var(--titlebar-h));
+}
+
+#sidebar {
+  width: var(--sidebar-w);
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--border);
+  padding: 0.5rem;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+#sidebar ul {
+  list-style: none;
+}
+
+#sidebar li {
+  padding: 0.55rem 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.9em;
+  transition:
+    color 150ms,
+    background 150ms;
+  user-select: none;
+}
+
+#sidebar li:hover {
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.05);
+}
+#sidebar li.active {
+  color: var(--accent);
+  background: var(--accent-dim);
+  font-weight: 500;
+}
+
+#content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem 2.5rem;
+}
+
+/* ── typography ──────────────────────────────────────── */
+
+h2 {
+  font-size: 1.3em;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.desc {
+  color: var(--muted);
+  font-size: 0.88em;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+code {
+  font-family: ui-monospace, monospace;
+  background: rgba(255, 255, 255, 0.07);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  font-size: 0.88em;
+}
+
+/* ── cards ───────────────────────────────────────────── */
+
+.card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.1rem 1.4rem;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.card-label {
+  font-size: 0.75em;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* ── form elements ───────────────────────────────────── */
+
+.row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+input[type="text"],
+input[type="number"] {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: rgba(255, 255, 255, 0.87);
+  font-family: inherit;
+  font-size: 1em;
+  padding: 0.45em 0.8em;
+  outline: none;
+  transition: border-color 200ms;
+  min-width: 0;
+}
+
+input[type="number"] {
+  flex: none;
+  width: 90px;
+}
+input:focus {
+  border-color: var(--accent);
+}
+
+button {
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  padding: 0.45em 1.1em;
+  font-size: 0.9em;
+  font-weight: 500;
+  font-family: inherit;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.87);
+  cursor: pointer;
+  transition:
+    border-color 200ms,
+    background 200ms;
+  white-space: nowrap;
+}
+
+button:hover {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: transparent;
+  color: #0f0f0f;
+  font-weight: 600;
+}
+
+button.primary:hover {
+  background: #c4b5fd;
+}
+
+/* ── results & output ────────────────────────────────── */
+
+.result {
+  color: var(--muted);
+  font-size: 0.9em;
+  min-height: 1.3em;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.result.mono {
+  font-family: ui-monospace, monospace;
+  font-size: 0.82em;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.85em;
+}
+
+/* ── clock ───────────────────────────────────────────── */
+
+.clock {
+  font-size: 2.2em;
+  font-weight: 300;
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── event log ───────────────────────────────────────── */
+
+.log {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.log-entry {
+  font-family: ui-monospace, monospace;
+  font-size: 0.82em;
+  color: rgba(255, 255, 255, 0.55);
+  padding: 0.2em 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.log-entry.out {
+  color: var(--accent);
+}
+.log-empty {
+  color: var(--muted);
+  font-size: 0.85em;
+  font-style: italic;
+}
+
+/* ── progress bar ────────────────────────────────────── */
+
+.progress-track {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  width: 0%;
+  transition: width 300ms ease;
+}
+
+/* ── drop zones ──────────────────────────────────────── */
+
+.drop-zone-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.drop-target {
+  border: 1.5px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.88em;
+  transition:
+    border-color 200ms,
+    background 200ms,
+    color 200ms;
+  min-height: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.drop-target--alt {
+  border-color: rgba(251, 191, 36, 0.25);
+}
+
+.drop-target.lune-drop-target-active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.drop-target--alt.lune-drop-target-active {
+  border-color: #fbbf24;
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.07);
+}

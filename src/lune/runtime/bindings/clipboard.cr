@@ -50,7 +50,7 @@ module Lune
             args: [] of String,
             return_type: "String",
             callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(@on_read.call) },
-            async: true,
+            async: false,
           ))
         end
 
@@ -64,7 +64,7 @@ module Lune
               @on_write.call(args[0].as_s)
               JSON::Any.new(nil)
             },
-            async: true,
+            async: false,
             arg_names: ["text"],
           ))
         end

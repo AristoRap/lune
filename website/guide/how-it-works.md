@@ -16,8 +16,8 @@ Lune connects a Crystal backend to a web frontend running inside a native WebVie
 │  │   import api from '../lunejs/app/App.js'          │  │
 │  │   await api.MyModule.doSomething(args)  ──────────┼──┼──┐
 │  └───────────────────────────────────────────────────┘  │  │
-│                         ↑ events                        │  │
-│                         │ app.emit(name, data)          │  │ binding call
+│                    ↕ events (bidirectional)              │  │
+│          app.emit() · app.on()  ↔  emit() · on()        │  │ binding call
 │  ┌────────────────────────────────────────────────────┐ │  │
 │  │  Crystal App                                       │ │  │
 │  │                                                    │ │  │
@@ -56,22 +56,24 @@ The `Lune::Bindable` module uses Crystal macros to inspect annotated methods at 
 
 ### 3. Registration (runtime)
 
-When you call `app.install(MyModule.new)`, the generated `install` method fires. Each binding is registered with the `Bridge`, which wires a WebView binding callback — a JavaScript-callable function backed by native code.
+When you call `app.install(MyModule.new)`, the generated `install` method fires. Each binding is added to the `App`'s binding list. When the WebView starts, the `Runner` hands the full list to the `Bridge`, which wires each one as a WebView binding callback — a JavaScript-callable function backed by native code.
 
-Lune's own built-in capabilities (lifecycle, filesystem, clipboard, window controls, dialogs, tray, notifications, screen) are registered the same way — as `Installable` classes that call `app.bind` internally. There is no separate path for built-in vs user bindings.
+Lune's own built-in capabilities (lifecycle, filesystem, clipboard, window controls, dialogs, tray, notifications, screen) are registered the same way — as `Installable` classes. There is no separate path for built-in vs user bindings.
 
 ### 4. JavaScript stub generation
 
-Lune writes two files into `frontend/lunejs/`:
+Lune writes four files into `frontend/lunejs/`:
 
-- `app/App.js` — one stub function per binding, grouped by namespace
+- `app/App.js` — one stub function per user binding, grouped by namespace
 - `app/App.d.ts` — TypeScript declarations with exact types derived from Crystal signatures
+- `runtime/runtime.js` — built-in functions (`quit`, `openURL`, `on`, `emit`, …)
+- `runtime/runtime.d.ts` — TypeScript declarations for runtime functions
 
 This happens automatically on `lune dev` startup and during `lune build` (before Vite runs).
 
 ### 5. The call
 
-When frontend code calls `api.MyModule.greet("world")`:
+When frontend code calls `api.MyModule.Greet("world")`:
 
 1. The JS stub calls the WebView's native binding with the serialized arguments
 2. The Bridge deserializes them and dispatches to the Crystal method
@@ -98,7 +100,7 @@ frontend/lunejs/
 │   ├── App.js       # binding stubs
 │   └── App.d.ts     # TypeScript declarations
 └── runtime/
-    ├── runtime.js   # quit, openURL, environment, on/once/off
+    ├── runtime.js   # quit, openURL, environment, on/once/off/emit
     └── runtime.d.ts # TypeScript declarations
 ```
 
@@ -153,15 +155,30 @@ When using `Lune.run` with `assets:`, the macro internally creates a `Runner` an
 
 ## Event system
 
-Crystal can push data to the frontend at any time via `app.emit`:
+The event bus is bidirectional. Crystal pushes to JS via `app.emit`; JS pushes to Crystal via `emit` from `runtime.js`. Both sides share the same event name namespace and use symmetric `on` / `once` / `off` APIs.
 
 ```crystal
+# Crystal → JS
 spawn do
   loop do
     app.emit("tick", Time.utc.to_s)
     sleep 1.second
   end
 end
+
+# Crystal listening for JS events
+app.on("search") do |data|
+  results = run_search(data["query"].as_s)
+  app.emit("results", results.map(&.to_h))
+end
 ```
 
-Under the hood `emit` calls `window.__lune_emit`, which the runtime registers as a custom event dispatcher. The frontend listens with `on` / `once` from `runtime.js`.
+```js
+// JS → Crystal
+import { emit, on } from "../lunejs/runtime/runtime.js";
+
+on("results", (data) => renderResults(data));
+emit("search", { query: input.value });
+```
+
+Under the hood, `app.emit` calls `window.__lune_emit` (Crystal→JS); `emit()` from `runtime.js` calls the `__lune_js_emit` WebView binding (JS→Crystal). See the [Events](./events) guide for the full API.

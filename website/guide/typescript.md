@@ -14,7 +14,7 @@ frontend/lunejs/
 │   ├── App.js       # binding stubs (runtime)
 │   └── App.d.ts     # TypeScript declarations for your bindings
 └── runtime/
-    ├── runtime.js   # quit, openURL, environment, on/once/off
+    ├── runtime.js   # quit, openURL, environment, on/once/off/emit
     └── runtime.d.ts # TypeScript declarations for runtime functions
 ```
 
@@ -79,9 +79,10 @@ export interface LuneError {
 export declare function on(name: string, cb: (data: unknown) => void): void;
 export declare function once(name: string, cb: (data: unknown) => void): void;
 export declare function off(name: string, cb?: (data: unknown) => void): void;
+export declare function emit(name: string, data?: unknown): Promise<void>;
 
-export declare function quit(): void;
-export declare function openURL(url: string): void;
+export declare function quit(): Promise<void>;
+export declare function openURL(url: string): Promise<void>;
 export declare function environment(): LuneEnvironment;
 
 export declare function homeDir(): Promise<string>;

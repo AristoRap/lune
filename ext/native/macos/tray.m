@@ -102,7 +102,14 @@ void tray_set_menu(const char **ids, const char **labels, int count,
         }
     }
 
-    // Attaching a menu disables the button action — clear the direct click handler.
-    _status_item.button.action = nil;
-    _status_item.menu          = menu;
+    if (count == 0) {
+        // Empty menu — restore direct click handler.
+        _status_item.menu          = nil;
+        _status_item.button.target = _delegate;
+        _status_item.button.action = @selector(trayClicked:);
+    } else {
+        // Attaching a menu disables the button action.
+        _status_item.button.action = nil;
+        _status_item.menu          = menu;
+    }
 }
