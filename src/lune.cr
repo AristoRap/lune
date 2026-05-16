@@ -10,6 +10,7 @@ require "./lune/webview"
 require "./lune/error"
 require "./lune/bridge"
 require "./lune/runtime/generator"
+require "./lune/runtime/scripts"
 require "./lune/installable"
 require "./lune/bindable"
 require "./lune/app"
@@ -19,7 +20,7 @@ require "./lune/single_instance"
 require "./lune/runner"
 
 module Lune
-  VERSION = "0.4.3"
+  VERSION = "0.4.4"
 
   # Default frontend directory name (matches the lune.yml default).
   DEFAULT_FRONTEND_DIR = "frontend"

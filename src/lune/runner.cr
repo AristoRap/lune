@@ -85,22 +85,6 @@ module Lune
               Native::Window.start_window_drag(drag_handle)
               JSON::Any.new(nil)
             })
-            drag_css_var = @options.drag_zone
-            drag_css_val = @options.drag_value
-            wv.init(<<-JS)
-              (function(){
-                document.addEventListener('mousedown', function(e) {
-                  var el = e.target;
-                  while (el) {
-                    if (window.getComputedStyle(el).getPropertyValue(#{drag_css_var.inspect}).trim() === #{drag_css_val.inspect}) {
-                      window.__lune_start_window_drag();
-                      return;
-                    }
-                    el = el.parentElement;
-                  }
-                }, true);
-              })();
-            JS
           end
         {% end %}
 
@@ -138,8 +122,6 @@ module Lune
             ->(x : Int32, y : Int32) { nil }
           end
 
-          # When drop zones are configured, gate the JS fileDrop event on __lune_drop_check
-          # so it only fires when the file lands on an element with the CSS drop property.
           on_drop : (Int32, Int32, Array(String)) -> Nil = if use_drop_zones
             ->(x : Int32, y : Int32, paths : Array(String)) {
               user_cb.try(&.call(x, y, paths))
@@ -177,102 +159,23 @@ module Lune
             end
             JSON::Any.new(nil)
           })
-          wv.init(<<-JS)
-            (function(){
-              function _lune_nav(){ window.__lune_navigate(location.href); }
-              window.addEventListener('popstate', _lune_nav);
-              window.addEventListener('hashchange', _lune_nav);
-            })();
-          JS
         end
 
-        if @options.disable_context_menu
-          wv.init("document.addEventListener('contextmenu',function(e){e.preventDefault();});")
-        end
+        wv.init(Runtime::Scripts.core)
+        wv.init(Runtime::Scripts::NAVIGATION) if @options.on_navigate
+        wv.init(Runtime::Scripts::DISABLE_CONTEXT_MENU) if @options.disable_context_menu
+
+        {% if flag?(:darwin) %}
+          unless @options.drag_zone.empty?
+            wv.init(Runtime::Scripts.drag_zone(@options.drag_zone, @options.drag_value))
+          end
+        {% end %}
 
         if should_drop
-          drop_zone_js = ""
-          unless @options.drop_zone.empty?
-            css_prop = @options.drop_zone.inspect
-            css_val  = @options.drop_value.inspect
-            drop_zone_js = <<-JS
-              var _lune_dz_prop = #{css_prop};
-              var _lune_dz_val  = #{css_val};
-              var _lune_dz_active = null;
-              window.__lune_drag_pos = function(x, y) {
-                if (_lune_dz_active) {
-                  _lune_dz_active.classList.remove('lune-drop-target-active');
-                  _lune_dz_active = null;
-                }
-                if (x < 0) return;
-                var el = document.elementFromPoint(x, y);
-                while (el) {
-                  if (window.getComputedStyle(el).getPropertyValue(_lune_dz_prop).trim() === _lune_dz_val) {
-                    _lune_dz_active = el;
-                    el.classList.add('lune-drop-target-active');
-                    return;
-                  }
-                  el = el.parentElement;
-                }
-              };
-              window.__lune_drop_check = function(x, y, pathsJson) {
-                if (_lune_dz_active) {
-                  _lune_dz_active.classList.remove('lune-drop-target-active');
-                  _lune_dz_active = null;
-                  window.__lune_emit("fileDrop", { x: x, y: y, paths: JSON.parse(pathsJson) });
-                }
-              };
-            JS
-          end
-
-          wv.init(<<-JS)
-            (function(){
-              #{drop_zone_js}
-              document.addEventListener('dragover', function(e){ e.preventDefault(); }, false);
-              document.addEventListener('drop',     function(e){ e.preventDefault(); }, false);
-            })();
-          JS
+          drop_prop = @options.drop_zone.empty? ? nil : @options.drop_zone
+          drop_val = @options.drop_zone.empty? ? nil : @options.drop_value
+          wv.init(Runtime::Scripts.file_drop(drop_prop, drop_val))
         end
-
-        wv.init(<<-JS)
-          (function(){
-          // Keyboard shortcuts (copy/paste/undo/redo/select-all)
-          document.addEventListener('keydown', function(e) {
-            if (!e.metaKey && !e.ctrlKey) return;
-            var cmd;
-            switch (e.key) {
-              case 'a': cmd = 'selectAll'; break;
-              case 'c': cmd = 'copy'; break;
-              case 'v': cmd = 'paste'; break;
-              case 'x': cmd = 'cut'; break;
-              case 'z': cmd = e.shiftKey ? 'redo' : 'undo'; break;
-              case 'y': cmd = 'redo'; break;
-            }
-            if (cmd) { e.preventDefault(); document.execCommand(cmd); }
-          });
-
-          // Event bus — used by app.emit() on the Crystal side
-          var _ll = {};
-          window.__lune_emit = function(name, data) {
-            var ls = _ll[name];
-            if (!ls) return;
-            var keep = [];
-            for (var i = 0; i < ls.length; i++) {
-              ls[i].cb(data);
-              ls[i].n++;
-              if (ls[i].max < 0 || ls[i].n < ls[i].max) keep.push(ls[i]);
-            }
-            _ll[name] = keep;
-          };
-          window.__lune_on = function(name, cb, max) {
-            (_ll[name] = _ll[name] || []).push({ cb: cb, n: 0, max: max === undefined ? -1 : max });
-          };
-          window.__lune_off = function(name, cb) {
-            if (!cb) { delete _ll[name]; return; }
-            if (_ll[name]) _ll[name] = _ll[name].filter(function(e) { return e.cb !== cb; });
-          };
-          })();
-        JS
 
         # asset_server is only set in the embedded-assets branch; it is stopped
         # after wv.run returns so the port is released when the window closes.
