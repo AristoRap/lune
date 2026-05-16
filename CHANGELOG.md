@@ -5,6 +5,7 @@
 ### Added
 
 - Bidirectional event bus — `app.on`, `app.once`, `app.off`, and `app.dispatch_event` on the Crystal side let the app listen for events emitted from JavaScript. `emit(name, data?)` in `runtime.js` / `runtime.d.ts` is the JS counterpart. Both sides share a single event-name namespace, making request/response and notification patterns straightforward.
+- Example app (`exampleapp/`) — a self-contained Vite + Crystal demo that exercises drag-and-drop, tray, clipboard, file dialogs, notifications, and the event bus, serving as both a reference and a manual smoke-test harness.
 
 ---
 

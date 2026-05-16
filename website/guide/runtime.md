@@ -360,7 +360,7 @@ on("trayMenuClick", (id) => {
 });
 ```
 
-> Attaching a menu replaces the direct click handler — `trayClick` will not fire when a menu is active.
+> Attaching a non-empty menu replaces the direct click handler — `trayClick` will not fire while menu items are present. Calling `traySetMenu([])` clears the menu and restores direct click behaviour.
 
 ---
 

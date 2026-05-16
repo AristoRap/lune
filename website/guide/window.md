@@ -330,7 +330,7 @@ onFileDrop((x, y, paths) => {
 
 **Type:** `(-> Nil)?` — **Default:** `nil`
 
-Called when the system tray icon is clicked and no context menu is attached. See [Runtime Functions](./runtime#system-tray) for the full tray API.
+Called when the system tray icon is clicked and no context menu is active (either none attached, or an empty menu was set via `traySetMenu([])`). See [Runtime Functions](./runtime#system-tray) for the full tray API.
 
 ```crystal
 opts.on_tray_click = -> { app.emit("trayClick", nil) }
