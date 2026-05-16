@@ -240,6 +240,26 @@ After the user resizes and moves the window, the next launch will reopen it at e
 
 ---
 
+## macOS menu bar
+
+**Supported:** macOS — **Not applicable:** Linux, Windows
+
+Lune automatically sets up a standard macOS menu bar when your app starts. No configuration required — it just works.
+
+The default menu bar includes:
+
+| Menu | Items |
+| ---- | ----- |
+| **[App name]** | About, Services, Hide / Hide Others / Show All, Quit (⌘Q) |
+| **Edit** | Undo (⌘Z), Redo (⇧⌘Z), Cut, Copy, Paste, Select All |
+| **Window** | Minimize (⌘M), Zoom, Bring All to Front |
+
+The app name in the menu bar is taken from `opts.title` (or the `title` set in `lune.yml`).
+
+> A user-configurable menu bar API (`app.menu { ... }`) is planned for a future release.
+
+---
+
 ## Full example
 
 ```crystal

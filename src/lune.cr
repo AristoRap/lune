@@ -19,7 +19,7 @@ require "./lune/single_instance"
 require "./lune/runner"
 
 module Lune
-  VERSION = "0.4.2"
+  VERSION = "0.4.3"
 
   # Default frontend directory name (matches the lune.yml default).
   DEFAULT_FRONTEND_DIR = "frontend"

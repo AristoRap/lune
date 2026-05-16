@@ -35,7 +35,9 @@
 - [x] macOS support
 - [x] Linux support
 - [ ] Windows support
-- [ ] Native menus — context menus and menu bar menus
+- [x] Default menu bar — App/Edit/Window menus set up automatically so Lune apps feel like real macOS apps
+- [ ] User-configurable menu bar — `app.menu { ... }` API to add/replace menu bar items from Crystal
+- [ ] Context menus
 - [ ] Multiple windows
 
 ## Random — no timeline

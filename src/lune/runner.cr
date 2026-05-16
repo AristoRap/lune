@@ -51,6 +51,8 @@ module Lune
 
         handle = wv.native_handle(Webview::NativeHandleKind::UI_WINDOW)
 
+        Native::Menu.setup_default(@options.title)
+
         native_app = App.new
         native_app.install(
           Runtime::Bindings::Window.new(handle),
