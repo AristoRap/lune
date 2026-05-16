@@ -110,6 +110,9 @@ module Lune
     # CSS value that activates drag behaviour. Defaults to `"drag"`.
     property drag_value : String = "drag"
 
+    # When true, suppresses the browser's default right-click context menu.
+    property disable_context_menu : Bool = false
+
     # macOS-specific window options.
     getter mac : MacOptions = MacOptions.new
 
@@ -132,6 +135,7 @@ module Lune
       @on_menu_click = nil
       @drag_zone = ""
       @drag_value = "drag"
+      @disable_context_menu = false
       @mac = MacOptions.new
     end
 

@@ -119,6 +119,18 @@ opts.debug = {{ flag?(:debug) }}
 
 ---
 
+### `disable_context_menu`
+
+**Type:** `Bool` — **Default:** `false`
+
+When `true`, suppresses the browser's built-in right-click context menu (the one with "Inspect Element", "Copy Image", etc.). Use this when you want full control over right-click behaviour in your app.
+
+```crystal
+opts.disable_context_menu = true
+```
+
+---
+
 ## Lifecycle callbacks
 
 ### `on_window_ready`

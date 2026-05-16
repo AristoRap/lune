@@ -148,6 +148,10 @@ module Lune
           JS
         end
 
+        if @options.disable_context_menu
+          wv.init("document.addEventListener('contextmenu',function(e){e.preventDefault();});")
+        end
+
         wv.init(<<-JS)
           (function(){
           // Keyboard shortcuts (copy/paste/undo/redo/select-all)

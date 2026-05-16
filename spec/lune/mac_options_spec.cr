@@ -74,3 +74,15 @@ describe "drag_zone on Options" do
     opts.drag_value.should eq("drag")
   end
 end
+
+describe "disable_context_menu on Options" do
+  it "defaults to false" do
+    Lune::Options.new.disable_context_menu.should be_false
+  end
+
+  it "can be enabled" do
+    opts = Lune::Options.new
+    opts.disable_context_menu = true
+    opts.disable_context_menu.should be_true
+  end
+end
