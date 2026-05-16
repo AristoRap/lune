@@ -7,8 +7,9 @@ module Lune
         @@last_size : Tuple(Int32, Int32)? = nil
         @@last_frame : Tuple(Int32, Int32, Int32, Int32)? = nil
         @@mock_frame : Tuple(Int32, Int32, Int32, Int32) = {0, 0, 1200, 800}
+        @@last_full_size_content : Bool? = nil
 
-        class_getter calls, last_title, last_size, last_frame, mock_frame
+        class_getter calls, last_title, last_size, last_frame, mock_frame, last_full_size_content
 
         def self.reset
           @@calls.clear
@@ -16,6 +17,7 @@ module Lune
           @@last_size = nil
           @@last_frame = nil
           @@mock_frame = {0, 0, 1200, 800}
+          @@last_full_size_content = nil
         end
 
         def self.mock_frame=(f : Tuple(Int32, Int32, Int32, Int32))
@@ -34,6 +36,13 @@ module Lune
           @@calls << :set_frame
           @@last_frame = {x, y, w, h}
         end
+        def self.record_set_titlebar_transparent(full_size_content : Bool)
+          @@calls << :set_titlebar_transparent
+          @@last_full_size_content = full_size_content
+        end
+        def self.record_set_background_transparent; @@calls << :set_background_transparent; end
+        def self.record_setup_drag_monitor;         @@calls << :setup_drag_monitor; end
+        def self.record_start_window_drag;          @@calls << :start_window_drag; end
       end
     {% elsif flag?(:darwin) %}
       {% system("cd '#{__DIR__}/../../../ext/native/macos' && clang -c window.m -o window.o -fobjc-arc 2>/dev/null") %}
@@ -54,6 +63,10 @@ module Lune
         fun center(window : Void*) : Void
         fun get_frame(window : Void*) : Frame
         fun set_frame(window : Void*, x : LibC::Int, y : LibC::Int, width : LibC::Int, height : LibC::Int) : Void
+        fun set_titlebar_transparent(window : Void*, full_size_content : LibC::Int) : Void
+        fun set_background_transparent(window : Void*) : Void
+        fun setup_drag_monitor : Void
+        fun start_window_drag(window : Void*) : Void
       end
     {% elsif flag?(:linux) %}
       {% system("cd '#{__DIR__}/../../../ext/native/linux' && gcc -c window.c -o window.o `pkg-config --cflags gtk+-3.0` 2>/dev/null") %}
@@ -134,6 +147,38 @@ module Lune
           WindowMock.record_set_frame(x, y, width, height)
         {% elsif flag?(:darwin) || flag?(:linux) %}
           LibNativeWindow.set_frame(handle, x, y, width, height)
+        {% end %}
+      end
+
+      def self.set_titlebar_transparent(handle : Void*, full_size_content : Bool)
+        {% if flag?(:lune_native_test_mock) %}
+          WindowMock.record_set_titlebar_transparent(full_size_content)
+        {% elsif flag?(:darwin) %}
+          LibNativeWindow.set_titlebar_transparent(handle, full_size_content ? 1 : 0)
+        {% end %}
+      end
+
+      def self.set_background_transparent(handle : Void*)
+        {% if flag?(:lune_native_test_mock) %}
+          WindowMock.record_set_background_transparent
+        {% elsif flag?(:darwin) %}
+          LibNativeWindow.set_background_transparent(handle)
+        {% end %}
+      end
+
+      def self.setup_drag_monitor
+        {% if flag?(:lune_native_test_mock) %}
+          WindowMock.record_setup_drag_monitor
+        {% elsif flag?(:darwin) %}
+          LibNativeWindow.setup_drag_monitor
+        {% end %}
+      end
+
+      def self.start_window_drag(handle : Void*)
+        {% if flag?(:lune_native_test_mock) %}
+          WindowMock.record_start_window_drag
+        {% elsif flag?(:darwin) %}
+          LibNativeWindow.start_window_drag(handle)
         {% end %}
       end
     end

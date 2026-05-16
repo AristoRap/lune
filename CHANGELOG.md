@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.4.3] - 2026-05-16
+
+### Added
+
+- Default macOS menu bar — App, Edit, and Window menus are set up automatically so Lune apps feel like proper macOS citizens out of the box. The app name in the menu is taken from `opts.title`. No configuration required.
+- `opts.mac` — macOS-specific window options grouped under a dedicated `MacOptions` struct, keeping them clearly separate from cross-platform settings.
+- `opts.mac.titlebar_transparent` — makes the title bar background transparent.
+- `opts.mac.full_size_content` — extends the content view to fill the entire window frame including the area behind the title bar. Implies a transparent title bar.
+- `opts.mac.transparent` — clears the window and WebView backgrounds so CSS `backdrop-filter` effects can sample whatever is behind the window, enabling frosted-glass / "mirror" style UIs.
+- `opts.mac.drag_zone` / `opts.mac.drag_value` — CSS custom property-based drag zones. Set `drag_zone` to a CSS property name (e.g. `"--lune-draggable"`) and any element with that property set to `drag_value` (default `"drag"`) becomes a window drag handle. Detection walks up the DOM tree, so marking a container makes all its children draggable.
+
+---
+
 ## [0.4.2] - 2026-05-15
 
 ### Added

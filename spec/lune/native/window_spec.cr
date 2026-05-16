@@ -41,4 +41,42 @@ describe Lune::Native::Window do
       Lune::Native::WindowMock.last_size.should eq({1280, 800})
     end
   end
+
+  describe ".set_titlebar_transparent" do
+    it "records the call" do
+      Lune::Native::Window.set_titlebar_transparent(handle, false)
+      Lune::Native::WindowMock.calls.should contain(:set_titlebar_transparent)
+    end
+
+    it "records full_size_content=false" do
+      Lune::Native::Window.set_titlebar_transparent(handle, false)
+      Lune::Native::WindowMock.last_full_size_content.should be_false
+    end
+
+    it "records full_size_content=true" do
+      Lune::Native::Window.set_titlebar_transparent(handle, true)
+      Lune::Native::WindowMock.last_full_size_content.should be_true
+    end
+  end
+
+  describe ".set_background_transparent" do
+    it "records the call" do
+      Lune::Native::Window.set_background_transparent(handle)
+      Lune::Native::WindowMock.calls.should contain(:set_background_transparent)
+    end
+  end
+
+  describe ".setup_drag_monitor" do
+    it "records the call" do
+      Lune::Native::Window.setup_drag_monitor
+      Lune::Native::WindowMock.calls.should contain(:setup_drag_monitor)
+    end
+  end
+
+  describe ".start_window_drag" do
+    it "records the call" do
+      Lune::Native::Window.start_window_drag(handle)
+      Lune::Native::WindowMock.calls.should contain(:start_window_drag)
+    end
+  end
 end

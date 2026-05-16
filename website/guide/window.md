@@ -260,6 +260,119 @@ The app name in the menu bar is taken from `opts.title` (or the `title` set in `
 
 ---
 
+## macOS window appearance
+
+**Supported:** macOS — **Not applicable:** Linux, Windows
+
+macOS-specific options are grouped under `opts.mac` to keep them clearly separate from cross-platform settings.
+
+```crystal
+Lune.run(app, assets: "frontend/dist") do |opts|
+  opts.mac.titlebar_transparent = true
+  opts.mac.full_size_content    = true
+  opts.mac.transparent          = true
+  opts.mac.drag_zone            = "--lune-draggable"
+end
+```
+
+### `mac.titlebar_transparent`
+
+**Type:** `Bool` — **Default:** `false`
+
+Makes the title bar background transparent. The window controls (traffic lights) remain visible. Usually paired with `full_size_content`.
+
+```crystal
+opts.mac.titlebar_transparent = true
+```
+
+---
+
+### `mac.full_size_content`
+
+**Type:** `Bool` — **Default:** `false`
+
+Extends the content view to fill the entire window frame, including the area behind the title bar. Implies a transparent title bar — you do not need to set `titlebar_transparent` separately.
+
+```crystal
+opts.mac.full_size_content = true
+```
+
+> Use `padding-top` or `env(safe-area-inset-top)` in CSS to push content below the traffic lights when using this option.
+
+---
+
+### `mac.transparent`
+
+**Type:** `Bool` — **Default:** `false`
+
+Clears the window and WebView backgrounds so CSS `backdrop-filter` effects can sample whatever is behind the window — other windows, the desktop, etc. This is what produces the frosted-glass "mirror" look.
+
+```crystal
+opts.mac.transparent = true
+```
+
+```css
+.sidebar {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+```
+
+> Without `backdrop-filter` in your CSS the window will appear fully transparent (see-through). Set a background colour on your root element when you only want the blur on specific regions.
+
+---
+
+### `mac.drag_zone` / `mac.drag_value`
+
+**Types:** `String` — **Defaults:** `""` / `"drag"`
+
+Enables CSS-driven drag zones. Set `drag_zone` to a CSS custom property name; any element (or its ancestors) that has that property set to `drag_value` becomes a handle for dragging the window. This is essential when using `full_size_content` without a native title bar.
+
+```crystal
+opts.mac.drag_zone  = "--lune-draggable"
+opts.mac.drag_value = "drag"   # default — can be omitted
+```
+
+Then mark any element as a drag handle in CSS:
+
+```css
+.titlebar {
+  --lune-draggable: drag;
+}
+```
+
+Or inline:
+
+```html
+<div style="--lune-draggable: drag">...</div>
+```
+
+Drag detection walks up the DOM tree from the element under the cursor, so marking a container makes all its children draggable too.
+
+---
+
+### Full appearance example
+
+```crystal
+Lune.run(app, assets: "frontend/dist") do |opts|
+  opts.title = "My App"
+
+  opts.mac.full_size_content = true   # content under title bar (implies transparent title bar)
+  opts.mac.transparent       = true   # clear background for backdrop-filter
+  opts.mac.drag_zone         = "--lune-draggable"
+end
+```
+
+```css
+/* Mark the title bar as a drag zone — layout and styling are up to you */
+.titlebar {
+  --lune-draggable: drag;
+}
+```
+
+---
+
 ## Full example
 
 ```crystal
@@ -271,6 +384,10 @@ Lune.run(app) do |opts|
   opts.min_height = 600
   opts.resizable  = true
   opts.debug      = {{ flag?(:debug) }}
+
+  opts.mac.full_size_content = true
+  opts.mac.transparent       = true
+  opts.mac.drag_zone         = "--lune-draggable"
 
   opts.on_window_ready = ->(_handle : Void*) {
     puts "Window created"

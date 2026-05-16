@@ -1,4 +1,37 @@
 module Lune
+  # macOS-specific window options, accessible via `opts.mac`.
+  #
+  # ```
+  # Lune.run(app) do |opts|
+  #   opts.mac.titlebar_transparent = true
+  #   opts.mac.full_size_content    = true
+  #   opts.mac.transparent          = true
+  #   opts.mac.drag_zone            = "--lune-draggable"
+  # end
+  # ```
+  class MacOptions
+    # Makes the title bar background transparent. Usually paired with `full_size_content`.
+    property titlebar_transparent : Bool = false
+
+    # Extends the content view to fill the entire window, including under the title bar.
+    # Implies `titlebar_transparent`.
+    property full_size_content : Bool = false
+
+    # Clears the window and webview background so CSS `backdrop-filter` effects
+    # (e.g. blur) show through to whatever is behind the window.
+    property transparent : Bool = false
+
+    # CSS custom property name that marks an element as a drag zone.
+    # When non-empty, elements (and their descendants) with this CSS property
+    # set to `drag_value` can be used to drag the window. Example: `"--lune-draggable"`.
+    property drag_zone : String = ""
+
+    # CSS value that triggers window dragging. Defaults to `"drag"`.
+    property drag_value : String = "drag"
+
+    def initialize; end
+  end
+
   # Configuration passed to `Lune.run` via its block parameter.
   #
   # ```
@@ -61,6 +94,9 @@ module Lune
     # Called when a tray context menu item is selected. Receives the item id.
     property on_menu_click : (String -> Nil)?
 
+    # macOS-specific window options.
+    getter mac : MacOptions = MacOptions.new
+
     def initialize
       @title = "Lune"
       @width = 1200
@@ -78,6 +114,7 @@ module Lune
       @on_window_ready = nil
       @on_tray_click = nil
       @on_menu_click = nil
+      @mac = MacOptions.new
     end
 
     def apply(window : Config::Window)

@@ -1,6 +1,45 @@
 #import <AppKit/AppKit.h>
+#import <WebKit/WebKit.h>
 
 typedef struct { int x; int y; int width; int height; } WindowFrame;
+
+// ── Appearance ────────────────────────────────────────────────────────────────
+
+void set_titlebar_transparent(void *window, BOOL full_size_content) {
+    NSWindow *w = (__bridge NSWindow *)window;
+    w.titlebarAppearsTransparent = YES;
+    if (full_size_content)
+        w.styleMask |= NSWindowStyleMaskFullSizeContentView;
+}
+
+void set_background_transparent(void *window) {
+    NSWindow *w = (__bridge NSWindow *)window;
+    // Disable webview's own background so CSS backdrop-filter shows through.
+    WKWebView *webview = (WKWebView *)w.contentView;
+    [webview setValue:@NO forKey:@"drawsBackground"];
+    w.backgroundColor = NSColor.clearColor;
+    w.opaque = NO;
+}
+
+// ── Drag zones ────────────────────────────────────────────────────────────────
+
+// Stores the last left-mousedown event so performWindowDragWithEvent: can use
+// it even after the async JS→Crystal round-trip has advanced the event queue.
+static NSEvent *_last_mousedown = nil;
+
+void setup_drag_monitor(void) {
+    [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskLeftMouseDown
+                                          handler:^NSEvent *(NSEvent *e) {
+        _last_mousedown = e;
+        return e;
+    }];
+}
+
+void start_window_drag(void *window) {
+    NSWindow *w = (__bridge NSWindow *)window;
+    if (_last_mousedown)
+        [w performWindowDragWithEvent:_last_mousedown];
+}
 
 void minimize(void *window) {
     NSWindow *w = (__bridge NSWindow *)window;
