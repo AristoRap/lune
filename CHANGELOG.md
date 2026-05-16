@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.4.3] - 2026-05-16
+
+### Added
+
+- Default macOS menu bar — App, Edit, and Window menus are set up automatically so Lune apps feel like proper macOS citizens out of the box. The app name in the menu is taken from `opts.title`. No configuration required.
+- `opts.mac` — macOS-specific window options grouped under a dedicated `MacOptions` struct, keeping them clearly separate from cross-platform settings.
+- `opts.mac.full_size_content` — extends the content view to fill the entire window frame including the area behind the title bar, and makes the title bar itself transparent. The traffic lights remain visible.
+- `opts.mac.transparent` — clears the window and WebView backgrounds so CSS `backdrop-filter` effects can sample whatever is behind the window, enabling frosted-glass / "mirror" style UIs.
+- `opts.mac.hide_title` — hides the window title text while keeping the title bar and traffic lights visible. Commonly combined with `full_size_content` for a clean custom header.
+- `opts.mac.appearance` — forces a specific appearance mode (`MacAppearance::Auto` / `Dark` / `Light`) regardless of the system setting.
+- `opts.mac.content_protection` — prevents the window from appearing in screenshots, screen recordings, or screen sharing.
+- `opts.mac.always_on_top` — keeps the window above all other windows, including those from other apps.
+- `opts.drag_zone` / `opts.drag_value` — CSS custom property-based drag zones. Set `drag_zone` to a CSS property name (e.g. `"--lune-draggable"`) and any element with that property set to `drag_value` (default `"drag"`) becomes a window drag handle. Detection walks up the DOM tree so marking a container makes all its children draggable.
+- `opts.disable_context_menu` — suppresses the browser's built-in right-click context menu across the entire window.
+- `opts.enable_file_drop` — registers the window as a native drop target. The WebView's own drag handling is automatically suppressed so dropped files don't navigate the page.
+- `opts.disable_webview_drop` — disables WebView drag handling without setting up a drop target, preventing accidental file opens without enabling the full drop API.
+- `opts.drop_zone` / `opts.drop_value` — CSS custom property-based drop zones. Elements with the named property set to `drop_value` receive the `lune-drop-target-active` class while a file is held over them. Position tracking is driven natively so the class updates work even though the WebView's own dragover events are suppressed.
+- `opts.on_file_drop` — Crystal callback fired on drop. Signature changed to `(Int32, Int32, Array(String)) -> Nil` — receives the drop position in logical pixels alongside the file paths. Setting this callback automatically enables file drop.
+- `onFileDrop(cb)` / `onFileDropOff()` — JS runtime helpers for subscribing to file drops from the frontend. The event payload is `{ x, y, paths }`, consistent with the Crystal callback.
+
+---
+
 ## [0.4.2] - 2026-05-15
 
 ### Added

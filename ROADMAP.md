@@ -35,10 +35,13 @@
 - [x] macOS support
 - [x] Linux support
 - [ ] Windows support
-- [ ] Native menus — context menus and menu bar menus
+- [x] Default menu bar — App/Edit/Window menus set up automatically so Lune apps feel like real macOS apps
+- [ ] User-configurable menu bar — `app.menu { ... }` API to add/replace menu bar items from Crystal
+- [ ] Context menus
 - [ ] Multiple windows
 
 ## Random — no timeline
 
 - [x] Window state persistence — save/restore position+size to `~/.config/<app>/window.json`
+- [x] Drag and drop — `enable_file_drop`, CSS drop zones (`drop_zone`/`drop_value`), `disable_webview_drop`, `on_file_drop(x, y, paths)` Crystal callback, and `onFileDrop`/`onFileDropOff` JS helpers (macOS + Linux)
 - [ ] Additional templates: Svelte, React+TS

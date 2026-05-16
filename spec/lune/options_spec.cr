@@ -53,6 +53,26 @@ describe Lune::Options do
     it "has no on_load callback" do
       Lune::Options.new.on_load.should be_nil
     end
+
+    it "has no on_file_drop callback" do
+      Lune::Options.new.on_file_drop.should be_nil
+    end
+
+    it "enable_file_drop defaults to false" do
+      Lune::Options.new.enable_file_drop.should be_false
+    end
+
+    it "disable_webview_drop defaults to false" do
+      Lune::Options.new.disable_webview_drop.should be_false
+    end
+
+    it "drop_zone defaults to empty string" do
+      Lune::Options.new.drop_zone.should be_empty
+    end
+
+    it "drop_value defaults to drop" do
+      Lune::Options.new.drop_value.should eq("drop")
+    end
   end
 
   describe "assignment" do
@@ -134,6 +154,18 @@ describe Lune::Options do
       opts.on_window_ready = ->(h : Void*) { received = h; nil }
       opts.on_window_ready.not_nil!.call(Pointer(Void).null)
       received.should eq(Pointer(Void).null)
+    end
+
+    it "accepts an on_file_drop callback and calls it with x, y, paths" do
+      opts = Lune::Options.new
+      received_x = 0; received_y = 0; received_paths = [] of String
+      opts.on_file_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
+        received_x = x; received_y = y; received_paths = paths; nil
+      }
+      opts.on_file_drop.not_nil!.call(10, 20, ["/tmp/photo.png"])
+      received_x.should eq(10)
+      received_y.should eq(20)
+      received_paths.should eq(["/tmp/photo.png"])
     end
   end
 end

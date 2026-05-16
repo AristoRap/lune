@@ -1,5 +1,5 @@
 name: lune
-version: 0.4.2
+version: 0.4.3
 description: Build native desktop apps with Crystal and a web frontend.
 
 authors:

@@ -51,6 +51,18 @@ module Lune
 
         handle = wv.native_handle(Webview::NativeHandleKind::UI_WINDOW)
 
+        Native::Menu.setup_default(@options.title)
+
+        mac = @options.mac
+        {% if flag?(:darwin) %}
+          Native::Window.set_titlebar_transparent(handle, true) if mac.full_size_content
+          Native::Window.set_background_transparent(handle) if mac.transparent
+          Native::Window.hide_title(handle) if mac.hide_title
+          Native::Window.set_appearance(handle, mac.appearance.value) unless mac.appearance.auto?
+          Native::Window.set_content_protection(handle, true) if mac.content_protection
+          Native::Window.set_always_on_top(handle, true) if mac.always_on_top
+        {% end %}
+
         native_app = App.new
         native_app.install(
           Runtime::Bindings::Window.new(handle),
@@ -65,6 +77,33 @@ module Lune
         native_bindings = Runtime::Bindings.filter(native_app.bindings, @config.capabilities)
         bridge.register_bindings(native_bindings)
 
+        {% if flag?(:darwin) %}
+          unless @options.drag_zone.empty?
+            Native::Window.setup_drag_monitor
+            drag_handle = handle
+            wv.bind("__lune_start_window_drag", Webview::JSProc.new { |_args|
+              Native::Window.start_window_drag(drag_handle)
+              JSON::Any.new(nil)
+            })
+            drag_css_var = @options.drag_zone
+            drag_css_val = @options.drag_value
+            wv.init(<<-JS)
+              (function(){
+                document.addEventListener('mousedown', function(e) {
+                  var el = e.target;
+                  while (el) {
+                    if (window.getComputedStyle(el).getPropertyValue(#{drag_css_var.inspect}).trim() === #{drag_css_val.inspect}) {
+                      window.__lune_start_window_drag();
+                      return;
+                    }
+                    el = el.parentElement;
+                  }
+                }, true);
+              })();
+            JS
+          end
+        {% end %}
+
         if window_ready_cb = @options.on_window_ready
           begin
             window_ready_cb.call(handle)
@@ -77,6 +116,44 @@ module Lune
         window_app_name = WindowState.app_name(@options.title)
         if saved = WindowState.load(window_app_name)
           Native::Window.set_frame(handle, saved[:x], saved[:y], saved[:width], saved[:height])
+        end
+
+        should_drop = @options.enable_file_drop || @options.on_file_drop != nil
+
+        if should_drop || @options.disable_webview_drop
+          Native::Window.disable_webview_drop(handle)
+        end
+
+        if should_drop
+          user_cb = @options.on_file_drop
+          app_ref = @app
+          use_drop_zones = !@options.drop_zone.empty?
+          wv_ref = wv
+
+          on_pos : (Int32, Int32) -> Nil = if use_drop_zones
+            ->(x : Int32, y : Int32) {
+              wv_ref.dispatch { wv_ref.eval("window.__lune_drag_pos(#{x},#{y})") }
+            }
+          else
+            ->(x : Int32, y : Int32) { nil }
+          end
+
+          # When drop zones are configured, gate the JS fileDrop event on __lune_drop_check
+          # so it only fires when the file lands on an element with the CSS drop property.
+          on_drop : (Int32, Int32, Array(String)) -> Nil = if use_drop_zones
+            ->(x : Int32, y : Int32, paths : Array(String)) {
+              user_cb.try(&.call(x, y, paths))
+              paths_json = paths.to_json
+              wv_ref.dispatch { wv_ref.eval("window.__lune_drop_check(#{x},#{y},#{paths_json.inspect})") }
+            }
+          else
+            ->(x : Int32, y : Int32, paths : Array(String)) {
+              user_cb.try(&.call(x, y, paths))
+              app_ref.emit("fileDrop", {"x" => x, "y" => y, "paths" => paths})
+            }
+          end
+
+          Native::Window.setup_file_drop(handle, on_drop, on_pos)
         end
 
         if load_cb = @options.on_load
@@ -105,6 +182,54 @@ module Lune
               function _lune_nav(){ window.__lune_navigate(location.href); }
               window.addEventListener('popstate', _lune_nav);
               window.addEventListener('hashchange', _lune_nav);
+            })();
+          JS
+        end
+
+        if @options.disable_context_menu
+          wv.init("document.addEventListener('contextmenu',function(e){e.preventDefault();});")
+        end
+
+        if should_drop
+          drop_zone_js = ""
+          unless @options.drop_zone.empty?
+            css_prop = @options.drop_zone.inspect
+            css_val  = @options.drop_value.inspect
+            drop_zone_js = <<-JS
+              var _lune_dz_prop = #{css_prop};
+              var _lune_dz_val  = #{css_val};
+              var _lune_dz_active = null;
+              window.__lune_drag_pos = function(x, y) {
+                if (_lune_dz_active) {
+                  _lune_dz_active.classList.remove('lune-drop-target-active');
+                  _lune_dz_active = null;
+                }
+                if (x < 0) return;
+                var el = document.elementFromPoint(x, y);
+                while (el) {
+                  if (window.getComputedStyle(el).getPropertyValue(_lune_dz_prop).trim() === _lune_dz_val) {
+                    _lune_dz_active = el;
+                    el.classList.add('lune-drop-target-active');
+                    return;
+                  }
+                  el = el.parentElement;
+                }
+              };
+              window.__lune_drop_check = function(x, y, pathsJson) {
+                if (_lune_dz_active) {
+                  _lune_dz_active.classList.remove('lune-drop-target-active');
+                  _lune_dz_active = null;
+                  window.__lune_emit("fileDrop", { x: x, y: y, paths: JSON.parse(pathsJson) });
+                }
+              };
+            JS
+          end
+
+          wv.init(<<-JS)
+            (function(){
+              #{drop_zone_js}
+              document.addEventListener('dragover', function(e){ e.preventDefault(); }, false);
+              document.addEventListener('drop',     function(e){ e.preventDefault(); }, false);
             })();
           JS
         end

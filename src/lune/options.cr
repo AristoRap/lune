@@ -1,4 +1,45 @@
 module Lune
+  # Controls the macOS window appearance. Used with `opts.mac.appearance`.
+  enum MacAppearance
+    Auto  # follows the system setting (default)
+    Dark
+    Light
+  end
+
+  # macOS-specific window options, accessible via `opts.mac`.
+  #
+  # ```
+  # Lune.run(app) do |opts|
+  #   opts.mac.full_size_content = true
+  #   opts.mac.transparent       = true
+  #   opts.mac.appearance        = Lune::MacAppearance::Dark
+  # end
+  # ```
+  class MacOptions
+    # Extends the content view to fill the entire window including under the title bar,
+    # and makes the title bar itself transparent. The traffic lights remain visible.
+    property full_size_content : Bool = false
+
+    # Clears the window and webview background so CSS `backdrop-filter` effects
+    # (e.g. blur) show through to whatever is behind the window.
+    property transparent : Bool = false
+
+    # Hides the window title text while keeping the title bar (and traffic lights) visible.
+    # Commonly combined with `full_size_content` for a clean custom header.
+    property hide_title : Bool = false
+
+    # Forces a specific appearance mode for the window. Defaults to `Auto` (system setting).
+    property appearance : MacAppearance = MacAppearance::Auto
+
+    # Prevents the window content from being captured by screenshots or screen recording.
+    property content_protection : Bool = false
+
+    # Keeps the window above all other windows, including those from other apps.
+    property always_on_top : Bool = false
+
+    def initialize; end
+  end
+
   # Configuration passed to `Lune.run` via its block parameter.
   #
   # ```
@@ -61,6 +102,40 @@ module Lune
     # Called when a tray context menu item is selected. Receives the item id.
     property on_menu_click : (String -> Nil)?
 
+    # Enables native file drop. When true the webview's own drop handling is disabled
+    # and the `fileDrop` event is emitted to JS on every drop.
+    property enable_file_drop : Bool = false
+
+    # Disables the webview's built-in drag handling without setting up a drop target.
+    # Prevents files from accidentally opening/navigating in the webview.
+    property disable_webview_drop : Bool = false
+
+    # CSS custom property that marks an element as a drop zone.
+    # e.g. "--lune-drop-target". Elements with this property set to `drop_value`
+    # receive the class `lune-drop-target-active` while a file is dragged over them.
+    property drop_zone : String = ""
+
+    # CSS value that activates drop zone highlighting. Defaults to "drop".
+    property drop_value : String = "drop"
+
+    # Optional Crystal-side callback fired on drop. Receives (x, y, paths).
+    # `enable_file_drop` must be true (or set alongside this callback) for drops to work.
+    property on_file_drop : ((Int32, Int32, Array(String)) -> Nil)?
+
+    # CSS custom property name that marks an element as a window drag handle.
+    # When non-empty, any element with this property set to `drag_value` (and its
+    # descendants) can be used to drag the window. Example: `"--lune-draggable"`.
+    property drag_zone : String = ""
+
+    # CSS value that activates drag behaviour. Defaults to `"drag"`.
+    property drag_value : String = "drag"
+
+    # When true, suppresses the browser's default right-click context menu.
+    property disable_context_menu : Bool = false
+
+    # macOS-specific window options.
+    getter mac : MacOptions = MacOptions.new
+
     def initialize
       @title = "Lune"
       @width = 1200
@@ -76,8 +151,17 @@ module Lune
       @on_close = nil
       @on_load = nil
       @on_window_ready = nil
-      @on_tray_click = nil
-      @on_menu_click = nil
+      @on_tray_click         = nil
+      @on_menu_click         = nil
+      @enable_file_drop      = false
+      @disable_webview_drop  = false
+      @drop_zone             = ""
+      @drop_value            = "drop"
+      @on_file_drop          = nil
+      @drag_zone             = ""
+      @drag_value = "drag"
+      @disable_context_menu = false
+      @mac = MacOptions.new
     end
 
     def apply(window : Config::Window)

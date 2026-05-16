@@ -24,6 +24,11 @@ module Lune
         export function once(name, cb) { window.__lune_on(name, cb,  1); }
         export function off(name, cb)  { window.__lune_off(name, cb); }
 
+        export function onFileDrop(cb) {
+          window.__lune_on("fileDrop", function(data) { cb(data.x, data.y, data.paths); }, -1);
+        }
+        export function onFileDropOff() { window.__lune_off("fileDrop"); }
+
         #{stubs}
         JS
       end
@@ -50,6 +55,8 @@ module Lune
         export declare function on(name: string, cb: (data: unknown) => void): void;
         export declare function once(name: string, cb: (data: unknown) => void): void;
         export declare function off(name: string, cb?: (data: unknown) => void): void;
+        export declare function onFileDrop(cb: (x: number, y: number, paths: string[]) => void): void;
+        export declare function onFileDropOff(): void;
 
         #{sigs}
         DTS
