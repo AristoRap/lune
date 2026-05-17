@@ -81,7 +81,7 @@ module Lune
 
               JSON.parse({os: os, arch: arch, debug: @debug}.to_json)
             },
-            ts_return_type: "LuneEnvironment",
+            ts_return_type: "Promise<LuneEnvironment>",
           ))
         end
       end

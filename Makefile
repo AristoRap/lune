@@ -1,6 +1,6 @@
 SHELL := /bin/sh
 
-.PHONY: help setup test build release copy deploy dev app run patch minor web clean
+.PHONY: help setup test build release copy deploy dev app run patch minor web docs clean
 
 help:
 	@echo "Source:"
@@ -21,6 +21,7 @@ help:
 	@echo ""
 	@echo "Docs:"
 	@echo "  make web      run website dev server"
+	@echo "  make docs     build website (checks for dead links)"
 
 # ── Source ───────────────────────────────────────────────────────────────────
 
@@ -86,3 +87,6 @@ run:
 
 web:
 	npm run docs:dev
+
+docs:
+	npm run docs:build

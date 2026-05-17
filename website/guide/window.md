@@ -361,9 +361,14 @@ Lune.run(app, assets: "frontend/dist") do |opts|
 end
 ```
 
+```html
+<div class="drop-area" style="--lune-drop-target: drop">
+  Drop files here
+</div>
+```
+
 ```css
 .drop-area {
-  --lune-drop-target: drop;
   border: 2px dashed transparent;
   transition: border-color 0.15s;
 }
@@ -611,13 +616,13 @@ opts.drag do |d|
 end
 ```
 
+> **Inline style required.** The property must be set as `style="--lune-draggable: drag"`, not via a CSS class, so that detection does not match child elements that inherit the value.
+
 Mark any element as a drag handle using an inline style:
 
 ```html
 <div style="--lune-draggable: drag">...</div>
 ```
-
-> **Inline style required.** The property must be set as `style="--lune-draggable: drag"`, not via a CSS class, so that detection does not match child elements that inherit the value.
 
 Drag detection walks up the DOM tree, so marking a container makes all its children draggable too.
 
