@@ -29,12 +29,15 @@ Full docs live at the project `website` folder
 ## Quick start
 
 ```sh
-lune init my_app
+lune init my_app              # vanilla JS + Vite
+lune init my_app --template vue  # Vue 3 + Vite
 cd my_app
 lune dev
 ```
 
 Pre-built CLI binaries are on the [releases page](https://github.com/AristoRap/lune/releases). Or build from source: `make setup && make deploy`.
+
+The `demo/` directory in this repo is a full showcase of the Lune API — bindings, events, system calls, file dialogs, tray, and more — built with the Vue 3 template. Run it with `cd demo && lune dev`.
 
 ## Platform support
 
