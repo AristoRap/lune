@@ -1,8 +1,9 @@
 module Lune
   class App
     getter bindings = [] of Binding
-    getter title
     property bridge : Bridge?
+    property title : String = ""
+    property menu_options : Options::Menu = Options::Menu.new
 
     def initialize
       @bindings = [] of Binding
@@ -63,6 +64,20 @@ module Lune
     def off(event : String)
       @event_handlers.delete(event)
       @event_once_handlers.delete(event)
+    end
+
+    # Replaces the application menu bar at runtime.
+    def set_menu(& : Options::Menu ->)
+      opts = Options::Menu.new
+      yield opts
+      @menu_options = opts
+      Native::Menu.set_from_options(opts, @title)
+    end
+
+    # Re-applies the current menu after mutating `MenuItem` properties
+    # (e.g. `item.enabled = false`).
+    def update_menu
+      Native::Menu.set_from_options(@menu_options, @title)
     end
 
     def async(name : String = "lune-task", &block : ->) : Nil

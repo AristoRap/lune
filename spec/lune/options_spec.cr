@@ -138,32 +138,32 @@ describe Lune::Options do
   end
 end
 
-describe Lune::DropOptions do
+describe Lune::Options::Drop do
   describe "defaults" do
     it "enabled is false" do
-      Lune::DropOptions.new.enabled.should be_false
+      Lune::Options::Drop.new.enabled.should be_false
     end
 
     it "disable_webview_drop is false" do
-      Lune::DropOptions.new.disable_webview_drop.should be_false
+      Lune::Options::Drop.new.disable_webview_drop.should be_false
     end
 
     it "zone defaults to empty string" do
-      Lune::DropOptions.new.zone.should be_empty
+      Lune::Options::Drop.new.zone.should be_empty
     end
 
     it "value defaults to drop" do
-      Lune::DropOptions.new.value.should eq("drop")
+      Lune::Options::Drop.new.value.should eq("drop")
     end
 
     it "has no on_drop callback" do
-      Lune::DropOptions.new.on_drop.should be_nil
+      Lune::Options::Drop.new.on_drop.should be_nil
     end
   end
 
   describe "via opts.drop block" do
     it "is accessible from Options" do
-      Lune::Options.new.drop.should be_a(Lune::DropOptions)
+      Lune::Options.new.drop.should be_a(Lune::Options::Drop)
     end
 
     it "mutations via block are retained" do
@@ -194,20 +194,20 @@ describe Lune::DropOptions do
   end
 end
 
-describe Lune::DragOptions do
+describe Lune::Options::Drag do
   describe "defaults" do
     it "zone defaults to empty string" do
-      Lune::DragOptions.new.zone.should be_empty
+      Lune::Options::Drag.new.zone.should be_empty
     end
 
     it "value defaults to drag" do
-      Lune::DragOptions.new.value.should eq("drag")
+      Lune::Options::Drag.new.value.should eq("drag")
     end
   end
 
   describe "via opts.drag block" do
     it "is accessible from Options" do
-      Lune::Options.new.drag.should be_a(Lune::DragOptions)
+      Lune::Options.new.drag.should be_a(Lune::Options::Drag)
     end
 
     it "mutations via block are retained" do
@@ -222,20 +222,20 @@ describe Lune::DragOptions do
   end
 end
 
-describe Lune::TrayOptions do
+describe Lune::Options::Tray do
   describe "defaults" do
     it "has no on_click callback" do
-      Lune::TrayOptions.new.on_click.should be_nil
+      Lune::Options::Tray.new.on_click.should be_nil
     end
 
     it "has no on_menu_click callback" do
-      Lune::TrayOptions.new.on_menu_click.should be_nil
+      Lune::Options::Tray.new.on_menu_click.should be_nil
     end
   end
 
   describe "via opts.tray block" do
     it "is accessible from Options" do
-      Lune::Options.new.tray.should be_a(Lune::TrayOptions)
+      Lune::Options.new.tray.should be_a(Lune::Options::Tray)
     end
 
     it "mutations via block are retained" do

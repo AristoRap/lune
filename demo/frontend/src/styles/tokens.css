@@ -1,0 +1,57 @@
+:root {
+  /* type */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI",
+    system-ui, sans-serif;
+  --font-mono: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace;
+  --font-display: "Space Grotesk", var(--font-sans);
+
+  /* palette — celestial / lune */
+  --bg-0: #07080f;
+  --bg-1: #0c0e1a;
+  --bg-2: #11142a;
+  --surface: rgba(255, 255, 255, 0.03);
+  --surface-hi: rgba(255, 255, 255, 0.055);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-hi: rgba(255, 255, 255, 0.14);
+
+  --text: rgba(255, 255, 255, 0.92);
+  --text-mid: rgba(255, 255, 255, 0.62);
+  --muted: rgba(255, 255, 255, 0.38);
+  --faint: rgba(255, 255, 255, 0.18);
+
+  --accent: #a78bfa;
+  --accent-2: #7c6cff;
+  --accent-dim: rgba(167, 139, 250, 0.14);
+  --accent-glow: rgba(124, 108, 255, 0.45);
+  --moon-1: #f5f3ff;
+  --moon-2: #c7c7ff;
+  --moon-3: #7c6cff;
+
+  --info: #60a5fa;
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --danger: #f87171;
+
+  /* layout */
+  --titlebar-h: 52px;
+  --statusbar-h: 28px;
+  --sidebar-w: 210px;
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+
+  /* effects */
+  --shadow-1: 0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 8px 24px -16px rgba(0, 0, 0, 0.6);
+  --shadow-hi: 0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 22px 52px -22px rgba(0, 0, 0, 0.7);
+  --glow: 0 0 36px -8px var(--accent-glow);
+
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color-scheme: dark;
+  color: var(--text);
+  background: var(--bg-0);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

@@ -1,5 +1,41 @@
 # Changelog
 
+## [0.6.0] - 2026-05-17
+
+### Added
+
+- `opts.menu { |m| }` — user-configurable macOS menu bar. Replaces the default menu when set; falls back to the standard App + Edit + Window menus when omitted.
+  - `m.app_menu` / `m.edit_menu` — role menus wired to native macOS selectors (About, Services, Quit; Undo, Redo, Copy, Paste, etc.).
+  - `m.submenu(label) { |f| }` — top-level custom submenu with its own item builder.
+  - `f.item(label, shortcut:, enabled:) { }` — text item with optional keyboard shortcut and per-item callback block.
+  - `f.separator` — horizontal separator.
+  - `f.checkbox(label, checked:, shortcut:) { |on| }` — toggle item; block receives new `Bool` state.
+  - `f.radio(label, selected:, shortcut:) { }` — radio item; adjacent radio items form a group automatically.
+  - `f.submenu(label) { }` — nested submenu at any depth.
+- `app.update_menu` — re-applies the current menu after mutating `Options::Menu::Item` properties (`label`, `enabled`, `checked`) at runtime.
+- `app.set_menu { |m| }` — replaces the entire menu bar at runtime.
+- `Lune::Options::Menu::Shortcut` — pure-Crystal shortcut parser: converts strings like `"cmd+n"`, `"cmd+shift+z"`, `"cmd+f1"` into the key character and `NSEventModifierFlags` bitmask used by `NSMenuItem`.
+- **Class-based menu API** — subclass `Options::Menu::Group` or `Options::Menu` for apps with complex menus or where keeping state and callbacks in a dedicated class is preferred.
+  - `m.submenu(group : Options::Menu::Group)` — pass a pre-built group instance instead of a block.
+  - `opts.menu(m : Options::Menu)` — assign a pre-built menu instance directly.
+  - Both styles (inline block and class-based) can be mixed freely.
+
+### Changed
+
+- **Demo app** (`demo/`, previously `exampleapp/`) — rebuilt frontend on the Vue 3 template (`lune init -t vue`): Single File Components, grouped sidebar with icons, `useLuneEvent` composable for auto-cleanup, animated starfield background, Welcome hero with orbital animation, live environment/screen stats, and a redesigned ping/pong display with per-round index and latency. Tray icon show/hide replaced with a toggle switch.
+- **Options namespace reorganisation** — all option sub-types are now nested under `Lune::Options`:
+  - `Lune::MacOptions` → `Lune::Options::Mac`; appearance enum moved to `Lune::Options::Mac::Appearance`
+  - `Lune::DropOptions` → `Lune::Options::Drop`
+  - `Lune::DragOptions` → `Lune::Options::Drag`
+  - `Lune::TrayOptions` → `Lune::Options::Tray`
+  - `Lune::MenuOptions` → `Lune::Options::Menu`
+  - `Lune::MenuItem` → `Lune::Options::Menu::Item`
+  - `Lune::MenuGroup` → `Lune::Options::Menu::Group`
+  - `Lune::MenuShortcut` → `Lune::Options::Menu::Shortcut`
+  - `src/lune/options.cr` reorganised into `src/lune/options/` folder with one file per component group.
+
+---
+
 ## [0.5.1] - 2026-05-16
 
 ### Breaking
@@ -57,7 +93,7 @@
 ### Added
 
 - Bidirectional event bus — `app.on`, `app.once`, `app.off`, and `app.dispatch_event` on the Crystal side let the app listen for events emitted from JavaScript. `emit(name, data?)` in `runtime.js` / `runtime.d.ts` is the JS counterpart. Both sides share a single event-name namespace, making request/response and notification patterns straightforward.
-- Example app (`exampleapp/`) — a self-contained Vite + Crystal demo that exercises drag-and-drop, tray, clipboard, file dialogs, notifications, and the event bus, serving as both a reference and a manual smoke-test harness.
+- Example app (`demo/`) — a self-contained Vite + Crystal demo that exercises drag-and-drop, tray, clipboard, file dialogs, notifications, and the event bus, serving as both a reference and a manual smoke-test harness.
 
 ---
 

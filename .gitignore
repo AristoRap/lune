@@ -11,16 +11,16 @@
 /lune.yml
 /src/main.cr
 
-# exampleapp — commit source, ignore generated/installed dirs
-exampleapp/lib/
-exampleapp/.shards/
-exampleapp/shard.lock
-exampleapp/build/
-exampleapp/.lune-dev
-exampleapp/*.dwarf
-exampleapp/frontend/node_modules/
-exampleapp/frontend/dist/
-exampleapp/frontend/lunejs/
+# demo — commit source, ignore generated/installed dirs
+demo/lib/
+demo/.shards/
+demo/shard.lock
+demo/build/
+demo/.lune-dev
+demo/*.dwarf
+demo/frontend/node_modules/
+demo/frontend/dist/
+demo/frontend/lunejs/
 
 # VitePress
 /node_modules/

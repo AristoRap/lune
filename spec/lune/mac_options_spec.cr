@@ -1,35 +1,35 @@
 require "../spec_helper"
 
-describe Lune::MacOptions do
+describe Lune::Options::Mac do
   describe "defaults" do
     it "full_size_content is false" do
-      Lune::MacOptions.new.full_size_content.should be_false
+      Lune::Options::Mac.new.full_size_content.should be_false
     end
 
     it "transparent is false" do
-      Lune::MacOptions.new.transparent.should be_false
+      Lune::Options::Mac.new.transparent.should be_false
     end
 
     it "hide_title is false" do
-      Lune::MacOptions.new.hide_title.should be_false
+      Lune::Options::Mac.new.hide_title.should be_false
     end
 
     it "appearance defaults to Auto" do
-      Lune::MacOptions.new.appearance.should eq(Lune::MacAppearance::Auto)
+      Lune::Options::Mac.new.appearance.should eq(Lune::Options::Mac::Appearance::Auto)
     end
 
     it "content_protection is false" do
-      Lune::MacOptions.new.content_protection.should be_false
+      Lune::Options::Mac.new.content_protection.should be_false
     end
 
     it "always_on_top is false" do
-      Lune::MacOptions.new.always_on_top.should be_false
+      Lune::Options::Mac.new.always_on_top.should be_false
     end
   end
 
   describe "via opts.mac block" do
     it "is accessible from Options" do
-      Lune::Options.new.mac.should be_a(Lune::MacOptions)
+      Lune::Options.new.mac.should be_a(Lune::Options::Mac)
     end
 
     it "mutations via block are retained" do
@@ -37,24 +37,24 @@ describe Lune::MacOptions do
       opts.mac do |m|
         m.full_size_content = true
         m.hide_title        = true
-        m.appearance        = Lune::MacAppearance::Dark
+        m.appearance        = Lune::Options::Mac::Appearance::Dark
         m.content_protection = true
         m.always_on_top     = true
       end
 
       opts.mac.full_size_content.should be_true
       opts.mac.hide_title.should be_true
-      opts.mac.appearance.should eq(Lune::MacAppearance::Dark)
+      opts.mac.appearance.should eq(Lune::Options::Mac::Appearance::Dark)
       opts.mac.content_protection.should be_true
       opts.mac.always_on_top.should be_true
     end
   end
 end
 
-describe Lune::MacAppearance do
+describe Lune::Options::Mac::Appearance do
   it "has Auto, Dark, and Light variants" do
-    Lune::MacAppearance::Auto.value.should eq(0)
-    Lune::MacAppearance::Dark.value.should eq(1)
-    Lune::MacAppearance::Light.value.should eq(2)
+    Lune::Options::Mac::Appearance::Auto.value.should eq(0)
+    Lune::Options::Mac::Appearance::Dark.value.should eq(1)
+    Lune::Options::Mac::Appearance::Light.value.should eq(2)
   end
 end

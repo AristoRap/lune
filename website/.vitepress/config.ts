@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitepress'
 
-const version = '0.5.1'
+const version = '0.6.0'
 
 export default defineConfig({
   title: 'Lune',
@@ -37,7 +37,7 @@ export default defineConfig({
       provider: 'local',
     },
 
-    outline: [2, 3],
+    outline: [2, 4],
     footer: {
       message: 'Released under the MIT License.',
     },

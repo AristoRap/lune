@@ -24,7 +24,7 @@ If a property is set in both, the opts block wins. Properties not set in either 
 
 ---
 
-## All options
+## Window properties
 
 Flat properties are set directly on `opts`. Grouped options use a nested block:
 
@@ -202,6 +202,41 @@ opts.on_close = -> {
 
 ---
 
+## Window state persistence
+
+Lune automatically saves and restores the window's position and size. No configuration required — it just works.
+
+When the window closes, the current frame is written to a JSON file. On the next launch, that file is read and the window is restored to the same position and size before the page loads.
+
+### Storage location
+
+The state file is stored under the app's config directory, derived from the window `title`:
+
+| Platform | Path                                                                           |
+| -------- | ------------------------------------------------------------------------------ |
+| macOS    | `~/Library/Application Support/<appname>/window.json`                          |
+| Linux    | `$XDG_CONFIG_HOME/<appname>/window.json` (falls back to `~/.config/<appname>`) |
+
+`<appname>` is derived from `opts.title` — lowercased, spaces replaced with hyphens, non-alphanumeric characters removed. For example, `"My App"` → `my-app`.
+
+### First launch
+
+On the first launch no file exists yet, so the window opens at the size and position specified by `opts.width` / `opts.height` (or the `lune.yml` defaults). After the window is closed for the first time, persistence kicks in on every subsequent launch.
+
+### Example
+
+```crystal
+Lune.run(app) do |opts|
+  opts.title  = "My App"   # → stored at .../my-app/window.json
+  opts.width  = 1280
+  opts.height = 800
+end
+```
+
+After the user resizes and moves the window, the next launch will reopen it at exactly the same position and size, regardless of what `opts.width` and `opts.height` say.
+
+---
+
 ## File drop
 
 Lune provides a complete drag-and-drop file API: a boolean to enable native drops, separate control to suppress the WebView's built-in drag handling, CSS-based drop zones for per-element highlighting, and JS helpers for subscribing to drops.
@@ -298,7 +333,9 @@ onFileDropOff();
 TypeScript signature:
 
 ```ts
-declare function onFileDrop(cb: (x: number, y: number, paths: string[]) => void): void;
+declare function onFileDrop(
+  cb: (x: number, y: number, paths: string[]) => void,
+): void;
 declare function onFileDropOff(): void;
 ```
 
@@ -342,7 +379,7 @@ onFileDrop((x, y, paths) => {
 
 ---
 
-## Tray callbacks
+## Tray
 
 Tray callbacks are configured in an `opts.tray` block. See [Runtime Functions](./runtime#system-tray) for the full tray API.
 
@@ -369,64 +406,197 @@ Called when a tray context menu item is selected. Receives the item's `id`.
 
 ---
 
-## Window state persistence
-
-Lune automatically saves and restores the window's position and size. No configuration required — it just works.
-
-When the window closes, the current frame is written to a JSON file. On the next launch, that file is read and the window is restored to the same position and size before the page loads.
-
-### Storage location
-
-The state file is stored under the app's config directory, derived from the window `title`:
-
-| Platform | Path                                                                           |
-| -------- | ------------------------------------------------------------------------------ |
-| macOS    | `~/Library/Application Support/<appname>/window.json`                          |
-| Linux    | `$XDG_CONFIG_HOME/<appname>/window.json` (falls back to `~/.config/<appname>`) |
-
-`<appname>` is derived from `opts.title` — lowercased, spaces replaced with hyphens, non-alphanumeric characters removed. For example, `"My App"` → `my-app`.
-
-### First launch
-
-On the first launch no file exists yet, so the window opens at the size and position specified by `opts.width` / `opts.height` (or the `lune.yml` defaults). After the window is closed for the first time, persistence kicks in on every subsequent launch.
-
-### Example
-
-```crystal
-Lune.run(app) do |opts|
-  opts.title  = "My App"   # → stored at .../my-app/window.json
-  opts.width  = 1280
-  opts.height = 800
-end
-```
-
-After the user resizes and moves the window, the next launch will reopen it at exactly the same position and size, regardless of what `opts.width` and `opts.height` say.
-
----
-
-## macOS menu bar
+## macOS
 
 **Supported:** macOS — **Not applicable:** Linux, Windows
 
-Lune automatically sets up a standard macOS menu bar when your app starts. No configuration required — it just works.
+### Menu bar
 
-The default menu bar includes:
+Use `opts.menu { |m| }` to define the application menu bar. When no menu is configured, Lune falls back to a standard menu (App + Edit + Window menus). If you set `opts.menu`, that menu replaces the default entirely.
 
-| Menu           | Items                                                     |
-| -------------- | --------------------------------------------------------- |
-| **[App name]** | About, Services, Hide / Hide Others / Show All, Quit (⌘Q) |
-| **Edit**       | Undo (⌘Z), Redo (⇧⌘Z), Cut, Copy, Paste, Select All       |
-| **Window**     | Minimize (⌘M), Zoom, Bring All to Front                   |
+```crystal
+opts.menu do |m|
+  m.app_menu   # standard macOS app menu (About, Services, Hide, Quit)
 
-The app name in the menu bar is taken from `opts.title` (or the `title` set in `lune.yml`).
+  m.submenu "File" do |file|
+    file.item "New",  shortcut: "cmd+n" do create_document end
+    file.item "Open", shortcut: "cmd+o" do open_dialog end
+    file.separator
+    file.item "Quit", shortcut: "cmd+q" do app.eval("runtime.quit()") end
+  end
 
-> A user-configurable menu bar API (`app.menu { ... }`) is planned for a future release.
+  m.edit_menu  # standard macOS edit menu (Undo, Redo, Cut, Copy, Paste, Select All)
+
+  m.submenu "View" do |view|
+    view.checkbox "Dark Mode", shortcut: "cmd+shift+d" do |on|
+      app.eval("document.body.classList.toggle('dark', #{on})")
+    end
+  end
+end
+```
+
+#### Role menus
+
+Role menus insert the standard macOS menus built from native selectors — they work correctly without any Crystal callbacks.
+
+| Method        | Inserts                                                             |
+| ------------- | ------------------------------------------------------------------- |
+| `m.app_menu`  | App menu: About, Services, Hide / Hide Others / Show All, Quit (⌘Q) |
+| `m.edit_menu` | Edit menu: Undo (⌘Z), Redo (⇧⌘Z), Cut, Copy, Paste, Select All      |
+
+Per macOS convention `m.app_menu` should be first. `m.edit_menu` makes text inputs in your WebView support undo/redo and clipboard shortcuts automatically.
+
+#### Submenus
+
+`m.submenu(label) { |group| }` adds a top-level menu. Inside the block, call builder methods on `group`:
+
+| Method                                                  | Description                                  |
+| ------------------------------------------------------- | -------------------------------------------- |
+| `group.item(label, shortcut:, enabled:) { }`            | Clickable text item                          |
+| `group.separator`                                       | Horizontal separator line                    |
+| `group.checkbox(label, checked:, shortcut:) { \|on\| }` | Toggle item; block receives new `Bool` state |
+| `group.radio(label, selected:, shortcut:) { }`          | Radio item; adjacent radio items auto-group  |
+| `group.submenu(label) { \|sub\| }`                      | Nested submenu                               |
+
+All builder methods return the `Options::Menu::Item` they create — hold the reference to mutate it later (see [Runtime updates](#runtime-updates)).
+
+#### Shortcuts
+
+Pass a shortcut string to any item. The format is modifier tokens joined by `+`, with the key last:
+
+```
+"cmd+n"          # ⌘N
+"cmd+shift+z"    # ⇧⌘Z
+"cmd+opt+t"      # ⌥⌘T
+"ctrl+opt+a"     # ⌃⌥A
+"cmd+f1"         # ⌘F1
+"cmd+return"     # ⌘↩
+"cmd+delete"     # ⌘⌫
+```
+
+| Token                    | Modifier  |
+| ------------------------ | --------- |
+| `cmd` / `command`        | ⌘ Command |
+| `shift`                  | ⇧ Shift   |
+| `opt` / `alt` / `option` | ⌥ Option  |
+| `ctrl` / `control`       | ⌃ Control |
+
+Named keys: `return`, `enter`, `tab`, `escape` / `esc`, `delete` / `backspace`, `space`, `up`, `down`, `left`, `right`, `home`, `end`, `pageup`, `pagedown`, `f1`–`f12`.
+
+Single-letter keys are automatically uppercased when `shift` is present (`"cmd+shift+z"` → key `Z`).
+
+#### Checkbox items
+
+The block receives the new checked state as a `Bool`. The visual checkmark is toggled automatically by the native layer.
+
+```crystal
+m.submenu "View" do |view|
+  view.checkbox "Show Sidebar", checked: true, shortcut: "cmd+\\" do |on|
+    app.emit("sidebar", on)
+  end
+end
+```
+
+#### Radio items
+
+Adjacent radio items form a group automatically — no explicit grouping needed. When one is selected, the others in the group are deselected by the native layer. The block fires for the newly selected item only.
+
+```crystal
+m.submenu "Appearance" do |a|
+  a.radio "System", selected: true do apply_theme(:system) end
+  a.radio "Light"                  do apply_theme(:light) end
+  a.radio "Dark"                   do apply_theme(:dark) end
+end
+```
+
+To have two independent radio groups in the same submenu, separate them with a `separator`.
+
+#### Runtime updates
+
+Every builder method returns the `Options::Menu::Item` it creates. Hold a reference to mutate `label`, `enabled`, or `checked` at runtime, then call `app.update_menu` to push the changes to the native layer.
+
+```crystal
+pause_item : Lune::Options::Menu::Item? = nil
+
+opts.menu do |m|
+  m.submenu "File" do |file|
+    pause_item = file.item("Pause", shortcut: "cmd+p") do
+      paused = !paused
+      pause_item.not_nil!.label = paused ? "Resume" : "Pause"
+      app.update_menu
+    end
+  end
+end
+```
+
+To replace the entire menu bar at runtime:
+
+```crystal
+app.set_menu do |m|
+  m.app_menu
+  m.submenu "File" do |file|
+    file.item("Quit") { app.eval("runtime.quit()") }
+  end
+end
+```
+
+Both `app.update_menu` and `app.set_menu` are no-ops on non-macOS platforms.
+
+#### Class-based menus
+
+For larger apps, subclass `Options::Menu::Group` or `Options::Menu` instead of using inline blocks. The builder methods (`item`, `separator`, `checkbox`, `radio`, `submenu`) are inherited and can be called directly in `initialize`. State and callbacks live inside the class, keeping `main.cr` clean.
+
+```crystal
+class FileMenu < Lune::Options::Menu::Group
+  @pause_item : Lune::Options::Menu::Item? = nil
+  getter clock_paused : Bool = false
+
+  def initialize(@app : Lune::App)
+    super("File")
+    @pause_item = item("Pause Clock", shortcut: "cmd+p") { toggle_clock }
+    separator
+    item("Quit", shortcut: "cmd+q") { @app.eval("runtime.quit()") }
+  end
+
+  private def toggle_clock
+    @clock_paused = !@clock_paused
+    @pause_item.not_nil!.label = @clock_paused ? "Resume Clock" : "Pause Clock"
+    @app.update_menu
+  end
+end
+```
+
+Pass an instance directly to `submenu` — no block needed:
+
+```crystal
+opts.menu do |m|
+  m.app_menu
+  m.submenu FileMenu.new(app)   # class-based
+  m.edit_menu
+  m.submenu "View" do |view|    # inline block also works
+    view.item("Zoom In") { app.eval("...") }
+  end
+end
+```
+
+To subclass the top-level menu itself:
+
+```crystal
+class AppMenu < Lune::Options::Menu
+  def initialize(app : Lune::App)
+    super()
+    app_menu
+    submenu FileMenu.new(app)
+    edit_menu
+  end
+end
+
+opts.menu AppMenu.new(app)
+```
 
 ---
 
-## Window drag zones
-
-CSS custom property-based drag handles — macOS implementation.
+### Window drag zones
 
 Set `drag.zone` to a CSS custom property name and any element with that property set to `drag.value` becomes a handle for dragging the window. Essential when using a custom title bar without the native one.
 
@@ -455,9 +625,7 @@ Drag detection walks up the DOM tree, so marking a container makes all its child
 
 ---
 
-## macOS window appearance
-
-**Supported:** macOS — **Not applicable:** Linux, Windows
+### Window appearance
 
 macOS-specific options are configured in an `opts.mac` block:
 
@@ -465,11 +633,11 @@ macOS-specific options are configured in an `opts.mac` block:
 opts.mac do |m|
   m.full_size_content = true
   m.transparent       = true
-  m.appearance        = Lune::MacAppearance::Dark
+  m.appearance        = Lune::Options::Mac::Appearance::Dark
 end
 ```
 
-### `mac.full_size_content`
+#### `mac.full_size_content`
 
 **Type:** `Bool` — **Default:** `false`
 
@@ -479,7 +647,7 @@ Extends the content view to fill the entire window frame including the area behi
 
 ---
 
-### `mac.transparent`
+#### `mac.transparent`
 
 **Type:** `Bool` — **Default:** `false`
 
@@ -497,7 +665,7 @@ Clears the window and WebView backgrounds so CSS `backdrop-filter` effects can s
 
 ---
 
-### `mac.hide_title`
+#### `mac.hide_title`
 
 **Type:** `Bool` — **Default:** `false`
 
@@ -505,21 +673,21 @@ Hides the window title text while keeping the title bar (and traffic lights) vis
 
 ---
 
-### `mac.appearance`
+#### `mac.appearance`
 
-**Type:** `Lune::MacAppearance` — **Default:** `Auto`
+**Type:** `Lune::Options::Mac::Appearance` — **Default:** `Auto`
 
 Forces a specific appearance mode for the window regardless of the system setting.
 
 | Value                  | Effect                                          |
 | ---------------------- | ----------------------------------------------- |
-| `MacAppearance::Auto`  | Follows the system dark/light setting (default) |
-| `MacAppearance::Dark`  | Forces dark mode                                |
-| `MacAppearance::Light` | Forces light mode                               |
+| `Mac::Appearance::Auto`  | Follows the system dark/light setting (default) |
+| `Mac::Appearance::Dark`  | Forces dark mode                                |
+| `Mac::Appearance::Light` | Forces light mode                               |
 
 ---
 
-### `mac.content_protection`
+#### `mac.content_protection`
 
 **Type:** `Bool` — **Default:** `false`
 
@@ -527,7 +695,7 @@ Prevents the window content from appearing in screenshots, screen recordings, or
 
 ---
 
-### `mac.always_on_top`
+#### `mac.always_on_top`
 
 **Type:** `Bool` — **Default:** `false`
 
@@ -535,7 +703,7 @@ Keeps the window above all other windows, including those from other apps. Usefu
 
 ---
 
-### Full appearance example
+#### Full appearance example
 
 ```crystal
 Lune.run(app, assets: "frontend/dist") do |opts|
@@ -549,7 +717,7 @@ Lune.run(app, assets: "frontend/dist") do |opts|
     m.full_size_content = true
     m.transparent       = true
     m.hide_title        = true
-    m.appearance        = Lune::MacAppearance::Dark
+    m.appearance        = Lune::Options::Mac::Appearance::Dark
   end
 end
 ```
@@ -559,29 +727,67 @@ end
 ## Full example
 
 ```crystal
-Lune.run(app) do |opts|
-  opts.title      = "Dashboard"
-  opts.width      = 1280
-  opts.height     = 800
-  opts.min_width  = 900
-  opts.min_height = 600
-  opts.resizable  = true
-  opts.debug      = {{ flag?(:debug) }}
+# Class-based submenu — state and callbacks live in the class.
+class FileMenu < Lune::Options::Menu::Group
+  @pause_item : Lune::Options::Menu::Item? = nil
+  getter clock_paused : Bool = false
 
-  opts.drag do |d|
-    d.zone = "--lune-draggable"
+  def initialize(@app : Lune::App)
+    super("File")
+    @pause_item = item("Pause Clock", shortcut: "cmd+p") { toggle_clock }
+    separator
+    item("Reload", shortcut: "cmd+r") { @app.eval("location.reload()") }
+    separator
+    item("Quit",   shortcut: "cmd+q") { @app.eval("runtime.quit()") }
   end
+
+  private def toggle_clock
+    @clock_paused = !@clock_paused
+    @pause_item.not_nil!.label = @clock_paused ? "Resume Clock" : "Pause Clock"
+    @app.update_menu
+    @app.emit("clockPaused", @clock_paused)
+  end
+end
+
+app = Lune::App.new
+file_menu = FileMenu.new(app)
+
+Lune.run(app) do |opts|
+  opts.title               = "Dashboard"
+  opts.width               = 1280
+  opts.height              = 800
+  opts.min_width           = 900
+  opts.min_height          = 600
+  opts.resizable           = true
+  opts.disable_context_menu = true
+  opts.debug               = {{ flag?(:debug) }}
 
   opts.drop do |d|
     d.enabled = true
+    d.zone    = "--lune-drop-target"
     d.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
       app.emit("fileDrop", {"x" => x, "y" => y, "paths" => paths})
     }
   end
 
+  opts.drag do |d|
+    d.zone = "--lune-draggable"
+  end
+
   opts.tray do |t|
     t.on_click      = -> { app.emit("trayClick", nil) }
     t.on_menu_click = ->(id : String) { app.emit("trayMenuClick", id) }
+  end
+
+  opts.menu do |m|
+    m.app_menu
+    m.submenu file_menu              # class-based Group
+    m.edit_menu
+    m.submenu "View" do |view|       # inline block
+      view.item("Zoom In")      { app.eval("document.body.style.zoom = String(Math.round((parseFloat(document.body.style.zoom||'1')+0.1)*10)/10)") }
+      view.item("Zoom Out")     { app.eval("document.body.style.zoom = String(Math.round((Math.max(0.5,parseFloat(document.body.style.zoom||'1')-0.1))*10)/10)") }
+      view.item("Actual Size",  shortcut: "cmd+0") { app.eval("document.body.style.zoom='1'") }
+    end
   end
 
   opts.mac do |m|
@@ -590,20 +796,9 @@ Lune.run(app) do |opts|
     m.hide_title        = true
   end
 
-  opts.on_window_ready = ->(_handle : Void*) {
-    puts "Window created"
-  }
-
-  opts.on_load = -> {
-    app.emit("ready", nil)
-  }
-
-  opts.on_navigate = ->(url : String) {
-    puts "Navigated to: #{url}"
-  }
-
-  opts.on_close = -> {
-    cleanup()
-  }
+  opts.on_window_ready = ->(_handle : Void*) { app.emit("windowReady", nil) }
+  opts.on_load         = -> { app.emit("ready", nil) }
+  opts.on_navigate     = ->(url : String) { puts "navigated: #{url}" }
+  opts.on_close        = -> { puts "closed" }
 end
 ```
