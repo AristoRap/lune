@@ -180,6 +180,31 @@ This builds the frontend with Vite, then compiles the Crystal binary with the fr
 
 ---
 
+## Demo app
+
+The repository ships with a full showcase in `demo/` — a Vue 3 app that exercises every part of the Lune API in one window:
+
+| Section | What it shows |
+|---|---|
+| Bindings | `@[Lune::Bind]` — calling Crystal methods from JS as async functions |
+| Events | Live clock (Crystal → JS), ping/pong roundtrip with latency, async file-progress |
+| System | `environment()`, `screenInfo()`, native notifications |
+| Clipboard | `clipboardRead` / `clipboardWrite` |
+| Window | `minimize`, `maximize`, `center`, `setTitle`, `setSize` |
+| Dialogs | File pickers (`openFile`, `openFiles`, `openDir`, `saveFile`) and message dialogs |
+| Tray | Status-bar icon with a context-menu and event log |
+
+Run it from the repo root:
+
+```sh
+cd demo
+lune dev
+```
+
+The frontend lives in `demo/frontend/src/` and is structured as a real Vue project — views, components, composables, and a `useLuneEvent` composable that handles `on`/`off` cleanup automatically on unmount. It is a good starting point to copy patterns from.
+
+---
+
 ## What's next
 
 - Learn how the Crystal ↔ JavaScript bridge works: [How It Works](./guide/how-it-works)

@@ -22,6 +22,7 @@
 
 ### Changed
 
+- **Demo app** (`demo/`, previously `exampleapp/`) — rebuilt frontend on the Vue 3 template (`lune init -t vue`): Single File Components, grouped sidebar with icons, `useLuneEvent` composable for auto-cleanup, animated starfield background, Welcome hero with orbital animation, live environment/screen stats, and a redesigned ping/pong display with per-round index and latency. Tray icon show/hide replaced with a toggle switch.
 - **Options namespace reorganisation** — all option sub-types are now nested under `Lune::Options`:
   - `Lune::MacOptions` → `Lune::Options::Mac`; appearance enum moved to `Lune::Options::Mac::Appearance`
   - `Lune::DropOptions` → `Lune::Options::Drop`
@@ -92,7 +93,7 @@
 ### Added
 
 - Bidirectional event bus — `app.on`, `app.once`, `app.off`, and `app.dispatch_event` on the Crystal side let the app listen for events emitted from JavaScript. `emit(name, data?)` in `runtime.js` / `runtime.d.ts` is the JS counterpart. Both sides share a single event-name namespace, making request/response and notification patterns straightforward.
-- Example app (`exampleapp/`) — a self-contained Vite + Crystal demo that exercises drag-and-drop, tray, clipboard, file dialogs, notifications, and the event bus, serving as both a reference and a manual smoke-test harness.
+- Example app (`demo/`) — a self-contained Vite + Crystal demo that exercises drag-and-drop, tray, clipboard, file dialogs, notifications, and the event bus, serving as both a reference and a manual smoke-test harness.
 
 ---
 

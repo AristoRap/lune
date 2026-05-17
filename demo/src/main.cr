@@ -40,19 +40,19 @@ Lune.run(app, assets: "frontend/dist") do |opts|
   end
 
   opts.tray do |t|
-    t.on_click      = -> { app.emit("trayEvent", "click") }
+    t.on_click = -> { app.emit("trayEvent", "click") }
     t.on_menu_click = ->(id : String) { app.emit("trayEvent", id) }
   end
 
   opts.menu do |m|
     m.app_menu
-    m.submenu file_menu                          # class-based: Group subclass
+    m.submenu file_menu # class-based: Group subclass
 
     m.edit_menu
 
-    m.submenu "View" do |view|                   # block style: inline, no state needed
-      view.item("Zoom In")     { app.eval("document.body.style.zoom = (Math.round((parseFloat(document.body.style.zoom || '1') + 0.1) * 10) / 10).toString()") }
-      view.item("Zoom Out")    { app.eval("document.body.style.zoom = (Math.round((Math.max(0.5, parseFloat(document.body.style.zoom || '1') - 0.1)) * 10) / 10).toString()") }
+    m.submenu "View" do |view| # block style: inline, no state needed
+      view.item("Zoom In") { app.eval("document.body.style.zoom = (Math.round((parseFloat(document.body.style.zoom || '1') + 0.1) * 10) / 10).toString()") }
+      view.item("Zoom Out") { app.eval("document.body.style.zoom = (Math.round((Math.max(0.5, parseFloat(document.body.style.zoom || '1') - 0.1)) * 10) / 10).toString()") }
       view.item("Actual Size", shortcut: "cmd+0") { app.eval("document.body.style.zoom = '1'") }
     end
   end
