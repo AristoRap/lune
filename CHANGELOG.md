@@ -12,9 +12,22 @@
   - `f.checkbox(label, checked:, shortcut:) { |on| }` — toggle item; block receives new `Bool` state.
   - `f.radio(label, selected:, shortcut:) { }` — radio item; adjacent radio items form a group automatically.
   - `f.submenu(label) { }` — nested submenu at any depth.
-- `app.update_menu` — re-applies the current menu after mutating `MenuItem` properties (`label`, `enabled`, `checked`) at runtime.
+- `app.update_menu` — re-applies the current menu after mutating `Options::Menu::Item` properties (`label`, `enabled`, `checked`) at runtime.
 - `app.set_menu { |m| }` — replaces the entire menu bar at runtime.
-- `Lune::MenuShortcut` — pure-Crystal shortcut parser: converts strings like `"cmd+n"`, `"cmd+shift+z"`, `"cmd+f1"` into the key character and `NSEventModifierFlags` bitmask used by `NSMenuItem`.
+- `Lune::Options::Menu::Shortcut` — pure-Crystal shortcut parser: converts strings like `"cmd+n"`, `"cmd+shift+z"`, `"cmd+f1"` into the key character and `NSEventModifierFlags` bitmask used by `NSMenuItem`.
+
+### Changed
+
+- **Options namespace reorganisation** — all option sub-types are now nested under `Lune::Options`:
+  - `Lune::MacOptions` → `Lune::Options::Mac`; appearance enum moved to `Lune::Options::Mac::Appearance`
+  - `Lune::DropOptions` → `Lune::Options::Drop`
+  - `Lune::DragOptions` → `Lune::Options::Drag`
+  - `Lune::TrayOptions` → `Lune::Options::Tray`
+  - `Lune::MenuOptions` → `Lune::Options::Menu`
+  - `Lune::MenuItem` → `Lune::Options::Menu::Item`
+  - `Lune::MenuGroup` → `Lune::Options::Menu::Group`
+  - `Lune::MenuShortcut` → `Lune::Options::Menu::Shortcut`
+  - `src/lune/options.cr` reorganised into `src/lune/options/` folder with one file per component group.
 
 ---
 

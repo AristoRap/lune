@@ -458,7 +458,7 @@ Per macOS convention `m.app_menu` should be first. `m.edit_menu` makes text inpu
 | `group.radio(label, selected:, shortcut:) { }`          | Radio item; adjacent radio items auto-group  |
 | `group.submenu(label) { \|sub\| }`                      | Nested submenu                               |
 
-All builder methods return the `MenuItem` they create — hold the reference to mutate it later (see [Runtime updates](#runtime-updates)).
+All builder methods return the `Options::Menu::Item` they create — hold the reference to mutate it later (see [Runtime updates](#runtime-updates)).
 
 #### Shortcuts
 
@@ -513,10 +513,10 @@ To have two independent radio groups in the same submenu, separate them with a `
 
 #### Runtime updates
 
-Every builder method returns the `MenuItem` it creates. Hold a reference to mutate `label`, `enabled`, or `checked` at runtime, then call `app.update_menu` to push the changes to the native layer.
+Every builder method returns the `Options::Menu::Item` it creates. Hold a reference to mutate `label`, `enabled`, or `checked` at runtime, then call `app.update_menu` to push the changes to the native layer.
 
 ```crystal
-pause_item : Lune::MenuItem? = nil
+pause_item : Lune::Options::Menu::Item? = nil
 
 opts.menu do |m|
   m.submenu "File" do |file|
@@ -581,7 +581,7 @@ macOS-specific options are configured in an `opts.mac` block:
 opts.mac do |m|
   m.full_size_content = true
   m.transparent       = true
-  m.appearance        = Lune::MacAppearance::Dark
+  m.appearance        = Lune::Options::Mac::Appearance::Dark
 end
 ```
 
@@ -623,15 +623,15 @@ Hides the window title text while keeping the title bar (and traffic lights) vis
 
 #### `mac.appearance`
 
-**Type:** `Lune::MacAppearance` — **Default:** `Auto`
+**Type:** `Lune::Options::Mac::Appearance` — **Default:** `Auto`
 
 Forces a specific appearance mode for the window regardless of the system setting.
 
 | Value                  | Effect                                          |
 | ---------------------- | ----------------------------------------------- |
-| `MacAppearance::Auto`  | Follows the system dark/light setting (default) |
-| `MacAppearance::Dark`  | Forces dark mode                                |
-| `MacAppearance::Light` | Forces light mode                               |
+| `Mac::Appearance::Auto`  | Follows the system dark/light setting (default) |
+| `Mac::Appearance::Dark`  | Forces dark mode                                |
+| `Mac::Appearance::Light` | Forces light mode                               |
 
 ---
 
@@ -665,7 +665,7 @@ Lune.run(app, assets: "frontend/dist") do |opts|
     m.full_size_content = true
     m.transparent       = true
     m.hide_title        = true
-    m.appearance        = Lune::MacAppearance::Dark
+    m.appearance        = Lune::Options::Mac::Appearance::Dark
   end
 end
 ```

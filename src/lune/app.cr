@@ -3,7 +3,7 @@ module Lune
     getter bindings = [] of Binding
     property bridge : Bridge?
     property title : String = ""
-    property menu_options : MenuOptions = MenuOptions.new
+    property menu_options : Options::Menu = Options::Menu.new
 
     def initialize
       @bindings = [] of Binding
@@ -67,8 +67,8 @@ module Lune
     end
 
     # Replaces the application menu bar at runtime.
-    def set_menu(& : MenuOptions ->)
-      opts = MenuOptions.new
+    def set_menu(& : Options::Menu ->)
+      opts = Options::Menu.new
       yield opts
       @menu_options = opts
       Native::Menu.set_from_options(opts, @title)

@@ -11,7 +11,7 @@ end
 
 # Shared state between the clock fiber and the menu callback.
 clock_paused = false
-pause_item : Lune::MenuItem? = nil
+pause_item : Lune::Options::Menu::Item? = nil
 
 app.async("clock") do
   loop do

@@ -30,7 +30,7 @@ describe Lune::Native::Menu do
 
   describe ".set_from_options" do
     it "records a set_menu call with the app name" do
-      opts = Lune::MenuOptions.new
+      opts = Lune::Options::Menu.new
       opts.app_menu
       Lune::Native::Menu.set_from_options(opts, "Demo")
       Lune::Native::MenuMock.calls.should contain(:set_menu)
@@ -38,7 +38,7 @@ describe Lune::Native::Menu do
     end
 
     it "produces valid JSON" do
-      opts = Lune::MenuOptions.new
+      opts = Lune::Options::Menu.new
       opts.app_menu
       opts.submenu("File") do |f|
         f.item("New", shortcut: "cmd+n") { }
@@ -58,7 +58,7 @@ describe Lune::Native::Menu do
     end
 
     it "serializes text item fields" do
-      opts = Lune::MenuOptions.new
+      opts = Lune::Options::Menu.new
       opts.submenu("File") { |f| f.item("New", shortcut: "cmd+n", enabled: true) { } }
       Lune::Native::Menu.set_from_options(opts, "App")
       json = Lune::Native::MenuMock.last_menu_json.not_nil!
@@ -66,12 +66,12 @@ describe Lune::Native::Menu do
       item["kind"].as_s.should eq("text")
       item["label"].as_s.should eq("New")
       item["key"].as_s.should eq("n")
-      item["modifiers"].as_i64.should eq(Lune::MenuShortcut::CMD.to_i64)
+      item["modifiers"].as_i64.should eq(Lune::Options::Menu::Shortcut::CMD.to_i64)
       item["enabled"].as_bool.should be_true
     end
 
     it "serializes checkbox item fields" do
-      opts = Lune::MenuOptions.new
+      opts = Lune::Options::Menu.new
       opts.submenu("View") { |v| v.checkbox("Dark Mode", checked: true) { |_| } }
       Lune::Native::Menu.set_from_options(opts, "App")
       json = Lune::Native::MenuMock.last_menu_json.not_nil!
@@ -81,7 +81,7 @@ describe Lune::Native::Menu do
     end
 
     it "serializes radio item fields" do
-      opts = Lune::MenuOptions.new
+      opts = Lune::Options::Menu.new
       opts.submenu("View") do |v|
         v.radio("Light", selected: true) { }
         v.radio("Dark") { }
@@ -95,7 +95,7 @@ describe Lune::Native::Menu do
     end
 
     it "serializes separator items" do
-      opts = Lune::MenuOptions.new
+      opts = Lune::Options::Menu.new
       opts.submenu("File") { |f| f.separator }
       Lune::Native::Menu.set_from_options(opts, "App")
       json = Lune::Native::MenuMock.last_menu_json.not_nil!
@@ -103,7 +103,7 @@ describe Lune::Native::Menu do
     end
 
     it "serializes nested submenus" do
-      opts = Lune::MenuOptions.new
+      opts = Lune::Options::Menu.new
       opts.submenu("File") do |f|
         f.submenu("Recent") do |r|
           r.item("doc.txt") { }
@@ -118,7 +118,7 @@ describe Lune::Native::Menu do
     end
 
     it "omits shortcut fields when shortcut is nil" do
-      opts = Lune::MenuOptions.new
+      opts = Lune::Options::Menu.new
       opts.submenu("File") { |f| f.item("Open") { } }
       Lune::Native::Menu.set_from_options(opts, "App")
       json = Lune::Native::MenuMock.last_menu_json.not_nil!
@@ -130,7 +130,7 @@ describe Lune::Native::Menu do
 
   describe ".update" do
     it "re-applies the menu using the stored app name" do
-      opts = Lune::MenuOptions.new
+      opts = Lune::Options::Menu.new
       opts.app_menu
       Lune::Native::Menu.set_from_options(opts, "MyApp")
       Lune::Native::MenuMock.reset

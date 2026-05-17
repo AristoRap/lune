@@ -55,7 +55,7 @@ module Lune
         {% end %}
       end
 
-      def self.set_from_options(opts : MenuOptions, app_name : String)
+      def self.set_from_options(opts : Options::Menu, app_name : String)
         @@app_name = app_name
         json = serialize(opts)
         {% if flag?(:lune_native_test_mock) %}
@@ -67,7 +67,7 @@ module Lune
             app_name,
             json,
             ->(payload : LibC::Char*, ctx : Void*) {
-              reg = Box(Hash(String, MenuItem)).unbox(ctx)
+              reg = Box(Hash(String, Options::Menu::Item)).unbox(ctx)
               dispatch(reg, String.new(payload))
             },
             @@box.not_nil!
@@ -75,14 +75,14 @@ module Lune
         {% end %}
       end
 
-      # Re-applies the menu after mutating MenuItem properties (enabled, checked, label).
-      def self.update(opts : MenuOptions)
+      # Re-applies the menu after mutating Item properties (enabled, checked, label).
+      def self.update(opts : Options::Menu)
         set_from_options(opts, @@app_name)
       end
 
       # ── Serialization ───────────────────────────────────────────────────────
 
-      def self.serialize(opts : MenuOptions) : String
+      def self.serialize(opts : Options::Menu) : String
         JSON.build do |json|
           json.array do
             opts.top_level.each { |item| serialize_item(json, item) }
@@ -90,19 +90,19 @@ module Lune
         end
       end
 
-      private def self.serialize_item(json : JSON::Builder, item : MenuItem)
+      private def self.serialize_item(json : JSON::Builder, item : Options::Menu::Item)
         json.object do
           kind_str = case item.kind
-                     when MenuItem::Kind::RoleApp  then "role_app"
-                     when MenuItem::Kind::RoleEdit then "role_edit"
+                     when Options::Menu::Item::Kind::RoleApp  then "role_app"
+                     when Options::Menu::Item::Kind::RoleEdit then "role_edit"
                      else item.kind.to_s.downcase
                      end
           json.field "kind", kind_str
 
           case item.kind
-          when MenuItem::Kind::Separator, MenuItem::Kind::RoleApp, MenuItem::Kind::RoleEdit
+          when Options::Menu::Item::Kind::Separator, Options::Menu::Item::Kind::RoleApp, Options::Menu::Item::Kind::RoleEdit
             # no additional fields
-          when MenuItem::Kind::Submenu
+          when Options::Menu::Item::Kind::Submenu
             json.field "label", item.label
             json.field "children" do
               json.array { item.children.each { |c| serialize_item(json, c) } }
@@ -113,7 +113,7 @@ module Lune
             json.field "enabled", item.enabled
             json.field "checked", item.checked
             if sc = item.shortcut
-              parsed = MenuShortcut.parse(sc)
+              parsed = Options::Menu::Shortcut.parse(sc)
               json.field "key",       parsed.key
               json.field "modifiers", parsed.modifiers
             else
@@ -126,22 +126,22 @@ module Lune
 
       # ── Callback dispatch ───────────────────────────────────────────────────
 
-      private def self.collect_registry(items : Array(MenuItem)) : Hash(String, MenuItem)
-        hash = {} of String => MenuItem
+      private def self.collect_registry(items : Array(Options::Menu::Item)) : Hash(String, Options::Menu::Item)
+        hash = {} of String => Options::Menu::Item
         items.each { |item| collect_into(hash, item) }
         hash
       end
 
-      private def self.collect_into(hash : Hash(String, MenuItem), item : MenuItem)
+      private def self.collect_into(hash : Hash(String, Options::Menu::Item), item : Options::Menu::Item)
         case item.kind
-        when MenuItem::Kind::Text, MenuItem::Kind::Checkbox, MenuItem::Kind::Radio
+        when Options::Menu::Item::Kind::Text, Options::Menu::Item::Kind::Checkbox, Options::Menu::Item::Kind::Radio
           hash[item.id] = item
-        when MenuItem::Kind::Submenu
+        when Options::Menu::Item::Kind::Submenu
           item.children.each { |c| collect_into(hash, c) }
         end
       end
 
-      private def self.dispatch(registry : Hash(String, MenuItem), payload : String)
+      private def self.dispatch(registry : Hash(String, Options::Menu::Item), payload : String)
         data = JSON.parse(payload)
         id   = data["id"]?.try(&.as_s?) || return
         item = registry[id]? || return
