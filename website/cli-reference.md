@@ -101,7 +101,7 @@ Alias: `b`
 1. Runs a Crystal pre-pass (`-Dbuild_mode`) to generate `App.js` / `App.d.ts`
 2. Runs the frontend build command (default: `npm run build`)
 3. Compiles the Crystal binary with the frontend assets embedded
-4. **macOS:** if [`mac.sign`](../configuration.md#macsign) is set in `lune.yml`, runs `codesign` on the output to enable `UNUserNotificationCenter`
+4. **macOS:** if [`mac.sign`](./configuration.md#macsign) is set in `lune.yml`, runs `codesign` on the output to enable `UNUserNotificationCenter`
 
 **Output:**
 
