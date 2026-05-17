@@ -10,6 +10,9 @@
 ### Fixed
 
 - Makefile `dev` / `app` / `run` / `clean` targets pointed at the old `exampleapp/` path; updated to `demo/`.
+- **File drop zone hover** — `lune-drop-target-active` now correctly highlights the drop zone element even when the cursor is over a child element (text, icon, etc.). Previously `getComputedStyle` matched inherited CSS custom property values on child elements, adding the active class to the wrong node. Detection now uses `el.style` (inline style only), consistent with the documented API.
+- **macOS drag position updates** — zone highlights during a file drag are snappy and glitch-free. The previous implementation routed each drag-move through `wv.dispatch { wv.eval(...) }` — a double-async hop (Crystal GCD dispatch → WKWebView eval queue) that let stale position evals queue up and fire out of order. The native `LuneDropView` now calls `evaluateJavaScript:completionHandler:` directly with a coalescing gate: at most one eval is in-flight at a time; if the cursor moved while waiting, the latest position flushes immediately on completion.
+- Same `el.style` fix applied to window drag zones (`--lune-draggable`), preventing false matches on children inside a drag-handle container.
 
 ---
 

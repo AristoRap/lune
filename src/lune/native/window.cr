@@ -95,12 +95,12 @@ module Lune
         fun set_appearance(window : Void*, mode : LibC::Int) : Void
         fun set_content_protection(window : Void*, enabled : LibC::Int) : Void
         fun set_always_on_top(window : Void*, enabled : LibC::Int) : Void
-        alias DropCallback    = (LibC::Char*, Void*) -> Void
-        alias DragPosCallback = (LibC::Int, LibC::Int, Void*) -> Void
+        alias DropCallback = (LibC::Char*, Void*) -> Void
         fun disable_webview_drop(window : Void*) : Void
+        # drag_pos_fn: JS function name, e.g. "window.__lune_drag_pos", or NULL
         fun setup_file_drop(window : Void*,
                             drop_cb : DropCallback, drop_ud : Void*,
-                            pos_cb : DragPosCallback, pos_ud : Void*) : Void
+                            drag_pos_fn : LibC::Char*) : Void
       end
     {% elsif flag?(:linux) %}
       {% system("cd '#{__DIR__}/../../../ext/native/linux' && gcc -c window.c -o window.o `pkg-config --cflags gtk+-3.0` 2>/dev/null") %}
@@ -143,15 +143,34 @@ module Lune
         {% end %}
       end
 
-      # on_drop  receives (x, y, paths) — coordinates in CSS pixels (origin top-left)
-      # on_pos   receives (x, y) on each drag-move, or (-1, -1) when the drag exits
+      # on_drop     receives (x, y, paths) — coordinates in CSS pixels (origin top-left)
+      # on_pos      receives (x, y) on each drag-move (Linux only; macOS uses drag_pos_fn)
+      # drag_pos_fn JS function name called natively on macOS, e.g. "window.__lune_drag_pos"
       def self.setup_file_drop(handle : Void*,
                                on_drop : (Int32, Int32, Array(String)) -> Nil,
-                               on_pos : (Int32, Int32) -> Nil)
+                               on_pos : (Int32, Int32) -> Nil,
+                               drag_pos_fn : String? = nil)
         {% if flag?(:lune_native_test_mock) %}
           WindowMock.record_setup_file_drop(on_drop)
-        {% elsif flag?(:darwin) || flag?(:linux) %}
+        {% elsif flag?(:darwin) %}
           @@drop_box = Box.box(on_drop)
+          # on_pos is unused on macOS — the ObjC overlay calls evaluateJavaScript:
+          # directly via drag_pos_fn, eliminating the double-async dispatch chain.
+          LibNativeWindow.setup_file_drop(
+            handle,
+            ->(json_ptr : LibC::Char*, data : Void*) {
+              return if data.null?
+              parsed = JSON.parse(String.new(json_ptr))
+              x     = parsed["x"].as_i
+              y     = parsed["y"].as_i
+              paths = parsed["paths"].as_a.map(&.as_s)
+              Box(Proc(Int32, Int32, Array(String), Nil)).unbox(data).call(x, y, paths)
+            },
+            @@drop_box,
+            drag_pos_fn ? drag_pos_fn.to_unsafe : Pointer(LibC::Char).null
+          )
+        {% elsif flag?(:linux) %}
+          @@drop_box     = Box.box(on_drop)
           @@drop_pos_box = Box.box(on_pos)
           LibNativeWindow.setup_file_drop(
             handle,

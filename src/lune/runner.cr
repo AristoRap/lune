@@ -120,13 +120,24 @@ module Lune
           use_drop_zones = !@options.drop.zone.empty?
           wv_ref = wv
 
-          on_pos : (Int32, Int32) -> Nil = if use_drop_zones
-            ->(x : Int32, y : Int32) {
-              wv_ref.dispatch { wv_ref.eval("window.__lune_drag_pos(#{x},#{y})") }
-            }
-          else
-            ->(x : Int32, y : Int32) { nil }
-          end
+          # Pre-declare so both variables are visible to Crystal's type checker
+          # regardless of which macro branch runs.
+          on_pos = ->(x : Int32, y : Int32) { nil }
+          drag_pos_fn : String? = nil
+
+          # macOS: position updates are driven natively in ObjC via evaluateJavaScript:
+          # with a coalescing gate, bypassing the Crystal wv.dispatch→wv.eval chain
+          # that caused stale queues and glitchy zone highlights during fast drag moves.
+          # Linux: the posCallback path is still used (no direct WebKit eval from C).
+          {% if flag?(:darwin) %}
+            drag_pos_fn = use_drop_zones ? "window.__lune_drag_pos" : nil
+          {% else %}
+            if use_drop_zones
+              on_pos = ->(x : Int32, y : Int32) {
+                wv_ref.dispatch { wv_ref.eval("window.__lune_drag_pos(#{x},#{y})") }
+              }
+            end
+          {% end %}
 
           on_drop : (Int32, Int32, Array(String)) -> Nil = if use_drop_zones
             ->(x : Int32, y : Int32, paths : Array(String)) {
@@ -141,7 +152,7 @@ module Lune
             }
           end
 
-          Native::Window.setup_file_drop(handle, on_drop, on_pos)
+          Native::Window.setup_file_drop(handle, on_drop, on_pos, drag_pos_fn)
         end
 
         if load_cb = @options.on_load

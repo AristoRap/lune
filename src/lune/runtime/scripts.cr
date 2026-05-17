@@ -21,7 +21,7 @@ module Lune
             document.addEventListener('mousedown', function(e) {
               var el = e.target;
               while (el) {
-                if (window.getComputedStyle(el).getPropertyValue(#{css_var.inspect}).trim() === #{css_val.inspect}) {
+                if (el.style && el.style.getPropertyValue(#{css_var.inspect}).trim() === #{css_val.inspect}) {
                   window.__lune_start_window_drag();
                   return;
                 }
@@ -47,7 +47,7 @@ module Lune
               if (x < 0) return;
               var el = document.elementFromPoint(x, y);
               while (el) {
-                if (window.getComputedStyle(el).getPropertyValue(_lune_dz_prop).trim() === _lune_dz_val) {
+                if (el.style && el.style.getPropertyValue(_lune_dz_prop).trim() === _lune_dz_val) {
                   _lune_dz_active = el;
                   el.classList.add('lune-drop-target-active');
                   return;

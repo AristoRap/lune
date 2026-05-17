@@ -273,7 +273,9 @@ Disables the WebView's built-in drag handling without setting up a drop target. 
 
 **Type:** `String` — **Defaults:** `""` / `"drop"`
 
-Mark specific elements as drop targets using a CSS custom property. Set `zone` to a CSS custom property name; any element with that property equal to `value` gets the class `lune-drop-target-active` while a file is dragged over it.
+Mark specific elements as drop targets using a CSS custom property. Set `zone` to a CSS custom property name; any element with that property set **inline** and equal to `value` gets the class `lune-drop-target-active` while a file is dragged over it.
+
+> **Inline style required.** The property must be set as an inline style (`style="--lune-drop-target: drop"`), not via a CSS class. Zone detection reads `el.style` directly to avoid matching child elements that would otherwise inherit the value.
 
 ```crystal
 opts.drop do |d|
@@ -283,11 +285,13 @@ opts.drop do |d|
 end
 ```
 
-```css
-.upload-area {
-  --lune-drop-target: drop;
-}
+```html
+<div class="upload-area" style="--lune-drop-target: drop">
+  Drop files here
+</div>
+```
 
+```css
 .upload-area.lune-drop-target-active {
   border: 2px dashed #007aff;
   background: rgba(0, 122, 255, 0.08);
@@ -607,19 +611,13 @@ opts.drag do |d|
 end
 ```
 
-Then mark any element as a drag handle:
-
-```css
-.titlebar {
-  --lune-draggable: drag;
-}
-```
-
-Or inline:
+Mark any element as a drag handle using an inline style:
 
 ```html
 <div style="--lune-draggable: drag">...</div>
 ```
+
+> **Inline style required.** The property must be set as `style="--lune-draggable: drag"`, not via a CSS class, so that detection does not match child elements that inherit the value.
 
 Drag detection walks up the DOM tree, so marking a container makes all its children draggable too.
 

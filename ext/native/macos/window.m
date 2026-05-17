@@ -79,14 +79,18 @@ void start_window_drag(void *window) {
 
 // Callback fired on drop: JSON string {"x":N,"y":N,"paths":[...]}
 typedef void (*LuneDropCallback)(const char *json, void *userdata);
-// Callback fired on every drag move: (x, y) in CSS pixels, or (-1,-1) on exit
-typedef void (*LuneDragPosCallback)(int x, int y, void *userdata);
 
 @interface LuneDropView : NSView <NSDraggingDestination>
 @property (nonatomic) LuneDropCallback  dropCallback;
 @property (nonatomic) void             *dropUserdata;
-@property (nonatomic) LuneDragPosCallback posCallback;
-@property (nonatomic) void             *posUserdata;
+// JS function to call with drag position, e.g. "window.__lune_drag_pos".
+// nil disables zone highlighting.
+@property (nonatomic, copy) NSString   *dragPosFn;
+// Coalescing: only one evaluateJavaScript: in-flight at a time.
+// pendingX/Y track the latest position; evalQueued gates re-entry.
+@property (nonatomic) int               pendingX;
+@property (nonatomic) int               pendingY;
+@property (nonatomic) BOOL              evalQueued;
 @end
 
 @implementation LuneDropView
@@ -96,6 +100,8 @@ typedef void (*LuneDragPosCallback)(int x, int y, void *userdata);
     if (self) {
         [self registerForDraggedTypes:@[NSPasteboardTypeFileURL]];
         self.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+        self.pendingX = -1;
+        self.pendingY = -1;
     }
     return self;
 }
@@ -136,12 +142,43 @@ typedef void (*LuneDragPosCallback)(int x, int y, void *userdata);
     return NSMakePoint(loc.x, y);
 }
 
+// Flush the latest pending position to JS. Called directly from drag handlers
+// (avoiding the Crystal wv.dispatch→wv.eval double-async hop that caused stale
+// queues and glitchy highlights). The completionHandler gate ensures at most one
+// evaluateJavaScript: is in-flight; if the position changed while we were waiting,
+// we immediately fire again with the latest coordinates.
+- (void)_flushDragPos {
+    NSString *fn = self.dragPosFn;
+    if (!fn) return;
+    int x = self.pendingX, y = self.pendingY;
+    NSString *js = [NSString stringWithFormat:@"%@(%d,%d)", fn, x, y];
+    __weak typeof(self) weak = self;
+    [(WKWebView *)self.window.contentView evaluateJavaScript:js completionHandler:^(id r, NSError *e) {
+        LuneDropView *s = weak;
+        if (!s) return;
+        s.evalQueued = NO;
+        if (s.pendingX != x || s.pendingY != y) {
+            s.evalQueued = YES;
+            [s _flushDragPos];
+        }
+    }];
+}
+
+- (void)_scheduleDragPos:(int)x y:(int)y {
+    self.pendingX = x;
+    self.pendingY = y;
+    if (!self.evalQueued) {
+        self.evalQueued = YES;
+        [self _flushDragPos];
+    }
+}
+
 - (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender {
     if (![[sender.draggingPasteboard types] containsObject:NSPasteboardTypeFileURL])
         return NSDragOperationNone;
-    if (self.posCallback) {
+    if (self.dragPosFn) {
         NSPoint p = [self _dropCSSPoint:sender];
-        self.posCallback((int)p.x, (int)p.y, self.posUserdata);
+        [self _scheduleDragPos:(int)p.x y:(int)p.y];
     }
     return NSDragOperationCopy;
 }
@@ -149,15 +186,15 @@ typedef void (*LuneDragPosCallback)(int x, int y, void *userdata);
 - (NSDragOperation)draggingUpdated:(id<NSDraggingInfo>)sender {
     if (![[sender.draggingPasteboard types] containsObject:NSPasteboardTypeFileURL])
         return NSDragOperationNone;
-    if (self.posCallback) {
+    if (self.dragPosFn) {
         NSPoint p = [self _dropCSSPoint:sender];
-        self.posCallback((int)p.x, (int)p.y, self.posUserdata);
+        [self _scheduleDragPos:(int)p.x y:(int)p.y];
     }
     return NSDragOperationCopy;
 }
 
 - (void)draggingExited:(id<NSDraggingInfo>)sender {
-    if (self.posCallback) self.posCallback(-1, -1, self.posUserdata);
+    if (self.dragPosFn) [self _scheduleDragPos:-1 y:-1];
 }
 
 - (BOOL)prepareForDragOperation:(id<NSDraggingInfo>)sender { return YES; }
@@ -197,9 +234,11 @@ void disable_webview_drop(void *window) {
     [w.contentView unregisterDraggedTypes];
 }
 
+// drag_pos_fn: JS function name to call with (x, y) on every drag-move, e.g.
+// "window.__lune_drag_pos". Pass NULL to disable zone highlighting.
 void setup_file_drop(void *window,
-                     LuneDropCallback     drop_callback,  void *drop_userdata,
-                     LuneDragPosCallback  pos_callback,   void *pos_userdata) {
+                     LuneDropCallback drop_callback, void *drop_userdata,
+                     const char *drag_pos_fn) {
     NSWindow *w = (__bridge NSWindow *)window;
 
     // Add the overlay as a sibling of the WKWebView (in the frame view) so it
@@ -207,10 +246,9 @@ void setup_file_drop(void *window,
     NSView *host = w.contentView.superview ?: w.contentView;
     LuneDropView *dropView = [[LuneDropView alloc] initWithFrame:host.bounds];
     dropView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-    dropView.dropCallback  = drop_callback;
-    dropView.dropUserdata  = drop_userdata;
-    dropView.posCallback   = pos_callback;
-    dropView.posUserdata   = pos_userdata;
+    dropView.dropCallback = drop_callback;
+    dropView.dropUserdata = drop_userdata;
+    dropView.dragPosFn    = drag_pos_fn ? [NSString stringWithUTF8String:drag_pos_fn] : nil;
     [host addSubview:dropView positioned:NSWindowAbove relativeTo:nil];
 }
 
