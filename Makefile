@@ -15,9 +15,9 @@ help:
 	@echo "  make minor    bump minor version (x.Y.0)"
 	@echo ""
 	@echo "Example app:"
-	@echo "  make dev      lune dev in exampleapp/"
-	@echo "  make app      lune build in exampleapp/"
-	@echo "  make run      lune run in exampleapp/"
+	@echo "  make dev      lune dev in demo/"
+	@echo "  make app      lune build in demo/"
+	@echo "  make run      lune run in demo/"
 	@echo ""
 	@echo "Docs:"
 	@echo "  make web      run website dev server"
@@ -46,7 +46,7 @@ deploy:
 
 clean:
 	rm -rf bin/lune bin/lune.dwarf
-	rm -rf exampleapp/build exampleapp/.lune-dev exampleapp/*.dwarf
+	rm -rf demo/build demo/.lune-dev demo/*.dwarf
 
 patch:
 	@current=$$(grep '^version:' shard.yml | sed 's/version: //'); \
@@ -74,13 +74,13 @@ minor:
 # ── Example app ──────────────────────────────────────────────────────────────
 
 dev:
-	cd exampleapp && lune dev
+	cd demo && lune dev
 
 app:
-	cd exampleapp && lune build
+	cd demo && lune build
 
 run:
-	cd exampleapp && lune run
+	cd demo && lune run
 
 # ── Docs ─────────────────────────────────────────────────────────────────────
 

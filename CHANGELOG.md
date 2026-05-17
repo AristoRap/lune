@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.6.1] - 2026-05-17
+
+### Added
+
+- `mac.sign` in `lune.yml` — code-signing identity applied via `codesign --force --deep --options runtime` after `lune build`. Enables `UNUserNotificationCenter` in production builds.
+- Runtime notification routing now uses the Security framework to detect a certificate-backed Apple signature (Team Identifier present) instead of checking for a bundle identifier. Ad-hoc and unsigned builds fall back to `osascript`.
+
+### Fixed
+
+- Makefile `dev` / `app` / `run` / `clean` targets pointed at the old `exampleapp/` path; updated to `demo/`.
+
+---
+
 ## [0.6.0] - 2026-05-17
 
 ### Added

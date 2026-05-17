@@ -21,7 +21,7 @@ private class LoggingBuildCommand < LuneCLI::Commands::Build
     nil
   end
 
-  def run(frontend_dir : String, app_entry : String, output_path : String, release : Bool = false, build_cmd : String = LuneCLI::DEFAULT_BUILD_CMD, icon : String? = nil) : Bool
+  def run(frontend_dir : String, app_entry : String, output_path : String, release : Bool = false, build_cmd : String = LuneCLI::DEFAULT_BUILD_CMD, icon : String? = nil, sign : String? = nil) : Bool
     @result
   end
 end

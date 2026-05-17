@@ -235,6 +235,18 @@ describe LuneCLI do
         LuneCLI::Config.load("nonexistent_lune.yml").icon.should be_nil
       end
 
+      it "reads mac.sign from lune.yml" do
+        with_tempdir do |dir|
+          path = File.join(dir, "lune.yml")
+          File.write(path, "mac:\n  sign: \"Developer ID Application: Foo (ABC123)\"\n")
+          LuneCLI::Config.load(path).mac.sign.should eq("Developer ID Application: Foo (ABC123)")
+        end
+      end
+
+      it "mac.sign defaults to nil when not set" do
+        LuneCLI::Config.load("nonexistent_lune.yml").mac.sign.should be_nil
+      end
+
       it "returns defaults when the file is invalid YAML" do
         with_tempdir do |dir|
           path = File.join(dir, "lune.yml")

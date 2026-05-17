@@ -39,6 +39,12 @@ frontend:
 
     # URL the dev server listens on (default: http://localhost:5173)
     url: http://localhost:5173
+
+# macOS-specific options (optional)
+mac:
+  # Code-signing identity applied via codesign after lune build (optional).
+  # Required for UNUserNotificationCenter in production builds.
+  sign: "Developer ID Application: Your Name (TEAMID)"
 ```
 
 ---
@@ -152,6 +158,23 @@ frontend:
   dev:
     url: http://localhost:3000
 ```
+
+---
+
+### `mac.sign`
+
+**Type:** `String?` — **Default:** `nil` — **Platform:** macOS only
+
+Code-signing identity passed to `codesign --force --deep --options runtime --sign <identity>` after `lune build` completes. The value must match a certificate installed in your Keychain (e.g. from Apple Developer Program).
+
+```yaml
+mac:
+  sign: "Developer ID Application: Your Name (TEAMID)"
+```
+
+When set and the identity is valid, the built `.app` carries a certificate-backed signature. The Lune runtime detects this at launch and routes `notify()` calls to `UNUserNotificationCenter` instead of the `osascript` fallback.
+
+If the identity is missing, invalid, or `codesign` fails, a warning is logged and the build continues — notifications silently fall back to `osascript`.
 
 ---
 

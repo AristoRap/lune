@@ -1,5 +1,6 @@
 #import <AppKit/AppKit.h>
 #import <UserNotifications/UserNotifications.h>
+#import <Security/Security.h>
 
 static void show_via_un(NSString *title, NSString *body) {
     UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
@@ -37,12 +38,26 @@ static void show_via_osascript(NSString *title, NSString *body) {
     [task launch];
 }
 
+// Returns YES only for processes bearing a certificate-backed Apple code
+// signature (Developer cert with a Team Identifier). Ad-hoc and unsigned
+// processes return NO and fall back to osascript.
+static BOOL has_apple_signing(void) {
+    SecCodeRef code = NULL;
+    if (SecCodeCopySelf(kSecCSDefaultFlags, &code) != errSecSuccess) return NO;
+    CFDictionaryRef info = NULL;
+    OSStatus status = SecCodeCopySigningInformation(code, kSecCSSigningInformation, &info);
+    CFRelease(code);
+    if (status != errSecSuccess || !info) return NO;
+    CFStringRef team = (CFStringRef)CFDictionaryGetValue(info, kSecCodeInfoTeamIdentifier);
+    BOOL result = team != NULL && CFStringGetLength(team) > 0;
+    CFRelease(info);
+    return result;
+}
+
 void show_notification(const char *title, const char *body) {
     NSString *nsTitle = [NSString stringWithUTF8String:title];
     NSString *nsBody  = [NSString stringWithUTF8String:body];
-    // UNUserNotificationCenter requires a bundle identifier.
-    // Non-bundled binaries (dev builds, /tmp) fall back to osascript.
-    if ([[NSBundle mainBundle] bundleIdentifier]) {
+    if (has_apple_signing()) {
         show_via_un(nsTitle, nsBody);
     } else {
         show_via_osascript(nsTitle, nsBody);

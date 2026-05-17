@@ -8,3 +8,5 @@ frontend:
   dev:
     cmd: npm run dev
     url: http://localhost:5173
+mac:
+  sign: "Developer ID Application: Your Name (TEAMID)" # enables UNUserNotificationCenter

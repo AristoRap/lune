@@ -8,6 +8,7 @@ module LuneCLI
     getter app_entry : String = "src/main.cr"
     getter icon : String? = nil
     getter frontend : Frontend = Frontend.new
+    getter mac : Mac = Mac.new
 
     def initialize; end
 
@@ -17,6 +18,14 @@ module LuneCLI
     rescue ex : YAML::ParseException
       Lune.logger.warn { "Could not parse #{path}: #{ex.message}" }
       new
+    end
+
+    struct Mac
+      include YAML::Serializable
+
+      getter sign : String? = nil
+
+      def initialize; end
     end
 
     struct Frontend

@@ -11,7 +11,7 @@
 
 - [ ] App icon support on Windows — `.ico` bundled into `lune build`
 - [ ] Additional templates: Svelte, React+TS
-- [ ] Notifications in production builds — `UNUserNotificationCenter` requires a bundle identifier; silently dropped when running as a raw binary from `lune build`
+- [x] Notifications in production builds — `mac.sign` in `lune.yml` triggers `codesign` after `lune build`; runtime detects Team Identifier and routes to `UNUserNotificationCenter` or osascript accordingly
 
 ---
 

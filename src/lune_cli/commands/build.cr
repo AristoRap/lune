@@ -27,7 +27,7 @@ module LuneCLI
           output_path = output_path_for(config.app_entry)
 
           Lune.logger.info { "Building frontend assets..." }
-          success = run(frontend_dir: config.frontend.dir, app_entry: config.app_entry, output_path: output_path, release: release, build_cmd: config.frontend.build || DEFAULT_BUILD_CMD, icon: config.icon)
+          success = run(frontend_dir: config.frontend.dir, app_entry: config.app_entry, output_path: output_path, release: release, build_cmd: config.frontend.build || DEFAULT_BUILD_CMD, icon: config.icon, sign: config.mac.sign)
 
           if success
             Lune.logger.info { "Built app: #{output_path}" }
@@ -55,7 +55,7 @@ module LuneCLI
         nil
       end
 
-      def run(frontend_dir : String, app_entry : String, output_path : String, release : Bool = false, build_cmd : String = DEFAULT_BUILD_CMD, icon : String? = nil) : Bool
+      def run(frontend_dir : String, app_entry : String, output_path : String, release : Bool = false, build_cmd : String = DEFAULT_BUILD_CMD, icon : String? = nil, sign : String? = nil) : Bool
         LuneCLI::Generator.generate_bindings(app_entry, frontend_dir)
 
         build_parts = build_cmd.split(' ', remove_empty: true)
@@ -87,6 +87,13 @@ module LuneCLI
 
         File.delete?("#{compiled_output_path}.dwarf")
         finalize_output(app_entry, output_path, icon)
+        {% if flag?(:darwin) %}
+          if identity = sign
+            sign_app(output_path, identity)
+          else
+            Lune.logger.info { "No mac.sign set — notifications will use osascript fallback (set mac.sign in lune.yml to enable UNUserNotificationCenter)" }
+          end
+        {% end %}
         true
       end
 
@@ -138,6 +145,19 @@ module LuneCLI
           end
         {% end %}
       end
+
+      {% if flag?(:darwin) %}
+      private def sign_app(output_path : String, identity : String) : Nil
+        result = Process.run(
+          "codesign",
+          ["--force", "--deep", "--options", "runtime", "--sign", identity, output_path],
+          input: Process::Redirect::Close,
+          output: Process::Redirect::Inherit,
+          error: Process::Redirect::Inherit
+        )
+        Lune.logger.warn { "codesign failed — notifications will fall back to osascript" } unless result.success?
+      end
+      {% end %}
 
       protected def png_to_icns(png_path : String) : String?
         iconset_dir = File.join(Dir.tempdir, "lune-icon-#{Random.new.hex(6)}.iconset")

@@ -25,6 +25,7 @@ module Lune
 
       @[Link(framework: "AppKit")]
       @[Link(framework: "UserNotifications")]
+      @[Link(framework: "Security")]
       @[Link(ldflags: "#{__DIR__}/../../../ext/native/macos/notify.o")]
       lib LibNativeNotify
         fun show_notification(title : LibC::Char*, body : LibC::Char*) : Void

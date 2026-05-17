@@ -378,7 +378,7 @@ Sends a native OS notification.
 await notify("Build complete", "Your app compiled successfully.");
 ```
 
-> **macOS:** uses `UNUserNotificationCenter`. Non-bundled binaries fall back to `osascript`.
+> **macOS:** uses `UNUserNotificationCenter` for apps signed with a Developer certificate (Team Identifier present). Unsigned and ad-hoc-signed builds (including `lune dev`) fall back to `osascript`. To enable `UNUserNotificationCenter` in production, set [`mac.sign`](../../configuration.md#macsign) in `lune.yml`.
 > **Linux:** uses `libnotify`.
 
 ---
