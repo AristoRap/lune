@@ -15,6 +15,10 @@
 - `app.update_menu` — re-applies the current menu after mutating `Options::Menu::Item` properties (`label`, `enabled`, `checked`) at runtime.
 - `app.set_menu { |m| }` — replaces the entire menu bar at runtime.
 - `Lune::Options::Menu::Shortcut` — pure-Crystal shortcut parser: converts strings like `"cmd+n"`, `"cmd+shift+z"`, `"cmd+f1"` into the key character and `NSEventModifierFlags` bitmask used by `NSMenuItem`.
+- **Class-based menu API** — subclass `Options::Menu::Group` or `Options::Menu` for apps with complex menus or where keeping state and callbacks in a dedicated class is preferred.
+  - `m.submenu(group : Options::Menu::Group)` — pass a pre-built group instance instead of a block.
+  - `opts.menu(m : Options::Menu)` — assign a pre-built menu instance directly.
+  - Both styles (inline block and class-based) can be mixed freely.
 
 ### Changed
 

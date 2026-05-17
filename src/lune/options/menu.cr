@@ -103,11 +103,18 @@ module Lune
           m
         end
 
-        # Adds a nested submenu. Returns the parent `Item` (kind Submenu).
+        # Adds a nested submenu via block. Returns the parent `Item` (kind Submenu).
         def submenu(label : String, &block : Group ->) : Item
           g = Group.new(label)
           yield g
           m = Item.new(label: label, kind: Item::Kind::Submenu, children: g.items)
+          @items << m
+          m
+        end
+
+        # Adds a pre-built `Group` subclass as a nested submenu.
+        def submenu(group : Group) : Item
+          m = Item.new(label: group.label, kind: Item::Kind::Submenu, children: group.items)
           @items << m
           m
         end
@@ -134,12 +141,18 @@ module Lune
         m
       end
 
-      # Adds a top-level submenu and yields its `Group` builder.
-      # Returns the `Item` (kind Submenu) that was appended.
+      # Adds a top-level submenu via block. Returns the `Item` (kind Submenu).
       def submenu(label : String, &block : Group ->) : Item
         g = Group.new(label)
         yield g
         m = Item.new(label: label, kind: Item::Kind::Submenu, children: g.items)
+        @top_level << m
+        m
+      end
+
+      # Adds a pre-built `Group` subclass as a top-level submenu.
+      def submenu(group : Group) : Item
+        m = Item.new(label: group.label, kind: Item::Kind::Submenu, children: group.items)
         @top_level << m
         m
       end

@@ -1,5 +1,22 @@
 require "../spec_helper"
 
+private class TestFileMenu < Lune::Options::Menu::Group
+  def initialize
+    super("File")
+    item("New",  shortcut: "cmd+n") { }
+    separator
+    item("Quit", shortcut: "cmd+q") { }
+  end
+end
+
+private class TestAppMenu < Lune::Options::Menu
+  def initialize
+    super()
+    app_menu
+    submenu(TestFileMenu.new)
+  end
+end
+
 describe Lune::Options::Menu::Item do
   describe "defaults" do
     it "generates a unique id per instance" do
@@ -223,6 +240,39 @@ describe Lune::Options::Menu do
   end
 end
 
+describe Lune::Options::Menu::Group do
+  describe "subclass usage" do
+    it "items built in initialize are available" do
+      g = TestFileMenu.new
+      g.items.size.should eq(3)
+      g.items[0].label.should eq("New")
+      g.items[1].kind.should eq(Lune::Options::Menu::Item::Kind::Separator)
+      g.items[2].label.should eq("Quit")
+    end
+
+    it "submenu(group) overload uses group label and items" do
+      parent = Lune::Options::Menu::Group.new("Top")
+      child  = TestFileMenu.new
+      sub    = parent.submenu(child)
+      sub.kind.should eq(Lune::Options::Menu::Item::Kind::Submenu)
+      sub.label.should eq("File")
+      sub.children.size.should eq(3)
+    end
+  end
+end
+
+describe Lune::Options::Menu do
+  describe "submenu(group) overload" do
+    it "adds the group as a top-level submenu" do
+      m = Lune::Options::Menu.new
+      m.submenu(TestFileMenu.new)
+      m.top_level.size.should eq(1)
+      m.top_level[0].label.should eq("File")
+      m.top_level[0].children.size.should eq(3)
+    end
+  end
+end
+
 describe Lune::Options do
   describe "#menu" do
     it "exposes a Menu instance" do
@@ -246,6 +296,14 @@ describe Lune::Options do
       opts.menu.top_level[0].kind.should eq(Lune::Options::Menu::Item::Kind::RoleApp)
       opts.menu.top_level[1].kind.should eq(Lune::Options::Menu::Item::Kind::Submenu)
       opts.menu.top_level[2].kind.should eq(Lune::Options::Menu::Item::Kind::RoleEdit)
+    end
+
+    it "accepts a pre-built Menu instance" do
+      m = TestAppMenu.new
+      opts = Lune::Options.new
+      opts.menu(m)
+      opts.menu.should be(m)
+      opts.menu.top_level.size.should eq(2)
     end
   end
 end

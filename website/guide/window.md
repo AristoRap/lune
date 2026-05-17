@@ -542,6 +542,58 @@ end
 
 Both `app.update_menu` and `app.set_menu` are no-ops on non-macOS platforms.
 
+#### Class-based menus
+
+For larger apps, subclass `Options::Menu::Group` or `Options::Menu` instead of using inline blocks. The builder methods (`item`, `separator`, `checkbox`, `radio`, `submenu`) are inherited and can be called directly in `initialize`. State and callbacks live inside the class, keeping `main.cr` clean.
+
+```crystal
+class FileMenu < Lune::Options::Menu::Group
+  @pause_item : Lune::Options::Menu::Item? = nil
+  getter clock_paused : Bool = false
+
+  def initialize(@app : Lune::App)
+    super("File")
+    @pause_item = item("Pause Clock", shortcut: "cmd+p") { toggle_clock }
+    separator
+    item("Quit", shortcut: "cmd+q") { @app.eval("runtime.quit()") }
+  end
+
+  private def toggle_clock
+    @clock_paused = !@clock_paused
+    @pause_item.not_nil!.label = @clock_paused ? "Resume Clock" : "Pause Clock"
+    @app.update_menu
+  end
+end
+```
+
+Pass an instance directly to `submenu` — no block needed:
+
+```crystal
+opts.menu do |m|
+  m.app_menu
+  m.submenu FileMenu.new(app)   # class-based
+  m.edit_menu
+  m.submenu "View" do |view|    # inline block also works
+    view.item("Zoom In") { app.eval("...") }
+  end
+end
+```
+
+To subclass the top-level menu itself:
+
+```crystal
+class AppMenu < Lune::Options::Menu
+  def initialize(app : Lune::App)
+    super()
+    app_menu
+    submenu FileMenu.new(app)
+    edit_menu
+  end
+end
+
+opts.menu AppMenu.new(app)
+```
+
 ---
 
 ### Window drag zones
@@ -675,20 +727,51 @@ end
 ## Full example
 
 ```crystal
+# Class-based submenu — state and callbacks live in the class.
+class FileMenu < Lune::Options::Menu::Group
+  @pause_item : Lune::Options::Menu::Item? = nil
+  getter clock_paused : Bool = false
+
+  def initialize(@app : Lune::App)
+    super("File")
+    @pause_item = item("Pause Clock", shortcut: "cmd+p") { toggle_clock }
+    separator
+    item("Reload", shortcut: "cmd+r") { @app.eval("location.reload()") }
+    separator
+    item("Quit",   shortcut: "cmd+q") { @app.eval("runtime.quit()") }
+  end
+
+  private def toggle_clock
+    @clock_paused = !@clock_paused
+    @pause_item.not_nil!.label = @clock_paused ? "Resume Clock" : "Pause Clock"
+    @app.update_menu
+    @app.emit("clockPaused", @clock_paused)
+  end
+end
+
+app = Lune::App.new
+file_menu = FileMenu.new(app)
+
 Lune.run(app) do |opts|
-  opts.title      = "Dashboard"
-  opts.width      = 1280
-  opts.height     = 800
-  opts.min_width  = 900
-  opts.min_height = 600
-  opts.resizable  = true
-  opts.debug      = {{ flag?(:debug) }}
+  opts.title               = "Dashboard"
+  opts.width               = 1280
+  opts.height              = 800
+  opts.min_width           = 900
+  opts.min_height          = 600
+  opts.resizable           = true
+  opts.disable_context_menu = true
+  opts.debug               = {{ flag?(:debug) }}
 
   opts.drop do |d|
     d.enabled = true
+    d.zone    = "--lune-drop-target"
     d.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
       app.emit("fileDrop", {"x" => x, "y" => y, "paths" => paths})
     }
+  end
+
+  opts.drag do |d|
+    d.zone = "--lune-draggable"
   end
 
   opts.tray do |t|
@@ -698,14 +781,13 @@ Lune.run(app) do |opts|
 
   opts.menu do |m|
     m.app_menu
-    m.submenu "File" do |file|
-      file.item("Quit", shortcut: "cmd+q") { app.eval("runtime.quit()") }
-    end
+    m.submenu file_menu              # class-based Group
     m.edit_menu
-  end
-
-  opts.drag do |d|
-    d.zone = "--lune-draggable"
+    m.submenu "View" do |view|       # inline block
+      view.item("Zoom In")      { app.eval("document.body.style.zoom = String(Math.round((parseFloat(document.body.style.zoom||'1')+0.1)*10)/10)") }
+      view.item("Zoom Out")     { app.eval("document.body.style.zoom = String(Math.round((Math.max(0.5,parseFloat(document.body.style.zoom||'1')-0.1))*10)/10)") }
+      view.item("Actual Size",  shortcut: "cmd+0") { app.eval("document.body.style.zoom='1'") }
+    end
   end
 
   opts.mac do |m|
@@ -714,20 +796,9 @@ Lune.run(app) do |opts|
     m.hide_title        = true
   end
 
-  opts.on_window_ready = ->(_handle : Void*) {
-    puts "Window created"
-  }
-
-  opts.on_load = -> {
-    app.emit("ready", nil)
-  }
-
-  opts.on_navigate = ->(url : String) {
-    puts "Navigated to: #{url}"
-  }
-
-  opts.on_close = -> {
-    cleanup()
-  }
+  opts.on_window_ready = ->(_handle : Void*) { app.emit("windowReady", nil) }
+  opts.on_load         = -> { app.emit("ready", nil) }
+  opts.on_navigate     = ->(url : String) { puts "navigated: #{url}" }
+  opts.on_close        = -> { puts "closed" }
 end
 ```

@@ -92,6 +92,10 @@ module Lune
       yield @menu
     end
 
+    def menu(m : Menu)
+      @menu = m
+    end
+
     def initialize; end
 
     def apply(window : Config::Window)
