@@ -37,7 +37,7 @@ export default defineConfig({
       provider: 'local',
     },
 
-    outline: [2, 3],
+    outline: [2, 4],
     footer: {
       message: 'Released under the MIT License.',
     },
