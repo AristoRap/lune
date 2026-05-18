@@ -203,13 +203,6 @@ module Lune
     private def setup_navigate_if_set(wv : Webview::Webview) : Nil
       return unless (nav_cb = @options.on_navigate)
       navigate_key = "#{Lune::Capability::BRIDGE_MARKER}.navigate"
-      wv.init(<<-JS)
-      (function(){
-        function _nav(){ window[#{navigate_key.inspect}](location.href); }
-        window.addEventListener('popstate', _nav);
-        window.addEventListener('hashchange', _nav);
-      })();
-      JS
       wv.bind(navigate_key, Webview::JSProc.new { |args|
         begin
           nav_cb.call(args[0]?.try(&.as_s) || "")
@@ -219,6 +212,13 @@ module Lune
         end
         JSON::Any.new(nil)
       })
+      wv.init(<<-JS)
+      (function(){
+        function _nav(){ window[#{navigate_key.inspect}](location.href); }
+        window.addEventListener('popstate', _nav);
+        window.addEventListener('hashchange', _nav);
+      })();
+      JS
     end
 
     private def callback_window_loaded_if_set(wv : Webview::Webview) : Nil
