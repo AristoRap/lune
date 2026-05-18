@@ -4,6 +4,7 @@
 import Welcome from "./views/Welcome.vue";
 import Bindings from "./views/Bindings.vue";
 import Events from "./views/Events.vue";
+import Channel from "./views/Channel.vue";
 import System from "./views/System.vue";
 import Clipboard from "./views/Clipboard.vue";
 import Window from "./views/Window.vue";
@@ -24,6 +25,7 @@ export const navGroups = [
     items: [
       { id: "bindings", label: "Bindings", icon: "code", view: Bindings },
       { id: "events", label: "Events", icon: "bolt", view: Events },
+      { id: "channel", label: "Channel", icon: "bolt", view: Channel },
     ],
   },
   {

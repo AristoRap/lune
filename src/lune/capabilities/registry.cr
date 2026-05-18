@@ -11,6 +11,7 @@ module Lune
         @all = [
           # Core (JS injection via wv.init / raw wv.bind)
           Capabilities::EventBus.new,
+          Capabilities::Channel.new,
           Capabilities::FileDrop.new(options.drop),
           # Runtime (bridge bindings)
           Capabilities::System.new(on_quit: on_quit, debug: options.debug),

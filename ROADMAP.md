@@ -35,7 +35,7 @@ Structural improvements that unlock whole categories of apps.
 - [ ] Plugin system — a Crystal shard interface (`Lune::Plugin`) with lifecycle hooks and runtime binding registration so community authors can publish Lune plugins
 - [ ] Per-window capabilities — scope `include`/`exclude` lists to individual windows rather than globally (depends on multiple windows)
 - [ ] Multiple webviews in one window — stack or embed multiple WebView panels within a single native window
-- [ ] High-throughput IPC channel — ordered, low-latency data delivery for streaming and high-frequency progress events (complement to the event bus, which is not optimised for this)
+- [x] High-throughput IPC channel — ordered, low-latency data delivery for streaming and high-frequency progress events (complement to the event bus, which is not optimised for this)
 - [x] Typed error propagation — Crystal exceptions in bindings arrive in JS as structured `Error` subclasses with type, message, and optional metadata rather than a raw string
 
 ## Backlog — DX & Templates

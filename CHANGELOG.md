@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.8.0] - 2026-05-19
+
+### Added
+
+- **WebSocket IPC channel** — a new `Channel` capability provides a bidirectional, ordered, low-latency channel backed by a local WebSocket server. Use `app.channel_send(name, data)` from Crystal and `Channel.on` / `Channel.send` from JavaScript for high-frequency or continuous data streams (tickers, log tails, LLM token output) where the event bus's per-call `evaluateJavaScript` overhead would become a bottleneck. The channel auto-reconnects on disconnect and can be excluded via `lune.yml` if not needed.
+
 ## [0.7.1] - 2026-05-19
 
 ### Fixed
