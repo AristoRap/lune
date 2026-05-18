@@ -7,7 +7,7 @@ module Lune
 
 
       def install(app : Lune::App)
-        {% if flag?(:darwin) %}
+        {% if flag?(:lune_native_test_mock) || flag?(:darwin) %}
           Native::DeepLink.install do |url|
             app.emit("deep_link", {"url" => url})
           end

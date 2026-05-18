@@ -10,7 +10,7 @@
 - **`drop.enabled` removed** — file drop is now activated solely by including `file_drop` in the `capabilities` list in `lune.yml`. `opts.drop` configures behaviour only (`zone`, `value`, `on_drop`, `disable_webview_drop`). Passing `d.enabled = true` no longer compiles.
 - **`FileDrop.on` / `FileDrop.off`** — renamed from `onFileDrop` / `onFileDropOff`.
 - **Context menu API changed** — `setContextMenu(items)` / `clearContextMenu()` / `onContextMenu(cb)` replaced by the namespaced `ContextMenu.set(items)` / `ContextMenu.clear()` / `ContextMenu.onSelect(cb)`.
-- **`Lune::Capability` refactored to abstract class** — was a plain value object; now an abstract base class with `name`, `core?`, `install(app)`, `init_webview(wv, handle, app)`, `js_helpers`, and `dts_helpers`. All concrete capability classes inherit from it.
+- **`Lune::Capability` refactored to abstract class** — was a plain value object; now an abstract base class with `name`, `install(app)`, `init_webview(wv, handle, app)`, `js_helpers`, and `dts_helpers`. All concrete capability classes inherit from it.
 - **`Capabilities::Registry` now instance-based** — `Registry.all(handle, ...)` class method replaced by `Registry.new(handle, options).all` / `.active(config)` / `.validate(config)`.
 
 ### Added
