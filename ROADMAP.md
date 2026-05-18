@@ -30,7 +30,7 @@ Features the platform exposes that Lune doesn't yet surface.
 
 Structural improvements that unlock whole categories of apps.
 
-- [ ] Webview teardown on macOS main thread — `cocoa_wkwebview_engine::deplete_run_loop_event_queue` calls `[NSApp nextEventMatchingMask:]` which requires the main OS thread; with `-Dpreview_mt` the Crystal main fiber runs on a pool thread, causing an intermittent SIGABRT on window close
+- [x] Main-thread safety for native UI — all AppKit (macOS) and GTK (Linux) calls now dispatch synchronously to the main thread when invoked from a background fiber, eliminating the intermittent `NSInternalInconsistencyException: nextEventMatchingMask` crash
 
 - [ ] Plugin system — a Crystal shard interface (`Lune::Plugin`) with lifecycle hooks and runtime binding registration so community authors can publish Lune plugins
 - [ ] Per-window capabilities — scope `include`/`exclude` lists to individual windows rather than globally (depends on multiple windows)
