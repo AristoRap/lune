@@ -372,28 +372,46 @@ FileDrop.on((x, y, paths) => {
 
 ## Tray
 
-Tray callbacks are configured in an `opts.tray` block. See [Runtime Functions](./runtime#system-tray) for the full tray API.
+Tray events are emitted automatically on the event bus — no `opts.tray` block required. See [Runtime Functions](./runtime#system-tray) for the full JS API.
+
+By default the event name is `"trayEvent"`. Both tray icon clicks (`"click"`) and menu item selections (item `id`) are emitted under the same event name.
+
+```js
+import { Events } from "../lunejs/runtime/runtime.js";
+
+Events.on("trayEvent", (payload) => {
+  if (payload === "click") console.log("icon clicked");
+  else console.log("menu item:", payload);
+});
+```
+
+### `tray.event`
+
+**Type:** `String` — **Default:** `"trayEvent"`
+
+The event bus name for tray activity. Override it if you want a different name or separate click vs menu events via two names.
 
 ```crystal
 opts.tray do |t|
-  t.on_click      = -> { app.emit("trayClick", nil) }
-  t.on_menu_click = ->(id : String) { app.emit("trayMenuClick", id) }
+  t.event = "myTray"
 end
 ```
 
-### `tray.on_click`
+---
+
+### `tray.on_click` *(advanced override)*
 
 **Type:** `(-> Nil)?` — **Default:** `nil`
 
-Called when the system tray icon is clicked and no context menu is active.
+When set, replaces the default `app.emit` for tray icon clicks entirely. Use when you need Crystal-side side-effects beyond event emission.
 
 ---
 
-### `tray.on_menu_click`
+### `tray.on_menu_click` *(advanced override)*
 
 **Type:** `(String -> Nil)?` — **Default:** `nil`
 
-Called when a tray context menu item is selected. Receives the item's `id`.
+When set, replaces the default `app.emit` for menu item selection entirely. Receives the item's `id`.
 
 ---
 
@@ -756,11 +774,6 @@ Lune.run(app) do |opts|
 
   opts.drag do |d|
     d.zone = "--lune-draggable"
-  end
-
-  opts.tray do |t|
-    t.on_click      = -> { app.emit("trayClick", nil) }
-    t.on_menu_click = ->(id : String) { app.emit("trayMenuClick", id) }
   end
 
   opts.menu do |m|

@@ -16,6 +16,7 @@
 - **`Tray.setMenu` accepts an array** — the `js_helpers` wrapper now serialises the items array to JSON automatically so `Tray.setMenu([{ id, label }])` works without manual `JSON.stringify`.
 - **`FileDrop.on` / `FileDrop.off`** — renamed from `onFileDrop` / `onFileDropOff`. The namespace already makes the subject clear.
 - **`disable_context_menu` demoted from capability** — no longer a `Lune::Capability` subclass; handled as a plain option check in `Runner`. `opts.disable_context_menu` still works identically but the name no longer appears in `include`/`exclude` lists or in capability sentinel keys.
+- **Tray auto-emits events** — `opts.tray` is no longer required. When the `tray` capability is active, icon clicks emit `"trayEvent"` with payload `"click"` and menu item clicks emit `"trayEvent"` with the item `id`. Override `t.event` to use a custom event name, or set `t.on_click`/`t.on_menu_click` for full Crystal-side control.
 - **Website docs rewritten** — `guide/runtime.md`, `guide/events.md`, `guide/deep-links.md`, `guide/how-it-works.md`, `guide/typescript.md`, `configuration.md`, and `getting-started.md` all updated to the new namespaced API.
 
 ### Added

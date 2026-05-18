@@ -218,11 +218,15 @@ end
 
 describe Lune::Options::Tray do
   describe "defaults" do
-    it "has no on_click callback" do
+    it "event defaults to trayEvent" do
+      Lune::Options::Tray.new.event.should eq("trayEvent")
+    end
+
+    it "has no on_click override" do
       Lune::Options::Tray.new.on_click.should be_nil
     end
 
-    it "has no on_menu_click callback" do
+    it "has no on_menu_click override" do
       Lune::Options::Tray.new.on_menu_click.should be_nil
     end
   end
@@ -232,7 +236,15 @@ describe Lune::Options::Tray do
       Lune::Options.new.tray.should be_a(Lune::Options::Tray)
     end
 
-    it "mutations via block are retained" do
+    it "custom event name is retained" do
+      opts = Lune::Options.new
+      opts.tray do |t|
+        t.event = "myTray"
+      end
+      opts.tray.event.should eq("myTray")
+    end
+
+    it "on_click override is retained" do
       opts = Lune::Options.new
       clicked = false
       opts.tray do |t|

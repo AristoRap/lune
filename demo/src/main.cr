@@ -42,11 +42,6 @@ Lune.run(app, assets: "frontend/dist") do |opts|
     d.zone = "--lune-drop-target"
   end
 
-  opts.tray do |t|
-    t.on_click = -> { app.emit("trayEvent", "click") }
-    t.on_menu_click = ->(id : String) { app.emit("trayEvent", id) }
-  end
-
   opts.menu do |m|
     m.app_menu
     m.submenu file_menu # class-based: Group subclass

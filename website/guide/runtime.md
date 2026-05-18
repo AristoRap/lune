@@ -468,29 +468,36 @@ interface TrayMenuItem {
 }
 ```
 
-### Tray callbacks
+### Tray events
 
-Wire click/menu events in Crystal via `opts`:
-
-```crystal
-Lune.run(app, assets: "frontend/dist") do |opts|
-  opts.tray do |t|
-    t.on_click      = -> { app.emit("trayClick", nil) }
-    t.on_menu_click = ->(id : String) { app.emit("trayMenuClick", id) }
-  end
-end
-```
+Tray activity is emitted automatically on the event bus — no configuration required. The default event name is `"trayEvent"`. Icon clicks carry the payload `"click"`; menu item selections carry the item `id`.
 
 ```js
 import { Events, Lifecycle } from "../lunejs/runtime/runtime.js";
 
-Events.on("trayClick", () => console.log("icon clicked"));
-Events.on("trayMenuClick", (id) => {
-  if (id === "quit") Lifecycle.quit();
+Events.on("trayEvent", (payload) => {
+  if (payload === "click") console.log("icon clicked");
+  else if (payload === "quit") Lifecycle.quit();
+  else console.log("menu item:", payload);
 });
 ```
 
-> Attaching a non-empty menu replaces the direct click handler — `trayClick` will not fire while menu items are present. Calling `Tray.setMenu([])` clears the menu and restores direct click behaviour.
+Override the event name or use fully custom Crystal callbacks in `opts.tray`:
+
+```crystal
+# custom event name
+opts.tray do |t|
+  t.event = "myTray"
+end
+
+# full Crystal-side override
+opts.tray do |t|
+  t.on_click      = -> { puts "clicked" }
+  t.on_menu_click = ->(id : String) { puts id }
+end
+```
+
+> Attaching a non-empty menu replaces the direct click handler — `"click"` will not fire while menu items are present. Calling `Tray.setMenu([])` clears the menu and restores direct click behaviour.
 
 ---
 

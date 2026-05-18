@@ -21,7 +21,7 @@ module Lune
           Capabilities::Clipboard.new,
           Capabilities::Window.new(handle),
           Capabilities::Dialogs.new,
-          Capabilities::Tray.new(on_tray_click: options.tray.on_click, on_menu_click: options.tray.on_menu_click),
+          Capabilities::Tray.new(event_name: options.tray.event, on_tray_click: options.tray.on_click, on_menu_click: options.tray.on_menu_click),
           Capabilities::Notifications.new,
           Capabilities::Screen.new,
           Capabilities::ContextMenu.new(handle),

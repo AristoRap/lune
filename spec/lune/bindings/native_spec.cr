@@ -244,6 +244,32 @@ describe "Lune::Capabilities (native)" do
       Lune::Native::TrayMock.simulate_menu_click("open")
       clicked_id.should eq("open")
     end
+
+    it "tray.set_menu default emit path does not raise without explicit callback" do
+      wv = FakeWebview.new
+      bridge = Lune::Bridge.new(wv)
+      app = Lune::App.new
+      app.install(Lune::Capabilities::Tray.new)
+      bridge.register_bindings(app.bindings)
+
+      json = %([{"id":"quit","label":"Quit"}])
+      wv.invoke("__lune.tray.set_menu", "seq15", [JSON::Any.new(json)])
+      Lune::Native::TrayMock.calls.should contain(:set_menu)
+      Lune::Native::TrayMock.simulate_menu_click("quit")
+    end
+
+    it "configured? is false with all defaults" do
+      Lune::Capabilities::Tray.new.configured?.should be_false
+    end
+
+    it "configured? is true with custom event name" do
+      Lune::Capabilities::Tray.new(event_name: "myTray").configured?.should be_true
+    end
+
+    it "configured? is true with explicit on_menu_click override" do
+      cb = ->(id : String) { nil }
+      Lune::Capabilities::Tray.new(on_menu_click: cb).configured?.should be_true
+    end
   end
 
   describe Lune::Capabilities::Notifications do

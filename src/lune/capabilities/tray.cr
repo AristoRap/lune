@@ -1,7 +1,11 @@
 module Lune
   module Capabilities
     class Tray < Lune::Capability
-      def initialize(@on_tray_click : (-> Nil)? = nil, @on_menu_click : (String -> Nil)? = nil)
+      def initialize(
+        @event_name : String = "trayEvent",
+        @on_tray_click : (-> Nil)? = nil,
+        @on_menu_click : (String -> Nil)? = nil,
+      )
       end
 
       def name : String
@@ -13,7 +17,7 @@ module Lune
       end
 
       def configured? : Bool
-        !@on_tray_click.nil? || !@on_menu_click.nil?
+        !@on_tray_click.nil? || !@on_menu_click.nil? || @event_name != "trayEvent"
       end
 
       def js_helpers : String
@@ -30,7 +34,8 @@ module Lune
       end
 
       def install(app : Lune::App)
-        on_tray_click = @on_tray_click
+        event_name = @event_name
+        on_tray_click = @on_tray_click || -> { app.emit(event_name, "click"); nil }
         app.register(Definition.new(
           name: "#{name}.show",
           args: ["String"],
@@ -54,7 +59,7 @@ module Lune
           callback: ->(args : Array(JSON::Any)) { Lune::Native::Tray.set_icon(args[0].as_s); JSON::Any.new(nil) },
         ).binding(binding_namespace))
 
-        on_menu_click = @on_menu_click
+        on_menu_click = @on_menu_click || ->(id : String) { app.emit(event_name, id); nil }
         app.register(Definition.new(
           name: "#{name}.set_menu",
           args: ["String"],
