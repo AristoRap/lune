@@ -196,7 +196,7 @@ The repository ships with a full showcase in `demo/` — a Vue 3 app that exerci
 | Tray         | Status-bar icon with click and menu-item event log                                              |
 | Context Menu | `ContextMenu.set` / `clear` / `onSelect` — native right-click menu with item selection          |
 | Drag Out     | `DragOut.start(paths)` — drag local files out of the window into Finder or other apps           |
-| Deep Links   | `url_schemes` config, `DeepLink.onDeepLink(cb)` — receive OS-routed custom URL scheme links     |
+| Deep Links   | `url_schemes` config, `DeepLink.on(cb)` — receive OS-routed custom URL scheme links             |
 | Capabilities | Runtime capability filtering (`include` / `exclude`) with live binding list                     |
 
 Run it from the repo root:

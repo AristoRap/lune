@@ -5,9 +5,6 @@ module Lune
         "event_bus"
       end
 
-      def core? : Bool
-        true
-      end
 
       # Public namespace is "Events" rather than the internal "EventBus".
       def binding_namespace : String

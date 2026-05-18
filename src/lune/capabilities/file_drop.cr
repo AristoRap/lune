@@ -8,9 +8,6 @@ module Lune
         "file_drop"
       end
 
-      def core? : Bool
-        true
-      end
 
       def configured? : Bool
         !@options.zone.empty? || !@options.on_drop.nil? || @options.disable_webview_drop

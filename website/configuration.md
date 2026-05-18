@@ -274,7 +274,7 @@ After receiving a URL the `deep_link` runtime event fires in JavaScript:
 
 ```js
 import { DeepLink } from "../lunejs/runtime/runtime.js";
-DeepLink.onDeepLink((url) => {
+DeepLink.on((url) => {
   /* url = "myapp://..." */
 });
 ```

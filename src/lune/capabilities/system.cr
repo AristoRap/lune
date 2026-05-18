@@ -21,9 +21,6 @@ module Lune
         "system"
       end
 
-      def core? : Bool
-        false
-      end
 
       def install(app : Lune::App)
         on_quit = @on_quit

@@ -59,8 +59,8 @@ await runtime.System.quit();
 | `ContextMenu`   | `clear` ²         | `clear()`                         | `void`                     |   ✓   |  tbd  |   tbd   |
 | `ContextMenu`   | `onSelect` ²      | `onSelect(cb)`                    | `void`                     |   ✓   |  tbd  |   tbd   |
 | `DragOut`       | `start` ²         | `start(paths)`                    | `Promise<void>`            |   ✓   |  tbd  |   tbd   |
-| `DeepLink`      | `onDeepLink` ³    | `onDeepLink(cb)`                  | `void`                     |   ✓   |   ✓   |   tbd   |
-| `DeepLink`      | `onDeepLinkOff` ³ | `onDeepLinkOff()`                 | `void`                     |   ✓   |   ✓   |   tbd   |
+| `DeepLink`      | `on` ³            | `on(cb)`                          | `void`                     |   ✓   |   ✓   |   tbd   |
+| `DeepLink`      | `off` ³           | `off()`                           | `void`                     |   ✓   |   ✓   |   tbd   |
 | `Events`        | `on`              | `on(name, cb)`                    | `void`                     |   ✓   |   ✓   |    ✓    |
 | `Events`        | `once`            | `once(name, cb)`                  | `void`                     |   ✓   |   ✓   |    ✓    |
 | `Events`        | `off`             | `off(name, cb?)`                  | `void`                     |   ✓   |   ✓   |    ✓    |
@@ -99,9 +99,9 @@ await runtime.System.quit();
 | `screen`        | `Screen`        | `info`                                                                                                             |
 | `context_menu`  | `ContextMenu`   | `set`, `clear`, `onSelect`                                                                                         |
 | `drag_out`      | `DragOut`       | `start`                                                                                                            |
-| `deep_link`     | `DeepLink`      | `onDeepLink`, `onDeepLinkOff` (event-only, no bridge binding)                                                      |
-| `event_bus`     | `Events`        | `on`, `once`, `off`, `emit` (core — no bridge binding)                                                             |
-| `file_drop`     | `FileDrop`      | `on`, `off` (core — controlled by `opts.drop`)                                                                     |
+| `deep_link`     | `DeepLink`      | `on`, `off` (event-only — no bridge binding)                                                                       |
+| `event_bus`     | `Events`        | `on`, `once`, `off`, `emit` (event-only — no bridge binding)                                                       |
+| `file_drop`     | `FileDrop`      | `on`, `off` (event-only — controlled by `opts.drop`)                                                               |
 
 `include: [system]` exposes all three `System` methods. Individual method names are not valid capability names — they log a warning and are ignored.
 
@@ -645,23 +645,23 @@ Then subscribe in JavaScript:
 import { DeepLink } from "../lunejs/runtime/runtime.js";
 ```
 
-### `DeepLink.onDeepLink(cb)`
+### `DeepLink.on(cb)`
 
 Registers a callback that fires whenever the OS routes a URL with your registered scheme to the running app.
 
 ```js
-DeepLink.onDeepLink((url) => {
+DeepLink.on((url) => {
   console.log("Received:", url);
   // e.g. "myapp://oauth/callback?code=abc123"
 });
 ```
 
-### `DeepLink.onDeepLinkOff()`
+### `DeepLink.off()`
 
-Removes the deep link listener registered by `DeepLink.onDeepLink`.
+Removes the deep link listener registered by `DeepLink.on`.
 
 ```js
-DeepLink.onDeepLinkOff();
+DeepLink.off();
 ```
 
 > **macOS:** The scheme is registered via `CFBundleURLTypes` in `Info.plist` at build time. Deep links received during `lune dev` will not be routed by the OS (the binary is not a `.app` bundle). Use `window.__lune.crystalEmit("deep_link", { url: "..." })` to simulate them during development.

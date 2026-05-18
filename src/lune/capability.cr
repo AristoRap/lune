@@ -10,10 +10,6 @@ module Lune
     # Unique camelCase name used in lune.yml capabilities include/exclude lists.
     abstract def name : String
 
-    # true = infrastructure injected via wv.init; false = callable bridge binding.
-    # Informational only — all capabilities participate equally in include/exclude.
-    abstract def core? : Bool
-
     # PascalCase JS namespace for generated exports: System, Filesystem, DragOut, …
     # Uses Crystal's built-in .camelcase (lower: false = PascalCase by default).
     # Override in subclasses when a different public name is needed (e.g. "Events").

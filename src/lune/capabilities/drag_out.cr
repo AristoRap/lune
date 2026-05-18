@@ -8,9 +8,6 @@ module Lune
         "drag_out"
       end
 
-      def core? : Bool
-        false
-      end
 
       def install(app : Lune::App)
         h = @handle

@@ -21,7 +21,7 @@ const ALL = [
   { cap: "drag_out", group: "Drag Out", core: false, fns: ["start"] },
   // Core — JS-injected infrastructure, no bridge binding
   { cap: "event_bus", group: "Event Bus", core: true, fns: ["on", "once", "off", "emit"] },
-  { cap: "deep_link", group: "Deep Link", core: true, fns: ["onDeepLink", "onDeepLinkOff"] },
+  { cap: "deep_link", group: "Deep Link", core: true, fns: ["on", "off"] },
   { cap: "file_drop", group: "File Drop", core: true, fns: ["on", "off"] },
 ];
 

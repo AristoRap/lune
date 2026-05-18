@@ -5,9 +5,6 @@ module Lune
         "screen"
       end
 
-      def core? : Bool
-        false
-      end
 
       def install(app : Lune::App)
         app.register(Definition.new(

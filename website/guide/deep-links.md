@@ -39,18 +39,18 @@ Scheme names must be lowercase alphanumeric. Avoid generic names that could conf
 ```js
 import { DeepLink } from "../lunejs/runtime/runtime.js";
 
-DeepLink.onDeepLink((url) => {
+DeepLink.on((url) => {
   console.log("Opened via:", url);
   // e.g. "myapp://oauth/callback?code=abc123"
 });
 ```
 
-Call `DeepLink.onDeepLink` early (top-level module scope or `onMounted`) so the handler is registered before the first event fires.
+Call `DeepLink.on` early (top-level module scope or `onMounted`) so the handler is registered before the first event fires.
 
 To stop listening:
 
 ```js
-DeepLink.onDeepLinkOff();
+DeepLink.off();
 ```
 
 ---
@@ -97,7 +97,7 @@ A typical OAuth flow:
 3. The provider redirects to `myapp://oauth/callback?code=abc123`.
 4. The OS routes the URL back to your app:
    ```js
-   DeepLink.onDeepLink((url) => {
+   DeepLink.on((url) => {
      const params = new URL(url).searchParams;
      const code = params.get("code");
      exchangeCodeForToken(code);

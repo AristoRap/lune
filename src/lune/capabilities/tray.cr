@@ -12,9 +12,6 @@ module Lune
         "tray"
       end
 
-      def core? : Bool
-        false
-      end
 
       def configured? : Bool
         !@on_tray_click.nil? || !@on_menu_click.nil? || @event_name != "trayEvent"

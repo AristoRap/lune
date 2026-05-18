@@ -23,7 +23,7 @@ function simulate() {
     <template #desc>
       Register a custom URL scheme so the OS routes
       <code>lune-demo://...</code> links into this app. Use
-      <code>onDeepLink(cb)</code> to receive them.
+      <code>DeepLink.on(cb)</code> to receive them.
     </template>
   </SectionHead>
 

@@ -5,9 +5,6 @@ module Lune
         "deep_link"
       end
 
-      def core? : Bool
-        false
-      end
 
       def install(app : Lune::App)
         {% if flag?(:darwin) %}
@@ -24,15 +21,15 @@ module Lune
       def js_helpers : String
         bm = BRIDGE_MARKER
         <<-JS
-          onDeepLink(cb)  { window.#{bm}.on("deep_link", function(data) { cb(data.url); }, -1); },
-          onDeepLinkOff() { window.#{bm}.off("deep_link"); },
+          on(cb)  { window.#{bm}.on("deep_link", function(data) { cb(data.url); }, -1); },
+          off()   { window.#{bm}.off("deep_link"); },
         JS
       end
 
       def dts_helpers : String
         <<-DTS
-          onDeepLink(cb: (url: string) => void): void;
-          onDeepLinkOff(): void;
+          on(cb: (url: string) => void): void;
+          off(): void;
         DTS
       end
     end
