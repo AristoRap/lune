@@ -1,39 +1,103 @@
 #include <gtk/gtk.h>
+#include <pthread.h>
+
+// GTK window operations require the main thread.  Binding callbacks may arrive
+// on any Crystal fiber thread, so we dispatch synchronously when needed.
 
 typedef struct { int x; int y; int width; int height; } WindowFrame;
 
-void minimize(void *window) {
-    gtk_window_iconify(GTK_WINDOW(window));
+// ── Main-thread dispatcher ────────────────────────────────────────────────────
+
+static pthread_t      _main_tid;
+static pthread_once_t _once = PTHREAD_ONCE_INIT;
+static void _capture(void) { _main_tid = pthread_self(); }
+
+typedef struct { void (*fn)(void *); void *d; GMutex m; GCond c; gboolean done; } _Call;
+
+static gboolean _call_cb(gpointer p) {
+    _Call *c = p;
+    c->fn(c->d);
+    g_mutex_lock(&c->m);
+    c->done = TRUE;
+    g_cond_signal(&c->c);
+    g_mutex_unlock(&c->m);
+    return G_SOURCE_REMOVE;
 }
 
-void maximize(void *window) {
-    gtk_window_maximize(GTK_WINDOW(window));
+static void run_on_main(void (*fn)(void *), void *d) {
+    pthread_once(&_once, _capture);
+    if (pthread_equal(pthread_self(), _main_tid)) { fn(d); return; }
+    _Call c = {.fn = fn, .d = d, .done = FALSE};
+    g_mutex_init(&c.m); g_cond_init(&c.c);
+    g_idle_add(_call_cb, &c);
+    g_mutex_lock(&c.m);
+    while (!c.done) g_cond_wait(&c.c, &c.m);
+    g_mutex_unlock(&c.m);
+    g_mutex_clear(&c.m); g_cond_clear(&c.c);
 }
+
+// ── Impl structs & functions ──────────────────────────────────────────────────
+
+typedef struct { void *win; const char *title; } TitleArgs;
+typedef struct { void *win; int w; int h; } SizeArgs;
+typedef struct { void *win; int x; int y; int w; int h; } FrameArgs;
+typedef struct { void *win; WindowFrame result; } GetFrameArgs;
+
+static void _minimize_impl(void *p)   { gtk_window_iconify(GTK_WINDOW(p)); }
+static void _maximize_impl(void *p)   { gtk_window_maximize(GTK_WINDOW(p)); }
+
+static void _set_title_impl(void *p) {
+    TitleArgs *a = p;
+    gtk_window_set_title(GTK_WINDOW(a->win), a->title);
+}
+
+static void _set_size_impl(void *p) {
+    SizeArgs *a = p;
+    gtk_window_resize(GTK_WINDOW(a->win), a->w, a->h);
+}
+
+static void _center_impl(void *p) {
+    gtk_window_set_position(GTK_WINDOW(p), GTK_WIN_POS_CENTER);
+}
+
+static void _get_frame_impl(void *p) {
+    GetFrameArgs *a = p;
+    gtk_window_get_position(GTK_WINDOW(a->win), &a->result.x, &a->result.y);
+    gtk_window_get_size(GTK_WINDOW(a->win), &a->result.width, &a->result.height);
+}
+
+static void _set_frame_impl(void *p) {
+    FrameArgs *a = p;
+    gtk_window_move(GTK_WINDOW(a->win), a->x, a->y);
+    gtk_window_resize(GTK_WINDOW(a->win), a->w, a->h);
+}
+
+// ── Public API ────────────────────────────────────────────────────────────────
+
+void minimize(void *window) { run_on_main(_minimize_impl, window); }
+void maximize(void *window) { run_on_main(_maximize_impl, window); }
 
 void set_title(void *window, const char *title) {
-    gtk_window_set_title(GTK_WINDOW(window), title);
+    TitleArgs a = {window, title};
+    run_on_main(_set_title_impl, &a);
 }
 
 void set_size(void *window, int width, int height) {
-    gtk_window_resize(GTK_WINDOW(window), width, height);
+    SizeArgs a = {window, width, height};
+    run_on_main(_set_size_impl, &a);
 }
 
-void center(void *window) {
-    gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
-}
+void center(void *window) { run_on_main(_center_impl, window); }
 
 WindowFrame get_frame(void *window) {
-    GtkWindow *w = GTK_WINDOW(window);
-    WindowFrame f;
-    gtk_window_get_position(w, &f.x, &f.y);
-    gtk_window_get_size(w, &f.width, &f.height);
-    return f;
+    GetFrameArgs a = {window, {0, 0, 0, 0}};
+    run_on_main(_get_frame_impl, &a);
+    return a.result;
 }
 
 void set_frame(void *window, int x, int y, int width, int height) {
-    GtkWindow *w = GTK_WINDOW(window);
-    gtk_window_move(w, x, y);
-    gtk_window_resize(w, width, height);
+    FrameArgs a = {window, x, y, width, height};
+    run_on_main(_set_frame_impl, &a);
 }
 
 // ── File drop ─────────────────────────────────────────────────────────────────
@@ -60,7 +124,7 @@ static void on_drag_leave(GtkWidget *widget, GdkDragContext *context,
 static void on_drag_data_received(GtkWidget *widget, GdkDragContext *context,
                                    int x, int y, GtkSelectionData *data,
                                    guint info, guint time, gpointer user_data) {
-    if (_pos_cb) _pos_cb(-1, -1, _pos_userdata); // clear zones on drop
+    if (_pos_cb) _pos_cb(-1, -1, _pos_userdata);
 
     gchar **uris = gtk_selection_data_get_uris(data);
     if (!uris) {
@@ -92,8 +156,7 @@ static void on_drag_data_received(GtkWidget *widget, GdkDragContext *context,
 }
 
 void disable_webview_drop(void *window) {
-    // WebKitWebView on Linux does not navigate on file drop by default,
-    // so this is a no-op. Reserved for future hardening if needed.
+    // WebKitWebView on Linux does not navigate on file drop by default.
     (void)window;
 }
 

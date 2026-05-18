@@ -1,5 +1,12 @@
 #import <AppKit/AppKit.h>
 
+// popUpMenuPositioningItem:, setMainMenu:, and other AppKit menu calls require
+// the main thread.  Binding callbacks may arrive on any Crystal fiber thread.
+static void run_on_main(void (^block)(void)) {
+    if ([NSThread isMainThread]) block();
+    else dispatch_sync(dispatch_get_main_queue(), block);
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 typedef void (*LuneMenuItemCallback)(const char *payload, void *ctx);
@@ -236,7 +243,10 @@ void lune_show_context_menu(void *nswindow_ptr, float x, float y,
     build_context_children(items, menu);
 
     // WKWebView is a flipped view (isFlipped=YES, y=0 at top), so web clientY maps directly.
-    [menu popUpMenuPositioningItem:nil atLocation:NSMakePoint(x, y) inView:view];
+    // popUpMenuPositioningItem: runs a modal tracking loop — must be on the main thread.
+    run_on_main(^{
+        [menu popUpMenuPositioningItem:nil atLocation:NSMakePoint(x, y) inView:view];
+    });
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -363,5 +373,5 @@ void lune_set_menu(const char *app_name_cstr, const char *json_utf8,
         }
     }
 
-    [NSApp setMainMenu:menubar];
+    run_on_main(^{ [NSApp setMainMenu:menubar]; });
 }

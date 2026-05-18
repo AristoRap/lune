@@ -10,6 +10,7 @@ module Lune
       @bridge = nil
       @event_handlers = {} of String => Array(Proc(JSON::Any, Nil))
       @event_once_handlers = {} of String => Array(Proc(JSON::Any, Nil))
+      @async_pool = Fiber::ExecutionContext::Parallel.new("lune-tasks", System.cpu_count)
     end
 
     # ----------------------------
@@ -81,7 +82,7 @@ module Lune
     end
 
     def async(name : String = "lune-task", &block : ->) : Nil
-      Fiber::ExecutionContext::Isolated.new(name, &block)
+      @async_pool.spawn(name: name, &block)
     end
 
     def dispatch_event(event : String, data : JSON::Any)

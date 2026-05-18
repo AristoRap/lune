@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.7.1] - 2026-05-19
+
+### Fixed
+
+- **Main-thread crash** — all native AppKit (macOS) and GTK (Linux) UI calls — dialogs, window controls, tray, context menus — now dispatch synchronously to the main thread when invoked from a background fiber. Eliminates the intermittent `NSInternalInconsistencyException: nextEventMatchingMask should only be called from the Main Thread!` crash.
+
+### Changed
+
+- **`async: true` bindings use a shared thread pool** — async binding callbacks and `app.async` blocks now spawn fibers into a `Fiber::ExecutionContext::Parallel` pool instead of creating a new OS thread per call. Reduces overhead for apps that fire async bindings frequently.
+
 ## [0.7.0] - 2026-05-18
 
 ### Breaking
