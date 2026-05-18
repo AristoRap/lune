@@ -6,7 +6,7 @@ export {
 } from "../lunejs/runtime/runtime.js";
 
 export type {
-  Lifecycle,
+  System,
   Filesystem,
   Clipboard,
   Window,

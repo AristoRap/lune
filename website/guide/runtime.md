@@ -3,9 +3,9 @@
 Lune exposes built-in JavaScript functions via `runtime.js`. They are organised into **namespace objects** — one per capability group — exported from the runtime module.
 
 ```js
-import { Lifecycle, Clipboard, Events } from "../lunejs/runtime/runtime.js";
+import { System, Clipboard, Events } from "../lunejs/runtime/runtime.js";
 
-await Lifecycle.quit();
+await System.quit();
 const text = await Clipboard.read();
 Events.on("myEvent", (data) => console.log(data));
 ```
@@ -14,7 +14,7 @@ All bridge methods return a `Promise`. TypeScript declarations are in `runtime.d
 
 ```js
 import runtime from "../lunejs/runtime/runtime.js";
-await runtime.Lifecycle.quit();
+await runtime.System.quit();
 ```
 
 ---
@@ -23,9 +23,9 @@ await runtime.Lifecycle.quit();
 
 | Namespace       | Method            | Signature                         | Returns                    | macOS | Linux | Windows |
 | --------------- | ----------------- | --------------------------------- | -------------------------- | :---: | :---: | :-----: |
-| `Lifecycle`     | `quit`            | `quit()`                          | `Promise<void>`            |   ✓   |   ✓   |    ✓    |
-| `Lifecycle`     | `openUrl`         | `openUrl(url)`                    | `Promise<void>`            |   ✓   |   ✓   |    ✓    |
-| `Lifecycle`     | `environment`     | `environment()`                   | `Promise<LuneEnvironment>` |   ✓   |   ✓   |    ✓    |
+| `System`     | `quit`            | `quit()`                          | `Promise<void>`            |   ✓   |   ✓   |    ✓    |
+| `System`     | `openUrl`         | `openUrl(url)`                    | `Promise<void>`            |   ✓   |   ✓   |    ✓    |
+| `System`     | `environment`     | `environment()`                   | `Promise<LuneEnvironment>` |   ✓   |   ✓   |    ✓    |
 | `Filesystem`    | `homeDir`         | `homeDir()`                       | `Promise<string>`          |   ✓   |   ✓   |    ✓    |
 | `Filesystem`    | `appDataDir`      | `appDataDir()`                    | `Promise<string>`          |   ✓   |   ✓   |    ✓    |
 | `Filesystem`    | `downloadsDir`    | `downloadsDir()`                  | `Promise<string>`          |   ✓   |   ✓   |    ✓    |
@@ -89,7 +89,7 @@ await runtime.Lifecycle.quit();
 
 | Capability name        | JS namespace    | Methods included                                                                                                   |
 | ---------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `lifecycle`            | `Lifecycle`     | `quit`, `openUrl`, `environment`                                                                                   |
+| `system`               | `System`        | `quit`, `openUrl`, `environment`                                                                                   |
 | `filesystem`           | `Filesystem`    | `homeDir`, `tempDir`, `downloadsDir`, `appDataDir`                                                                 |
 | `clipboard`            | `Clipboard`     | `read`, `write`, `readHtml`, `writeHtml`, `readImage`, `writeImage`                                                |
 | `window`               | `Window`        | `minimize`, `maximize`, `center`, `setTitle`, `setSize`                                                            |
@@ -104,46 +104,45 @@ await runtime.Lifecycle.quit();
 | `keyboard_shortcuts`   | —               | Cmd/Ctrl+C/V/Z/etc. JS injection (core — no bridge binding)                                                        |
 | `file_drop`            | `FileDrop`      | `on`, `off` (core — controlled by `opts.drop`)                                                                     |
 | `drag_zone`            | —               | Window-drag-by-CSS injection (core — controlled by `opts.drag.zone`)                                               |
-| `navigation`           | —               | SPA navigation tracking (core — controlled by `opts.on_navigate`)                                                  |
 
-`include: [lifecycle]` exposes all three `Lifecycle` methods. Individual method names are not valid capability names — they log a warning and are ignored.
+`include: [system]` exposes all three `System` methods. Individual method names are not valid capability names — they log a warning and are ignored.
 
 See [Configuration → capabilities](../configuration#capabilities) for the full syntax.
 
 ---
 
-## App lifecycle
+## System
 
-### `Lifecycle.quit()`
+### `System.quit()`
 
 Terminates the app.
 
 ```js
-import { Lifecycle } from "../lunejs/runtime/runtime.js";
+import { System } from "../lunejs/runtime/runtime.js";
 
-await Lifecycle.quit();
+await System.quit();
 ```
 
 ---
 
-### `Lifecycle.openUrl(url)`
+### `System.openUrl(url)`
 
 Opens a URL in the system default browser.
 
 ```js
-await Lifecycle.openUrl("https://example.com");
+await System.openUrl("https://example.com");
 ```
 
 ---
 
 ## System info
 
-### `Lifecycle.environment()`
+### `System.environment()`
 
 Returns information about the current runtime environment.
 
 ```js
-const env = await Lifecycle.environment();
+const env = await System.environment();
 // { os: "darwin", arch: "arm64", debug: false }
 ```
 
@@ -473,11 +472,11 @@ interface TrayMenuItem {
 Tray activity is emitted automatically on the event bus — no configuration required. The default event name is `"trayEvent"`. Icon clicks carry the payload `"click"`; menu item selections carry the item `id`.
 
 ```js
-import { Events, Lifecycle } from "../lunejs/runtime/runtime.js";
+import { Events, System } from "../lunejs/runtime/runtime.js";
 
 Events.on("trayEvent", (payload) => {
   if (payload === "click") console.log("icon clicked");
-  else if (payload === "quit") Lifecycle.quit();
+  else if (payload === "quit") System.quit();
   else console.log("menu item:", payload);
 });
 ```

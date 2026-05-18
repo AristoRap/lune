@@ -14,7 +14,7 @@ module Lune
     # Informational only — all capabilities participate equally in include/exclude.
     abstract def core? : Bool
 
-    # PascalCase JS namespace for generated exports: Lifecycle, Filesystem, DragOut, …
+    # PascalCase JS namespace for generated exports: System, Filesystem, DragOut, …
     # Uses Crystal's built-in .camelcase (lower: false = PascalCase by default).
     # Override in subclasses when a different public name is needed (e.g. "Events").
     def binding_namespace : String

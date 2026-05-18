@@ -1,7 +1,7 @@
 require "../spec_helper"
 
-# method is the capability-prefixed path, e.g. "lifecycle.quit" — no BRIDGE_MARKER prefix.
-# The bridge ID is BRIDGE_MARKER + "." + method = "__lune.lifecycle.quit".
+# method is the capability-prefixed path, e.g. "system.quit" — no BRIDGE_MARKER prefix.
+# The bridge ID is BRIDGE_MARKER + "." + method = "__lune.system.quit".
 private def make_rb(method = "test.ping", js_namespace = "Test", args = [] of String, return_type = "String", arg_names = [] of String, ts_return_type = nil)
   Lune::RuntimeBinding.new(
     js_namespace: js_namespace,
@@ -17,7 +17,7 @@ end
 describe Lune::RuntimeBinding do
   describe "#id" do
     it "puts BRIDGE_MARKER at root: __lune.<capability>.<method>" do
-      make_rb(method: "lifecycle.quit").id.should eq("__lune.lifecycle.quit")
+      make_rb(method: "system.quit").id.should eq("__lune.system.quit")
       make_rb(method: "clipboard.read").id.should eq("__lune.clipboard.read")
       make_rb(method: "screen.info").id.should eq("__lune.screen.info")
     end
@@ -25,8 +25,8 @@ describe Lune::RuntimeBinding do
 
   describe "#js_func_name" do
     it "returns the camelCase leaf (last path segment)" do
-      make_rb(method: "lifecycle.quit").js_func_name.should eq("quit")
-      make_rb(method: "lifecycle.openURL").js_func_name.should eq("openURL")
+      make_rb(method: "system.quit").js_func_name.should eq("quit")
+      make_rb(method: "system.openURL").js_func_name.should eq("openURL")
       make_rb(method: "screen.info").js_func_name.should eq("info")
     end
   end
@@ -39,13 +39,13 @@ describe Lune::RuntimeBinding do
 
   describe "#to_js_stub" do
     it "emits an object method calling the correct bridge ID" do
-      stub = make_rb(method: "lifecycle.quit", js_namespace: "Lifecycle").to_js_stub
-      stub.should eq(%(  quit() { return __lune.call("__lune.lifecycle.quit"); },))
+      stub = make_rb(method: "system.quit", js_namespace: "System").to_js_stub
+      stub.should eq(%(  quit() { return __lune.call("__lune.system.quit"); },))
     end
 
     it "emits an object method with named args" do
-      stub = make_rb(method: "lifecycle.openURL", js_namespace: "Lifecycle", args: ["String"], arg_names: ["url"]).to_js_stub
-      stub.should eq(%(  openURL(url) { return __lune.call("__lune.lifecycle.openURL", url); },))
+      stub = make_rb(method: "system.openURL", js_namespace: "System", args: ["String"], arg_names: ["url"]).to_js_stub
+      stub.should eq(%(  openURL(url) { return __lune.call("__lune.system.openURL", url); },))
     end
 
     it "falls back to arg0..argN when arg_names is empty" do
@@ -61,7 +61,7 @@ describe Lune::RuntimeBinding do
     end
 
     it "uses ts_return_type as the full return type bypassing auto-wrap" do
-      sig = make_rb(method: "lifecycle.environment", return_type: "JSON", ts_return_type: "LuneEnvironment").to_dts_sig
+      sig = make_rb(method: "system.environment", return_type: "JSON", ts_return_type: "LuneEnvironment").to_dts_sig
       sig.should eq("  environment(): LuneEnvironment;")
     end
 

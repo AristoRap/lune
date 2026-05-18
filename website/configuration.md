@@ -16,7 +16,7 @@ icon: assets/icon.icns
 # Active capabilities (default: all). Omit to expose everything.
 capabilities:
   include:
-    - lifecycle
+    - system
     - clipboard
   exclude:
     - clipboard
@@ -310,16 +310,16 @@ All keys are optional. Omitted keys fall back to the `Lune::Options` defaults (`
 
 Controls which built-in capabilities are active. The unit is a **capability** — a named group of related functions. `include` is resolved first, then `exclude` is subtracted. Both keys accept `"*"` or `"all"` as explicit wildcards.
 
-Values must be **capability names** (e.g. `lifecycle`, `clipboard`). Individual function names like `quit` are not valid — they will log a warning and be ignored.
+Values must be **capability names** (e.g. `system`, `clipboard`). Individual function names like `quit` are not valid — they will log a warning and be ignored.
 
 | `include`                    | `exclude`            | result               |
 | ---------------------------- | -------------------- | -------------------- |
 | omitted or `[]`              | omitted              | all capabilities     |
-| `["lifecycle"]`              | omitted              | lifecycle only       |
+| `["system"]`                 | omitted              | system only          |
 | `["*"]` or `["all"]`         | omitted              | all (explicit)       |
 | omitted or `[]`              | `["clipboard"]`      | all except clipboard |
 | omitted                      | `["*"]` or `["all"]` | none                 |
-| `["lifecycle", "clipboard"]` | `["clipboard"]`      | only lifecycle       |
+| `["system", "clipboard"]`    | `["clipboard"]`      | only system          |
 
 See [Runtime → Capabilities](./guide/runtime#capabilities) for the full list of capability names and the functions each one controls.
 
@@ -331,20 +331,20 @@ See [Runtime → Capabilities](./guide/runtime#capabilities) for the full list o
 Any unknown name in `include` or `exclude` logs a warning at startup and is ignored.
 
 ```yaml
-# expose only the lifecycle capability
+# expose only the system capability
 capabilities:
   include:
-    - lifecycle
+    - system
 
 # expose everything except file dialogs
 capabilities:
   exclude:
     - dialogs
 
-# expose lifecycle and clipboard, then remove clipboard
+# expose system and clipboard, then remove clipboard
 capabilities:
   include:
-    - lifecycle
+    - system
     - clipboard
   exclude:
     - clipboard

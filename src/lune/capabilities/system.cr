@@ -1,6 +1,6 @@
 module Lune
   module Capabilities
-    class Lifecycle < Lune::Capability
+    class System < Lune::Capability
       DEFAULT_OPEN_URL = ->(url : String) {
         {% if flag?(:darwin) %}
           Process.run("open", [url])
@@ -18,7 +18,7 @@ module Lune
       end
 
       def name : String
-        "lifecycle"
+        "system"
       end
 
       def core? : Bool

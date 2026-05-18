@@ -189,7 +189,7 @@ The repository ships with a full showcase in `demo/` — a Vue 3 app that exerci
 | ------------ | ----------------------------------------------------------------------------------------------- |
 | Bindings     | `@[Lune::Bind]` — calling Crystal methods from JS as async functions                            |
 | Events       | Live clock (Crystal → JS), ping/pong roundtrip with latency, async file-progress                |
-| System       | `Lifecycle.environment()`, `Screen.info()`, native notifications                                |
+| System       | `System.environment()`, `Screen.info()`, native notifications                                |
 | Clipboard    | `Clipboard.read/write`, `Clipboard.readHtml/writeHtml`, `Clipboard.readImage/writeImage`        |
 | Window       | `Window.minimize`, `Window.maximize`, `Window.center`, `Window.setTitle`, `Window.setSize`      |
 | Dialogs      | File pickers (`Dialogs.openFile`, `openFiles`, `openDir`, `saveFile`) and message dialogs       |

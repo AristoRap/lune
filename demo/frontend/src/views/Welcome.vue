@@ -3,14 +3,14 @@ import { onMounted, ref } from "vue";
 import luneSrc from "../assets/images/lune.svg";
 import vueSrc from "../assets/images/vue.svg";
 import Icon from "../components/Icon.vue";
-import { Lifecycle, Screen } from "../lune.js";
+import { System, Screen } from "../lune.js";
 
 const env = ref(null);
 const screen = ref(null);
 
 onMounted(async () => {
   try {
-    env.value = await Lifecycle.environment();
+    env.value = await System.environment();
     screen.value = await Screen.info();
   } catch (_) {
     /* unavailable in static preview */
@@ -56,7 +56,7 @@ const features = [
           and a custom menu bar. This app is a live tour of every piece.
         </p>
         <div class="hero-actions">
-          <button class="btn-link primary" @click="Lifecycle.openUrl('https://github.com/aristorap/lune')">
+          <button class="btn-link primary" @click="System.openUrl('https://github.com/aristorap/lune')">
             <Icon name="code" :size="14" /> Source on GitHub
           </button>
           <span class="chip">

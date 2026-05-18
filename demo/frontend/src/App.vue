@@ -5,7 +5,7 @@ import Titlebar from "./components/Titlebar.vue";
 import Sidebar from "./components/Sidebar.vue";
 import Statusbar from "./components/Statusbar.vue";
 import { flatNav } from "./nav.js";
-import { Lifecycle, Events } from "./lune.js";
+import { System, Events } from "./lune.js";
 
 const active = ref("welcome");
 const env = ref({});
@@ -24,7 +24,7 @@ function select(id) {
 
 onMounted(async () => {
   try {
-    env.value = await Lifecycle.Environment();
+    env.value = await System.environment();
   } catch {
     env.value = {};
   }

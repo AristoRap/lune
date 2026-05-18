@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import SectionHead from "../components/SectionHead.vue";
-import { Tray, Lifecycle } from "../lune.js";
+import { Tray, System } from "../lune.js";
 import { useLuneEvent } from "../composables/useLuneEvent.js";
 
 const log = ref([]);
@@ -10,7 +10,7 @@ const visible = ref(false);
 
 useLuneEvent("trayEvent", (id) => {
   log.value.unshift(`trayEvent: ${JSON.stringify(id)}`);
-  if (id === "quit") Lifecycle.quit();
+  if (id === "quit") System.quit();
 });
 
 async function toggle() {

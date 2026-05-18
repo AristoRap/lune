@@ -17,6 +17,8 @@
 - **`FileDrop.on` / `FileDrop.off`** — renamed from `onFileDrop` / `onFileDropOff`. The namespace already makes the subject clear.
 - **`disable_context_menu` demoted from capability** — no longer a `Lune::Capability` subclass; handled as a plain option check in `Runner`. `opts.disable_context_menu` still works identically but the name no longer appears in `include`/`exclude` lists or in capability sentinel keys.
 - **Tray auto-emits events** — `opts.tray` is no longer required. When the `tray` capability is active, icon clicks emit `"trayEvent"` with payload `"click"` and menu item clicks emit `"trayEvent"` with the item `id`. Override `t.event` to use a custom event name, or set `t.on_click`/`t.on_menu_click` for full Crystal-side control.
+- **`navigation` demoted from capability** — `on_navigate` JS injection inlined into `Runner`. `opts.on_navigate` unchanged.
+- **`lifecycle` renamed to `system`** — capability name, JS namespace (`Lifecycle` → `System`), and bridge IDs (`__lune.lifecycle.*` → `__lune.system.*`) all updated. **Breaking change** for any code using `lifecycle` in `lune.yml` or importing `Lifecycle` from `runtime.js`.
 - **Website docs rewritten** — `guide/runtime.md`, `guide/events.md`, `guide/deep-links.md`, `guide/how-it-works.md`, `guide/typescript.md`, `configuration.md`, and `getting-started.md` all updated to the new namespaced API.
 
 ### Added

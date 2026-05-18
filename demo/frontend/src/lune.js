@@ -5,7 +5,7 @@ export { default as api } from "../lunejs/app/App.js";
 export {
   LuneError,
   runtime,
-  Lifecycle,
+  System,
   Filesystem,
   Clipboard,
   Window,

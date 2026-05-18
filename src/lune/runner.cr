@@ -72,6 +72,8 @@ module Lune
           wv.init("document.addEventListener('contextmenu',function(e){e.preventDefault();});")
         end
 
+        setup_navigate_if_set(wv)
+
         active.each do |cap|
           wv.init("window[#{cap.sentinel_key.inspect}] = true;")
           cap.init_webview(wv, handle, @app)
@@ -142,6 +144,27 @@ module Lune
           Lune.logger.debug(exception: ex) { "on_window_ready callback failed (stacktrace)" }
         end
       end
+    end
+
+    private def setup_navigate_if_set(wv : Webview::Webview) : Nil
+      return unless (nav_cb = @options.on_navigate)
+      navigate_key = "#{Lune::Capability::BRIDGE_MARKER}.navigate"
+      wv.init(<<-JS)
+      (function(){
+        function _nav(){ window[#{navigate_key.inspect}](location.href); }
+        window.addEventListener('popstate', _nav);
+        window.addEventListener('hashchange', _nav);
+      })();
+      JS
+      wv.bind(navigate_key, Webview::JSProc.new { |args|
+        begin
+          nav_cb.call(args[0]?.try(&.as_s) || "")
+        rescue ex
+          Lune.logger.error { "on_navigate callback failed: #{ex.message}" }
+          Lune.logger.debug(exception: ex) { "on_navigate callback failed (stacktrace)" }
+        end
+        JSON::Any.new(nil)
+      })
     end
 
     private def callback_window_loaded_if_set(wv : Webview::Webview) : Nil

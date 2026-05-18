@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import SectionHead from "../components/SectionHead.vue";
-import { Lifecycle, Screen, Notifications } from "../lune.js";
+import { System, Screen, Notifications } from "../lune.js";
 
 const envOut = ref("");
 const screenOut = ref("");
@@ -9,7 +9,7 @@ const notifTitle = ref("Hello from Lune");
 const notifBody = ref("This is a native notification.");
 
 async function loadEnv() {
-  envOut.value = JSON.stringify(await Lifecycle.environment(), null, 2);
+  envOut.value = JSON.stringify(await System.environment(), null, 2);
 }
 async function loadScreen() {
   screenOut.value = JSON.stringify(await Screen.info(), null, 2);
@@ -25,7 +25,7 @@ async function sendNotif() {
 
   <div class="card-grid">
     <div class="card">
-      <span class="card-label">Lifecycle.environment()</span>
+      <span class="card-label">System.environment()</span>
       <button @click="loadEnv">Get environment</button>
       <pre class="result mono">{{ envOut }}</pre>
     </div>

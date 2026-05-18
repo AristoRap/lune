@@ -69,23 +69,23 @@ describe Lune::Runtime do
     dts.includes?("emit(name: string").should be_true
   end
 
-  it "exports Lifecycle namespace with quit, openUrl, environment" do
+  it "exports System namespace with quit, openUrl, environment" do
     js = Lune::Runtime::Generator.generate_runtime_js(runtime_bindings)
 
-    js.includes?("export const Lifecycle").should be_true
+    js.includes?("export const System").should be_true
     js.includes?("quit()").should be_true
     js.includes?("openUrl(").should be_true
     js.includes?("environment()").should be_true
-    js.includes?("__lune.lifecycle.quit").should be_true
-    js.includes?("__lune.lifecycle.open_url").should be_true
-    js.includes?("__lune.lifecycle.environment").should be_true
+    js.includes?("__lune.system.quit").should be_true
+    js.includes?("__lune.system.open_url").should be_true
+    js.includes?("__lune.system.environment").should be_true
   end
 
   it "generates runtime.d.ts with typed namespace interfaces" do
     dts = Lune::Runtime::Generator.generate_runtime_dts(runtime_bindings, event_bus_caps)
 
     dts.includes?("LuneEnvironment").should be_true
-    dts.includes?("export interface Lifecycle").should be_true
+    dts.includes?("export interface System").should be_true
     dts.includes?("quit()").should be_true
     dts.includes?("openUrl(").should be_true
     dts.includes?("environment()").should be_true

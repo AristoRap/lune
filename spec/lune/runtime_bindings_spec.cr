@@ -12,11 +12,11 @@ private def install(app : Lune::App, *mods : Lune::Installable)
 end
 
 describe "Lune::Capabilities" do
-  describe Lune::Capabilities::Lifecycle do
+  describe Lune::Capabilities::System do
     it "does not pollute user bindings" do
       fake, bridge = make_bridge
       app = Lune::App.new
-      app.install(Lune::Capabilities::Lifecycle.new(on_quit: -> { }))
+      app.install(Lune::Capabilities::System.new(on_quit: -> { }))
       bridge.register_bindings(app.bindings)
       bridge.all_bindings.values.reject(&.internal?).should be_empty
     end
@@ -25,10 +25,10 @@ describe "Lune::Capabilities" do
       fake, bridge = make_bridge
       quit_called = false
       app = Lune::App.new
-      app.install(Lune::Capabilities::Lifecycle.new(on_quit: -> { quit_called = true; nil }))
+      app.install(Lune::Capabilities::System.new(on_quit: -> { quit_called = true; nil }))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.lifecycle.quit", "seq-1", [] of JSON::Any)
+      fake.invoke("__lune.system.quit", "seq-1", [] of JSON::Any)
       quit_called.should be_true
     end
 
@@ -36,13 +36,13 @@ describe "Lune::Capabilities" do
       fake, bridge = make_bridge
       opened_url = ""
       app = Lune::App.new
-      app.install(Lune::Capabilities::Lifecycle.new(
+      app.install(Lune::Capabilities::System.new(
         on_quit: -> { },
         on_open_url: ->(url : String) { opened_url = url; nil }
       ))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.lifecycle.open_url", "seq-2", [JSON::Any.new("https://example.com")])
+      fake.invoke("__lune.system.open_url", "seq-2", [JSON::Any.new("https://example.com")])
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -58,10 +58,10 @@ describe "Lune::Capabilities" do
     it "returns environment with os, arch, and debug fields" do
       fake, bridge = make_bridge
       app = Lune::App.new
-      app.install(Lune::Capabilities::Lifecycle.new(on_quit: -> { }, debug: true))
+      app.install(Lune::Capabilities::System.new(on_quit: -> { }, debug: true))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.lifecycle.environment", "seq-3", [] of JSON::Any)
+      fake.invoke("__lune.system.environment", "seq-3", [] of JSON::Any)
       _seq, status, result = fake.resolve_calls[0]
       status.should eq(0)
       env = JSON.parse(result)
@@ -73,10 +73,10 @@ describe "Lune::Capabilities" do
     it "reflects the debug flag in environment" do
       fake, bridge = make_bridge
       app = Lune::App.new
-      app.install(Lune::Capabilities::Lifecycle.new(on_quit: -> { }, debug: false))
+      app.install(Lune::Capabilities::System.new(on_quit: -> { }, debug: false))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.lifecycle.environment", "seq-4", [] of JSON::Any)
+      fake.invoke("__lune.system.environment", "seq-4", [] of JSON::Any)
       env = JSON.parse(fake.resolve_calls[0][2])
       env["debug"].as_bool.should be_false
     end
@@ -84,10 +84,10 @@ describe "Lune::Capabilities" do
     it "returns a known os value" do
       fake, bridge = make_bridge
       app = Lune::App.new
-      app.install(Lune::Capabilities::Lifecycle.new(on_quit: -> { }))
+      app.install(Lune::Capabilities::System.new(on_quit: -> { }))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.lifecycle.environment", "seq-5", [] of JSON::Any)
+      fake.invoke("__lune.system.environment", "seq-5", [] of JSON::Any)
       env = JSON.parse(fake.resolve_calls[0][2])
       ["darwin", "linux", "windows"].should contain(env["os"].as_s)
     end
@@ -343,9 +343,9 @@ describe "Lune::Capabilities" do
 
       methods = app.bindings.map(&.method)
 
-      methods.should contain("lifecycle.quit")
-      methods.should contain("lifecycle.environment")
-      methods.should contain("lifecycle.open_url")
+      methods.should contain("system.quit")
+      methods.should contain("system.environment")
+      methods.should contain("system.open_url")
       methods.should contain("filesystem.home_dir")
       methods.should contain("clipboard.read")
       methods.should contain("clipboard.write")
@@ -387,9 +387,9 @@ describe "Lune::Capabilities" do
 
     it "includes a capability when its name is in the include list" do
       registry = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigCapabilities.new(only: ["lifecycle"])
+      caps = Lune::ConfigCapabilities.new(only: ["system"])
       active = registry.active(caps)
-      active.map(&.name).should contain("lifecycle")
+      active.map(&.name).should contain("system")
       active.size.should eq(1)
     end
 
@@ -408,9 +408,9 @@ describe "Lune::Capabilities" do
 
     it "silently ignores nonexistent capability names in include" do
       registry = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigCapabilities.new(only: ["lifecycle", "nonexistent"])
+      caps = Lune::ConfigCapabilities.new(only: ["system", "nonexistent"])
       active = registry.active(caps)
-      active.map(&.name).should eq(["lifecycle"])
+      active.map(&.name).should eq(["system"])
     end
 
     it "excludes a capability by capability name" do
@@ -418,7 +418,7 @@ describe "Lune::Capabilities" do
       caps = Lune::ConfigCapabilities.new(exclude: ["clipboard"])
       active = registry.active(caps)
       active.map(&.name).should_not contain("clipboard")
-      active.map(&.name).should contain("lifecycle")
+      active.map(&.name).should contain("system")
     end
 
     it "does not match binding names in exclude — only capability names" do
@@ -430,9 +430,9 @@ describe "Lune::Capabilities" do
 
     it "applies include before exclude" do
       registry = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigCapabilities.new(only: ["lifecycle", "clipboard"], exclude: ["clipboard"])
+      caps = Lune::ConfigCapabilities.new(only: ["system", "clipboard"], exclude: ["clipboard"])
       active = registry.active(caps)
-      active.map(&.name).should contain("lifecycle")
+      active.map(&.name).should contain("system")
       active.map(&.name).should_not contain("clipboard")
     end
 

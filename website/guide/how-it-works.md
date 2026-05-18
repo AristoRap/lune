@@ -58,7 +58,7 @@ The `Lune::Bindable` module uses Crystal macros to inspect annotated methods at 
 
 When you call `app.install(MyModule.new)`, the generated `install` method fires. Each binding is added to the `App`'s binding list. When the WebView starts, the `Runner` hands the full list to the `Bridge`, which wires each one as a WebView binding callback — a JavaScript-callable function backed by native code.
 
-Lune's own built-in capabilities (lifecycle, filesystem, clipboard, window controls, dialogs, tray, notifications, screen) are registered the same way — as `Installable` classes. There is no separate path for built-in vs user bindings.
+Lune's own built-in capabilities (system, filesystem, clipboard, window controls, dialogs, tray, notifications, screen) are registered the same way — as `Installable` classes. There is no separate path for built-in vs user bindings.
 
 ### 4. JavaScript stub generation
 
@@ -66,7 +66,7 @@ Lune writes four files into `frontend/lunejs/`:
 
 - `app/App.js` — one stub function per user binding, grouped by namespace
 - `app/App.d.ts` — TypeScript declarations with exact types derived from Crystal signatures
-- `runtime/runtime.js` — built-in functions (`Lifecycle.quit`, `Lifecycle.openUrl`, `Events.on`, `Events.emit`, …)
+- `runtime/runtime.js` — built-in functions (`System.quit`, `System.openUrl`, `Events.on`, `Events.emit`, …)
 - `runtime/runtime.d.ts` — TypeScript declarations for runtime functions
 
 This happens automatically on `lune dev` startup and during `lune build` (before Vite runs).
@@ -100,7 +100,7 @@ frontend/lunejs/
 │   ├── App.js       # binding stubs
 │   └── App.d.ts     # TypeScript declarations
 └── runtime/
-    ├── runtime.js   # runtime, Lifecycle/Filesystem/Clipboard...
+    ├── runtime.js   # runtime, System/Filesystem/Clipboard...
     └── runtime.d.ts # TypeScript declarations
 ```
 

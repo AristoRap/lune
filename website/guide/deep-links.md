@@ -88,8 +88,8 @@ A typical OAuth flow:
 
 1. Your app opens the browser to the provider's auth URL:
    ```js
-   import { Lifecycle } from "../lunejs/runtime/runtime.js";
-   Lifecycle.openUrl(
+   import { System } from "../lunejs/runtime/runtime.js";
+   System.openUrl(
      "https://provider.com/oauth/authorize?redirect_uri=myapp://oauth/callback&...",
    );
    ```
