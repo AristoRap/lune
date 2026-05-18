@@ -19,5 +19,5 @@ capabilities:
   # include:
   # - system
 
-  exclude:
-    - system
+  # exclude:
+  #   - system
