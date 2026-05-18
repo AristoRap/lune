@@ -23,9 +23,9 @@ await runtime.System.quit();
 
 | Namespace       | Method            | Signature                         | Returns                    | macOS | Linux | Windows |
 | --------------- | ----------------- | --------------------------------- | -------------------------- | :---: | :---: | :-----: |
-| `System`     | `quit`            | `quit()`                          | `Promise<void>`            |   ✓   |   ✓   |    ✓    |
-| `System`     | `openUrl`         | `openUrl(url)`                    | `Promise<void>`            |   ✓   |   ✓   |    ✓    |
-| `System`     | `environment`     | `environment()`                   | `Promise<LuneEnvironment>` |   ✓   |   ✓   |    ✓    |
+| `System`        | `quit`            | `quit()`                          | `Promise<void>`            |   ✓   |   ✓   |    ✓    |
+| `System`        | `openUrl`         | `openUrl(url)`                    | `Promise<void>`            |   ✓   |   ✓   |    ✓    |
+| `System`        | `environment`     | `environment()`                   | `Promise<LuneEnvironment>` |   ✓   |   ✓   |    ✓    |
 | `Filesystem`    | `homeDir`         | `homeDir()`                       | `Promise<string>`          |   ✓   |   ✓   |    ✓    |
 | `Filesystem`    | `appDataDir`      | `appDataDir()`                    | `Promise<string>`          |   ✓   |   ✓   |    ✓    |
 | `Filesystem`    | `downloadsDir`    | `downloadsDir()`                  | `Promise<string>`          |   ✓   |   ✓   |    ✓    |
@@ -87,22 +87,21 @@ await runtime.System.quit();
 
 `include`/`exclude` in `lune.yml` operate on whole **capabilities** — groups of related functions — referenced by their **capability name**, not by individual method names.
 
-| Capability name        | JS namespace    | Methods included                                                                                                   |
-| ---------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `system`               | `System`        | `quit`, `openUrl`, `environment`                                                                                   |
-| `filesystem`           | `Filesystem`    | `homeDir`, `tempDir`, `downloadsDir`, `appDataDir`                                                                 |
-| `clipboard`            | `Clipboard`     | `read`, `write`, `readHtml`, `writeHtml`, `readImage`, `writeImage`                                                |
-| `window`               | `Window`        | `minimize`, `maximize`, `center`, `setTitle`, `setSize`                                                            |
-| `dialogs`              | `Dialogs`       | `openFile`, `openDir`, `openFiles`, `saveFile`, `messageInfo`, `messageWarning`, `messageError`, `messageQuestion` |
-| `tray`                 | `Tray`          | `show`, `hide`, `setIcon`, `setMenu`                                                                               |
-| `notifications`        | `Notifications` | `notify`                                                                                                           |
-| `screen`               | `Screen`        | `info`                                                                                                             |
-| `context_menu`         | `ContextMenu`   | `set`, `clear`, `onSelect`                                                                                         |
-| `drag_out`             | `DragOut`       | `start`                                                                                                            |
-| `deep_link`            | `DeepLink`      | `onDeepLink`, `onDeepLinkOff` (event-only, no bridge binding)                                                      |
-| `event_bus`            | `Events`        | `on`, `once`, `off`, `emit` (core — no bridge binding)                                                             |
-| `keyboard_shortcuts`   | —               | Cmd/Ctrl+C/V/Z/etc. JS injection (core — no bridge binding)                                                        |
-| `file_drop`            | `FileDrop`      | `on`, `off` (core — controlled by `opts.drop`)                                                                     |
+| Capability name | JS namespace    | Methods included                                                                                                   |
+| --------------- | --------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `system`        | `System`        | `quit`, `openUrl`, `environment`                                                                                   |
+| `filesystem`    | `Filesystem`    | `homeDir`, `tempDir`, `downloadsDir`, `appDataDir`                                                                 |
+| `clipboard`     | `Clipboard`     | `read`, `write`, `readHtml`, `writeHtml`, `readImage`, `writeImage`                                                |
+| `window`        | `Window`        | `minimize`, `maximize`, `center`, `setTitle`, `setSize`                                                            |
+| `dialogs`       | `Dialogs`       | `openFile`, `openDir`, `openFiles`, `saveFile`, `messageInfo`, `messageWarning`, `messageError`, `messageQuestion` |
+| `tray`          | `Tray`          | `show`, `hide`, `setIcon`, `setMenu`                                                                               |
+| `notifications` | `Notifications` | `notify`                                                                                                           |
+| `screen`        | `Screen`        | `info`                                                                                                             |
+| `context_menu`  | `ContextMenu`   | `set`, `clear`, `onSelect`                                                                                         |
+| `drag_out`      | `DragOut`       | `start`                                                                                                            |
+| `deep_link`     | `DeepLink`      | `onDeepLink`, `onDeepLinkOff` (event-only, no bridge binding)                                                      |
+| `event_bus`     | `Events`        | `on`, `once`, `off`, `emit` (core — no bridge binding)                                                             |
+| `file_drop`     | `FileDrop`      | `on`, `off` (core — controlled by `opts.drop`)                                                                     |
 
 `include: [system]` exposes all three `System` methods. Individual method names are not valid capability names — they log a warning and are ignored.
 

@@ -17,8 +17,7 @@ url_schemes:
 
 capabilities:
   # include:
-  # - lifecycle
+  # - system
 
-  # exclude:
-  #   - lifecycle
-  #   - dragZone
+  exclude:
+    - system

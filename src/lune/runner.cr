@@ -72,6 +72,7 @@ module Lune
           wv.init("document.addEventListener('contextmenu',function(e){e.preventDefault();});")
         end
 
+        setup_keyboard_shortcuts(wv)
         setup_navigate_if_set(wv)
         setup_drag_zone_if_set(wv, handle)
 
@@ -145,6 +146,26 @@ module Lune
           Lune.logger.debug(exception: ex) { "on_window_ready callback failed (stacktrace)" }
         end
       end
+    end
+
+    private def setup_keyboard_shortcuts(wv : Webview::Webview) : Nil
+      wv.init(<<-JS)
+      (function(){
+        document.addEventListener('keydown', function(e) {
+          if (!e.metaKey && !e.ctrlKey) return;
+          var cmd;
+          switch (e.key) {
+            case 'a': cmd = 'selectAll'; break;
+            case 'c': cmd = 'copy'; break;
+            case 'v': cmd = 'paste'; break;
+            case 'x': cmd = 'cut'; break;
+            case 'z': cmd = e.shiftKey ? 'redo' : 'undo'; break;
+            case 'y': cmd = 'redo'; break;
+          }
+          if (cmd) { e.preventDefault(); document.execCommand(cmd); }
+        });
+      })();
+      JS
     end
 
     private def setup_drag_zone_if_set(wv : Webview::Webview, handle : Pointer(Void)) : Nil

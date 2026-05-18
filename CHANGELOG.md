@@ -2,55 +2,53 @@
 
 ## [0.7.0] - 2026-05-18
 
-### Changed
+### Breaking
 
-- **Generated `App.js` stubs use named parameters** — user-binding stubs now emit `Add(arg0, arg1)` / `Add(n, label)` instead of `Add(...args)`. Behaviour is identical; the change also makes generated code consistent with runtime stubs.
-
+- **Namespaced JS API** — `runtime.js` now exports PascalCase namespace objects with camelCase methods instead of flat functions. `quit()` → `System.quit()`, `clipboardRead()` → `Clipboard.read()`, `screenInfo()` → `Screen.info()`, `on()` → `Events.on()`, etc. A `runtime` default export bundles all namespaces. All TypeScript declarations updated to match.
+- **`lifecycle` capability renamed to `system`** — update `lune.yml` (`lifecycle` → `system`); JS namespace is now `System` (was `Lifecycle`); bridge IDs changed from `__lune.lifecycle.*` to `__lune.system.*`.
+- **`LuneError` class** — rejected promises now reject with `LuneError extends Error` instead of a plain object. `err.code` is the machine-readable error type; `err.message` replaces the old `err.error` field. `err instanceof LuneError` and `err instanceof Error` both work. `runtime.d.ts` exports `LuneError` as a class declaration.
 - **`drop.enabled` removed** — file drop is now activated solely by including `file_drop` in the `capabilities` list in `lune.yml`. `opts.drop` configures behaviour only (`zone`, `value`, `on_drop`, `disable_webview_drop`). Passing `d.enabled = true` no longer compiles.
-- **Dev warning for orphan config** — in debug mode, Lune logs a warning if any capability has non-default options set but is not active (e.g. `opts.drop.zone` configured while `file_drop` is excluded in `lune.yml`).
-
-### Changed (this release, continued)
-
-- **Namespaced JS API** — `runtime.js` now exports PascalCase namespace objects instead of flat functions. `quit()` → `Lifecycle.quit()`, `clipboardRead()` → `Clipboard.read()`, `on()` → `Events.on()`, etc. A `runtime` default export bundles all namespaces for convenience. All TypeScript declarations updated to match. **Breaking change** for any existing JS code importing flat function names.
-- **Bridge IDs updated** — internal WebView binding identifiers changed from `runtime.__lune.<camelCase>` to `__lune.<capability>.<snake_case>` (e.g. `runtime.__lune.clipboardRead` → `__lune.clipboard.read`). Affects only code that calls `window[id]` directly.
-- **`Tray.setMenu` accepts an array** — the `js_helpers` wrapper now serialises the items array to JSON automatically so `Tray.setMenu([{ id, label }])` works without manual `JSON.stringify`.
-- **`FileDrop.on` / `FileDrop.off`** — renamed from `onFileDrop` / `onFileDropOff`. The namespace already makes the subject clear.
-- **`disable_context_menu` demoted from capability** — no longer a `Lune::Capability` subclass; handled as a plain option check in `Runner`. `opts.disable_context_menu` still works identically but the name no longer appears in `include`/`exclude` lists or in capability sentinel keys.
-- **Tray auto-emits events** — `opts.tray` is no longer required. When the `tray` capability is active, icon clicks emit `"trayEvent"` with payload `"click"` and menu item clicks emit `"trayEvent"` with the item `id`. Override `t.event` to use a custom event name, or set `t.on_click`/`t.on_menu_click` for full Crystal-side control.
-- **`navigation` demoted from capability** — `on_navigate` JS injection inlined into `Runner`. `opts.on_navigate` unchanged.
-- **`drag_zone` demoted from capability** — window drag zone setup inlined into `Runner`. `opts.drag.zone` / `opts.drag.value` unchanged.
-- **`lifecycle` renamed to `system`** — capability name, JS namespace (`Lifecycle` → `System`), and bridge IDs (`__lune.lifecycle.*` → `__lune.system.*`) all updated. **Breaking change** for any code using `lifecycle` in `lune.yml` or importing `Lifecycle` from `runtime.js`.
-- **Website docs rewritten** — `guide/runtime.md`, `guide/events.md`, `guide/deep-links.md`, `guide/how-it-works.md`, `guide/typescript.md`, `configuration.md`, and `getting-started.md` all updated to the new namespaced API.
+- **`FileDrop.on` / `FileDrop.off`** — renamed from `onFileDrop` / `onFileDropOff`.
+- **Context menu API changed** — `setContextMenu(items)` / `clearContextMenu()` / `onContextMenu(cb)` replaced by the namespaced `ContextMenu.set(items)` / `ContextMenu.clear()` / `ContextMenu.onSelect(cb)`.
+- **`Lune::Capability` refactored to abstract class** — was a plain value object; now an abstract base class with `name`, `core?`, `install(app)`, `init_webview(wv, handle, app)`, `js_helpers`, and `dts_helpers`. All concrete capability classes inherit from it.
+- **`Capabilities::Registry` now instance-based** — `Registry.all(handle, ...)` class method replaced by `Registry.new(handle, options).all` / `.active(config)` / `.validate(config)`.
 
 ### Added
 
-- **`lune dist`** — new CLI command that packages the built app for distribution. On macOS produces a DMG via `hdiutil` with an `/Applications` symlink; if `mac.notarize: true` and credentials are set, submits to Apple's notary service and staples the ticket. On Linux assembles an AppDir and runs `appimagetool` to produce a self-contained `.AppImage`. Use `--skip-notarize` to skip notarization on macOS. Platform is determined automatically at compile time — no flags needed.
+- **`lune dist`** — new CLI command that packages the built app for distribution. On macOS produces a DMG via `hdiutil` with an `/Applications` symlink; if `mac.notarize: true` and credentials are set, submits to Apple's notary service and staples the ticket. On Linux assembles an AppDir and runs `appimagetool` to produce a self-contained `.AppImage`. Use `--skip-notarize` to skip notarization on macOS.
 - **`mac.notarize`** — new `lune.yml` option (`Bool`, default `false`). Enables automatic notarization and stapling in `lune dist`.
-- **`mac.entitlements`** — new `lune.yml` option (`String?`). Path to a custom entitlements plist passed to `codesign` during `lune build`. When omitted, Lune generates a minimal default that satisfies WKWebView under hardened runtime (`allow-jit`, `allow-unsigned-executable-memory`, `network.client`).
+- **`mac.entitlements`** — new `lune.yml` option (`String?`). Path to a custom entitlements plist passed to `codesign` during `lune build`. When omitted, Lune generates a minimal default that satisfies WKWebView under hardened runtime.
 - **`mac.bundle_id`** — new `lune.yml` option (`String?`). Overrides the `CFBundleIdentifier` in `Info.plist` (default: `dev.lune.<app_name>`).
+- **Deep links / `url_schemes`** — registers OS-level URL handlers. `lune build` injects `CFBundleURLTypes` into `Info.plist` (macOS); `lune dist` injects `MimeType` entries into the `.desktop` file (Linux). The app receives URLs via `DeepLink.onDeepLink(cb)` in JS. macOS uses `NSAppleEventManager`; Linux reads the URL from `ARGV` on startup.
+- **`name` drives artifact naming** — `lune.yml`'s `name` field now controls the output artifact name (`build/bin/<name>.app`, `build/bin/<name>.dmg`). `CFBundleName` in `Info.plist` also uses `name`. Previously the name was always derived from `app_entry`.
+- **Rich clipboard** — `Clipboard.readHtml()`, `Clipboard.writeHtml(html)`, `Clipboard.readImage()` (returns `data:image/png;base64,...` or `""`), and `Clipboard.writeImage(dataUrl)`. macOS backed by `NSPasteboard`; Linux backed by `xclip`.
+- **Context menus** — `ContextMenu.set(items)` / `ContextMenu.clear()` / `ContextMenu.onSelect(cb)` register a native right-click menu from JS. The `contextmenu` event is intercepted automatically; the selected item `id` is delivered to the callback. Items support `id`, `label`, `enabled`, and `separator`. macOS backed by `NSMenu popUpMenuPositioningItem:atLocation:inView:`.
+- **Drag-out** — `DragOut.start(paths)` initiates a native macOS drag session from JS. Call it from a `pointerdown` handler to let users drag local files from the app into Finder or another drop target. Backed by `NSView beginDraggingSessionWithItems:event:source:`.
 - **Distribution guide** — new website page documenting the full signing, packaging, and notarization workflow.
-- **`name` drives artifact naming** — `lune.yml`'s `name` field now controls the output artifact name (`build/bin/<name>.app`, `build/bin/<name>.dmg`). The Crystal binary inside `Contents/MacOS/` retains the entry-point name. `CFBundleName` in `Info.plist` also uses `name`. Previously the artifact name was always derived from `app_entry`.
-- **`opts.debug` respects build mode** — demo now uses `{{ flag?(:lune_dev) }}` so release builds correctly report `BUILD: release`. `lune dev` passes `-Dlune_dev` at compile time; `lune build` does not.
-- **Deep links / custom URL schemes** — `url_schemes` in `lune.yml` registers OS-level URL handlers. `lune build` injects `CFBundleURLTypes` into `Info.plist` (macOS); `lune dist` injects `MimeType` entries into the `.desktop` file (Linux). The app receives URLs via the `onDeepLink(cb)` runtime function. macOS uses `NSAppleEventManager`; Linux reads the URL from `ARGV` on startup.
 
 ### Changed
 
-- **`LuneError` class** — rejected promises from Crystal bindings now reject with a proper `LuneError extends Error` instance instead of a plain object. `err instanceof LuneError` and `err instanceof Error` both work; `err.code` holds the machine-readable error type; `err.message` holds the human-readable description (replaces the old `err.error` field). Generated `runtime.d.ts` exports `LuneError` as a class declaration.
-- **Rich clipboard** — four new runtime functions: `clipboardReadHtml()`, `clipboardWriteHtml(html)`, `clipboardReadImage()` (returns a `data:image/png;base64,...` string or `""`), and `clipboardWriteImage(dataUrl)`. macOS backed by `NSPasteboard` (reads TIFF and converts to PNG if needed); Linux backed by `xclip -t text/html` / `xclip -t image/png`.
-- **Context menus** — `setContextMenu(items)` / `clearContextMenu()` / `onContextMenu(cb)` let any JS code register a native right-click menu. The `contextmenu` event is intercepted automatically; the selected item id is delivered via the `contextMenu` event. Items support `id`, `label`, `enabled`, and `separator`. macOS backed by `NSMenu popUpMenuPositioningItem:atLocation:inView:`.
-- **Drag-out** — `dragOut(paths)` initiates a native macOS drag session from JavaScript. Call it from a `pointerdown` handler to let users drag local files from the app into Finder or any other drop target. Backed by `NSView beginDraggingSessionWithItems:event:source:`.
-- **`capabilities` refactored to `include`/`exclude` struct** — `capabilities:` in `lune.yml` is now a map with optional `include` and `exclude` keys instead of a flat array. `include` restricts to the listed capabilities (omit or leave empty to allow all); `exclude` removes from whatever `include` resolved to. Both keys accept `"*"` or `"all"` as explicit wildcards. Omitting `capabilities:` entirely still exposes everything.
-- **Capabilities operate at group granularity** — `include`/`exclude` now target whole **capability groups** by name (e.g. `lifecycle`, `clipboard`). Individual function names like `quit` are not valid and log a warning. See [Runtime → Capabilities](./guide/runtime.md#capabilities) for the full list of names and the functions each one controls.
-- **Dev vs build enforcement** — in dev mode the bridge is filtered (excluded functions throw if called from JS) but `runtime.js` always contains all helpers so hot-reload and imports keep working. In build mode both the bridge and `runtime.js` are filtered; importing an excluded function is a hard bundler error.
-- **Startup warnings for unknown capability names** — any name in `include` or `exclude` that does not match a real capability logs a warning before the window opens.
-- **`Lune::Capability` refactored to abstract class** — was a plain value object wrapping one binding; now an abstract base class with `name : String`, `core? : Bool`, `install(app)`, `init_webview(wv, handle, app)`, `js_helpers : String`, and `dts_helpers : String`. All concrete capability classes (`Lifecycle`, `Clipboard`, `Window`, etc.) inherit from it. **Breaking for anyone subclassing or constructing `Lune::Capability` directly.**
-- **`Capabilities::Registry` now instance-based** — `Registry.all(handle, ...)` class method replaced by `Registry.new(handle, options).all` / `.active(config)` / `.validate(config)`. **Breaking for any direct use of `Registry.all`.**
-- **`runtime/scripts.cr` deleted** — all JS initialisation code (`core`, `NAVIGATION`, `DISABLE_CONTEXT_MENU`, `drag_zone`, `file_drop`) moved into dedicated `init_webview` implementations on their respective capability classes (`EventBus`, `Navigation`, `DisableContextMenu`, `DragZone`, `FileDrop`).
-- **New core capabilities** — `EventBus` (on/once/off/emit), `KeyboardShortcuts` (Cmd/Ctrl+C/V/Z/etc.), `ContextMenuBridge`, `Navigation`, `DisableContextMenu`, `DragZone`, and `FileDrop` are now first-class `Lune::Capability` subclasses. Previously their JS was injected as raw strings from `Runner`. They participate in `include`/`exclude` like any other capability.
-- **`Runtime::Generator` now capability-aware** — `generate_runtime_js` and `generate_runtime_dts` accept an `Array(Lune::Capability)` and collect `js_helpers`/`dts_helpers` from each capability, replacing the previously hardcoded helper blocks.
-- **`runner.cr` major simplification** — feature-specific setup methods (`setup_file_drop`, `setup_mac_window_drag`, `register_callback_events`, etc.) removed. Both the install and webview-init phases are now a single `active.each { |cap| cap.install(@app) }` / `active.each { |cap| cap.init_webview(...) }` loop.
+- **Bridge IDs** — internal WebView binding identifiers changed from `runtime.__lune.<camelCase>` to `__lune.<capability>.<snake_case>` (e.g. `runtime.__lune.clipboardRead` → `__lune.clipboard.read`). Affects only code calling `window[id]` directly.
+- **`capabilities` refactored to `include`/`exclude` struct** — `capabilities:` in `lune.yml` is now a map with optional `include` and `exclude` keys instead of a flat array. `include` restricts to the listed capabilities; `exclude` removes from whatever `include` resolved to. Both keys accept `"*"` or `"all"` as wildcards. Omitting `capabilities:` entirely still exposes everything.
+- **Capabilities operate at group granularity** — `include`/`exclude` target whole capability groups (e.g. `system`, `clipboard`). Individual function names are not valid and log a warning.
+- **Dev vs build enforcement** — in dev mode the bridge is filtered but `runtime.js` always contains all helpers so hot-reload keeps working. In build mode both are filtered; importing an excluded function is a hard bundler error.
+- **Startup warnings for unknown capability names** — any unknown name in `include` or `exclude` logs a warning before the window opens.
+- **Dev warning for orphan config** — in debug mode, logs a warning if capability options are configured but the capability is not active.
+- **Tray auto-emits events** — `opts.tray` callbacks are now optional. When the `tray` capability is active, icon clicks emit `"trayEvent"` with `"click"` and menu item clicks emit `"trayEvent"` with the item `id`. Override `t.event` for a custom event name, or set `t.on_click`/`t.on_menu_click` for full Crystal-side control.
+- **`Tray.setMenu` accepts an array** — auto-serialises items to JSON; `Tray.setMenu([{ id, label }])` works without manual `JSON.stringify`.
+- **`disable_context_menu` demoted** — no longer a `Lune::Capability` subclass; handled as a plain option in `Runner`. `opts.disable_context_menu` unchanged.
+- **`keyboard_shortcuts` demoted** — Cmd/Ctrl+C/V/Z/etc. JS injection inlined into `Runner`. Always active; not a toggleable capability.
+- **`navigation` demoted** — `on_navigate` JS injection inlined into `Runner`. `opts.on_navigate` unchanged.
+- **`drag_zone` demoted** — window drag zone setup inlined into `Runner`. `opts.drag.zone` / `opts.drag.value` unchanged.
+- **New core capabilities** — `EventBus`, `KeyboardShortcuts`, `ContextMenu`, `Navigation`, `DisableContextMenu`, `DragZone`, and `FileDrop` are now first-class `Lune::Capability` subclasses. Previously their JS was injected as raw strings from `Runner`. They participate in `include`/`exclude` like any other capability.
+- **`runtime/scripts.cr` deleted** — JS initialisation code moved into `init_webview` on the respective capability classes.
+- **`Runtime::Generator` now capability-aware** — `generate_runtime_js` and `generate_runtime_dts` collect `js_helpers`/`dts_helpers` from each capability, replacing hardcoded helper blocks.
+- **`runner.cr` simplified** — install and webview-init phases are now `active.each { |cap| cap.install(@app) }` / `active.each { |cap| cap.init_webview(...) }` loops; feature-specific setup methods removed.
+- **Generated `App.js` stubs use named parameters** — stubs now emit `Add(arg0, arg1)` / `Add(n, label)` instead of `Add(...args)`.
+- **`opts.debug` respects build mode** — uses `{{ flag?(:lune_dev) }}` so release builds correctly report `BUILD: release`.
 - **Makefile demo targets renamed** — `dev`/`app`/`run` → `demo-dev`/`demo-app`/`demo-run`. New targets: `demo-release`, `demo-dist`, `demo-deploy`.
 - **Demo** — new Capabilities view shows which runtime functions are available in the current build.
+- **Website docs rewritten** — `guide/runtime.md`, `guide/events.md`, `guide/deep-links.md`, `guide/how-it-works.md`, `guide/typescript.md`, `configuration.md`, and `getting-started.md` updated to the new namespaced API.
 
 ---
 

@@ -23,7 +23,6 @@ const ALL = [
   { cap: "event_bus", group: "Event Bus", core: true, fns: ["on", "once", "off", "emit"] },
   { cap: "deep_link", group: "Deep Link", core: true, fns: ["onDeepLink", "onDeepLinkOff"] },
   { cap: "file_drop", group: "File Drop", core: true, fns: ["on", "off"] },
-  { cap: "keyboard_shortcuts", group: "Keyboard Shortcuts", core: true, fns: ["Cmd/Ctrl+C/V/X/Z/Y"] },
 ];
 
 const bridgeGroups = ref([]);
