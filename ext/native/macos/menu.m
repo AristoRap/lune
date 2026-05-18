@@ -7,6 +7,10 @@ typedef void (*LuneMenuItemCallback)(const char *payload, void *ctx);
 static LuneMenuItemCallback _item_cb  = NULL;
 static void                *_item_ctx = NULL;
 
+// Context menu — separate callback set so menu-bar and context-menu don't interfere.
+static LuneMenuItemCallback _ctx_cb  = NULL;
+static void                *_ctx_ctx = NULL;
+
 #define LUNE_TAG_TEXT     0
 #define LUNE_TAG_CHECKBOX 1
 #define LUNE_TAG_RADIO    2
@@ -33,6 +37,12 @@ static void                *_item_ctx = NULL;
     NSString *payload = [NSString stringWithFormat:@"{\"id\":\"%@\",\"checked\":%@}",
                          sender.representedObject, on ? @"true" : @"false"];
     _item_cb([payload UTF8String], _item_ctx);
+}
+
+- (void)contextItemClicked:(NSMenuItem *)sender {
+    if (!_ctx_cb) return;
+    NSString *payload = [NSString stringWithFormat:@"{\"id\":\"%@\"}", sender.representedObject];
+    _ctx_cb([payload UTF8String], _ctx_ctx);
 }
 
 - (void)radioClicked:(NSMenuItem *)sender {
@@ -183,6 +193,50 @@ static void build_children(NSArray *items, NSMenu *menu) {
             [menu addItem:mi];
         }
     }
+}
+
+// ── Context menu ──────────────────────────────────────────────────────────────
+
+// Simpler item format: { id, label, enabled?, separator? }
+static void build_context_children(NSArray *items, NSMenu *menu) {
+    for (NSDictionary *item in items) {
+        if ([item[@"separator"] boolValue]) {
+            [menu addItem:[NSMenuItem separatorItem]];
+            continue;
+        }
+        NSString *label = item[@"label"] ?: item[@"id"] ?: @"";
+        BOOL enabled = item[@"enabled"] != nil ? [item[@"enabled"] boolValue] : YES;
+        NSMenuItem *mi = [[NSMenuItem alloc] initWithTitle:label
+                                                    action:@selector(contextItemClicked:)
+                                             keyEquivalent:@""];
+        mi.target           = _item_handler;
+        mi.enabled          = enabled;
+        mi.representedObject = item[@"id"] ?: @"";
+        [menu addItem:mi];
+    }
+}
+
+void lune_show_context_menu(void *nswindow_ptr, float x, float y,
+                             const char *json_utf8,
+                             LuneMenuItemCallback callback, void *ctx) {
+    _ctx_cb  = callback;
+    _ctx_ctx = ctx;
+
+    if (!_item_handler) _item_handler = [[LuneMenuItemHandler alloc] init];
+
+    NSWindow *window = (__bridge NSWindow *)nswindow_ptr;
+    NSView   *view   = window.contentView;
+
+    NSData  *data  = [[NSString stringWithUTF8String:json_utf8] dataUsingEncoding:NSUTF8StringEncoding];
+    NSArray *items = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+    if (!items) return;
+
+    NSMenu *menu = [[NSMenu alloc] initWithTitle:@""];
+    menu.autoenablesItems = NO;
+    build_context_children(items, menu);
+
+    // WKWebView is a flipped view (isFlipped=YES, y=0 at top), so web clientY maps directly.
+    [menu popUpMenuPositioningItem:nil atLocation:NSMakePoint(x, y) inView:view];
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────

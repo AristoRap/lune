@@ -35,8 +35,7 @@ Lune.run(app) do |opts|
   opts.height = 720
 
   opts.drop do |d|
-    d.enabled = true
-    d.zone    = "--lune-drop-target"
+    d.zone = "--lune-drop-target"
   end
 
   opts.mac do |m|
@@ -137,6 +136,8 @@ When `true`, suppresses the browser's built-in right-click context menu (the one
 ```crystal
 opts.disable_context_menu = true
 ```
+
+> To show a **native** context menu on right-click instead, use [`setContextMenu`](./runtime#context-menus) from JavaScript — no Crystal option required.`setContextMenu` intercepts `contextmenu` automatically, so `disable_context_menu` is not needed alongside it.
 
 ---
 
@@ -239,13 +240,12 @@ After the user resizes and moves the window, the next launch will reopen it at e
 
 ## File drop
 
-Lune provides a complete drag-and-drop file API: a boolean to enable native drops, separate control to suppress the WebView's built-in drag handling, CSS-based drop zones for per-element highlighting, and JS helpers for subscribing to drops.
+Lune provides a complete drag-and-drop file API: CSS-based drop zones for per-element highlighting, a Crystal callback, and JS helpers for subscribing to drops.
 
-File drop options are configured in an `opts.drop` block:
+Enable the `file_drop` capability in `lune.yml` to activate native drop handling. Options in `opts.drop` configure its behaviour.
 
 ```crystal
 opts.drop do |d|
-  d.enabled = true
   d.zone    = "--lune-drop-target"
   d.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
     puts "Dropped #{paths.size} file(s)"
@@ -253,19 +253,11 @@ opts.drop do |d|
 end
 ```
 
-### `drop.enabled`
-
-**Type:** `Bool` — **Default:** `false`
-
-When `true`, registers the window as a native drop target. The WebView's own drag handling is automatically disabled so dropped files don't open or navigate. The `fileDrop` event is emitted to the frontend on every drop.
-
----
-
 ### `drop.disable_webview_drop`
 
 **Type:** `Bool` — **Default:** `false`
 
-Disables the WebView's built-in drag handling without setting up a drop target. Prevents files from accidentally opening or navigating inside the WebView when `drop.enabled` is not needed.
+Disables the WebView's built-in drag handling globally, without enabling the `file_drop` capability. Prevents files from accidentally opening or navigating inside the WebView.
 
 ---
 
@@ -279,16 +271,13 @@ Mark specific elements as drop targets using a CSS custom property. Set `zone` t
 
 ```crystal
 opts.drop do |d|
-  d.enabled = true
-  d.zone    = "--lune-drop-target"
-  d.value   = "drop"   # default — can be omitted
+  d.zone  = "--lune-drop-target"
+  d.value = "drop"   # default — can be omitted
 end
 ```
 
 ```html
-<div class="upload-area" style="--lune-drop-target: drop">
-  Drop files here
-</div>
+<div class="upload-area" style="--lune-drop-target: drop">Drop files here</div>
 ```
 
 ```css
@@ -298,7 +287,7 @@ end
 }
 ```
 
-Requires `enabled = true`. The `lune-drop-target-active` class is added and removed in real time as the pointer moves.
+Requires the `file_drop` capability to be active. The `lune-drop-target-active` class is added and removed in real time as the pointer moves.
 
 ---
 
@@ -306,7 +295,7 @@ Requires `enabled = true`. The `lune-drop-target-active` class is added and remo
 
 **Type:** `((Int32, Int32, Array(String)) -> Nil)?` — **Default:** `nil`
 
-Crystal-side callback fired when the user drops files. Receives the drop position in logical pixels and an array of absolute file paths. Setting this callback also enables file drop automatically — `enabled` does not need to be set separately.
+Crystal-side callback fired when the user drops files. Receives the drop position in logical pixels and an array of absolute file paths. Requires the `file_drop` capability to be active in `lune.yml`.
 
 ```crystal
 opts.drop do |d|
@@ -352,7 +341,6 @@ These are shorthand for `on("fileDrop", ...)` / `off("fileDrop")` — you can al
 ```crystal
 Lune.run(app, assets: "frontend/dist") do |opts|
   opts.drop do |d|
-    d.enabled = true
     d.zone    = "--lune-drop-target"
     d.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
       puts "Dropped: #{paths.inspect}"
@@ -362,9 +350,7 @@ end
 ```
 
 ```html
-<div class="drop-area" style="--lune-drop-target: drop">
-  Drop files here
-</div>
+<div class="drop-area" style="--lune-drop-target: drop">Drop files here</div>
 ```
 
 ```css
@@ -682,8 +668,8 @@ Hides the window title text while keeping the title bar (and traffic lights) vis
 
 Forces a specific appearance mode for the window regardless of the system setting.
 
-| Value                  | Effect                                          |
-| ---------------------- | ----------------------------------------------- |
+| Value                    | Effect                                          |
+| ------------------------ | ----------------------------------------------- |
 | `Mac::Appearance::Auto`  | Follows the system dark/light setting (default) |
 | `Mac::Appearance::Dark`  | Forces dark mode                                |
 | `Mac::Appearance::Light` | Forces light mode                               |
@@ -766,10 +752,9 @@ Lune.run(app) do |opts|
   opts.debug               = {{ flag?(:debug) }}
 
   opts.drop do |d|
-    d.enabled = true
     d.zone    = "--lune-drop-target"
     d.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
-      app.emit("fileDrop", {"x" => x, "y" => y, "paths" => paths})
+      app.emit("file_drop", {"x" => x, "y" => y, "paths" => paths})
     }
   end
 

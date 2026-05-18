@@ -140,10 +140,6 @@ end
 
 describe Lune::Options::Drop do
   describe "defaults" do
-    it "enabled is false" do
-      Lune::Options::Drop.new.enabled.should be_false
-    end
-
     it "disable_webview_drop is false" do
       Lune::Options::Drop.new.disable_webview_drop.should be_false
     end
@@ -169,11 +165,9 @@ describe Lune::Options::Drop do
     it "mutations via block are retained" do
       opts = Lune::Options.new
       opts.drop do |d|
-        d.enabled = true
         d.zone = "--lune-drop-target"
         d.value = "file"
       end
-      opts.drop.enabled.should be_true
       opts.drop.zone.should eq("--lune-drop-target")
       opts.drop.value.should eq("file")
     end

@@ -25,6 +25,7 @@ app.async do
   end
 end
 ```
+
 :::
 
 **macOS only:** Xcode Command Line Tools are required for the native WebView headers.
@@ -78,7 +79,7 @@ Add it to your `shard.yml`:
 dependencies:
   lune:
     github: AristoRap/lune
-    version: ~> 0.6.2
+    version: ~> 0.7.0
 ```
 
 Then install:
@@ -184,15 +185,19 @@ This builds the frontend with Vite, then compiles the Crystal binary with the fr
 
 The repository ships with a full showcase in `demo/` — a Vue 3 app that exercises every part of the Lune API in one window:
 
-| Section | What it shows |
-|---|---|
-| Bindings | `@[Lune::Bind]` — calling Crystal methods from JS as async functions |
-| Events | Live clock (Crystal → JS), ping/pong roundtrip with latency, async file-progress |
-| System | `environment()`, `screenInfo()`, native notifications |
-| Clipboard | `clipboardRead` / `clipboardWrite` |
-| Window | `minimize`, `maximize`, `center`, `setTitle`, `setSize` |
-| Dialogs | File pickers (`openFile`, `openFiles`, `openDir`, `saveFile`) and message dialogs |
-| Tray | Status-bar icon with a context-menu and event log |
+| Section      | What it shows                                                                                        |
+| ------------ | ---------------------------------------------------------------------------------------------------- |
+| Bindings     | `@[Lune::Bind]` — calling Crystal methods from JS as async functions                                 |
+| Events       | Live clock (Crystal → JS), ping/pong roundtrip with latency, async file-progress                     |
+| System       | `Lifecycle.Environment()`, `Screen.Info()`, native notifications                                     |
+| Clipboard    | `Clipboard.Read/Write`, `Clipboard.ReadHtml/WriteHtml`, `Clipboard.ReadImage/WriteImage`             |
+| Window       | `Window.Minimize`, `Window.Maximize`, `Window.Center`, `Window.SetTitle`, `Window.SetSize`           |
+| Dialogs      | File pickers (`Dialogs.OpenFile`, `OpenFiles`, `OpenDir`, `SaveFile`) and message dialogs            |
+| Tray         | Status-bar icon with click and menu-item event log                                                   |
+| Context Menu | `ContextMenuBridge.SetContextMenu` / `ClearContextMenu` — native right-click menu with item selection |
+| Drag Out     | `DragOut.Start(paths)` — drag local files out of the window into Finder or other apps                |
+| Deep Links   | `url_schemes` config, `DeepLink.OnDeepLink(cb)` — receive OS-routed custom URL scheme links         |
+| Capabilities | Runtime capability filtering (`include` / `exclude`) with live binding list                          |
 
 Run it from the repo root:
 

@@ -1,7 +1,7 @@
 <script setup>
 import { nextTick, ref, useTemplateRef } from "vue";
 import SectionHead from "../components/SectionHead.vue";
-import { api, openFiles, emit } from "../lune.js";
+import { api, Dialogs, Events } from "../lune.js";
 import { useLuneEvent } from "../composables/useLuneEvent.js";
 
 const clock = ref("—");
@@ -44,7 +44,7 @@ useLuneEvent("pong", (data) => {
 useLuneEvent("fileProgress", ({ done, total, name }) => {
   progress.value = { done, total, name, percent: (done / total) * 100 };
 });
-useLuneEvent("fileDrop", ({ x, y, paths }) => {
+useLuneEvent("file_drop", ({ x, y, paths }) => {
   const hit = document.elementFromPoint(x, y);
   const zone = hit?.closest("#drop-b") ? "B" : "A";
   paths.forEach((p) => dropLog.value.unshift({ zone, path: p }));
@@ -59,7 +59,7 @@ async function sendPing() {
     ms: 0,
   });
   scrollRoundsToBottom();
-  await emit("ping", pingValue.value);
+  await Events.Emit("ping", pingValue.value);
 }
 
 function fmtVal(v) {
@@ -69,7 +69,7 @@ function fmtVal(v) {
 }
 
 async function pickAndProcess() {
-  const paths = await openFiles("Select files to process");
+  const paths = await Dialogs.OpenFiles("Select files to process");
   if (!paths.length) return;
   progress.value = null;
   await api.Demo.ProcessFiles(paths);

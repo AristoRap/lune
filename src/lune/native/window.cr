@@ -19,30 +19,47 @@ module Lune
           @@mock_frame = {0, 0, 1200, 800}
           @@last_full_size_content = nil
           @@last_appearance = nil
-          @@last_drop_cb    = nil
+          @@last_drop_cb = nil
+          @@last_drag_out_paths = nil
         end
 
         def self.mock_frame=(f : Tuple(Int32, Int32, Int32, Int32))
           @@mock_frame = f
         end
 
-        def self.record_minimize;              @@calls << :minimize; end
-        def self.record_maximize;              @@calls << :maximize; end
-        def self.record_center;                @@calls << :center; end
-        def self.record_set_title(t : String); @@calls << :set_title; @@last_title = t; end
+        def self.record_minimize
+          @@calls << :minimize
+        end
+
+        def self.record_maximize
+          @@calls << :maximize
+        end
+
+        def self.record_center
+          @@calls << :center
+        end
+
+        def self.record_set_title(t : String)
+          @@calls << :set_title; @@last_title = t
+        end
+
         def self.record_set_size(w : Int32, h : Int32)
           @@calls << :set_size
           @@last_size = {w, h}
         end
+
         def self.record_set_frame(x : Int32, y : Int32, w : Int32, h : Int32)
           @@calls << :set_frame
           @@last_frame = {x, y, w, h}
         end
+
         @@last_appearance : Int32? = nil
         @@last_drop_cb : ((Int32, Int32, Array(String)) -> Nil)? = nil
         class_getter last_appearance, last_drop_cb
 
-        def self.record_disable_webview_drop; @@calls << :disable_webview_drop; end
+        def self.record_disable_webview_drop
+          @@calls << :disable_webview_drop
+        end
 
         def self.record_setup_file_drop(cb : (Int32, Int32, Array(String)) -> Nil)
           @@calls << :setup_file_drop
@@ -53,20 +70,47 @@ module Lune
           @@last_drop_cb.try(&.call(x, y, paths))
         end
 
+        @@last_drag_out_paths : Array(String)? = nil
+        class_getter last_drag_out_paths
+
+        def self.record_start_drag_out(paths : Array(String))
+          @@calls << :start_drag_out
+          @@last_drag_out_paths = paths
+        end
+
         def self.record_set_titlebar_transparent(full_size_content : Bool)
           @@calls << :set_titlebar_transparent
           @@last_full_size_content = full_size_content
         end
-        def self.record_set_background_transparent; @@calls << :set_background_transparent; end
-        def self.record_setup_drag_monitor;         @@calls << :setup_drag_monitor; end
-        def self.record_start_window_drag;          @@calls << :start_window_drag; end
-        def self.record_hide_title;                 @@calls << :hide_title; end
+
+        def self.record_set_background_transparent
+          @@calls << :set_background_transparent
+        end
+
+        def self.record_setup_drag_monitor
+          @@calls << :setup_drag_monitor
+        end
+
+        def self.record_start_window_drag
+          @@calls << :start_window_drag
+        end
+
+        def self.record_hide_title
+          @@calls << :hide_title
+        end
+
         def self.record_set_appearance(mode : Int32)
           @@calls << :set_appearance
           @@last_appearance = mode
         end
-        def self.record_set_content_protection; @@calls << :set_content_protection; end
-        def self.record_set_always_on_top;      @@calls << :set_always_on_top; end
+
+        def self.record_set_content_protection
+          @@calls << :set_content_protection
+        end
+
+        def self.record_set_always_on_top
+          @@calls << :set_always_on_top
+        end
       end
     {% elsif flag?(:darwin) %}
       {% system("cd '#{__DIR__}/../../../ext/native/macos' && clang -c window.m -o window.o -fobjc-arc 2>/dev/null") %}
@@ -97,10 +141,11 @@ module Lune
         fun set_always_on_top(window : Void*, enabled : LibC::Int) : Void
         alias DropCallback = (LibC::Char*, Void*) -> Void
         fun disable_webview_drop(window : Void*) : Void
-        # drag_pos_fn: JS function name, e.g. "window.__lune_drag_pos", or NULL
+        # drag_pos_fn: JS function name, e.g. "window.__lune.dragPos", or NULL
         fun setup_file_drop(window : Void*,
                             drop_cb : DropCallback, drop_ud : Void*,
                             drag_pos_fn : LibC::Char*) : Void
+        fun lune_start_drag_out(window : Void*, paths_json : LibC::Char*) : Void
       end
     {% elsif flag?(:linux) %}
       {% system("cd '#{__DIR__}/../../../ext/native/linux' && gcc -c window.c -o window.o `pkg-config --cflags gtk+-3.0` 2>/dev/null") %}
@@ -132,7 +177,7 @@ module Lune
 
     module Window
       # Kept at class level so GC never collects boxed callbacks while the window is live.
-      @@drop_box    : Pointer(Void) = Pointer(Void).null
+      @@drop_box : Pointer(Void) = Pointer(Void).null
       @@drop_pos_box : Pointer(Void) = Pointer(Void).null
 
       def self.disable_webview_drop(handle : Void*)
@@ -145,7 +190,7 @@ module Lune
 
       # on_drop     receives (x, y, paths) — coordinates in CSS pixels (origin top-left)
       # on_pos      receives (x, y) on each drag-move (Linux only; macOS uses drag_pos_fn)
-      # drag_pos_fn JS function name called natively on macOS, e.g. "window.__lune_drag_pos"
+      # drag_pos_fn JS function name called natively on macOS, e.g. "window.__lune.dragPos"
       def self.setup_file_drop(handle : Void*,
                                on_drop : (Int32, Int32, Array(String)) -> Nil,
                                on_pos : (Int32, Int32) -> Nil,
@@ -161,8 +206,8 @@ module Lune
             ->(json_ptr : LibC::Char*, data : Void*) {
               return if data.null?
               parsed = JSON.parse(String.new(json_ptr))
-              x     = parsed["x"].as_i
-              y     = parsed["y"].as_i
+              x = parsed["x"].as_i
+              y = parsed["y"].as_i
               paths = parsed["paths"].as_a.map(&.as_s)
               Box(Proc(Int32, Int32, Array(String), Nil)).unbox(data).call(x, y, paths)
             },
@@ -170,15 +215,15 @@ module Lune
             drag_pos_fn ? drag_pos_fn.to_unsafe : Pointer(LibC::Char).null
           )
         {% elsif flag?(:linux) %}
-          @@drop_box     = Box.box(on_drop)
+          @@drop_box = Box.box(on_drop)
           @@drop_pos_box = Box.box(on_pos)
           LibNativeWindow.setup_file_drop(
             handle,
             ->(json_ptr : LibC::Char*, data : Void*) {
               return if data.null?
               parsed = JSON.parse(String.new(json_ptr))
-              x     = parsed["x"].as_i
-              y     = parsed["y"].as_i
+              x = parsed["x"].as_i
+              y = parsed["y"].as_i
               paths = parsed["paths"].as_a.map(&.as_s)
               Box(Proc(Int32, Int32, Array(String), Nil)).unbox(data).call(x, y, paths)
             },
@@ -189,6 +234,14 @@ module Lune
             },
             @@drop_pos_box
           )
+        {% end %}
+      end
+
+      def self.start_drag_out(handle : Void*, paths : Array(String))
+        {% if flag?(:lune_native_test_mock) %}
+          WindowMock.record_start_drag_out(paths)
+        {% elsif flag?(:darwin) %}
+          LibNativeWindow.lune_start_drag_out(handle, paths.to_json)
         {% end %}
       end
 

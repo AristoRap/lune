@@ -24,13 +24,12 @@ module LuneCLI
 
         command.on_run do |cmd, _args|
           release = cmd.bool_flag("release")
-          output_path = output_path_for(config.app_entry)
 
           Lune.logger.info { "Building frontend assets..." }
-          success = run(frontend_dir: config.frontend.dir, app_entry: config.app_entry, output_path: output_path, release: release, build_cmd: config.frontend.build || DEFAULT_BUILD_CMD, icon: config.icon, sign: config.mac.sign)
+          success = run(config, release: release)
 
           if success
-            Lune.logger.info { "Built app: #{output_path}" }
+            Lune.logger.info { "Built app: #{output_path_for(config.app_entry, config.name)}" }
           else
             raise Argy::Error.new("build failed")
           end
@@ -39,13 +38,17 @@ module LuneCLI
         command
       end
 
-      def output_path_for(app_entry : String) : String
-        app_name = app_name_for(app_entry)
+      def output_path_for(app_entry : String, name : String? = nil) : String
+        bundle = bundle_name_for(app_entry, name)
         {% if flag?(:darwin) %}
-          File.join(BUILD_DIR, "#{app_name}.app")
+          File.join(BUILD_DIR, "#{bundle}.app")
         {% else %}
-          File.join(BUILD_DIR, app_name)
+          File.join(BUILD_DIR, bundle)
         {% end %}
+      end
+
+      def bundle_name_for(app_entry : String, name : String? = nil) : String
+        name || File.basename(app_entry, File.extname(app_entry))
       end
 
       def validate_paths(frontend_dir : String, app_entry : String) : String?
@@ -55,7 +58,12 @@ module LuneCLI
         nil
       end
 
-      def run(frontend_dir : String, app_entry : String, output_path : String, release : Bool = false, build_cmd : String = DEFAULT_BUILD_CMD, icon : String? = nil, sign : String? = nil) : Bool
+      def run(config : LuneCLI::Config = LuneCLI::Config.new, release : Bool = false) : Bool
+        app_entry = config.app_entry
+        output_path = output_path_for(app_entry, config.name)
+        frontend_dir = config.frontend.dir
+        build_cmd = config.frontend.build || DEFAULT_BUILD_CMD
+
         LuneCLI::Generator.generate_bindings(app_entry, frontend_dir)
 
         build_parts = build_cmd.split(' ', remove_empty: true)
@@ -86,10 +94,10 @@ module LuneCLI
         return false unless app_status.success?
 
         File.delete?("#{compiled_output_path}.dwarf")
-        finalize_output(app_entry, output_path, icon)
+        finalize_output(output_path, config)
         {% if flag?(:darwin) %}
-          if identity = sign
-            sign_app(output_path, identity)
+          if identity = config.mac.sign
+            sign_app(output_path, identity, config.mac.entitlements)
           else
             Lune.logger.info { "No mac.sign set — notifications will use osascript fallback (set mac.sign in lune.yml to enable UNUserNotificationCenter)" }
           end
@@ -97,13 +105,13 @@ module LuneCLI
         true
       end
 
-      private def app_name_for(app_entry : String) : String
+      private def binary_name_for(app_entry : String) : String
         File.basename(app_entry, File.extname(app_entry))
       end
 
       private def compiled_output_path_for(app_entry : String, output_path : String) : String
         {% if flag?(:darwin) %}
-          File.join(output_path, "Contents", "MacOS", app_name_for(app_entry))
+          File.join(output_path, "Contents", "MacOS", binary_name_for(app_entry))
         {% else %}
           output_path
         {% end %}
@@ -119,10 +127,10 @@ module LuneCLI
         {% end %}
       end
 
-      private def finalize_output(app_entry : String, output_path : String, icon : String? = nil) : Nil
+      private def finalize_output(output_path : String, config : LuneCLI::Config = LuneCLI::Config.new) : Nil
         {% if flag?(:darwin) %}
           icon_name = nil
-          if src = icon
+          if src = config.icon
             if File.exists?(src)
               icns_path = File.extname(src).downcase == ".png" ? png_to_icns(src) : src
               if icns_path
@@ -134,9 +142,9 @@ module LuneCLI
             end
           end
           plist_path = File.join(output_path, "Contents", "Info.plist")
-          File.write(plist_path, info_plist_for(app_entry, icon_name))
+          File.write(plist_path, info_plist_for(config.app_entry, icon_name, config.name, config.mac.bundle_id, config.url_schemes))
         {% elsif flag?(:linux) %}
-          if src = icon
+          if src = config.icon
             if File.exists?(src)
               FileUtils.cp(src, File.join(File.dirname(output_path), File.basename(src)))
             else
@@ -147,16 +155,48 @@ module LuneCLI
       end
 
       {% if flag?(:darwin) %}
-      private def sign_app(output_path : String, identity : String) : Nil
-        result = Process.run(
-          "codesign",
-          ["--force", "--deep", "--options", "runtime", "--sign", identity, output_path],
-          input: Process::Redirect::Close,
-          output: Process::Redirect::Inherit,
-          error: Process::Redirect::Inherit
-        )
-        Lune.logger.warn { "codesign failed — notifications will fall back to osascript" } unless result.success?
-      end
+        private def sign_app(output_path : String, identity : String, entitlements : String? = nil) : Nil
+          ents_path = resolve_entitlements(entitlements)
+          args = ["--force", "--deep", "--options", "runtime",
+                  "--entitlements", ents_path,
+                  "--sign", identity, output_path]
+          result = Process.run(
+            "codesign", args,
+            input: Process::Redirect::Close,
+            output: Process::Redirect::Inherit,
+            error: Process::Redirect::Inherit
+          )
+          Lune.logger.warn { "codesign failed — notifications will fall back to osascript" } unless result.success?
+        end
+
+        private def resolve_entitlements(path : String?) : String
+          if p = path
+            return p if File.exists?(p)
+            Lune.logger.warn { "Entitlements file not found: #{p} — using defaults" }
+          end
+          write_default_entitlements
+        end
+
+        protected def write_default_entitlements : String
+          tmp = File.join(Dir.tempdir, "lune-entitlements-#{Random.new.hex(6)}.plist")
+          File.write(tmp, DEFAULT_ENTITLEMENTS_PLIST)
+          tmp
+        end
+
+        DEFAULT_ENTITLEMENTS_PLIST = <<-XML
+      <?xml version="1.0" encoding="UTF-8"?>
+      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+      <plist version="1.0">
+      <dict>
+        <key>com.apple.security.cs.allow-jit</key>
+        <true/>
+        <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+        <true/>
+        <key>com.apple.security.network.client</key>
+        <true/>
+      </dict>
+      </plist>
+      XML
       {% end %}
 
       protected def png_to_icns(png_path : String) : String?
@@ -164,7 +204,6 @@ module LuneCLI
         icns_path = File.join(Dir.tempdir, "lune-icon-#{Random.new.hex(6)}.icns")
         Dir.mkdir_p(iconset_dir)
 
-        sizes = {16 => ["1x", ""], 32 => ["2x", "1x"], 64 => ["2x"], 128 => ["1x", ""], 256 => ["2x", "1x"], 512 => ["2x", "1x"]}
         {
           {"icon_16x16.png", 16},
           {"icon_16x16@2x.png", 32},
@@ -195,9 +234,12 @@ module LuneCLI
         end
       end
 
-      private def info_plist_for(app_entry : String, icon_name : String? = nil) : String
-        app_name = app_name_for(app_entry)
+      private def info_plist_for(app_entry : String, icon_name : String? = nil, display_name : String? = nil, bundle_id : String? = nil, url_schemes : Array(String) = [] of String) : String
+        binary_name = binary_name_for(app_entry)
+        app_name = display_name || binary_name
+        identifier = bundle_id || "dev.lune.#{binary_name.gsub('_', '-')}"
         icon_entry = icon_name ? "\n  <key>CFBundleIconFile</key>\n  <string>#{icon_name}</string>" : ""
+        url_types_entry = url_schemes.empty? ? "" : build_url_types_plist(url_schemes, identifier)
         <<-XML
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -206,9 +248,9 @@ module LuneCLI
           <key>CFBundleDevelopmentRegion</key>
           <string>en</string>
           <key>CFBundleExecutable</key>
-          <string>#{app_name}</string>
+          <string>#{binary_name}</string>
           <key>CFBundleIdentifier</key>
-          <string>dev.lune.#{app_name.gsub('_', '-')}</string>
+          <string>#{identifier}</string>
           <key>CFBundleInfoDictionaryVersion</key>
           <string>6.0</string>
           <key>CFBundleName</key>
@@ -220,10 +262,27 @@ module LuneCLI
           <key>CFBundleVersion</key>
           <string>#{Lune::VERSION}</string>
           <key>NSHighResolutionCapable</key>
-          <true/>#{icon_entry}
+          <true/>#{icon_entry}#{url_types_entry}
         </dict>
         </plist>
         XML
+      end
+
+      private def build_url_types_plist(schemes : Array(String), identifier : String) : String
+        String.build do |s|
+          s << "\n  <key>CFBundleURLTypes</key>\n  <array>"
+          schemes.each do |scheme|
+            s << "\n    <dict>"
+            s << "\n      <key>CFBundleURLName</key>"
+            s << "\n      <string>#{identifier}.#{scheme}</string>"
+            s << "\n      <key>CFBundleURLSchemes</key>"
+            s << "\n      <array>"
+            s << "\n        <string>#{scheme}</string>"
+            s << "\n      </array>"
+            s << "\n    </dict>"
+          end
+          s << "\n  </array>"
+        end
       end
     end
   end

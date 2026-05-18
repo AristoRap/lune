@@ -12,13 +12,13 @@ module LuneCLI
         )
 
         command.on_pre_run do |_cmd, _args|
-          if message = validate_paths(app_entry: config.app_entry)
+          if message = validate_paths(app_entry: config.app_entry, name: config.name)
             raise Argy::Error.new(message)
           end
         end
 
         command.on_run do |_cmd, _args|
-          unless run(app_entry: config.app_entry)
+          unless run(app_entry: config.app_entry, name: config.name)
             raise Argy::Error.new("run failed")
           end
         end
@@ -26,14 +26,14 @@ module LuneCLI
         command
       end
 
-      def artifact_path_for(app_entry : String) : String
-        Commands::Build.new.output_path_for(app_entry)
+      def artifact_path_for(app_entry : String, name : String? = nil) : String
+        Commands::Build.new.output_path_for(app_entry, name)
       end
 
-      def validate_paths(app_entry : String) : String?
+      def validate_paths(app_entry : String, name : String? = nil) : String?
         return "App entry file not found: #{app_entry}" unless File.file?(app_entry)
 
-        artifact_path = artifact_path_for(app_entry)
+        artifact_path = artifact_path_for(app_entry, name)
         {% if flag?(:darwin) %}
           return "Built app not found: #{artifact_path}. Run 'lune build' first." unless Dir.exists?(artifact_path)
         {% else %}
@@ -43,22 +43,23 @@ module LuneCLI
         nil
       end
 
-      def run_lock_slug(app_entry : String) : String
-        abs = File.expand_path(artifact_path_for(app_entry))
+      def run_lock_slug(app_entry : String, name : String? = nil) : String
+        abs = File.expand_path(artifact_path_for(app_entry, name))
         "run-" + Lune::SingleInstance.slug(abs)
       end
 
       def run(
         app_entry : String,
+        name : String? = nil,
         lock_dir : String = File.join(Path.home, ".lune"),
       ) : Bool
-        lock_file = Lune::SingleInstance.acquire(run_lock_slug(app_entry), lock_dir)
+        lock_file = Lune::SingleInstance.acquire(run_lock_slug(app_entry, name), lock_dir)
         unless lock_file
           Lune.logger.error { "Another instance is already running for #{app_entry}" }
           return false
         end
 
-        artifact_path = artifact_path_for(app_entry)
+        artifact_path = artifact_path_for(app_entry, name)
 
         {% if flag?(:darwin) %}
           Process.run(

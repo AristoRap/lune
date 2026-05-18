@@ -57,11 +57,15 @@ void set_always_on_top(void *window, BOOL enabled) {
 
 // ── Drag zones ────────────────────────────────────────────────────────────────
 
-// Stores the last left-mousedown event so performWindowDragWithEvent: can use
-// it even after the async JS→Crystal round-trip has advanced the event queue.
+// Stores the last left-mousedown event so performWindowDragWithEvent: and
+// beginDraggingSessionWithItems:event:source: can use it after the async
+// JS→Crystal round-trip has advanced the event queue.
 static NSEvent *_last_mousedown = nil;
+static BOOL     _drag_monitor_active = NO;
 
 void setup_drag_monitor(void) {
+    if (_drag_monitor_active) return;
+    _drag_monitor_active = YES;
     [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskLeftMouseDown
                                           handler:^NSEvent *(NSEvent *e) {
         _last_mousedown = e;
@@ -250,6 +254,52 @@ void setup_file_drop(void *window,
     dropView.dropUserdata = drop_userdata;
     dropView.dragPosFn    = drag_pos_fn ? [NSString stringWithUTF8String:drag_pos_fn] : nil;
     [host addSubview:dropView positioned:NSWindowAbove relativeTo:nil];
+}
+
+// ── Drag out ──────────────────────────────────────────────────────────────────
+
+// Minimal NSDraggingSource — lets any NSView initiate a drag-out session.
+@interface LuneDragSource : NSObject <NSDraggingSource>
+@end
+
+@implementation LuneDragSource
+- (NSDragOperation)draggingSession:(NSDraggingSession *)session
+    sourceOperationMaskForDraggingContext:(NSDraggingContext)context {
+    return NSDragOperationCopy | NSDragOperationMove | NSDragOperationLink;
+}
+@end
+
+static LuneDragSource *_drag_source = nil;
+
+// Initiates a native drag of local files out of the window.
+// paths_json: JSON array of absolute file path strings.
+// Requires setup_drag_monitor to have been called so _last_mousedown is set.
+void lune_start_drag_out(void *nswindow_ptr, const char *paths_json) {
+    if (!_last_mousedown) return;
+    if (!_drag_source) _drag_source = [[LuneDragSource alloc] init];
+
+    NSWindow *window = (__bridge NSWindow *)nswindow_ptr;
+    NSView   *view   = window.contentView;
+
+    NSData  *data  = [[NSString stringWithUTF8String:paths_json] dataUsingEncoding:NSUTF8StringEncoding];
+    NSArray *paths = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+    if (!paths || paths.count == 0) return;
+
+    // Use the stored mousedown position as the drag image origin.
+    NSPoint loc = [_last_mousedown locationInWindow];
+    NSPoint viewLoc = [view convertPoint:loc fromView:nil];
+
+    NSMutableArray<NSDraggingItem *> *items = [NSMutableArray array];
+    for (NSString *path in paths) {
+        NSURL *url = [NSURL fileURLWithPath:path];
+        if (!url) continue;
+        NSDraggingItem *item = [[NSDraggingItem alloc] initWithPasteboardWriter:url];
+        item.draggingFrame = NSMakeRect(viewLoc.x - 16, viewLoc.y - 16, 32, 32);
+        [items addObject:item];
+    }
+    if (items.count == 0) return;
+
+    [view beginDraggingSessionWithItems:items event:_last_mousedown source:_drag_source];
 }
 
 // ── Window controls ────────────────────────────────────────────────────────────

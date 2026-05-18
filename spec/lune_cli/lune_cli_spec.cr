@@ -6,6 +6,24 @@ private class ExposedBuildCommand < LuneCLI::Commands::Build
   def call_png_to_icns(path : String) : String?
     png_to_icns(path)
   end
+
+  def call_info_plist_for(app_entry : String, icon_name : String? = nil, display_name : String? = nil, bundle_id : String? = nil, url_schemes : Array(String) = [] of String) : String
+    info_plist_for(app_entry, icon_name, display_name, bundle_id, url_schemes)
+  end
+
+  {% if flag?(:darwin) %}
+    def call_write_default_entitlements : String
+      write_default_entitlements
+    end
+  {% end %}
+end
+
+private class ExposedDistCommand < LuneCLI::Commands::Dist
+  {% if flag?(:linux) %}
+    def call_desktop_entry_for(app_name : String, url_schemes : Array(String) = [] of String) : String
+      desktop_entry_for(app_name, url_schemes)
+    end
+  {% end %}
 end
 
 private class RecordingDoctorCommand < LuneCLI::Commands::Doctor
@@ -38,6 +56,7 @@ describe LuneCLI do
       cmd.subcommands.has_key?("check").should be_true
       cmd.subcommands.has_key?("dev").should be_true
       cmd.subcommands.has_key?("build").should be_true
+      cmd.subcommands.has_key?("dist").should be_true
       cmd.subcommands.has_key?("run").should be_true
       cmd.subcommands.has_key?("version").should be_true
       cmd.subcommands.has_key?("doctor").should be_true
@@ -123,7 +142,7 @@ describe LuneCLI do
   end
 
   describe "build command" do
-    it "derives the default output path from the app entry" do
+    it "derives the default output path from the app entry when no name is set" do
       cmd = LuneCLI::Commands::Build.new
 
       expected_output = {% if flag?(:darwin) %}
@@ -133,6 +152,24 @@ describe LuneCLI do
                         {% end %}
 
       cmd.output_path_for("main.cr").should eq(expected_output)
+    end
+
+    it "uses config name as the bundle name when set" do
+      cmd = LuneCLI::Commands::Build.new
+
+      expected_output = {% if flag?(:darwin) %}
+                          "build/bin/demo.app"
+                        {% else %}
+                          "build/bin/demo"
+                        {% end %}
+
+      cmd.output_path_for("src/main.cr", "demo").should eq(expected_output)
+    end
+
+    it "bundle_name_for returns name when set, entry basename otherwise" do
+      cmd = LuneCLI::Commands::Build.new
+      cmd.bundle_name_for("src/main.cr", "demo").should eq("demo")
+      cmd.bundle_name_for("src/main.cr", nil).should eq("main")
     end
 
     it "rejects a missing frontend dir" do
@@ -158,13 +195,13 @@ describe LuneCLI do
     end
 
     {% if flag?(:darwin) %}
-    it "png_to_icns converts a PNG to a .icns file" do
-      cmd = ExposedBuildCommand.new
-      result = cmd.call_png_to_icns("spec/fixtures/icon.png")
-      result.should_not be_nil
-      File.exists?(result.not_nil!).should be_true
-      File.extname(result.not_nil!).should eq(".icns")
-    end
+      it "png_to_icns converts a PNG to a .icns file" do
+        cmd = ExposedBuildCommand.new
+        result = cmd.call_png_to_icns("spec/fixtures/icon.png")
+        result.should_not be_nil
+        File.exists?(result.not_nil!).should be_true
+        File.extname(result.not_nil!).should eq(".icns")
+      end
     {% end %}
   end
 
@@ -247,6 +284,54 @@ describe LuneCLI do
         LuneCLI::Config.load("nonexistent_lune.yml").mac.sign.should be_nil
       end
 
+      it "reads mac.notarize from lune.yml" do
+        with_tempdir do |dir|
+          path = File.join(dir, "lune.yml")
+          File.write(path, "mac:\n  notarize: true\n")
+          LuneCLI::Config.load(path).mac.notarize.should be_true
+        end
+      end
+
+      it "mac.notarize defaults to false when not set" do
+        LuneCLI::Config.load("nonexistent_lune.yml").mac.notarize.should be_false
+      end
+
+      it "reads mac.entitlements from lune.yml" do
+        with_tempdir do |dir|
+          path = File.join(dir, "lune.yml")
+          File.write(path, "mac:\n  entitlements: assets/entitlements.plist\n")
+          LuneCLI::Config.load(path).mac.entitlements.should eq("assets/entitlements.plist")
+        end
+      end
+
+      it "mac.entitlements defaults to nil when not set" do
+        LuneCLI::Config.load("nonexistent_lune.yml").mac.entitlements.should be_nil
+      end
+
+      it "reads mac.bundle_id from lune.yml" do
+        with_tempdir do |dir|
+          path = File.join(dir, "lune.yml")
+          File.write(path, "mac:\n  bundle_id: com.example.myapp\n")
+          LuneCLI::Config.load(path).mac.bundle_id.should eq("com.example.myapp")
+        end
+      end
+
+      it "mac.bundle_id defaults to nil when not set" do
+        LuneCLI::Config.load("nonexistent_lune.yml").mac.bundle_id.should be_nil
+      end
+
+      it "reads url_schemes from lune.yml" do
+        with_tempdir do |dir|
+          path = File.join(dir, "lune.yml")
+          File.write(path, "url_schemes:\n  - myapp\n  - myapp-alt\n")
+          LuneCLI::Config.load(path).url_schemes.should eq(["myapp", "myapp-alt"])
+        end
+      end
+
+      it "url_schemes defaults to empty array when not set" do
+        LuneCLI::Config.load("nonexistent_lune.yml").url_schemes.should be_empty
+      end
+
       it "returns defaults when the file is invalid YAML" do
         with_tempdir do |dir|
           path = File.join(dir, "lune.yml")
@@ -306,6 +391,85 @@ describe LuneCLI do
     end
   end
 
+  describe "dist command" do
+    it "is registered on the root command" do
+      LuneCLI.root_command.subcommands.has_key?("dist").should be_true
+    end
+
+    it "registers a --skip-notarize flag" do
+      cmd = LuneCLI::Commands::Dist.new.to_command
+      cmd.flags.lookup("skip-notarize").should_not be_nil
+      cmd.flags.lookup("dmg").should be_nil
+      cmd.flags.lookup("appimage").should be_nil
+    end
+
+    it "derives app name from entry point when no name is set" do
+      cmd = LuneCLI::Commands::Dist.new
+      cmd.app_name_for("src/main.cr").should eq("main")
+    end
+
+    it "uses config name as app name when set" do
+      cmd = LuneCLI::Commands::Dist.new
+      cmd.app_name_for("src/main.cr", "Demo").should eq("Demo")
+    end
+
+    it "derives the dist output path from app entry" do
+      cmd = LuneCLI::Commands::Dist.new
+      {% if flag?(:darwin) %}
+        cmd.dist_path_for("src/main.cr").should eq("build/bin/main.dmg")
+        cmd.dist_path_for("src/main.cr", "Demo").should eq("build/bin/Demo.dmg")
+      {% elsif flag?(:linux) %}
+        cmd.dist_path_for("src/main.cr").should eq("build/bin/main.AppImage")
+        cmd.dist_path_for("src/main.cr", "Demo").should eq("build/bin/Demo.AppImage")
+      {% end %}
+    end
+
+    {% if flag?(:darwin) %}
+      it "info_plist_for includes CFBundleURLTypes when url_schemes are set" do
+        cmd = ExposedBuildCommand.new
+        plist = cmd.call_info_plist_for("src/main.cr", nil, nil, nil, ["myapp", "myapp2"])
+        plist.should contain("CFBundleURLTypes")
+        plist.should contain("<string>myapp</string>")
+        plist.should contain("<string>myapp2</string>")
+      end
+
+      it "info_plist_for omits CFBundleURLTypes when url_schemes is empty" do
+        cmd = ExposedBuildCommand.new
+        plist = cmd.call_info_plist_for("src/main.cr")
+        plist.should_not contain("CFBundleURLTypes")
+      end
+
+      it "write_default_entitlements creates a valid plist in the temp dir" do
+        cmd = ExposedBuildCommand.new
+        path = cmd.call_write_default_entitlements
+        File.exists?(path).should be_true
+        content = File.read(path)
+        content.includes?("com.apple.security.cs.allow-jit").should be_true
+        content.includes?("com.apple.security.network.client").should be_true
+      end
+    {% end %}
+
+    {% if flag?(:linux) %}
+      it "desktop_entry_for includes MimeType when url_schemes are set" do
+        cmd = ExposedDistCommand.new
+        entry = cmd.call_desktop_entry_for("myapp", ["myscheme", "myscheme2"])
+        entry.should contain("MimeType=x-scheme-handler/myscheme;x-scheme-handler/myscheme2;")
+      end
+
+      it "desktop_entry_for omits MimeType when url_schemes is empty" do
+        cmd = ExposedDistCommand.new
+        entry = cmd.call_desktop_entry_for("myapp")
+        entry.should_not contain("MimeType")
+      end
+
+      it "desktop_entry_for includes %u in Exec for URL passing" do
+        cmd = ExposedDistCommand.new
+        entry = cmd.call_desktop_entry_for("myapp")
+        entry.should contain("Exec=myapp %u")
+      end
+    {% end %}
+  end
+
   describe "_dev-error command" do
     it "is registered on the root command" do
       cmd = LuneCLI.root_command
@@ -347,6 +511,18 @@ describe LuneCLI do
                         {% end %}
 
       cmd.artifact_path_for("main.cr").should eq(expected_output)
+    end
+
+    it "uses config name in artifact path when set" do
+      cmd = LuneCLI::Commands::Run.new
+
+      expected_output = {% if flag?(:darwin) %}
+                          "build/bin/demo.app"
+                        {% else %}
+                          "build/bin/demo"
+                        {% end %}
+
+      cmd.artifact_path_for("src/main.cr", "demo").should eq(expected_output)
     end
 
     it "returns false immediately when a run lock is already held for the same entry" do

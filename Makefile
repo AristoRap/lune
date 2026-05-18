@@ -31,7 +31,7 @@ setup:
 CRYSTAL_FLAGS := -Dpreview_mt -Dexecution_context
 
 test:
-	crystal spec -D lune_native_test_mock $(CRYSTAL_FLAGS)
+	crystal spec -D lune_native_test_mock $(CRYSTAL_FLAGS) -v
 
 build:
 	$(MAKE) test && shards build $(CRYSTAL_FLAGS)
@@ -74,14 +74,23 @@ minor:
 
 # ── Example app ──────────────────────────────────────────────────────────────
 
-dev:
+demo-dev:
 	cd demo && lune dev
 
-app:
+demo-app:
 	cd demo && lune build
 
-run:
+demo-release:
+	cd demo && lune build --release
+
+demo-dist:
+	cd demo && lune dist
+
+demo-run:
 	cd demo && lune run
+
+demo-deploy:
+	cd demo && lune build --release && lune dist
 
 # ── Docs ─────────────────────────────────────────────────────────────────────
 

@@ -7,6 +7,7 @@ module LuneCLI
     getter name : String? = nil
     getter app_entry : String = "src/main.cr"
     getter icon : String? = nil
+    getter url_schemes : Array(String) = [] of String
     getter frontend : Frontend = Frontend.new
     getter mac : Mac = Mac.new
 
@@ -24,6 +25,9 @@ module LuneCLI
       include YAML::Serializable
 
       getter sign : String? = nil
+      getter bundle_id : String? = nil
+      getter entitlements : String? = nil
+      getter notarize : Bool = false
 
       def initialize; end
     end

@@ -3,6 +3,7 @@ module Lune
     getter options : Options
 
     def initialize(app : App, &block : Options -> Nil)
+      STDOUT.sync = true
       @app = app
       @lunejs_dir = File.join(ENV.fetch(Lune::ENV_FRONTEND_DIR, Lune::DEFAULT_FRONTEND_DIR), Lune::LUNEJS_SUBDIR)
       @config = Config.load
@@ -11,8 +12,7 @@ module Lune
       block.call(@options)
     end
 
-    def start(html : String? = nil, url : String? = nil)
-      STDOUT.sync = true
+    def start(html : String? = nil, url : String? = nil) : Nil
       @options.hint = @options.resizable ? @options.hint : Webview::SizeHints::FIXED
       # Windows ONLY: run the webview on a separate thread
       {% if flag?(:win32) %}
@@ -33,177 +33,46 @@ module Lune
       Webview.with_window(@options.width, @options.height, @options.hint, @options.title, @options.debug) do |wv|
         wv.size(@options.min_width || 0, @options.min_height || 0, Webview::SizeHints::MIN) if @options.min_width || @options.min_height
         wv.size(@options.max_width || 0, @options.max_height || 0, Webview::SizeHints::MAX) if @options.max_width || @options.max_height
-        bridge = Bridge.new(wv)
-        bridge.register_bindings(@app.bindings)
 
-        runtime_app = App.new
-        runtime_app.install(
-          Runtime::Bindings::Lifecycle.new(
-            on_quit: -> { wv.dispatch { wv.terminate } },
-            debug: @options.debug
-          ),
-          Runtime::Bindings::Filesystem.new,
-          Runtime::Bindings::Clipboard.new
-        )
-        runtime_bindings = Runtime::Bindings.filter(runtime_app.bindings, @config.capabilities)
-        bridge.register_bindings(runtime_bindings)
-        @app.bridge = bridge
-        @app.title = @options.title
+        set_user_menu_or_default
 
         handle = wv.native_handle(Webview::NativeHandleKind::UI_WINDOW)
-
-        if @options.menu.any?
-          @app.menu_options = @options.menu
-          Native::Menu.set_from_options(@options.menu, @options.title)
-        else
-          Native::Menu.setup_default(@options.title)
-        end
-
-        mac = @options.mac
         {% if flag?(:darwin) %}
-          Native::Window.set_titlebar_transparent(handle, true) if mac.full_size_content
-          Native::Window.set_background_transparent(handle) if mac.transparent
-          Native::Window.hide_title(handle) if mac.hide_title
-          Native::Window.set_appearance(handle, mac.appearance.value) unless mac.appearance.auto?
-          Native::Window.set_content_protection(handle, true) if mac.content_protection
-          Native::Window.set_always_on_top(handle, true) if mac.always_on_top
+          setup_mac_window_options(handle)
         {% end %}
 
-        native_app = App.new
-        native_app.install(
-          Runtime::Bindings::Window.new(handle),
-          Runtime::Bindings::Tray.new(
-            on_tray_click: @options.tray.on_click,
-            on_menu_click: @options.tray.on_menu_click
-          ),
-          Runtime::Bindings::Dialogs.new,
-          Runtime::Bindings::Notifications.new,
-          Runtime::Bindings::Screen.new
-        )
-        native_bindings = Runtime::Bindings.filter(native_app.bindings, @config.capabilities)
-        bridge.register_bindings(native_bindings)
+        registry = Capabilities::Registry.new(handle, @options, on_quit: -> { wv.dispatch { wv.terminate } })
+        registry.validate(@config.capabilities)
+        active = registry.active(@config.capabilities)
 
-        {% if flag?(:darwin) %}
-          unless @options.drag.zone.empty?
-            Native::Window.setup_drag_monitor
-            drag_handle = handle
-            wv.bind("__lune_start_window_drag", Webview::JSProc.new { |_args|
-              Native::Window.start_window_drag(drag_handle)
-              JSON::Any.new(nil)
-            })
-          end
-        {% end %}
-
-        if window_ready_cb = @options.on_window_ready
-          begin
-            window_ready_cb.call(handle)
-          rescue ex
-            Lune.logger.error { "on_window_ready callback failed: #{ex.message}" }
-            Lune.logger.debug(exception: ex) { "on_window_ready callback failed (stacktrace)" }
+        if @options.debug
+          registry.all.each do |cap|
+            next if active.includes?(cap)
+            Lune.logger.warn { "\"#{cap.name}\" is configured but not active — enable it in lune.yml capabilities" } if cap.configured?
           end
         end
+
+        active.each { |cap| cap.install(@app) }
+
+        bridge = Bridge.new(wv)
+        bridge.register_bindings(@app.bindings.reject(&.internal?))
+        bridge.register_bindings(@app.bindings.select(&.internal?))
+        @app.bridge = bridge
+
+        callback_window_ready_if_set(handle)
 
         window_app_name = WindowState.app_name(@options.title)
         if saved = WindowState.load(window_app_name)
           Native::Window.set_frame(handle, saved[:x], saved[:y], saved[:width], saved[:height])
         end
 
-        should_drop = @options.drop.enabled || @options.drop.on_drop != nil
+        callback_window_loaded_if_set(wv)
 
-        if should_drop || @options.drop.disable_webview_drop
-          Native::Window.disable_webview_drop(handle)
+        active.each do |cap|
+          wv.init("window[#{cap.sentinel_key.inspect}] = true;")
+          cap.init_webview(wv, handle, @app)
         end
 
-        if should_drop
-          user_cb = @options.drop.on_drop
-          app_ref = @app
-          use_drop_zones = !@options.drop.zone.empty?
-          wv_ref = wv
-
-          # Pre-declare so both variables are visible to Crystal's type checker
-          # regardless of which macro branch runs.
-          on_pos = ->(x : Int32, y : Int32) { nil }
-          drag_pos_fn : String? = nil
-
-          # macOS: position updates are driven natively in ObjC via evaluateJavaScript:
-          # with a coalescing gate, bypassing the Crystal wv.dispatch→wv.eval chain
-          # that caused stale queues and glitchy zone highlights during fast drag moves.
-          # Linux: the posCallback path is still used (no direct WebKit eval from C).
-          {% if flag?(:darwin) %}
-            drag_pos_fn = use_drop_zones ? "window.__lune_drag_pos" : nil
-          {% else %}
-            if use_drop_zones
-              on_pos = ->(x : Int32, y : Int32) {
-                wv_ref.dispatch { wv_ref.eval("window.__lune_drag_pos(#{x},#{y})") }
-              }
-            end
-          {% end %}
-
-          on_drop : (Int32, Int32, Array(String)) -> Nil = if use_drop_zones
-            ->(x : Int32, y : Int32, paths : Array(String)) {
-              user_cb.try(&.call(x, y, paths))
-              paths_json = paths.to_json
-              wv_ref.dispatch { wv_ref.eval("window.__lune_drop_check(#{x},#{y},#{paths_json.inspect})") }
-            }
-          else
-            ->(x : Int32, y : Int32, paths : Array(String)) {
-              user_cb.try(&.call(x, y, paths))
-              app_ref.emit("fileDrop", {"x" => x, "y" => y, "paths" => paths})
-            }
-          end
-
-          Native::Window.setup_file_drop(handle, on_drop, on_pos, drag_pos_fn)
-        end
-
-        if load_cb = @options.on_load
-          wv.on_load = -> {
-            begin
-              load_cb.call
-            rescue ex
-              Lune.logger.error { "on_load callback failed: #{ex.message}" }
-              Lune.logger.debug(exception: ex) { "on_load callback failed (stacktrace)" }
-            end
-          }
-        end
-
-        if nav_cb = @options.on_navigate
-          wv.bind("__lune_navigate", Webview::JSProc.new { |args|
-            begin
-              nav_cb.call(args[0]?.try(&.as_s) || "")
-            rescue ex
-              Lune.logger.error { "on_navigate callback failed: #{ex.message}" }
-              Lune.logger.debug(exception: ex) { "on_navigate callback failed (stacktrace)" }
-            end
-            JSON::Any.new(nil)
-          })
-        end
-
-        app_ref = @app
-        wv.bind("__lune_js_emit", Webview::JSProc.new { |args|
-          event = args[0]?.try(&.as_s) || ""
-          data = args[1]? || JSON::Any.new(nil)
-          app_ref.dispatch_event(event, data)
-          JSON::Any.new(nil)
-        })
-
-        wv.init(Runtime::Scripts.core)
-        wv.init(Runtime::Scripts::NAVIGATION) if @options.on_navigate
-        wv.init(Runtime::Scripts::DISABLE_CONTEXT_MENU) if @options.disable_context_menu
-
-        {% if flag?(:darwin) %}
-          unless @options.drag.zone.empty?
-            wv.init(Runtime::Scripts.drag_zone(@options.drag.zone, @options.drag.value))
-          end
-        {% end %}
-
-        if should_drop
-          drop_prop = @options.drop.zone.empty? ? nil : @options.drop.zone
-          drop_val = @options.drop.zone.empty? ? nil : @options.drop.value
-          wv.init(Runtime::Scripts.file_drop(drop_prop, drop_val))
-        end
-
-        # asset_server is only set in the embedded-assets branch; it is stopped
-        # after wv.run returns so the port is released when the window closes.
         asset_server : AssetServer? = nil
 
         if h = html
@@ -211,8 +80,15 @@ module Lune
         elsif u = url
           wv.navigate(u)
         elsif dev_url = ENV[Lune::ENV_DEV_URL]?
-          all_bindings = @app.bindings + runtime_app.bindings + native_app.bindings
-          Lune::Runtime::Generator.write_js(all_bindings, @lunejs_dir)
+          # In dev mode runtime.js carries all capabilities so the dev view can
+          # show which are active vs excluded. The bridge is still filtered.
+          all_stubs = App.new
+          registry.all.each { |cap| cap.install(all_stubs) }
+          Lune::Runtime::Generator.write_js(
+            @app.bindings.reject(&.internal?) + all_stubs.bindings.select(&.internal?),
+            @lunejs_dir,
+            registry.all
+          )
           wv.navigate(dev_url)
         elsif !Assets.empty?
           s = AssetServer.new
@@ -231,6 +107,49 @@ module Lune
         asset_server.try(&.stop)
         bridge.close!
         @options.on_close.try(&.call)
+      end
+    end
+
+    private def set_user_menu_or_default : Nil
+      if @options.menu.any?
+        @app.menu_options = @options.menu
+        Native::Menu.set_from_options(@options.menu, @options.title)
+      else
+        Native::Menu.setup_default(@options.title)
+      end
+    end
+
+    private def setup_mac_window_options(handle : Pointer(Void)) : Nil
+      mac = @options.mac
+      Native::Window.set_titlebar_transparent(handle, true) if mac.full_size_content
+      Native::Window.set_background_transparent(handle) if mac.transparent
+      Native::Window.hide_title(handle) if mac.hide_title
+      Native::Window.set_appearance(handle, mac.appearance.value) unless mac.appearance.auto?
+      Native::Window.set_content_protection(handle, true) if mac.content_protection
+      Native::Window.set_always_on_top(handle, true) if mac.always_on_top
+    end
+
+    private def callback_window_ready_if_set(handle : Pointer(Void)) : Nil
+      if window_ready_cb = @options.on_window_ready
+        begin
+          window_ready_cb.call(handle)
+        rescue ex
+          Lune.logger.error { "on_window_ready callback failed: #{ex.message}" }
+          Lune.logger.debug(exception: ex) { "on_window_ready callback failed (stacktrace)" }
+        end
+      end
+    end
+
+    private def callback_window_loaded_if_set(wv : Webview::Webview) : Nil
+      if load_cb = @options.on_load
+        wv.on_load = -> {
+          begin
+            load_cb.call
+          rescue ex
+            Lune.logger.error { "on_load callback failed: #{ex.message}" }
+            Lune.logger.debug(exception: ex) { "on_load callback failed (stacktrace)" }
+          end
+        }
       end
     end
   end

@@ -23,24 +23,17 @@ const paths = {
   dialog:
     "M4 5h16v10H8l-4 4z M8 9h8 M8 12h5",
   tray: "M4 4h16v10H4z M4 14l3 5h10l3-5 M9 8h6",
+  shield: "M12 2l8 4v6c0 5-4 9-8 10C8 21 4 17 4 12V6l8-4z",
+  drag: "M9 3v18 M15 3v18 M3 9h18 M3 15h18",
+  link: "M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71 M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71",
 };
 
 const d = computed(() => paths[props.name] || paths.moon);
 </script>
 
 <template>
-  <svg
-    class="icon"
-    :width="sizePx"
-    :height="sizePx"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="1.6"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    aria-hidden="true"
-  >
+  <svg class="icon" :width="sizePx" :height="sizePx" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <path :d="d" />
   </svg>
 </template>

@@ -38,7 +38,7 @@ describe Lune::Binding do
   describe "#to_js_stub" do
     it "emits a JS function stub with the correct call ID" do
       stub = make_bd(method: "ping", namespace: "alpha").to_js_stub
-      stub.includes?("Ping(...args)").should be_true
+      stub.includes?("Ping()").should be_true
       stub.includes?(%("alpha.ping")).should be_true
       stub.includes?("return __lune.call(").should be_true
     end
@@ -46,6 +46,23 @@ describe Lune::Binding do
     it "uses dot-joined id for nested namespaces" do
       stub = make_bd(method: "go", namespace: "alpha::beta").to_js_stub
       stub.includes?(%("alpha.beta.go")).should be_true
+    end
+
+    it "falls back to arg0..argN when arg_names is empty" do
+      stub = make_bd(method: "add", namespace: "math", args: ["Int32", "String"]).to_js_stub
+      stub.includes?("Add(arg0, arg1)").should be_true
+    end
+
+    it "uses arg_names when provided" do
+      bd = Lune::Binding.new(
+        method: "add",
+        namespace: "math",
+        args: ["Int32", "String"],
+        return_type: "Int32",
+        callback: ->(_a : Array(JSON::Any)) { JSON::Any.new(0_i64) },
+        arg_names: ["n", "label"]
+      )
+      bd.to_js_stub.includes?("Add(n, label)").should be_true
     end
   end
 

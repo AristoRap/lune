@@ -5,7 +5,7 @@ import Titlebar from "./components/Titlebar.vue";
 import Sidebar from "./components/Sidebar.vue";
 import Statusbar from "./components/Statusbar.vue";
 import { flatNav } from "./nav.js";
-import { environment, on, off } from "./lune.js";
+import { Lifecycle, Events } from "./lune.js";
 
 const active = ref("welcome");
 const env = ref({});
@@ -24,7 +24,7 @@ function select(id) {
 
 onMounted(async () => {
   try {
-    env.value = await environment();
+    env.value = await Lifecycle.Environment();
   } catch {
     env.value = {};
   }
@@ -32,12 +32,12 @@ onMounted(async () => {
   const tickH = (ts) => {
     clock.value = new Date(ts).toLocaleTimeString();
   };
-  on("tick", tickH);
+  Events.On("tick", tickH);
 
   const pausedH = (v) => {
     clockPaused.value = v;
   };
-  on("clockPaused", pausedH);
+  Events.On("clockPaused", pausedH);
 });
 </script>
 

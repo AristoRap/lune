@@ -9,18 +9,18 @@ require "./lune/native/*"
 require "./lune/webview"
 require "./lune/error"
 require "./lune/bridge"
-require "./lune/runtime/generator"
-require "./lune/runtime/scripts"
 require "./lune/installable"
+require "./lune/capability"
+require "./lune/capabilities/*"
+require "./lune/runtime/generator"
 require "./lune/bindable"
 require "./lune/app"
-require "./lune/runtime/bindings/*"
 require "./lune/window_state"
 require "./lune/single_instance"
 require "./lune/runner"
 
 module Lune
-  VERSION = "0.6.2"
+  VERSION = "0.7.0"
 
   # Default frontend directory name (matches the lune.yml default).
   DEFAULT_FRONTEND_DIR = "frontend"
@@ -48,9 +48,13 @@ module Lune
       ::Lune.logger.info { "Running in build mode" }
       appl = {{ app }}
       lunejs_dir = File.join(ENV.fetch(Lune::ENV_FRONTEND_DIR, Lune::DEFAULT_FRONTEND_DIR), Lune::LUNEJS_SUBDIR)
-      stubs_app = ::Lune::App.new
-      ::Lune::Runtime::Bindings.register_stubs(stubs_app)
-      ::Lune::Runtime::Generator.write_js(appl.bindings + stubs_app.bindings, lunejs_dir)
+      _config = ::Lune::Config.load
+      _registry = ::Lune::Capabilities::Registry.new(Pointer(Void).null, ::Lune::Options.new)
+      _registry.validate(_config.capabilities)
+      _active = _registry.active(_config.capabilities)
+      _stubs = ::Lune::App.new
+      _active.each { |cap| cap.install(_stubs) }
+      ::Lune::Runtime::Generator.write_js(appl.bindings + _stubs.bindings.select(&.internal?), lunejs_dir, _active)
     {% else %}
       runner = ::Lune::Runner.new({{ app }}) do |opts|
         {% if block %}

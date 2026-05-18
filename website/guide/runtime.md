@@ -1,52 +1,76 @@
 # Runtime Functions
 
-Lune exposes built-in JavaScript functions via `runtime.js`. These cover app lifecycle, system integration, filesystem paths, native window controls, file dialogs, system tray, notifications, and screen info — all backed by Crystal.
+Lune exposes built-in JavaScript functions via `runtime.js`. They are organised into **namespace objects** — one per capability group — exported from the runtime module.
 
 ```js
-import {
-  quit,
-  minimize,
-  notify,
-  screenInfo,
-} from "../lunejs/runtime/runtime.js";
+import { Lifecycle, Clipboard, Events } from "../lunejs/runtime/runtime.js";
+
+await Lifecycle.Quit();
+const text = await Clipboard.Read();
+Events.On("myEvent", (data) => console.log(data));
 ```
 
-All functions return a `Promise`. TypeScript declarations are in `runtime.d.ts`.
+All bridge methods return a `Promise`. TypeScript declarations are in `runtime.d.ts`. You can also import the `runtime` default export which bundles every namespace:
+
+```js
+import runtime from "../lunejs/runtime/runtime.js";
+await runtime.Lifecycle.Quit();
+```
+
+---
 
 ## Quick reference
 
-| Function          | Signature                         | Returns                    | macOS | Linux | Windows |
-| ----------------- | --------------------------------- | -------------------------- | :---: | :---: | :-----: |
-| `quit`            | `quit()`                          | `Promise<void>`            |   ✓   |   ✓   |    ✓    |
-| `openURL`         | `openURL(url)`                    | `Promise<void>`            |   ✓   |   ✓   |    ✓    |
-| `environment`     | `environment()`                   | `Promise<LuneEnvironment>` |   ✓   |   ✓   |    ✓    |
-| `homeDir`         | `homeDir()`                       | `Promise<string>`          |   ✓   |   ✓   |    ✓    |
-| `appDataDir`      | `appDataDir()`                    | `Promise<string>`          |   ✓   |   ✓   |    ✓    |
-| `downloadsDir`    | `downloadsDir()`                  | `Promise<string>`          |   ✓   |   ✓   |    ✓    |
-| `tempDir`         | `tempDir()`                       | `Promise<string>`          |   ✓   |   ✓   |    ✓    |
-| `clipboardRead`   | `clipboardRead()`                 | `Promise<string>`          |   ✓   |   ✓   |    ✓    |
-| `clipboardWrite`  | `clipboardWrite(text)`            | `Promise<void>`            |   ✓   |   ✓   |    ✓    |
-| `minimize`        | `minimize()`                      | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
-| `maximize`        | `maximize()`                      | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
-| `center`          | `center()`                        | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
-| `setTitle`        | `setTitle(title)`                 | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
-| `setSize`         | `setSize(width, height)`          | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
-| `openFile`        | `openFile(prompt)`                | `Promise<string>`          |   ✓   |   ✓   |   tbd   |
-| `openDir`         | `openDir(prompt)`                 | `Promise<string>`          |   ✓   |   ✓   |   tbd   |
-| `openFiles`       | `openFiles(prompt)`               | `Promise<string[]>`        |   ✓   |   ✓   |   tbd   |
-| `saveFile`        | `saveFile(prompt, filename)`      | `Promise<string>`          |   ✓   |   ✓   |   tbd   |
-| `messageInfo`     | `messageInfo(title, message)`     | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
-| `messageWarning`  | `messageWarning(title, message)`  | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
-| `messageError`    | `messageError(title, message)`    | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
-| `messageQuestion` | `messageQuestion(title, message)` | `Promise<string>`          |   ✓   |   ✓   |   tbd   |
-| `trayShow`        | `trayShow(iconPath)`              | `Promise<void>`            |   ✓   |  ✓ ¹  |   tbd   |
-| `trayHide`        | `trayHide()`                      | `Promise<void>`            |   ✓   |  ✓ ¹  |   tbd   |
-| `traySetIcon`     | `traySetIcon(path)`               | `Promise<void>`            |   ✓   |  ✓ ¹  |   tbd   |
-| `traySetMenu`     | `traySetMenu(items)`              | `Promise<void>`            |   ✓   |  ✓ ¹  |   tbd   |
-| `notify`          | `notify(title, body)`             | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
-| `screenInfo`      | `screenInfo()`                    | `Promise<ScreenInfo>`      |   ✓   |   ✓   |   tbd   |
+| Namespace | Method | Signature | Returns | macOS | Linux | Windows |
+| --------- | ------ | --------- | ------- | :---: | :---: | :-----: |
+| `Lifecycle` | `Quit` | `Quit()` | `Promise<void>` | ✓ | ✓ | ✓ |
+| `Lifecycle` | `OpenUrl` | `OpenUrl(url)` | `Promise<void>` | ✓ | ✓ | ✓ |
+| `Lifecycle` | `Environment` | `Environment()` | `Promise<LuneEnvironment>` | ✓ | ✓ | ✓ |
+| `Filesystem` | `HomeDir` | `HomeDir()` | `Promise<string>` | ✓ | ✓ | ✓ |
+| `Filesystem` | `AppDataDir` | `AppDataDir()` | `Promise<string>` | ✓ | ✓ | ✓ |
+| `Filesystem` | `DownloadsDir` | `DownloadsDir()` | `Promise<string>` | ✓ | ✓ | ✓ |
+| `Filesystem` | `TempDir` | `TempDir()` | `Promise<string>` | ✓ | ✓ | ✓ |
+| `Clipboard` | `Read` | `Read()` | `Promise<string>` | ✓ | ✓ | ✓ |
+| `Clipboard` | `Write` | `Write(text)` | `Promise<void>` | ✓ | ✓ | ✓ |
+| `Clipboard` | `ReadHtml` | `ReadHtml()` | `Promise<string>` | ✓ | ✓ | tbd |
+| `Clipboard` | `WriteHtml` | `WriteHtml(html)` | `Promise<void>` | ✓ | ✓ | tbd |
+| `Clipboard` | `ReadImage` | `ReadImage()` | `Promise<string>` | ✓ | ✓ | tbd |
+| `Clipboard` | `WriteImage` | `WriteImage(dataUrl)` | `Promise<void>` | ✓ | ✓ | tbd |
+| `Window` | `Minimize` | `Minimize()` | `Promise<void>` | ✓ | ✓ | tbd |
+| `Window` | `Maximize` | `Maximize()` | `Promise<void>` | ✓ | ✓ | tbd |
+| `Window` | `Center` | `Center()` | `Promise<void>` | ✓ | ✓ | tbd |
+| `Window` | `SetTitle` | `SetTitle(title)` | `Promise<void>` | ✓ | ✓ | tbd |
+| `Window` | `SetSize` | `SetSize(width, height)` | `Promise<void>` | ✓ | ✓ | tbd |
+| `Dialogs` | `OpenFile` | `OpenFile(prompt)` | `Promise<string>` | ✓ | ✓ | tbd |
+| `Dialogs` | `OpenDir` | `OpenDir(prompt)` | `Promise<string>` | ✓ | ✓ | tbd |
+| `Dialogs` | `OpenFiles` | `OpenFiles(prompt)` | `Promise<string[]>` | ✓ | ✓ | tbd |
+| `Dialogs` | `SaveFile` | `SaveFile(prompt, filename)` | `Promise<string>` | ✓ | ✓ | tbd |
+| `Dialogs` | `MessageInfo` | `MessageInfo(title, message)` | `Promise<void>` | ✓ | ✓ | tbd |
+| `Dialogs` | `MessageWarning` | `MessageWarning(title, message)` | `Promise<void>` | ✓ | ✓ | tbd |
+| `Dialogs` | `MessageError` | `MessageError(title, message)` | `Promise<void>` | ✓ | ✓ | tbd |
+| `Dialogs` | `MessageQuestion` | `MessageQuestion(title, message)` | `Promise<string>` | ✓ | ✓ | tbd |
+| `Tray` | `Show` | `Show(iconPath)` | `Promise<void>` | ✓ | ✓ ¹ | tbd |
+| `Tray` | `Hide` | `Hide()` | `Promise<void>` | ✓ | ✓ ¹ | tbd |
+| `Tray` | `SetIcon` | `SetIcon(path)` | `Promise<void>` | ✓ | ✓ ¹ | tbd |
+| `Tray` | `SetMenu` | `SetMenu(items)` | `Promise<void>` | ✓ | ✓ ¹ | tbd |
+| `Notifications` | `Notify` | `Notify(title, body)` | `Promise<void>` | ✓ | ✓ | tbd |
+| `Screen` | `Info` | `Info()` | `Promise<ScreenInfo>` | ✓ | ✓ | tbd |
+| `ContextMenuBridge` | `SetContextMenu` ² | `SetContextMenu(items)` | `void` | ✓ | tbd | tbd |
+| `ContextMenuBridge` | `ClearContextMenu` ² | `ClearContextMenu()` | `void` | ✓ | tbd | tbd |
+| `ContextMenuBridge` | `OnContextMenu` ² | `OnContextMenu(cb)` | `void` | ✓ | tbd | tbd |
+| `DragOut` | `Start` ² | `Start(paths)` | `Promise<void>` | ✓ | tbd | tbd |
+| `DeepLink` | `OnDeepLink` ³ | `OnDeepLink(cb)` | `void` | ✓ | ✓ | tbd |
+| `DeepLink` | `OnDeepLinkOff` ³ | `OnDeepLinkOff()` | `void` | ✓ | ✓ | tbd |
+| `Events` | `On` | `On(name, cb)` | `void` | ✓ | ✓ | ✓ |
+| `Events` | `Once` | `Once(name, cb)` | `void` | ✓ | ✓ | ✓ |
+| `Events` | `Off` | `Off(name, cb?)` | `void` | ✓ | ✓ | ✓ |
+| `Events` | `Emit` | `Emit(name, data?)` | `Promise<void>` | ✓ | ✓ | ✓ |
+| `FileDrop` | `OnFileDrop` | `OnFileDrop(cb)` | `void` | ✓ | ✓ | tbd |
+| `FileDrop` | `OnFileDropOff` | `OnFileDropOff()` | `void` | ✓ | ✓ | tbd |
 
 ¹ Requires XWayland on Wayland compositors.
+² Requires both the `context_menu` and `context_menu_bridge` capabilities to be active.
+³ Enable via [`url_schemes`](../configuration#url_schemes) in `lune.yml`.
 
 > **Linux prerequisites:** GTK3 and libnotify headers are required for native features (window controls, tray, dialogs, notifications, screen).
 >
@@ -59,36 +83,69 @@ All functions return a `Promise`. TypeScript declarations are in `runtime.d.ts`.
 
 ---
 
+## Capabilities
+
+`include`/`exclude` in `lune.yml` operate on whole **capabilities** — groups of related functions — referenced by their **capability name**, not by individual method names.
+
+| Capability name        | JS namespace        | Methods included                                                                                                                       |
+| ---------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `lifecycle`            | `Lifecycle`         | `Quit`, `OpenUrl`, `Environment`                                                                                                       |
+| `filesystem`           | `Filesystem`        | `HomeDir`, `TempDir`, `DownloadsDir`, `AppDataDir`                                                                                     |
+| `clipboard`            | `Clipboard`         | `Read`, `Write`, `ReadHtml`, `WriteHtml`, `ReadImage`, `WriteImage`                                                                    |
+| `window`               | `Window`            | `Minimize`, `Maximize`, `Center`, `SetTitle`, `SetSize`                                                                                |
+| `dialogs`              | `Dialogs`           | `OpenFile`, `OpenDir`, `OpenFiles`, `SaveFile`, `MessageInfo`, `MessageWarning`, `MessageError`, `MessageQuestion`                     |
+| `tray`                 | `Tray`              | `Show`, `Hide`, `SetIcon`, `SetMenu`                                                                                                   |
+| `notifications`        | `Notifications`     | `Notify`                                                                                                                               |
+| `screen`               | `Screen`            | `Info`                                                                                                                                 |
+| `context_menu`         | `ContextMenu`       | Low-level bridge (`Show`) — not called directly; use `context_menu_bridge`                                                             |
+| `context_menu_bridge`  | `ContextMenuBridge` | `SetContextMenu`, `ClearContextMenu`, `OnContextMenu` (core — requires `context_menu`)                                                 |
+| `drag_out`             | `DragOut`           | `Start`                                                                                                                                |
+| `deep_link`            | `DeepLink`          | `OnDeepLink`, `OnDeepLinkOff` (event-only, no bridge binding)                                                                         |
+| `event_bus`            | `Events`            | `On`, `Once`, `Off`, `Emit` (core — no bridge binding)                                                                                 |
+| `keyboard_shortcuts`   | —                   | Cmd/Ctrl+C/V/Z/etc. JS injection (core — no bridge binding)                                                                            |
+| `file_drop`            | `FileDrop`          | `OnFileDrop`, `OnFileDropOff` (core — controlled by `opts.drop`)                                                                       |
+| `disable_context_menu` | —                   | Suppresses browser right-click menu (core — controlled by `opts.disable_context_menu`)                                                 |
+| `drag_zone`            | —                   | Window-drag-by-CSS injection (core — controlled by `opts.drag.zone`)                                                                   |
+| `navigation`           | —                   | SPA navigation tracking (core — controlled by `opts.on_navigate`)                                                                      |
+
+`include: [lifecycle]` exposes all three `Lifecycle` methods. Individual method names are not valid capability names — they log a warning and are ignored.
+
+See [Configuration → capabilities](../configuration#capabilities) for the full syntax.
+
+---
+
 ## App lifecycle
 
-### `quit()`
+### `Lifecycle.Quit()`
 
 Terminates the app.
 
 ```js
-await quit();
+import { Lifecycle } from "../lunejs/runtime/runtime.js";
+
+await Lifecycle.Quit();
 ```
 
 ---
 
-### `openURL(url)`
+### `Lifecycle.OpenUrl(url)`
 
 Opens a URL in the system default browser.
 
 ```js
-await openURL("https://example.com");
+await Lifecycle.OpenUrl("https://example.com");
 ```
 
 ---
 
 ## System info
 
-### `environment()`
+### `Lifecycle.Environment()`
 
 Returns information about the current runtime environment.
 
 ```js
-const env = await environment();
+const env = await Lifecycle.Environment();
 // { os: "darwin", arch: "arm64", debug: false }
 ```
 
@@ -106,17 +163,21 @@ interface LuneEnvironment {
 
 ## Filesystem paths
 
-These functions return platform-appropriate directory paths. All return `Promise<string>`.
+These methods return platform-appropriate directory paths. All return `Promise<string>`.
 
-### `homeDir()`
+```js
+import { Filesystem } from "../lunejs/runtime/runtime.js";
+```
+
+### `Filesystem.HomeDir()`
 
 The current user's home directory.
 
 ```js
-const home = await homeDir(); // e.g. "/Users/alice"
+const home = await Filesystem.HomeDir(); // e.g. "/Users/alice"
 ```
 
-### `appDataDir()`
+### `Filesystem.AppDataDir()`
 
 The platform-standard directory for storing application data.
 
@@ -127,46 +188,94 @@ The platform-standard directory for storing application data.
 | Windows  | `%APPDATA%`                          |
 
 ```js
-const dataDir = await appDataDir();
+const dataDir = await Filesystem.AppDataDir();
 ```
 
-### `downloadsDir()`
+### `Filesystem.DownloadsDir()`
 
 The user's Downloads directory (`~/Downloads` on macOS and Linux).
 
 ```js
-const dl = await downloadsDir();
+const dl = await Filesystem.DownloadsDir();
 ```
 
-### `tempDir()`
+### `Filesystem.TempDir()`
 
 The system temporary directory.
 
 ```js
-const tmp = await tempDir();
+const tmp = await Filesystem.TempDir();
 ```
 
 ---
 
 ## Clipboard
 
-### `clipboardRead()`
+```js
+import { Clipboard } from "../lunejs/runtime/runtime.js";
+```
+
+### `Clipboard.Read()`
 
 Returns the current clipboard text content.
 
 ```js
-const text = await clipboardRead();
+const text = await Clipboard.Read();
 ```
 
-### `clipboardWrite(text)`
+Platform commands: `pbpaste`/`pbcopy` on macOS, `xclip` on Linux, PowerShell/`clip.exe` on Windows.
 
-Writes a string to the clipboard.
+### `Clipboard.Write(text)`
+
+Writes a plain-text string to the clipboard.
 
 ```js
-await clipboardWrite("copied!");
+await Clipboard.Write("copied!");
 ```
 
-Platform commands used internally: `pbpaste`/`pbcopy` on macOS, `xclip` on Linux, PowerShell/`clip.exe` on Windows.
+### `Clipboard.ReadHtml()`
+
+Returns the HTML content from the clipboard, or `""` if none is present.
+
+```js
+const html = await Clipboard.ReadHtml();
+// e.g. "<b>Hello</b>"
+```
+
+**Supported:** macOS (NSPasteboard), Linux (xclip) — **Planned:** Windows
+
+### `Clipboard.WriteHtml(html)`
+
+Writes an HTML string to the clipboard.
+
+```js
+await Clipboard.WriteHtml("<b>Hello</b> from <em>Lune</em>");
+```
+
+**Supported:** macOS, Linux — **Planned:** Windows
+
+### `Clipboard.ReadImage()`
+
+Returns a PNG image from the clipboard as a `data:image/png;base64,…` string, or `""` if no image is present. TIFF images on macOS are automatically converted to PNG.
+
+```js
+const dataUrl = await Clipboard.ReadImage();
+if (dataUrl) {
+  document.querySelector("img").src = dataUrl;
+}
+```
+
+**Supported:** macOS (NSPasteboard), Linux (xclip) — **Planned:** Windows
+
+### `Clipboard.WriteImage(dataUrl)`
+
+Writes a PNG image to the clipboard from a `data:image/png;base64,…` data URL.
+
+```js
+await Clipboard.WriteImage(dataUrl);
+```
+
+**Supported:** macOS, Linux — **Planned:** Windows
 
 ---
 
@@ -174,46 +283,48 @@ Platform commands used internally: `pbpaste`/`pbcopy` on macOS, `xclip` on Linux
 
 **Supported:** macOS, Linux — **Planned:** Windows
 
-Control the native window at runtime from JavaScript.
+```js
+import { Window } from "../lunejs/runtime/runtime.js";
+```
 
-### `minimize()`
+### `Window.Minimize()`
 
 Minimizes the window.
 
 ```js
-await minimize();
+await Window.Minimize();
 ```
 
-### `maximize()`
+### `Window.Maximize()`
 
 Expands the window to fill the screen.
 
 ```js
-await maximize();
+await Window.Maximize();
 ```
 
-### `center()`
+### `Window.Center()`
 
 Centers the window on the primary display.
 
 ```js
-await center();
+await Window.Center();
 ```
 
-### `setTitle(title)`
+### `Window.SetTitle(title)`
 
 Updates the window title bar text.
 
 ```js
-await setTitle("My App");
+await Window.SetTitle("My App");
 ```
 
-### `setSize(width, height)`
+### `Window.SetSize(width, height)`
 
 Resizes the window in logical pixels.
 
 ```js
-await setSize(1280, 800);
+await Window.SetSize(1280, 800);
 ```
 
 ---
@@ -222,74 +333,76 @@ await setSize(1280, 800);
 
 **Supported:** macOS, Linux — **Planned:** Windows
 
-Open native file picker and save dialogs.
+```js
+import { Dialogs } from "../lunejs/runtime/runtime.js";
+```
 
-### `openFile(prompt)`
+### `Dialogs.OpenFile(prompt)`
 
 Shows a native open-file dialog. Returns the selected path, or `""` if cancelled.
 
 ```js
-const path = await openFile("Select an image");
+const path = await Dialogs.OpenFile("Select an image");
 // "/Users/alice/Pictures/photo.jpg"  or  ""
 ```
 
-### `openDir(prompt)`
+### `Dialogs.OpenDir(prompt)`
 
 Shows a native folder picker. Returns the selected directory path, or `""` if cancelled.
 
 ```js
-const dir = await openDir("Choose a folder");
+const dir = await Dialogs.OpenDir("Choose a folder");
 // "/Users/alice/Documents"  or  ""
 ```
 
-### `openFiles(prompt)`
+### `Dialogs.OpenFiles(prompt)`
 
 Shows a native open-files dialog that allows selecting multiple files. Returns an array of paths (empty array if cancelled).
 
 ```js
-const paths = await openFiles("Select images");
+const paths = await Dialogs.OpenFiles("Select images");
 // ["/Users/alice/a.jpg", "/Users/alice/b.jpg"]  or  []
 ```
 
-### `saveFile(prompt, filename)`
+### `Dialogs.SaveFile(prompt, filename)`
 
 Shows a native save dialog. Returns the chosen path, or `""` if cancelled.
 
 ```js
-const dest = await saveFile("Export as", "report.csv");
+const dest = await Dialogs.SaveFile("Export as", "report.csv");
 // "/Users/alice/Desktop/report.csv"  or  ""
 ```
 
-### `messageInfo(title, message)`
+### `Dialogs.MessageInfo(title, message)`
 
 Shows an informational message dialog.
 
 ```js
-await messageInfo("Done", "Your file has been saved.");
+await Dialogs.MessageInfo("Done", "Your file has been saved.");
 ```
 
-### `messageWarning(title, message)`
+### `Dialogs.MessageWarning(title, message)`
 
 Shows a warning message dialog.
 
 ```js
-await messageWarning("Low disk space", "You are running low on storage.");
+await Dialogs.MessageWarning("Low disk space", "You are running low on storage.");
 ```
 
-### `messageError(title, message)`
+### `Dialogs.MessageError(title, message)`
 
 Shows an error message dialog.
 
 ```js
-await messageError("Export failed", "Could not write to the selected path.");
+await Dialogs.MessageError("Export failed", "Could not write to the selected path.");
 ```
 
-### `messageQuestion(title, message)`
+### `Dialogs.MessageQuestion(title, message)`
 
 Shows a yes/no confirmation dialog. Returns `"Yes"` or `"No"`.
 
 ```js
-const answer = await messageQuestion("Confirm", "Delete this file?");
+const answer = await Dialogs.MessageQuestion("Confirm", "Delete this file?");
 if (answer === "Yes") {
   // proceed
 }
@@ -301,43 +414,54 @@ if (answer === "Yes") {
 
 **Supported:** macOS, Linux (XWayland required on Wayland) — **Planned:** Windows
 
-Show a status-bar icon with an optional click callback or context menu.
+```js
+import { Tray } from "../lunejs/runtime/runtime.js";
+```
 
-### `trayShow(iconPath)`
+### `Tray.Show(iconPath)`
 
 Shows the tray icon. Pass `""` for the default ● icon, or a file path for a custom image (18×18 px recommended).
 
 ```js
-await trayShow(""); // default icon
-await trayShow("/path/to/icon.png");
+await Tray.Show(""); // default icon
+await Tray.Show("/path/to/icon.png");
 ```
 
-### `trayHide()`
+### `Tray.Hide()`
 
 Hides the tray icon.
 
 ```js
-await trayHide();
+await Tray.Hide();
 ```
 
-### `traySetIcon(path)`
+### `Tray.SetIcon(path)`
 
 Swaps the icon without hiding or showing it.
 
 ```js
-await traySetIcon("/path/to/new.png");
+await Tray.SetIcon("/path/to/new.png");
 ```
 
-### `traySetMenu(items)`
+### `Tray.SetMenu(items)`
 
-Attaches a context menu to the tray icon. Use `"---"` as the `id` for a separator.
+Attaches a context menu to the tray icon. Pass an empty array to clear the menu. Use `"---"` as the `id` for a separator.
 
 ```js
-await traySetMenu([
+await Tray.SetMenu([
   { id: "open", label: "Open" },
   { id: "---", label: "" },
   { id: "quit", label: "Quit" },
 ]);
+```
+
+**Type:**
+
+```ts
+interface TrayMenuItem {
+  id: string;
+  label: string;
+}
 ```
 
 ### Tray callbacks
@@ -354,15 +478,15 @@ end
 ```
 
 ```js
-import { on } from "../lunejs/runtime/runtime.js";
+import { Events, Lifecycle } from "../lunejs/runtime/runtime.js";
 
-on("trayClick", () => console.log("icon clicked"));
-on("trayMenuClick", (id) => {
-  if (id === "quit") quit();
+Events.On("trayClick", () => console.log("icon clicked"));
+Events.On("trayMenuClick", (id) => {
+  if (id === "quit") Lifecycle.Quit();
 });
 ```
 
-> Attaching a non-empty menu replaces the direct click handler — `trayClick` will not fire while menu items are present. Calling `traySetMenu([])` clears the menu and restores direct click behaviour.
+> Attaching a non-empty menu replaces the direct click handler — `trayClick` will not fire while menu items are present. Calling `Tray.SetMenu([])` clears the menu and restores direct click behaviour.
 
 ---
 
@@ -370,12 +494,14 @@ on("trayMenuClick", (id) => {
 
 **Supported:** macOS, Linux — **Planned:** Windows
 
-### `notify(title, body)`
+### `Notifications.Notify(title, body)`
 
 Sends a native OS notification.
 
 ```js
-await notify("Build complete", "Your app compiled successfully.");
+import { Notifications } from "../lunejs/runtime/runtime.js";
+
+await Notifications.Notify("Build complete", "Your app compiled successfully.");
 ```
 
 > **macOS:** uses `UNUserNotificationCenter` for apps signed with a Developer certificate (Team Identifier present). Unsigned and ad-hoc-signed builds (including `lune dev`) fall back to `osascript`. To enable `UNUserNotificationCenter` in production, set [`mac.sign`](../configuration.md#macsign) in `lune.yml`.
@@ -387,12 +513,14 @@ await notify("Build complete", "Your app compiled successfully.");
 
 **Supported:** macOS, Linux — **Planned:** Windows
 
-### `screenInfo()`
+### `Screen.Info()`
 
 Returns the primary display dimensions and pixel density.
 
 ```js
-const screen = await screenInfo();
+import { Screen } from "../lunejs/runtime/runtime.js";
+
+const screen = await Screen.Info();
 // { width: 2560, height: 1440, scale: 2 }
 ```
 
@@ -400,14 +528,209 @@ const screen = await screenInfo();
 
 ```ts
 interface ScreenInfo {
-  width: number; // logical width in points
+  width: number;  // logical width in points
   height: number; // logical height in points
-  scale: number; // pixel ratio (1 = standard, 2 = Retina / HiDPI)
+  scale: number;  // pixel ratio (1 = standard, 2 = Retina / HiDPI)
 }
 ```
 
 ---
 
+## Context menus
+
+**Supported:** macOS — **Planned:** Linux, Windows
+
+Show a native right-click context menu driven entirely from JavaScript. Requires both `context_menu` and `context_menu_bridge` capabilities to be active (both are on by default).
+
+```js
+import { ContextMenuBridge } from "../lunejs/runtime/runtime.js";
+```
+
+### `ContextMenuBridge.SetContextMenu(items)`
+
+Registers items to display whenever the user right-clicks anywhere in the window. Replaces any previously set menu.
+
+```js
+ContextMenuBridge.SetContextMenu([
+  { id: "copy",   label: "Copy" },
+  { id: "paste",  label: "Paste" },
+  { separator: true },
+  { id: "delete", label: "Delete", enabled: false },
+]);
+
+ContextMenuBridge.OnContextMenu((id) => {
+  console.log("selected:", id);
+});
+```
+
+**Type:**
+
+```ts
+interface ContextMenuItem {
+  id?: string;
+  label?: string;
+  enabled?: boolean;
+  separator?: boolean;
+}
+```
+
+### `ContextMenuBridge.ClearContextMenu()`
+
+Removes the registered menu. Right-clicks revert to default browser behaviour (or are suppressed if `disable_context_menu` is set).
+
+```js
+ContextMenuBridge.ClearContextMenu();
+```
+
+### `ContextMenuBridge.OnContextMenu(cb)`
+
+Subscribes to context menu item selections. The callback receives the `id` of the selected item. Not called if the menu is dismissed without a selection.
+
+```js
+ContextMenuBridge.OnContextMenu((id) => {
+  if (id === "delete") deleteSelectedItem();
+});
+```
+
+---
+
+## Drag-out
+
+**Supported:** macOS — **Planned:** Linux, Windows
+
+Initiate a native drag session that hands local files from the app to the OS. The user can then drop them into Finder, another app, or anywhere else that accepts files.
+
+### `DragOut.Start(paths)`
+
+Starts a native drag with the given array of absolute file paths. Call it from a `pointerdown` or `mousedown` handler — the drag uses the current mouse position automatically.
+
+| Parameter | Type       | Description                          |
+| --------- | ---------- | ------------------------------------ |
+| `paths`   | `string[]` | Absolute paths to the files to drag. |
+
+```js
+import { DragOut } from "../lunejs/runtime/runtime.js";
+
+element.addEventListener("pointerdown", () => {
+  DragOut.Start(["/path/to/file.txt"]);
+});
+```
+
+---
+
+## Deep links
+
+**Supported:** macOS (built app), Linux — **Planned:** Windows
+
+Receive URLs routed to your app by the OS when the user opens a custom URL scheme link (e.g. `myapp://...`). Common use case: OAuth redirect flows.
+
+First declare the schemes in `lune.yml`:
+
+```yaml
+url_schemes:
+  - myapp
+```
+
+Then subscribe in JavaScript:
+
+```js
+import { DeepLink } from "../lunejs/runtime/runtime.js";
+```
+
+### `DeepLink.OnDeepLink(cb)`
+
+Registers a callback that fires whenever the OS routes a URL with your registered scheme to the running app.
+
+```js
+DeepLink.OnDeepLink((url) => {
+  console.log("Received:", url);
+  // e.g. "myapp://oauth/callback?code=abc123"
+});
+```
+
+### `DeepLink.OnDeepLinkOff()`
+
+Removes the deep link listener registered by `DeepLink.OnDeepLink`.
+
+```js
+DeepLink.OnDeepLinkOff();
+```
+
+> **macOS:** The scheme is registered via `CFBundleURLTypes` in `Info.plist` at build time. Deep links received during `lune dev` will not be routed by the OS (the binary is not a `.app` bundle). Use `window.__lune.crystalEmit("deep_link", { url: "..." })` to simulate them during development.
+>
+> **Linux:** Each deep link opens a new process. Lune emits the URL from `ARGV` before the window becomes visible. Single-instance forwarding (so the URL lands in an already-running window) is planned but not yet implemented.
+
+See the [Deep Links guide](./deep-links) for a full walkthrough.
+
+---
+
 ## Events
 
-The event bus is bidirectional. See the [Events](./events) guide for `on`, `once`, `off`, and `emit` — both Crystal→JS and JS→Crystal directions.
+The event bus is bidirectional. Crystal emits to JS with `app.emit(name, data)` and JS emits to Crystal via `Events.Emit`.
+
+```js
+import { Events } from "../lunejs/runtime/runtime.js";
+```
+
+### `Events.On(name, cb)`
+
+Subscribes to an event by name. The callback fires every time the event is emitted (from either side). `cb` receives the event payload.
+
+```js
+Events.On("myEvent", (data) => console.log(data));
+```
+
+### `Events.Once(name, cb)`
+
+Like `Events.On` but fires only for the next occurrence, then removes itself.
+
+```js
+Events.Once("ready", () => init());
+```
+
+### `Events.Off(name, cb?)`
+
+Removes a listener. If `cb` is omitted, removes all listeners for `name`.
+
+```js
+Events.Off("myEvent", handler);
+Events.Off("myEvent"); // removes all listeners for "myEvent"
+```
+
+### `Events.Emit(name, data?)`
+
+Emits an event from JavaScript to Crystal. The Crystal app receives it via `app.on(name) { |data| ... }`.
+
+```js
+await Events.Emit("userAction", { kind: "save" });
+```
+
+See the [Events guide](./events) for the Crystal-side API and full examples.
+
+---
+
+## File drop
+
+Enable native file drop via `opts.drop` in Crystal. See [Configuration → `drop`](../configuration#drop).
+
+```js
+import { FileDrop } from "../lunejs/runtime/runtime.js";
+```
+
+### `FileDrop.OnFileDrop(cb)`
+
+Registers a callback that fires when files are dropped onto the window (or onto a configured drop zone). Receives the drop position and an array of absolute file paths.
+
+```js
+FileDrop.OnFileDrop((x, y, paths) => {
+  console.log("dropped at", x, y, paths);
+});
+```
+
+### `FileDrop.OnFileDropOff()`
+
+Removes the file drop listener.
+
+```js
+FileDrop.OnFileDropOff();
+```

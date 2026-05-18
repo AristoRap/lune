@@ -9,6 +9,8 @@ module Lune
   end
 
   def self.default_logger : Log
+    backend = Log::IOBackend.new(STDERR, dispatcher: :sync)
+    Log.setup("lune", :info, backend)
     logger = Log.for("lune")
     logger.level = Log::Severity::Info
     logger

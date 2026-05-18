@@ -1,8 +1,10 @@
 require "../spec_helper"
 
-private def make_rb(method = "__lune.ping", args = [] of String, return_type = "String", arg_names = [] of String, ts_return_type = nil)
+# method is the capability-prefixed path, e.g. "lifecycle.quit" — no BRIDGE_MARKER prefix.
+# The bridge ID is BRIDGE_MARKER + "." + method = "__lune.lifecycle.quit".
+private def make_rb(method = "test.ping", js_namespace = "Test", args = [] of String, return_type = "String", arg_names = [] of String, ts_return_type = nil)
   Lune::RuntimeBinding.new(
-    namespace: "runtime",
+    js_namespace: js_namespace,
     method: method,
     args: args,
     return_type: return_type,
@@ -13,11 +15,27 @@ private def make_rb(method = "__lune.ping", args = [] of String, return_type = "
 end
 
 describe Lune::RuntimeBinding do
+  describe "#id" do
+    it "puts BRIDGE_MARKER at root: __lune.<capability>.<method>" do
+      make_rb(method: "lifecycle.quit").id.should eq("__lune.lifecycle.quit")
+      make_rb(method: "clipboard.read").id.should eq("__lune.clipboard.read")
+      make_rb(method: "screen.info").id.should eq("__lune.screen.info")
+    end
+  end
+
   describe "#js_func_name" do
-    it "strips the __lune. prefix" do
-      make_rb(method: "__lune.quit").js_func_name.should eq("quit")
-      make_rb(method: "__lune.openURL").js_func_name.should eq("openURL")
-      make_rb(method: "__lune.screenInfo").js_func_name.should eq("screenInfo")
+    it "returns the camelCase leaf (last path segment)" do
+      make_rb(method: "lifecycle.quit").js_func_name.should eq("quit")
+      make_rb(method: "lifecycle.openURL").js_func_name.should eq("openURL")
+      make_rb(method: "screen.info").js_func_name.should eq("info")
+    end
+  end
+
+  describe "#js_method_name" do
+    it "returns PascalCase leaf for use as an object method name" do
+      make_rb(method: "lifecycle.quit").js_method_name.should eq("Quit")
+      make_rb(method: "lifecycle.openURL").js_method_name.should eq("OpenURL")
+      make_rb(method: "screen.info").js_method_name.should eq("Info")
     end
   end
 
@@ -28,41 +46,41 @@ describe Lune::RuntimeBinding do
   end
 
   describe "#to_js_stub" do
-    it "emits an export function with no args" do
-      stub = make_rb(method: "__lune.quit").to_js_stub
-      stub.should eq(%(export function quit() { return __lune.call("runtime.__lune.quit"); }))
+    it "emits an object method calling the correct bridge ID" do
+      stub = make_rb(method: "lifecycle.quit", js_namespace: "Lifecycle").to_js_stub
+      stub.should eq(%(  Quit() { return __lune.call("__lune.lifecycle.quit"); },))
     end
 
-    it "emits an export function with named args" do
-      stub = make_rb(method: "__lune.openURL", args: ["String"], arg_names: ["url"]).to_js_stub
-      stub.should eq(%(export function openURL(url) { return __lune.call("runtime.__lune.openURL", url); }))
+    it "emits an object method with named args" do
+      stub = make_rb(method: "lifecycle.openURL", js_namespace: "Lifecycle", args: ["String"], arg_names: ["url"]).to_js_stub
+      stub.should eq(%(  OpenURL(url) { return __lune.call("__lune.lifecycle.openURL", url); },))
     end
 
     it "falls back to arg0..argN when arg_names is empty" do
-      stub = make_rb(method: "__lune.setSize", args: ["Int32", "Int32"]).to_js_stub
+      stub = make_rb(method: "window.setSize", args: ["Int32", "Int32"]).to_js_stub
       stub.includes?("arg0, arg1").should be_true
     end
   end
 
   describe "#to_dts_sig" do
-    it "emits an export declare function wrapping return in Promise" do
-      sig = make_rb(method: "__lune.homeDir", return_type: "String").to_dts_sig
-      sig.should eq("export declare function homeDir(): Promise<string>;")
+    it "emits an interface member wrapping return in Promise" do
+      sig = make_rb(method: "filesystem.homeDir", return_type: "String").to_dts_sig
+      sig.should eq("  HomeDir(): Promise<string>;")
     end
 
     it "uses ts_return_type as the full return type bypassing auto-wrap" do
-      sig = make_rb(method: "__lune.environment", return_type: "JSON", ts_return_type: "LuneEnvironment").to_dts_sig
-      sig.should eq("export declare function environment(): LuneEnvironment;")
+      sig = make_rb(method: "lifecycle.environment", return_type: "JSON", ts_return_type: "LuneEnvironment").to_dts_sig
+      sig.should eq("  Environment(): LuneEnvironment;")
     end
 
     it "uses ts_return_type with explicit Promise when needed" do
-      sig = make_rb(method: "__lune.screenInfo", return_type: "String", ts_return_type: "Promise<ScreenInfo>").to_dts_sig
-      sig.should eq("export declare function screenInfo(): Promise<ScreenInfo>;")
+      sig = make_rb(method: "screen.info", return_type: "String", ts_return_type: "Promise<ScreenInfo>").to_dts_sig
+      sig.should eq("  Info(): Promise<ScreenInfo>;")
     end
 
     it "includes named params in the signature" do
-      sig = make_rb(method: "__lune.notify", args: ["String", "String"], return_type: "Nil", arg_names: ["title", "body"]).to_dts_sig
-      sig.should eq("export declare function notify(title: string, body: string): Promise<void>;")
+      sig = make_rb(method: "notifications.notify", args: ["String", "String"], return_type: "Nil", arg_names: ["title", "body"]).to_dts_sig
+      sig.should eq("  Notify(title: string, body: string): Promise<void>;")
     end
   end
 end

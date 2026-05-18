@@ -107,8 +107,8 @@ describe Lune::App do
       app = Lune::App.new
 
       rb = Lune::RuntimeBinding.new(
-        namespace: "runtime",
-        method: "__lune.ping",
+        js_namespace: "Test",
+        method: "test.ping",
         args: [] of String,
         return_type: "String",
         callback: ->(_a : Array(JSON::Any)) { JSON::Any.new("ok") }
@@ -117,7 +117,7 @@ describe Lune::App do
       app.register(rb)
 
       app.bindings.size.should eq(1)
-      app.bindings.first.method.should eq("__lune.ping")
+      app.bindings.first.method.should eq("test.ping")
       app.bindings.first.internal?.should be_true
     end
   end
@@ -131,7 +131,7 @@ describe Lune::App do
 
       app.emit("ready", {status: "ok"})
 
-      bridge.last_eval.should contain("window.__lune_emit")
+      bridge.last_eval.should contain("window.__lune.crystalEmit")
       bridge.last_eval.should contain("ready")
       bridge.last_eval.should contain(%("status":"ok"))
     end

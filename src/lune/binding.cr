@@ -29,7 +29,10 @@ module Lune
     end
 
     def to_js_stub : String
-      "  #{js_func_name}(...args) {\n    return __lune.call(#{id.inspect}, ...args);\n  },"
+      names = resolved_arg_names
+      params = names.join(", ")
+      call_args = names.empty? ? "" : ", #{names.join(", ")}"
+      "  #{js_func_name}(#{params}) {\n    return __lune.call(#{id.inspect}#{call_args});\n  },"
     end
 
     def to_dts_sig : String
@@ -41,14 +44,17 @@ module Lune
     end
 
     def dts_params
-      @args.each_with_index.map { |t, i|
-        name = @arg_names.empty? ? "arg#{i}" : @arg_names[i]
+      resolved_arg_names.zip(@args).map { |name, t|
         "#{name}: #{Lune::Runtime::Generator.crystal_to_ts(t)}"
       }.join(", ")
     end
 
     def internal?
       @internal
+    end
+
+    protected def resolved_arg_names : Array(String)
+      @arg_names.empty? ? Array(String).new(@args.size) { |i| "arg#{i}" } : @arg_names
     end
   end
 end

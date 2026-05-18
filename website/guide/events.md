@@ -20,18 +20,18 @@ The payload can be any Crystal value that serializes to JSON — strings, number
 
 ### Listening in JavaScript
 
-Import `on`, `once`, or `off` from `runtime.js`:
+Import the `Events` namespace from `runtime.js`:
 
 ```js
-import { on, once, off } from "../lunejs/runtime/runtime.js";
+import { Events } from "../lunejs/runtime/runtime.js";
 
 // Persistent listener
-on("status-changed", (status) => {
+Events.On("status-changed", (status) => {
   console.log("New status:", status);
 });
 
 // One-shot listener — fires once, then removes itself
-once("connected", () => {
+Events.Once("connected", () => {
   showWelcomeMessage();
 });
 ```
@@ -42,17 +42,17 @@ once("connected", () => {
 
 ### Emitting from JavaScript
 
-Import `emit` from `runtime.js` and call it with an event name and an optional payload:
+Use `Events.Emit` with an event name and an optional payload:
 
 ```js
-import { emit } from "../lunejs/runtime/runtime.js";
+import { Events } from "../lunejs/runtime/runtime.js";
 
-await emit("search", { query: input.value });
-await emit("user-action", "button-clicked");
-await emit("ready"); // no payload
+await Events.Emit("search", { query: input.value });
+await Events.Emit("user-action", "button-clicked");
+await Events.Emit("ready"); // no payload
 ```
 
-`emit` is async — it resolves once Crystal has received the event.
+`Events.Emit` is async — it resolves once Crystal has received the event.
 
 ### Listening in Crystal
 
@@ -93,10 +93,10 @@ end
 
 ```js
 // JS side
-on("results", (data) => renderList(data));
+Events.On("results", (data) => renderList(data));
 
 searchButton.addEventListener("click", () => {
-  emit("search", { query: input.value });
+  Events.Emit("search", { query: input.value });
 });
 ```
 
@@ -109,13 +109,13 @@ searchButton.addEventListener("click", () => {
 ```js
 const handler = (data) => console.log(data);
 
-on("tick", handler);
+Events.On("tick", handler);
 
 // Remove this specific handler
-off("tick", handler);
+Events.Off("tick", handler);
 
 // Remove ALL handlers for this event
-off("tick");
+Events.Off("tick");
 ```
 
 **Crystal:**
@@ -148,7 +148,7 @@ end
 ```
 
 ```js
-on("progress", ({ done, total, path }) => {
+Events.On("progress", ({ done, total, path }) => {
   progressBar.value = done / total;
   statusLabel.textContent = `Processing ${path}...`;
 });
@@ -169,10 +169,10 @@ end
 ```
 
 ```js
-on("search-results", (results) => renderResults(results));
+Events.On("search-results", (results) => renderResults(results));
 
 searchInput.addEventListener("input", (e) => {
-  emit("search", { query: e.target.value });
+  Events.Emit("search", { query: e.target.value });
 });
 ```
 
@@ -197,12 +197,12 @@ end
 ```
 
 ```js
-import { emit, on } from "../lunejs/runtime/runtime.js";
+import { Events } from "../lunejs/runtime/runtime.js";
 
-on("config", (cfg) => applyConfig(cfg));
+Events.On("config", (cfg) => applyConfig(cfg));
 
 // After your app has mounted and listeners are registered
-emit("frontend-ready");
+Events.Emit("frontend-ready");
 ```
 
 ---
@@ -227,10 +227,10 @@ end
 
 ## TypeScript
 
-All event functions are declared in `runtime.d.ts`. Callbacks receive `unknown` by default — cast to your expected type:
+All event methods are declared in `runtime.d.ts`. Callbacks receive `unknown` by default — cast to your expected type:
 
 ```ts
-import { on, emit } from "../lunejs/runtime/runtime.js";
+import { Events } from "../lunejs/runtime/runtime.js";
 
 interface SearchPayload {
   query: string;
@@ -241,11 +241,11 @@ interface SearchResult {
   url: string;
 }
 
-on("search-results", (data) => {
+Events.On("search-results", (data) => {
   const results = data as SearchResult[];
   renderResults(results);
 });
 
 const search = (query: string) =>
-  emit("search", { query } satisfies SearchPayload);
+  Events.Emit("search", { query } satisfies SearchPayload);
 ```

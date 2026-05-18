@@ -5,19 +5,15 @@ module Lune
     # ```
     # Lune.run(app) do |opts|
     #   opts.drop do |d|
-    #     d.enabled = true
     #     d.zone    = "--lune-drop-target"
     #     d.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) { puts paths.inspect; nil }
     #   end
     # end
     # ```
     class Drop
-      # Enables native file drop. When true the webview's own drop handling is disabled
-      # and the `fileDrop` event is emitted to JS on every drop.
-      property enabled : Bool = false
-
-      # Disables the webview's built-in drag handling without setting up a drop target.
-      # Prevents files from accidentally opening/navigating in the webview.
+      # Disables the webview's built-in drag handling globally.
+      # Prevents files from accidentally opening or navigating in the webview.
+      # Enable the `file_drop` capability in lune.yml to receive drops in your app.
       property disable_webview_drop : Bool = false
 
       # CSS custom property that marks an element as a drop zone.
@@ -29,7 +25,6 @@ module Lune
       property value : String = "drop"
 
       # Crystal-side callback fired on drop. Receives (x, y, paths).
-      # Setting this also enables file drop — `enabled` does not need to be set separately.
       property on_drop : ((Int32, Int32, Array(String)) -> Nil)? = nil
 
       def initialize; end

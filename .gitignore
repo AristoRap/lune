@@ -6,10 +6,10 @@
 /.shards/
 *.dwarf
 *.o
+*.o.tmp
 .lune-dev
 /shard.lock
 /lune.yml
-/src/main.cr
 
 # demo — commit source, ignore generated/installed dirs
 demo/lib/

@@ -1,31 +1,31 @@
 # Error Handling
 
-When a Crystal binding raises an exception, the JavaScript `Promise` rejects. Lune provides a structured error envelope so the frontend can inspect the failure and branch on error type.
+When a Crystal binding raises an exception, the JavaScript `Promise` rejects with a `LuneError` instance — a proper `Error` subclass you can inspect with `instanceof`, catch in a typed `catch` block, and see in DevTools stack traces.
 
 ---
 
-## The error envelope
+## `LuneError`
 
-All rejected promises carry an object with two fields:
+`LuneError` extends the native `Error` class and adds a machine-readable `code`:
 
 ```ts
-interface LuneError {
-  code: string; // machine-readable error code
-  error: string; // human-readable message
+class LuneError extends Error {
+  readonly code: string; // machine-readable error type
+  // err.message — inherited from Error, holds the human-readable description
 }
+```
+
+Import it from the runtime module:
+
+```js
+import { LuneError } from "../lunejs/runtime/runtime.js";
 ```
 
 ---
 
 ## Generic exceptions
 
-If a Crystal method raises a plain `Exception`, the frontend receives:
-
-```json
-{ "code": "error", "error": "the exception message" }
-```
-
-Example:
+If a Crystal method raises a plain `Exception`, the promise rejects with a `LuneError` whose `code` is `"error"` and `message` is the exception message:
 
 ```crystal
 @[Lune::Bind]
@@ -36,11 +36,14 @@ end
 ```
 
 ```js
+import { LuneError } from "../lunejs/runtime/runtime.js";
+
 try {
   await api.Math.Divide(10, 0);
-} catch (e) {
-  console.log(e.code); // "error"
-  console.log(e.error); // "division by zero"
+} catch (err) {
+  console.log(err instanceof LuneError); // true
+  console.log(err.code);                 // "error"
+  console.log(err.message);             // "division by zero"
 }
 ```
 
@@ -48,7 +51,34 @@ try {
 
 ## `Lune::Error` — typed errors
 
-For errors you want the frontend to act on differently, subclass `Lune::Error` and provide a machine-readable `code`:
+For errors you want the frontend to branch on, raise a `Lune::Error` with a machine-readable `code`:
+
+```crystal
+@[Lune::Bind]
+def get_user(id : Int32) : String
+  user = find_user(id)
+  raise Lune::Error.new("not_found", "User ##{id} was not found") unless user
+  user.to_json
+end
+```
+
+In JavaScript, use `instanceof` or branch on `code`:
+
+```js
+import { LuneError } from "../lunejs/runtime/runtime.js";
+
+try {
+  const user = await api.Users.GetUser(99);
+} catch (err) {
+  if (err instanceof LuneError && err.code === "not_found") {
+    showNotFoundMessage();
+  } else {
+    throw err; // re-throw unexpected errors
+  }
+}
+```
+
+You can also subclass `Lune::Error` in Crystal for reuse across bindings:
 
 ```crystal
 class NotFoundError < Lune::Error
@@ -64,51 +94,25 @@ class UnauthorizedError < Lune::Error
 end
 ```
 
-Raise them from bindings just like any other exception:
-
-```crystal
-@[Lune::Bind]
-def get_user(id : Int32) : String
-  user = find_user(id)
-  raise NotFoundError.new("User ##{id}") unless user
-  user.to_json
-end
-```
-
-In JavaScript, branch on `code`:
-
-```js
-try {
-  const user = await api.Users.GetUser(99);
-} catch (e) {
-  if (e.code === "not_found") {
-    showNotFoundMessage();
-  } else if (e.code === "unauthorized") {
-    redirectToLogin();
-  } else {
-    console.error("Unexpected error:", e.error);
-  }
-}
-```
-
 ---
 
 ## TypeScript pattern
 
-If you are using TypeScript, define a type guard for `LuneError`:
+With TypeScript, `instanceof LuneError` narrows the type automatically — no custom type guard needed:
 
 ```ts
-import type { LuneError } from "../lunejs/runtime/runtime.js";
-
-function isLuneError(e: unknown): e is LuneError {
-  return typeof e === "object" && e !== null && "code" in e && "error" in e;
-}
+import { LuneError } from "../lunejs/runtime/runtime.js";
 
 try {
   await api.Users.GetUser(99);
-} catch (e) {
-  if (isLuneError(e) && e.code === "not_found") {
-    // handle
+} catch (err) {
+  if (err instanceof LuneError) {
+    // err is typed as LuneError here
+    switch (err.code) {
+      case "not_found":    return showNotFoundMessage();
+      case "unauthorized": return redirectToLogin();
+      default:             console.error("Unexpected:", err.message);
+    }
   }
 }
 ```

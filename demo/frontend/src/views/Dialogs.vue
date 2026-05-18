@@ -1,45 +1,36 @@
 <script setup>
 import { ref } from "vue";
 import SectionHead from "../components/SectionHead.vue";
-import {
-  openFile,
-  openFiles,
-  openDir,
-  saveFile,
-  messageInfo,
-  messageWarning,
-  messageError,
-  messageQuestion,
-} from "../lune.js";
+import { Dialogs } from "../lune.js";
 
 const pickerOut = ref("");
 const dialogOut = ref("");
 
 async function pickFile() {
-  pickerOut.value = (await openFile("Select a file")) || "(cancelled)";
+  pickerOut.value = (await Dialogs.OpenFile("Select a file")) || "(cancelled)";
 }
 async function pickFiles() {
-  const ps = await openFiles("Select files");
+  const ps = await Dialogs.OpenFiles("Select files");
   pickerOut.value = ps.length ? ps.join("\n") : "(cancelled)";
 }
 async function pickDir() {
-  pickerOut.value = (await openDir("Select a folder")) || "(cancelled)";
+  pickerOut.value = (await Dialogs.OpenDir("Select a folder")) || "(cancelled)";
 }
 async function saveAs() {
-  pickerOut.value = (await saveFile("Save as", "export.txt")) || "(cancelled)";
+  pickerOut.value = (await Dialogs.SaveFile("Save as", "export.txt")) || "(cancelled)";
 }
 
 function info() {
-  messageInfo("Information", "This is an info dialog from Lune.");
+  Dialogs.MessageInfo("Information", "This is an info dialog from Lune.");
 }
 function warn() {
-  messageWarning("Warning", "Something might need your attention.");
+  Dialogs.MessageWarning("Warning", "Something might need your attention.");
 }
 function err() {
-  messageError("Error", "Something went wrong!");
+  Dialogs.MessageError("Error", "Something went wrong!");
 }
 async function ask() {
-  const yes = await messageQuestion("Confirm", "Do you want to proceed?");
+  const yes = await Dialogs.MessageQuestion("Confirm", "Do you want to proceed?");
   dialogOut.value = `Answer: ${yes}`;
 }
 </script>

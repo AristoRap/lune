@@ -120,6 +120,60 @@ lune build --release
 
 ---
 
+## `lune dist`
+
+Package the built app into a platform-native distributable.
+
+```sh
+lune dist [flags]
+```
+
+Requires a prior `lune build`. The output format is chosen automatically based on the current platform, or set explicitly with a flag.
+
+**Flags:**
+
+| Flag              | Default | Description                                                   |
+| ----------------- | ------- | ------------------------------------------------------------- |
+| `--skip-notarize` | `false` | Skip notarization even if `mac.notarize: true` is set (macOS) |
+
+**macOS — DMG:**
+
+1. Copies the built `.app` into a staging directory alongside an `/Applications` symlink
+2. Runs `hdiutil create` to produce a compressed `build/bin/<name>.dmg`
+3. If `mac.notarize: true` and `APPLE_ID` / `APPLE_PASSWORD` / `APPLE_TEAM_ID` env vars are set:
+   - Submits to Apple's notary service (`xcrun notarytool submit --wait`)
+   - Staples the ticket (`xcrun stapler staple`) so Gatekeeper can verify offline
+
+**Linux — AppImage:**
+
+1. Assembles an AppDir (`usr/bin/<name>`, `AppRun`, `.desktop` entry, icon if available)
+2. Runs `appimagetool` to produce `build/bin/<name>.AppImage`
+3. Cleans up the AppDir
+
+Requires `appimagetool` in `PATH` — download the binary for your architecture from the [appimagetool releases](https://github.com/AppImage/appimagetool/releases/tag/continuous).
+
+**Output:**
+
+| Platform | Output                      |
+| -------- | --------------------------- |
+| macOS    | `build/bin/<name>.dmg`      |
+| Linux    | `build/bin/<name>.AppImage` |
+
+**Examples:**
+
+```sh
+# Build → package (platform default)
+lune build --release
+lune dist
+
+# macOS: package without notarizing (local testing)
+lune dist --skip-notarize
+```
+
+See [Distribution](./guide/distribution) for the full signing and notarization setup.
+
+---
+
 ## `lune run`
 
 Launch the previously built binary.

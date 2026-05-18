@@ -21,7 +21,7 @@ private class LoggingBuildCommand < LuneCLI::Commands::Build
     nil
   end
 
-  def run(frontend_dir : String, app_entry : String, output_path : String, release : Bool = false, build_cmd : String = LuneCLI::DEFAULT_BUILD_CMD, icon : String? = nil, sign : String? = nil) : Bool
+  def run(config : LuneCLI::Config = LuneCLI::Config.new, release : Bool = false) : Bool
     @result
   end
 end
@@ -30,11 +30,11 @@ private class LoggingRunCommand < LuneCLI::Commands::Run
   def initialize(@result : Bool)
   end
 
-  def validate_paths(app_entry : String) : String?
+  def validate_paths(app_entry : String, name : String? = nil) : String?
     nil
   end
 
-  def run(app_entry : String) : Bool
+  def run(app_entry : String, name : String? = nil, lock_dir : String = File.join(Path.home, ".lune")) : Bool
     @result
   end
 end

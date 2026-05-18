@@ -1,11 +1,22 @@
 require "yaml"
 
 module Lune
+  struct ConfigCapabilities
+    include YAML::Serializable
+
+    @[YAML::Field(key: "include")]
+    getter only : Array(String)? = nil
+
+    getter exclude : Array(String)? = nil
+
+    def initialize(@only : Array(String)? = nil, @exclude : Array(String)? = nil); end
+  end
+
   struct Config
     include YAML::Serializable
 
     getter window : Window = Window.new
-    getter capabilities : Array(String)? = nil
+    getter capabilities : ConfigCapabilities = ConfigCapabilities.new
 
     def initialize; end
 

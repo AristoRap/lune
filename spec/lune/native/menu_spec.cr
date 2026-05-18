@@ -139,4 +139,27 @@ describe Lune::Native::Menu do
       Lune::Native::MenuMock.last_app_name.should eq("MyApp")
     end
   end
+
+  describe ".show_context_menu" do
+    it "records the call with coordinates and JSON" do
+      Lune::Native::Menu.show_context_menu(Pointer(Void).null, 10.0_f32, 20.0_f32, "[{\"id\":\"cut\"}]") { }
+      Lune::Native::MenuMock.calls.should contain(:show_context_menu)
+      Lune::Native::MenuMock.last_context_json.should eq("[{\"id\":\"cut\"}]")
+    end
+
+    it "calls the block with the stubbed selection id" do
+      Lune::Native::MenuMock.stub_context_selection("paste")
+      selected = ""
+      Lune::Native::Menu.show_context_menu(Pointer(Void).null, 0.0_f32, 0.0_f32, "[]") do |id|
+        selected = id
+      end
+      selected.should eq("paste")
+    end
+
+    it "does not call the block when stub selection is empty (dismissed)" do
+      called = false
+      Lune::Native::Menu.show_context_menu(Pointer(Void).null, 0.0_f32, 0.0_f32, "[]") { called = true }
+      called.should be_false
+    end
+  end
 end

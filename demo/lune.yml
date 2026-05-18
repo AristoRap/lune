@@ -1,4 +1,4 @@
-name: demo
+name: Demo
 app_entry: src/main.cr
 icon: ../assets/lune-logo.png
 frontend:
@@ -10,3 +10,15 @@ frontend:
     url: http://localhost:5173
 mac:
   sign: "Developer ID Application: Your Name (TEAMID)" # enables UNUserNotificationCenter
+  notarize: false
+
+url_schemes:
+  - lune-demo
+
+capabilities:
+  # include:
+  # - lifecycle
+
+  # exclude:
+  #   - lifecycle
+  #   - dragZone

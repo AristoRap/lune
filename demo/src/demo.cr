@@ -23,6 +23,12 @@ class Demo
     %({"error":"#{e.message}"})
   end
 
+  @[Lune::Bind]
+  def fail_with(code : String) : String
+    raise Lune::Error.new(code, "Demo error raised from Crystal (code: #{code})") unless code.empty?
+    "ok"
+  end
+
   @[Lune::Bind(async: true)]
   def process_files(paths : Array(String)) : Nil
     paths.each_with_index do |path, i|

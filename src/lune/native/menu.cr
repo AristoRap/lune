@@ -7,13 +7,21 @@ module Lune
         @@calls = [] of Symbol
         @@last_app_name : String? = nil
         @@last_menu_json : String? = nil
+        @@last_context_json : String? = nil
+        @@context_stub_id : String = ""
 
-        class_getter calls, last_app_name, last_menu_json
+        class_getter calls, last_app_name, last_menu_json, last_context_json, context_stub_id
 
         def self.reset
           @@calls.clear
           @@last_app_name = nil
           @@last_menu_json = nil
+          @@last_context_json = nil
+          @@context_stub_id = ""
+        end
+
+        def self.stub_context_selection(id : String)
+          @@context_stub_id = id
         end
 
         def self.record_setup_default(app_name : String)
@@ -25,6 +33,12 @@ module Lune
           @@calls << :set_menu
           @@last_app_name = app_name
           @@last_menu_json = json
+        end
+
+        def self.record_show_context_menu(x : Float32, y : Float32, json : String, &on_select : String -> Nil)
+          @@calls << :show_context_menu
+          @@last_context_json = json
+          on_select.call(@@context_stub_id) unless @@context_stub_id.empty?
         end
       end
     {% elsif flag?(:darwin) %}
@@ -40,12 +54,21 @@ module Lune
           cb       : (LibC::Char*, Void*) ->,
           ctx      : Void*
         ) : Void
+        fun lune_show_context_menu(
+          window : Void*,
+          x      : LibC::Float,
+          y      : LibC::Float,
+          json   : LibC::Char*,
+          cb     : (LibC::Char*, Void*) ->,
+          ctx    : Void*
+        ) : Void
       end
     {% end %}
 
     module Menu
       @@app_name : String = ""
       @@box : Void*? = nil
+      @@ctx_box : Void*? = nil
 
       def self.setup_default(app_name : String)
         {% if flag?(:lune_native_test_mock) %}
@@ -78,6 +101,28 @@ module Lune
       # Re-applies the menu after mutating Item properties (enabled, checked, label).
       def self.update(opts : Options::Menu)
         set_from_options(opts, @@app_name)
+      end
+
+      # Shows a native context menu at (x, y) in web coordinates and yields the
+      # selected item's id. The block is not called if the menu is dismissed.
+      def self.show_context_menu(handle : Void*, x : Float32, y : Float32, items_json : String, &on_select : String -> Nil)
+        cb = on_select
+        {% if flag?(:lune_native_test_mock) %}
+          MenuMock.record_show_context_menu(x, y, items_json) { |id| cb.call(id) }
+        {% elsif flag?(:darwin) %}
+          box = Box.box(cb)
+          @@ctx_box = box
+          LibNativeMenu.lune_show_context_menu(
+            handle, x, y, items_json,
+            ->(payload : LibC::Char*, ctx : Void*) {
+              fn = Box(Proc(String, Nil)).unbox(ctx)
+              data = JSON.parse(String.new(payload))
+              id = data["id"]?.try(&.as_s) || ""
+              fn.call(id) unless id.empty?
+            },
+            box
+          )
+        {% end %}
       end
 
       # ── Serialization ───────────────────────────────────────────────────────

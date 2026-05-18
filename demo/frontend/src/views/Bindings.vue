@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import SectionHead from "../components/SectionHead.vue";
-import { api } from "../lune.js";
+import { api, LuneError } from "../lune.js";
 
 const greetIn = ref("");
 const greetOut = ref("");
@@ -9,6 +9,8 @@ const revIn = ref("");
 const revOut = ref("");
 const fiIn = ref("");
 const fiOut = ref("");
+const errCode = ref("validation_error");
+const errOut = ref(null);
 
 async function callGreet() {
   greetOut.value = await api.Demo.Greet(greetIn.value);
@@ -24,6 +26,20 @@ async function callFileInfo() {
     fiOut.value = JSON.stringify(JSON.parse(raw), null, 2);
   } catch {
     fiOut.value = raw;
+  }
+}
+
+async function callFailWith() {
+  errOut.value = null;
+  try {
+    await api.Demo.FailWith(errCode.value);
+  } catch (err) {
+    errOut.value = {
+      isLuneError: err instanceof LuneError,
+      name: err.name,
+      code: err.code,
+      message: err.message,
+    };
   }
 }
 </script>
@@ -63,6 +79,15 @@ async function callFileInfo() {
         <button @click="callFileInfo">Call</button>
       </div>
       <pre class="result mono">{{ fiOut }}</pre>
+    </div>
+
+    <div class="card">
+      <span class="card-label">fail_with(code) → LuneError</span>
+      <div class="row">
+        <input v-model="errCode" type="text" placeholder="error_code" />
+        <button @click="callFailWith">Trigger Error</button>
+      </div>
+      <pre v-if="errOut" class="result mono">{{ JSON.stringify(errOut, null, 2) }}</pre>
     </div>
   </div>
 </template>

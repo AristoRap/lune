@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import SectionHead from "../components/SectionHead.vue";
-import { trayShow, trayHide, traySetMenu, quit } from "../lune.js";
+import { Tray, Lifecycle } from "../lune.js";
 import { useLuneEvent } from "../composables/useLuneEvent.js";
 
 const log = ref([]);
@@ -10,21 +10,21 @@ const visible = ref(false);
 
 useLuneEvent("trayEvent", (id) => {
   log.value.unshift(`trayEvent: ${JSON.stringify(id)}`);
-  if (id === "quit") quit();
+  if (id === "quit") Lifecycle.Quit();
 });
 
 async function toggle() {
   if (visible.value) {
-    await trayHide();
+    await Tray.Hide();
     visible.value = false;
   } else {
-    await trayShow("");
+    await Tray.Show("");
     visible.value = true;
   }
 }
 
 function setMenuA() {
-  traySetMenu([
+  Tray.SetMenu([
     { id: "open", label: "Open" },
     { id: "---", label: "" },
     { id: "quit", label: "Quit" },
@@ -32,7 +32,7 @@ function setMenuA() {
   activeMenu.value = "a";
 }
 function setMenuB() {
-  traySetMenu([
+  Tray.SetMenu([
     { id: "pause", label: "Pause" },
     { id: "resume", label: "Resume" },
     { id: "---", label: "" },
@@ -41,7 +41,7 @@ function setMenuB() {
   activeMenu.value = "b";
 }
 function clearMenu() {
-  traySetMenu([]);
+  Tray.SetMenu([]);
   activeMenu.value = null;
 }
 </script>

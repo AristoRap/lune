@@ -191,10 +191,10 @@ end
 
 ```js
 // JS → Crystal
-import { emit, on } from "../lunejs/runtime/runtime.js";
+import { Events } from "../lunejs/runtime/runtime.js";
 
-on("results", (data) => renderResults(data));
-emit("search", { query: input.value });
+Events.On("results", (data) => renderResults(data));
+Events.Emit("search", { query: input.value });
 ```
 
-Under the hood, `app.emit` calls `window.__lune_emit` (Crystal→JS); `emit()` from `runtime.js` calls the `__lune_js_emit` WebView binding (JS→Crystal). See the [Events](./events) guide for the full API.
+Under the hood, `app.emit` calls `window.__lune.crystalEmit` (Crystal→JS); `Events.Emit` calls the `__lune.jsEmit` WebView binding (JS→Crystal). See the [Events](./events) guide for the full API.

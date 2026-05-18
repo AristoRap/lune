@@ -24,7 +24,11 @@ Lune.run(app, assets: "frontend/dist") do |opts|
   opts.title = "Lune Example"
   opts.width = 1100
   opts.height = 740
-  opts.disable_context_menu = true
+  # opts.on_window_ready = ->(_handle : Void*) {
+  #   puts "Window open, about to navigate"
+  # }
+  # opts.disable_context_menu = true
+  opts.debug = {{ flag?(:lune_dev) }}
 
   opts.mac do |m|
     m.full_size_content = true
@@ -35,7 +39,6 @@ Lune.run(app, assets: "frontend/dist") do |opts|
   end
 
   opts.drop do |d|
-    d.enabled = true
     d.zone = "--lune-drop-target"
   end
 

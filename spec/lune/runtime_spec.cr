@@ -3,8 +3,16 @@ require "file_utils"
 
 private def runtime_bindings
   app = Lune::App.new
-  Lune::Runtime::Bindings.register_stubs(app)
+  Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new).all.each(&.install(app))
   app.bindings.select(&.internal?)
+end
+
+private def event_bus_caps
+  [Lune::Capabilities::EventBus.new] of Lune::Capability
+end
+
+private def drag_out_caps
+  [Lune::Capabilities::DragOut.new(Pointer(Void).null)] of Lune::Capability
 end
 
 describe Lune::Runtime do
@@ -15,50 +23,90 @@ describe Lune::Runtime do
     js.includes?("export const __lune").should be_true
   end
 
-  it "exports on, once, off event bus helpers" do
+  it "exports LuneError class that extends Error" do
     js = Lune::Runtime::Generator.generate_runtime_js([] of Lune::Binding)
 
-    js.includes?("export function on").should be_true
-    js.includes?("export function once").should be_true
-    js.includes?("export function off").should be_true
-    js.includes?("__lune_on").should be_true
-    js.includes?("__lune_off").should be_true
+    js.includes?("export class LuneError extends Error").should be_true
+    js.includes?("this.name = \"LuneError\"").should be_true
+    js.includes?("this.code = code").should be_true
   end
 
-  it "exports emit for JS-to-Crystal events" do
+  it "wraps __lune.call to convert plain error envelopes to LuneError instances" do
     js = Lune::Runtime::Generator.generate_runtime_js([] of Lune::Binding)
 
-    js.includes?("export function emit").should be_true
-    js.includes?("__lune_js_emit").should be_true
+    js.includes?(".catch(").should be_true
+    js.includes?("new LuneError(").should be_true
   end
 
-  it "declares emit in runtime.d.ts" do
+  it "declares LuneError as a class in runtime.d.ts" do
     dts = Lune::Runtime::Generator.generate_runtime_dts([] of Lune::Binding)
 
-    dts.includes?("export declare function emit").should be_true
+    dts.includes?("export declare class LuneError extends Error").should be_true
+    dts.includes?("readonly code: string").should be_true
   end
 
-  it "exports quit, openURL, environment runtime functions" do
+  it "exports Events namespace with On, Once, Off helpers" do
+    js = Lune::Runtime::Generator.generate_runtime_js([] of Lune::Binding, event_bus_caps)
+
+    js.includes?("export const Events").should be_true
+    js.includes?("On(name, cb)").should be_true
+    js.includes?("Once(name, cb)").should be_true
+    js.includes?("Off(name, cb)").should be_true
+    js.includes?("window.__lune.on").should be_true
+    js.includes?("window.__lune.off").should be_true
+  end
+
+  it "exports Emit for JS-to-Crystal events" do
+    js = Lune::Runtime::Generator.generate_runtime_js([] of Lune::Binding, event_bus_caps)
+
+    js.includes?("Emit(name, data)").should be_true
+    js.includes?("__lune.jsEmit").should be_true
+  end
+
+  it "declares Emit in runtime.d.ts" do
+    dts = Lune::Runtime::Generator.generate_runtime_dts([] of Lune::Binding, event_bus_caps)
+
+    dts.includes?("Emit(name: string").should be_true
+  end
+
+  it "exports Lifecycle namespace with Quit, OpenUrl, Environment" do
     js = Lune::Runtime::Generator.generate_runtime_js(runtime_bindings)
 
-    js.includes?("export function quit").should be_true
-    js.includes?("export function openURL").should be_true
-    js.includes?("export function environment").should be_true
-    js.includes?("__lune.quit").should be_true
-    js.includes?("__lune.openURL").should be_true
-    js.includes?("__lune.environment").should be_true
+    js.includes?("export const Lifecycle").should be_true
+    js.includes?("Quit()").should be_true
+    js.includes?("OpenUrl(").should be_true
+    js.includes?("Environment()").should be_true
+    js.includes?("__lune.lifecycle.quit").should be_true
+    js.includes?("__lune.lifecycle.open_url").should be_true
+    js.includes?("__lune.lifecycle.environment").should be_true
   end
 
-  it "generates runtime.d.ts with typed declarations" do
-    dts = Lune::Runtime::Generator.generate_runtime_dts(runtime_bindings)
+  it "generates runtime.d.ts with typed namespace interfaces" do
+    dts = Lune::Runtime::Generator.generate_runtime_dts(runtime_bindings, event_bus_caps)
 
     dts.includes?("LuneEnvironment").should be_true
-    dts.includes?("export declare function quit").should be_true
-    dts.includes?("export declare function openURL").should be_true
-    dts.includes?("export declare function environment").should be_true
-    dts.includes?("export declare function on").should be_true
-    dts.includes?("export declare function once").should be_true
-    dts.includes?("export declare function off").should be_true
+    dts.includes?("export interface Lifecycle").should be_true
+    dts.includes?("Quit()").should be_true
+    dts.includes?("OpenUrl(").should be_true
+    dts.includes?("Environment()").should be_true
+    dts.includes?("export interface Events").should be_true
+    dts.includes?("On(name: string").should be_true
+    dts.includes?("Once(name: string").should be_true
+    dts.includes?("Off(name: string").should be_true
+  end
+
+  it "exports DragOut namespace with Start helper" do
+    js = Lune::Runtime::Generator.generate_runtime_js([] of Lune::Binding, drag_out_caps)
+
+    js.includes?("export const DragOut").should be_true
+    js.includes?("Start(paths)").should be_true
+  end
+
+  it "declares DragOut interface in runtime.d.ts" do
+    dts = Lune::Runtime::Generator.generate_runtime_dts([] of Lune::Binding, drag_out_caps)
+
+    dts.includes?("export interface DragOut").should be_true
+    dts.includes?("Start(paths: string[])").should be_true
   end
 
   it "generates App.d.ts with namespace interfaces and camelcased binding names" do
@@ -165,8 +213,8 @@ describe Lune::Runtime do
 
     js.includes?("export const alpha = {").should be_true
     js.includes?("export const counter = {").should be_true
-    js.includes?("Zeta(...args)").should be_true
-    js.includes?("Alpha(...args)").should be_true
+    js.includes?("Zeta()").should be_true
+    js.includes?("Alpha()").should be_true
   end
 
   it "includes namespace objects and a default export" do
@@ -361,7 +409,7 @@ describe Lune::Runtime do
 
       mtime_after.should_not eq(mtime_before)
       File.read(app_path).includes?("export const alpha = {").should be_true
-      File.read(app_path).includes?("Pong(...args)").should be_true
+      File.read(app_path).includes?("Pong()").should be_true
     end
   end
 end

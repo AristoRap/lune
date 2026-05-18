@@ -79,15 +79,27 @@ describe Lune::Config do
       end
     end
 
-    it "parses capabilities list" do
-      with_lune_yml("capabilities:\n  - quit\n  - clipboardRead") do
-        Lune::Config.load.capabilities.should eq(["quit", "clipboardRead"])
+    it "parses capabilities include list" do
+      with_lune_yml("capabilities:\n  include:\n    - quit\n    - clipboardRead") do
+        caps = Lune::Config.load.capabilities
+        caps.only.should eq(["quit", "clipboardRead"])
+        caps.exclude.should be_nil
       end
     end
 
-    it "returns nil capabilities when key is absent" do
+    it "parses capabilities exclude list" do
+      with_lune_yml("capabilities:\n  exclude:\n    - environment") do
+        caps = Lune::Config.load.capabilities
+        caps.only.should be_nil
+        caps.exclude.should eq(["environment"])
+      end
+    end
+
+    it "returns empty capabilities when key is absent" do
       with_lune_yml("window:\n  title: My App") do
-        Lune::Config.load.capabilities.should be_nil
+        caps = Lune::Config.load.capabilities
+        caps.only.should be_nil
+        caps.exclude.should be_nil
       end
     end
   end
