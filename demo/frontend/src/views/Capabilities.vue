@@ -22,10 +22,9 @@ const ALL = [
   // Core — JS-injected infrastructure, no bridge binding
   { cap: "event_bus", group: "Event Bus", core: true, fns: ["on", "once", "off", "emit"] },
   { cap: "deep_link", group: "Deep Link", core: true, fns: ["onDeepLink", "onDeepLinkOff"] },
-  { cap: "file_drop", group: "File Drop", core: true, fns: ["onFileDrop", "onFileDropOff"] },
+  { cap: "file_drop", group: "File Drop", core: true, fns: ["on", "off"] },
   { cap: "keyboard_shortcuts", group: "Keyboard Shortcuts", core: true, fns: ["Cmd/Ctrl+C/V/X/Z/Y"] },
   { cap: "navigation", group: "Navigation", core: true, fns: ["on_navigate callback"] },
-  { cap: "disable_context_menu", group: "Disable Context Menu", core: true, fns: ["suppresses right-click"] },
   { cap: "drag_zone", group: "Drag Zone", core: true, fns: ["--lune-draggable drag handle"] },
 ];
 

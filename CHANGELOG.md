@@ -13,7 +13,9 @@
 
 - **Namespaced JS API** — `runtime.js` now exports PascalCase namespace objects instead of flat functions. `quit()` → `Lifecycle.quit()`, `clipboardRead()` → `Clipboard.read()`, `on()` → `Events.on()`, etc. A `runtime` default export bundles all namespaces for convenience. All TypeScript declarations updated to match. **Breaking change** for any existing JS code importing flat function names.
 - **Bridge IDs updated** — internal WebView binding identifiers changed from `runtime.__lune.<camelCase>` to `__lune.<capability>.<snake_case>` (e.g. `runtime.__lune.clipboardRead` → `__lune.clipboard.read`). Affects only code that calls `window[id]` directly.
-- **`Tray.SetMenu` accepts an array** — the `js_helpers` wrapper now serialises the items array to JSON automatically so `Tray.SetMenu([{ id, label }])` works without manual `JSON.stringify`.
+- **`Tray.setMenu` accepts an array** — the `js_helpers` wrapper now serialises the items array to JSON automatically so `Tray.setMenu([{ id, label }])` works without manual `JSON.stringify`.
+- **`FileDrop.on` / `FileDrop.off`** — renamed from `onFileDrop` / `onFileDropOff`. The namespace already makes the subject clear.
+- **`disable_context_menu` demoted from capability** — no longer a `Lune::Capability` subclass; handled as a plain option check in `Runner`. `opts.disable_context_menu` still works identically but the name no longer appears in `include`/`exclude` lists or in capability sentinel keys.
 - **Website docs rewritten** — `guide/runtime.md`, `guide/events.md`, `guide/deep-links.md`, `guide/how-it-works.md`, `guide/typescript.md`, `configuration.md`, and `getting-started.md` all updated to the new namespaced API.
 
 ### Added

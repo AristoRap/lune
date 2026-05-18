@@ -103,7 +103,6 @@ await runtime.Lifecycle.quit();
 | `event_bus`            | `Events`        | `on`, `once`, `off`, `emit` (core — no bridge binding)                                                             |
 | `keyboard_shortcuts`   | —               | Cmd/Ctrl+C/V/Z/etc. JS injection (core — no bridge binding)                                                        |
 | `file_drop`            | `FileDrop`      | `on`, `off` (core — controlled by `opts.drop`)                                                                     |
-| `disable_context_menu` | —               | Suppresses browser right-click menu (core — controlled by `opts.disable_context_menu`)                             |
 | `drag_zone`            | —               | Window-drag-by-CSS injection (core — controlled by `opts.drag.zone`)                                               |
 | `navigation`           | —               | SPA navigation tracking (core — controlled by `opts.on_navigate`)                                                  |
 

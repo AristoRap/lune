@@ -308,31 +308,27 @@ end
 
 ---
 
-### JS helpers — `onFileDrop` / `onFileDropOff`
+### JS helpers — `FileDrop.on` / `FileDrop.off`
 
 Convenience wrappers around the event bus for subscribing to file drops from the frontend.
 
 ```js
-import { onFileDrop, onFileDropOff } from "../lunejs/runtime/runtime.js";
+import { FileDrop } from "../lunejs/runtime/runtime.js";
 
-onFileDrop((x, y, paths) => {
+FileDrop.on((x, y, paths) => {
   console.log("Dropped at", x, y, paths);
 });
 
-// later — unsubscribe all drop listeners
-onFileDropOff();
+// later — unsubscribe
+FileDrop.off();
 ```
 
 TypeScript signature:
 
 ```ts
-declare function onFileDrop(
-  cb: (x: number, y: number, paths: string[]) => void,
-): void;
-declare function onFileDropOff(): void;
+FileDrop.on(cb: (x: number, y: number, paths: string[]) => void): void;
+FileDrop.off(): void;
 ```
-
-These are shorthand for `on("fileDrop", ...)` / `off("fileDrop")` — you can also use the generic event bus directly if you prefer.
 
 ---
 
@@ -365,9 +361,9 @@ end
 ```
 
 ```js
-import { onFileDrop } from "../lunejs/runtime/runtime.js";
+import { FileDrop } from "../lunejs/runtime/runtime.js";
 
-onFileDrop((x, y, paths) => {
+FileDrop.on((x, y, paths) => {
   paths.forEach((p) => console.log("File:", p));
 });
 ```

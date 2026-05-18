@@ -13,7 +13,6 @@ module Lune
           Capabilities::EventBus.new,
           Capabilities::KeyboardShortcuts.new,
           Capabilities::Navigation.new(options.on_navigate),
-          Capabilities::DisableContextMenu.new(options.disable_context_menu),
           Capabilities::DragZone.new(options.drag.zone, options.drag.value),
           Capabilities::FileDrop.new(options.drop),
           # Runtime (bridge bindings)

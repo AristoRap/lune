@@ -68,6 +68,10 @@ module Lune
 
         callback_window_loaded_if_set(wv)
 
+        if @options.disable_context_menu
+          wv.init("document.addEventListener('contextmenu',function(e){e.preventDefault();});")
+        end
+
         active.each do |cap|
           wv.init("window[#{cap.sentinel_key.inspect}] = true;")
           cap.init_webview(wv, handle, @app)
