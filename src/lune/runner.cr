@@ -73,6 +73,7 @@ module Lune
         end
 
         setup_navigate_if_set(wv)
+        setup_drag_zone_if_set(wv, handle)
 
         active.each do |cap|
           wv.init("window[#{cap.sentinel_key.inspect}] = true;")
@@ -144,6 +145,38 @@ module Lune
           Lune.logger.debug(exception: ex) { "on_window_ready callback failed (stacktrace)" }
         end
       end
+    end
+
+    private def setup_drag_zone_if_set(wv : Webview::Webview, handle : Pointer(Void)) : Nil
+      css_var = @options.drag.zone
+      return if css_var.empty?
+
+      {% if flag?(:darwin) %}
+        css_val = @options.drag.value
+        start_drag_key = "#{Lune::Capability::BRIDGE_MARKER}.startDrag"
+
+        Native::Window.setup_drag_monitor
+
+        wv.bind(start_drag_key, Webview::JSProc.new { |_args|
+          Native::Window.start_window_drag(handle)
+          JSON::Any.new(nil)
+        })
+
+        wv.init(<<-JS)
+        (function(){
+          document.addEventListener('mousedown', function(e) {
+            var el = e.target;
+            while (el) {
+              if (el.style && el.style.getPropertyValue(#{css_var.inspect}).trim() === #{css_val.inspect}) {
+                window[#{start_drag_key.inspect}]();
+                return;
+              }
+              el = el.parentElement;
+            }
+          }, true);
+        })();
+        JS
+      {% end %}
     end
 
     private def setup_navigate_if_set(wv : Webview::Webview) : Nil

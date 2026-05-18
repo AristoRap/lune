@@ -12,8 +12,7 @@ module Lune
           # Core (JS injection via wv.init / raw wv.bind)
           Capabilities::EventBus.new,
           Capabilities::KeyboardShortcuts.new,
-Capabilities::DragZone.new(options.drag.zone, options.drag.value),
-          Capabilities::FileDrop.new(options.drop),
+Capabilities::FileDrop.new(options.drop),
           # Runtime (bridge bindings)
           Capabilities::System.new(on_quit: on_quit, debug: options.debug),
           Capabilities::Filesystem.new,

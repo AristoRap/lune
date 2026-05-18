@@ -24,7 +24,6 @@ const ALL = [
   { cap: "deep_link", group: "Deep Link", core: true, fns: ["onDeepLink", "onDeepLinkOff"] },
   { cap: "file_drop", group: "File Drop", core: true, fns: ["on", "off"] },
   { cap: "keyboard_shortcuts", group: "Keyboard Shortcuts", core: true, fns: ["Cmd/Ctrl+C/V/X/Z/Y"] },
-  { cap: "drag_zone", group: "Drag Zone", core: true, fns: ["--lune-draggable drag handle"] },
 ];
 
 const bridgeGroups = ref([]);

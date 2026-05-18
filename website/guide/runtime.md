@@ -103,7 +103,6 @@ await runtime.System.quit();
 | `event_bus`            | `Events`        | `on`, `once`, `off`, `emit` (core — no bridge binding)                                                             |
 | `keyboard_shortcuts`   | —               | Cmd/Ctrl+C/V/Z/etc. JS injection (core — no bridge binding)                                                        |
 | `file_drop`            | `FileDrop`      | `on`, `off` (core — controlled by `opts.drop`)                                                                     |
-| `drag_zone`            | —               | Window-drag-by-CSS injection (core — controlled by `opts.drag.zone`)                                               |
 
 `include: [system]` exposes all three `System` methods. Individual method names are not valid capability names — they log a warning and are ignored.
 
