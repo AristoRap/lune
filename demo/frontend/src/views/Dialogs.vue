@@ -7,40 +7,37 @@ const pickerOut = ref("");
 const dialogOut = ref("");
 
 async function pickFile() {
-  pickerOut.value = (await Dialogs.OpenFile("Select a file")) || "(cancelled)";
+  pickerOut.value = (await Dialogs.openFile("Select a file")) || "(cancelled)";
 }
 async function pickFiles() {
-  const ps = await Dialogs.OpenFiles("Select files");
+  const ps = await Dialogs.openFiles("Select files");
   pickerOut.value = ps.length ? ps.join("\n") : "(cancelled)";
 }
 async function pickDir() {
-  pickerOut.value = (await Dialogs.OpenDir("Select a folder")) || "(cancelled)";
+  pickerOut.value = (await Dialogs.openDir("Select a folder")) || "(cancelled)";
 }
 async function saveAs() {
-  pickerOut.value = (await Dialogs.SaveFile("Save as", "export.txt")) || "(cancelled)";
+  pickerOut.value = (await Dialogs.saveFile("Save as", "export.txt")) || "(cancelled)";
 }
 
 function info() {
-  Dialogs.MessageInfo("Information", "This is an info dialog from Lune.");
+  Dialogs.messageInfo("Information", "This is an info dialog from Lune.");
 }
 function warn() {
-  Dialogs.MessageWarning("Warning", "Something might need your attention.");
+  Dialogs.messageWarning("Warning", "Something might need your attention.");
 }
 function err() {
-  Dialogs.MessageError("Error", "Something went wrong!");
+  Dialogs.messageError("Error", "Something went wrong!");
 }
 async function ask() {
-  const yes = await Dialogs.MessageQuestion("Confirm", "Do you want to proceed?");
+  const yes = await Dialogs.messageQuestion("Confirm", "Do you want to proceed?");
   dialogOut.value = `Answer: ${yes}`;
 }
 </script>
 
 <template>
-  <SectionHead
-    eyebrow="OS UI"
-    title="Dialogs"
-    desc="Native file pickers and message dialogs, modal to the current window."
-  />
+  <SectionHead eyebrow="OS UI" title="Dialogs"
+    desc="Native file pickers and message dialogs, modal to the current window." />
 
   <div class="card-grid">
     <div class="card">

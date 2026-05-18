@@ -13,15 +13,15 @@ const errCode = ref("validation_error");
 const errOut = ref(null);
 
 async function callGreet() {
-  greetOut.value = await api.Demo.Greet(greetIn.value);
+  greetOut.value = await api.Demo.greet(greetIn.value);
 }
 
 async function callReverse() {
-  revOut.value = await api.Demo.Reverse(revIn.value);
+  revOut.value = await api.Demo.reverse(revIn.value);
 }
 
 async function callFileInfo() {
-  const raw = await api.Demo.FileInfo(fiIn.value);
+  const raw = await api.Demo.fileInfo(fiIn.value);
   try {
     fiOut.value = JSON.stringify(JSON.parse(raw), null, 2);
   } catch {
@@ -32,7 +32,7 @@ async function callFileInfo() {
 async function callFailWith() {
   errOut.value = null;
   try {
-    await api.Demo.FailWith(errCode.value);
+    await api.Demo.failWith(errCode.value);
   } catch (err) {
     errOut.value = {
       isLuneError: err instanceof LuneError,

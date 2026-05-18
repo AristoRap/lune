@@ -24,15 +24,15 @@ module Lune
       def js_helpers : String
         bm = BRIDGE_MARKER
         <<-JS
-          OnDeepLink(cb)  { window.#{bm}.on("deep_link", function(data) { cb(data.url); }, -1); },
-          OnDeepLinkOff() { window.#{bm}.off("deep_link"); },
+          onDeepLink(cb)  { window.#{bm}.on("deep_link", function(data) { cb(data.url); }, -1); },
+          onDeepLinkOff() { window.#{bm}.off("deep_link"); },
         JS
       end
 
       def dts_helpers : String
         <<-DTS
-          OnDeepLink(cb: (url: string) => void): void;
-          OnDeepLinkOff(): void;
+          onDeepLink(cb: (url: string) => void): void;
+          onDeepLinkOff(): void;
         DTS
       end
     end

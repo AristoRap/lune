@@ -8,7 +8,7 @@ const files = [
 ];
 
 function startDrag(path) {
-  DragOut.Start([path]);
+  DragOut.start([path]);
 }
 </script>
 
@@ -18,7 +18,7 @@ function startDrag(path) {
 
   <div class="card-grid">
     <div class="card">
-      <span class="card-label">DragOut.Start(paths)</span>
+      <span class="card-label">DragOut.start(paths)</span>
       <p class="card-desc">
         Hold and drag a chip out of the window to hand the file to the OS.
       </p>

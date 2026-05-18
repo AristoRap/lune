@@ -7,7 +7,7 @@ import { Lifecycle, Clipboard, Events } from "../lunejs/runtime/runtime.js";
 
 await Lifecycle.Quit();
 const text = await Clipboard.Read();
-Events.On("myEvent", (data) => console.log(data));
+Events.on("myEvent", (data) => console.log(data));
 ```
 
 All bridge methods return a `Promise`. TypeScript declarations are in `runtime.d.ts`. You can also import the `runtime` default export which bundles every namespace:
@@ -21,52 +21,52 @@ await runtime.Lifecycle.Quit();
 
 ## Quick reference
 
-| Namespace | Method | Signature | Returns | macOS | Linux | Windows |
-| --------- | ------ | --------- | ------- | :---: | :---: | :-----: |
-| `Lifecycle` | `Quit` | `Quit()` | `Promise<void>` | ✓ | ✓ | ✓ |
-| `Lifecycle` | `OpenUrl` | `OpenUrl(url)` | `Promise<void>` | ✓ | ✓ | ✓ |
-| `Lifecycle` | `Environment` | `Environment()` | `Promise<LuneEnvironment>` | ✓ | ✓ | ✓ |
-| `Filesystem` | `HomeDir` | `HomeDir()` | `Promise<string>` | ✓ | ✓ | ✓ |
-| `Filesystem` | `AppDataDir` | `AppDataDir()` | `Promise<string>` | ✓ | ✓ | ✓ |
-| `Filesystem` | `DownloadsDir` | `DownloadsDir()` | `Promise<string>` | ✓ | ✓ | ✓ |
-| `Filesystem` | `TempDir` | `TempDir()` | `Promise<string>` | ✓ | ✓ | ✓ |
-| `Clipboard` | `Read` | `Read()` | `Promise<string>` | ✓ | ✓ | ✓ |
-| `Clipboard` | `Write` | `Write(text)` | `Promise<void>` | ✓ | ✓ | ✓ |
-| `Clipboard` | `ReadHtml` | `ReadHtml()` | `Promise<string>` | ✓ | ✓ | tbd |
-| `Clipboard` | `WriteHtml` | `WriteHtml(html)` | `Promise<void>` | ✓ | ✓ | tbd |
-| `Clipboard` | `ReadImage` | `ReadImage()` | `Promise<string>` | ✓ | ✓ | tbd |
-| `Clipboard` | `WriteImage` | `WriteImage(dataUrl)` | `Promise<void>` | ✓ | ✓ | tbd |
-| `Window` | `Minimize` | `Minimize()` | `Promise<void>` | ✓ | ✓ | tbd |
-| `Window` | `Maximize` | `Maximize()` | `Promise<void>` | ✓ | ✓ | tbd |
-| `Window` | `Center` | `Center()` | `Promise<void>` | ✓ | ✓ | tbd |
-| `Window` | `SetTitle` | `SetTitle(title)` | `Promise<void>` | ✓ | ✓ | tbd |
-| `Window` | `SetSize` | `SetSize(width, height)` | `Promise<void>` | ✓ | ✓ | tbd |
-| `Dialogs` | `OpenFile` | `OpenFile(prompt)` | `Promise<string>` | ✓ | ✓ | tbd |
-| `Dialogs` | `OpenDir` | `OpenDir(prompt)` | `Promise<string>` | ✓ | ✓ | tbd |
-| `Dialogs` | `OpenFiles` | `OpenFiles(prompt)` | `Promise<string[]>` | ✓ | ✓ | tbd |
-| `Dialogs` | `SaveFile` | `SaveFile(prompt, filename)` | `Promise<string>` | ✓ | ✓ | tbd |
-| `Dialogs` | `MessageInfo` | `MessageInfo(title, message)` | `Promise<void>` | ✓ | ✓ | tbd |
-| `Dialogs` | `MessageWarning` | `MessageWarning(title, message)` | `Promise<void>` | ✓ | ✓ | tbd |
-| `Dialogs` | `MessageError` | `MessageError(title, message)` | `Promise<void>` | ✓ | ✓ | tbd |
-| `Dialogs` | `MessageQuestion` | `MessageQuestion(title, message)` | `Promise<string>` | ✓ | ✓ | tbd |
-| `Tray` | `Show` | `Show(iconPath)` | `Promise<void>` | ✓ | ✓ ¹ | tbd |
-| `Tray` | `Hide` | `Hide()` | `Promise<void>` | ✓ | ✓ ¹ | tbd |
-| `Tray` | `SetIcon` | `SetIcon(path)` | `Promise<void>` | ✓ | ✓ ¹ | tbd |
-| `Tray` | `SetMenu` | `SetMenu(items)` | `Promise<void>` | ✓ | ✓ ¹ | tbd |
-| `Notifications` | `Notify` | `Notify(title, body)` | `Promise<void>` | ✓ | ✓ | tbd |
-| `Screen` | `Info` | `Info()` | `Promise<ScreenInfo>` | ✓ | ✓ | tbd |
-| `ContextMenuBridge` | `SetContextMenu` ² | `SetContextMenu(items)` | `void` | ✓ | tbd | tbd |
-| `ContextMenuBridge` | `ClearContextMenu` ² | `ClearContextMenu()` | `void` | ✓ | tbd | tbd |
-| `ContextMenuBridge` | `OnContextMenu` ² | `OnContextMenu(cb)` | `void` | ✓ | tbd | tbd |
-| `DragOut` | `Start` ² | `Start(paths)` | `Promise<void>` | ✓ | tbd | tbd |
-| `DeepLink` | `OnDeepLink` ³ | `OnDeepLink(cb)` | `void` | ✓ | ✓ | tbd |
-| `DeepLink` | `OnDeepLinkOff` ³ | `OnDeepLinkOff()` | `void` | ✓ | ✓ | tbd |
-| `Events` | `On` | `On(name, cb)` | `void` | ✓ | ✓ | ✓ |
-| `Events` | `Once` | `Once(name, cb)` | `void` | ✓ | ✓ | ✓ |
-| `Events` | `Off` | `Off(name, cb?)` | `void` | ✓ | ✓ | ✓ |
-| `Events` | `Emit` | `Emit(name, data?)` | `Promise<void>` | ✓ | ✓ | ✓ |
-| `FileDrop` | `OnFileDrop` | `OnFileDrop(cb)` | `void` | ✓ | ✓ | tbd |
-| `FileDrop` | `OnFileDropOff` | `OnFileDropOff()` | `void` | ✓ | ✓ | tbd |
+| Namespace           | Method               | Signature                         | Returns                    | macOS | Linux | Windows |
+| ------------------- | -------------------- | --------------------------------- | -------------------------- | :---: | :---: | :-----: |
+| `Lifecycle`         | `Quit`               | `Quit()`                          | `Promise<void>`            |   ✓   |   ✓   |    ✓    |
+| `Lifecycle`         | `OpenUrl`            | `OpenUrl(url)`                    | `Promise<void>`            |   ✓   |   ✓   |    ✓    |
+| `Lifecycle`         | `Environment`        | `Environment()`                   | `Promise<LuneEnvironment>` |   ✓   |   ✓   |    ✓    |
+| `Filesystem`        | `HomeDir`            | `HomeDir()`                       | `Promise<string>`          |   ✓   |   ✓   |    ✓    |
+| `Filesystem`        | `AppDataDir`         | `AppDataDir()`                    | `Promise<string>`          |   ✓   |   ✓   |    ✓    |
+| `Filesystem`        | `DownloadsDir`       | `DownloadsDir()`                  | `Promise<string>`          |   ✓   |   ✓   |    ✓    |
+| `Filesystem`        | `TempDir`            | `TempDir()`                       | `Promise<string>`          |   ✓   |   ✓   |    ✓    |
+| `Clipboard`         | `Read`               | `Read()`                          | `Promise<string>`          |   ✓   |   ✓   |    ✓    |
+| `Clipboard`         | `Write`              | `Write(text)`                     | `Promise<void>`            |   ✓   |   ✓   |    ✓    |
+| `Clipboard`         | `ReadHtml`           | `ReadHtml()`                      | `Promise<string>`          |   ✓   |   ✓   |   tbd   |
+| `Clipboard`         | `WriteHtml`          | `WriteHtml(html)`                 | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
+| `Clipboard`         | `ReadImage`          | `ReadImage()`                     | `Promise<string>`          |   ✓   |   ✓   |   tbd   |
+| `Clipboard`         | `WriteImage`         | `WriteImage(dataUrl)`             | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
+| `Window`            | `Minimize`           | `Minimize()`                      | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
+| `Window`            | `Maximize`           | `Maximize()`                      | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
+| `Window`            | `Center`             | `Center()`                        | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
+| `Window`            | `SetTitle`           | `SetTitle(title)`                 | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
+| `Window`            | `SetSize`            | `SetSize(width, height)`          | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
+| `Dialogs`           | `OpenFile`           | `OpenFile(prompt)`                | `Promise<string>`          |   ✓   |   ✓   |   tbd   |
+| `Dialogs`           | `OpenDir`            | `OpenDir(prompt)`                 | `Promise<string>`          |   ✓   |   ✓   |   tbd   |
+| `Dialogs`           | `OpenFiles`          | `OpenFiles(prompt)`               | `Promise<string[]>`        |   ✓   |   ✓   |   tbd   |
+| `Dialogs`           | `SaveFile`           | `SaveFile(prompt, filename)`      | `Promise<string>`          |   ✓   |   ✓   |   tbd   |
+| `Dialogs`           | `MessageInfo`        | `MessageInfo(title, message)`     | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
+| `Dialogs`           | `MessageWarning`     | `MessageWarning(title, message)`  | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
+| `Dialogs`           | `MessageError`       | `MessageError(title, message)`    | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
+| `Dialogs`           | `MessageQuestion`    | `MessageQuestion(title, message)` | `Promise<string>`          |   ✓   |   ✓   |   tbd   |
+| `Tray`              | `Show`               | `Show(iconPath)`                  | `Promise<void>`            |   ✓   |  ✓ ¹  |   tbd   |
+| `Tray`              | `Hide`               | `Hide()`                          | `Promise<void>`            |   ✓   |  ✓ ¹  |   tbd   |
+| `Tray`              | `SetIcon`            | `SetIcon(path)`                   | `Promise<void>`            |   ✓   |  ✓ ¹  |   tbd   |
+| `Tray`              | `SetMenu`            | `SetMenu(items)`                  | `Promise<void>`            |   ✓   |  ✓ ¹  |   tbd   |
+| `Notifications`     | `Notify`             | `Notify(title, body)`             | `Promise<void>`            |   ✓   |   ✓   |   tbd   |
+| `Screen`            | `Info`               | `Info()`                          | `Promise<ScreenInfo>`      |   ✓   |   ✓   |   tbd   |
+| `ContextMenuBridge` | `SetContextMenu` ²   | `SetContextMenu(items)`           | `void`                     |   ✓   |  tbd  |   tbd   |
+| `ContextMenuBridge` | `ClearContextMenu` ² | `ClearContextMenu()`              | `void`                     |   ✓   |  tbd  |   tbd   |
+| `ContextMenuBridge` | `OnContextMenu` ²    | `OnContextMenu(cb)`               | `void`                     |   ✓   |  tbd  |   tbd   |
+| `DragOut`           | `Start` ²            | `Start(paths)`                    | `Promise<void>`            |   ✓   |  tbd  |   tbd   |
+| `DeepLink`          | `OnDeepLink` ³       | `OnDeepLink(cb)`                  | `void`                     |   ✓   |   ✓   |   tbd   |
+| `DeepLink`          | `OnDeepLinkOff` ³    | `OnDeepLinkOff()`                 | `void`                     |   ✓   |   ✓   |   tbd   |
+| `Events`            | `On`                 | `On(name, cb)`                    | `void`                     |   ✓   |   ✓   |    ✓    |
+| `Events`            | `Once`               | `Once(name, cb)`                  | `void`                     |   ✓   |   ✓   |    ✓    |
+| `Events`            | `Off`                | `Off(name, cb?)`                  | `void`                     |   ✓   |   ✓   |    ✓    |
+| `Events`            | `Emit`               | `Emit(name, data?)`               | `Promise<void>`            |   ✓   |   ✓   |    ✓    |
+| `FileDrop`          | `OnFileDrop`         | `OnFileDrop(cb)`                  | `void`                     |   ✓   |   ✓   |   tbd   |
+| `FileDrop`          | `OnFileDropOff`      | `OnFileDropOff()`                 | `void`                     |   ✓   |   ✓   |   tbd   |
 
 ¹ Requires XWayland on Wayland compositors.
 ² Requires both the `context_menu` and `context_menu_bridge` capabilities to be active.
@@ -87,26 +87,26 @@ await runtime.Lifecycle.Quit();
 
 `include`/`exclude` in `lune.yml` operate on whole **capabilities** — groups of related functions — referenced by their **capability name**, not by individual method names.
 
-| Capability name        | JS namespace        | Methods included                                                                                                                       |
-| ---------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `lifecycle`            | `Lifecycle`         | `Quit`, `OpenUrl`, `Environment`                                                                                                       |
-| `filesystem`           | `Filesystem`        | `HomeDir`, `TempDir`, `DownloadsDir`, `AppDataDir`                                                                                     |
-| `clipboard`            | `Clipboard`         | `Read`, `Write`, `ReadHtml`, `WriteHtml`, `ReadImage`, `WriteImage`                                                                    |
-| `window`               | `Window`            | `Minimize`, `Maximize`, `Center`, `SetTitle`, `SetSize`                                                                                |
-| `dialogs`              | `Dialogs`           | `OpenFile`, `OpenDir`, `OpenFiles`, `SaveFile`, `MessageInfo`, `MessageWarning`, `MessageError`, `MessageQuestion`                     |
-| `tray`                 | `Tray`              | `Show`, `Hide`, `SetIcon`, `SetMenu`                                                                                                   |
-| `notifications`        | `Notifications`     | `Notify`                                                                                                                               |
-| `screen`               | `Screen`            | `Info`                                                                                                                                 |
-| `context_menu`         | `ContextMenu`       | Low-level bridge (`Show`) — not called directly; use `context_menu_bridge`                                                             |
-| `context_menu_bridge`  | `ContextMenuBridge` | `SetContextMenu`, `ClearContextMenu`, `OnContextMenu` (core — requires `context_menu`)                                                 |
-| `drag_out`             | `DragOut`           | `Start`                                                                                                                                |
-| `deep_link`            | `DeepLink`          | `OnDeepLink`, `OnDeepLinkOff` (event-only, no bridge binding)                                                                         |
-| `event_bus`            | `Events`            | `On`, `Once`, `Off`, `Emit` (core — no bridge binding)                                                                                 |
-| `keyboard_shortcuts`   | —                   | Cmd/Ctrl+C/V/Z/etc. JS injection (core — no bridge binding)                                                                            |
-| `file_drop`            | `FileDrop`          | `OnFileDrop`, `OnFileDropOff` (core — controlled by `opts.drop`)                                                                       |
-| `disable_context_menu` | —                   | Suppresses browser right-click menu (core — controlled by `opts.disable_context_menu`)                                                 |
-| `drag_zone`            | —                   | Window-drag-by-CSS injection (core — controlled by `opts.drag.zone`)                                                                   |
-| `navigation`           | —                   | SPA navigation tracking (core — controlled by `opts.on_navigate`)                                                                      |
+| Capability name        | JS namespace        | Methods included                                                                                                   |
+| ---------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `lifecycle`            | `Lifecycle`         | `Quit`, `OpenUrl`, `Environment`                                                                                   |
+| `filesystem`           | `Filesystem`        | `HomeDir`, `TempDir`, `DownloadsDir`, `AppDataDir`                                                                 |
+| `clipboard`            | `Clipboard`         | `Read`, `Write`, `ReadHtml`, `WriteHtml`, `ReadImage`, `WriteImage`                                                |
+| `window`               | `Window`            | `Minimize`, `Maximize`, `Center`, `SetTitle`, `SetSize`                                                            |
+| `dialogs`              | `Dialogs`           | `OpenFile`, `OpenDir`, `OpenFiles`, `SaveFile`, `MessageInfo`, `MessageWarning`, `MessageError`, `MessageQuestion` |
+| `tray`                 | `Tray`              | `Show`, `Hide`, `SetIcon`, `SetMenu`                                                                               |
+| `notifications`        | `Notifications`     | `Notify`                                                                                                           |
+| `screen`               | `Screen`            | `Info`                                                                                                             |
+| `context_menu`         | `ContextMenu`       | Low-level bridge (`Show`) — not called directly; use `context_menu_bridge`                                         |
+| `context_menu_bridge`  | `ContextMenuBridge` | `SetContextMenu`, `ClearContextMenu`, `OnContextMenu` (core — requires `context_menu`)                             |
+| `drag_out`             | `DragOut`           | `Start`                                                                                                            |
+| `deep_link`            | `DeepLink`          | `OnDeepLink`, `OnDeepLinkOff` (event-only, no bridge binding)                                                      |
+| `event_bus`            | `Events`            | `On`, `Once`, `Off`, `Emit` (core — no bridge binding)                                                             |
+| `keyboard_shortcuts`   | —                   | Cmd/Ctrl+C/V/Z/etc. JS injection (core — no bridge binding)                                                        |
+| `file_drop`            | `FileDrop`          | `OnFileDrop`, `OnFileDropOff` (core — controlled by `opts.drop`)                                                   |
+| `disable_context_menu` | —                   | Suppresses browser right-click menu (core — controlled by `opts.disable_context_menu`)                             |
+| `drag_zone`            | —                   | Window-drag-by-CSS injection (core — controlled by `opts.drag.zone`)                                               |
+| `navigation`           | —                   | SPA navigation tracking (core — controlled by `opts.on_navigate`)                                                  |
 
 `include: [lifecycle]` exposes all three `Lifecycle` methods. Individual method names are not valid capability names — they log a warning and are ignored.
 
@@ -386,7 +386,10 @@ await Dialogs.MessageInfo("Done", "Your file has been saved.");
 Shows a warning message dialog.
 
 ```js
-await Dialogs.MessageWarning("Low disk space", "You are running low on storage.");
+await Dialogs.MessageWarning(
+  "Low disk space",
+  "You are running low on storage.",
+);
 ```
 
 ### `Dialogs.MessageError(title, message)`
@@ -394,7 +397,10 @@ await Dialogs.MessageWarning("Low disk space", "You are running low on storage."
 Shows an error message dialog.
 
 ```js
-await Dialogs.MessageError("Export failed", "Could not write to the selected path.");
+await Dialogs.MessageError(
+  "Export failed",
+  "Could not write to the selected path.",
+);
 ```
 
 ### `Dialogs.MessageQuestion(title, message)`
@@ -480,8 +486,8 @@ end
 ```js
 import { Events, Lifecycle } from "../lunejs/runtime/runtime.js";
 
-Events.On("trayClick", () => console.log("icon clicked"));
-Events.On("trayMenuClick", (id) => {
+Events.on("trayClick", () => console.log("icon clicked"));
+Events.on("trayMenuClick", (id) => {
   if (id === "quit") Lifecycle.Quit();
 });
 ```
@@ -528,9 +534,9 @@ const screen = await Screen.Info();
 
 ```ts
 interface ScreenInfo {
-  width: number;  // logical width in points
+  width: number; // logical width in points
   height: number; // logical height in points
-  scale: number;  // pixel ratio (1 = standard, 2 = Retina / HiDPI)
+  scale: number; // pixel ratio (1 = standard, 2 = Retina / HiDPI)
 }
 ```
 
@@ -552,8 +558,8 @@ Registers items to display whenever the user right-clicks anywhere in the window
 
 ```js
 ContextMenuBridge.SetContextMenu([
-  { id: "copy",   label: "Copy" },
-  { id: "paste",  label: "Paste" },
+  { id: "copy", label: "Copy" },
+  { id: "paste", label: "Paste" },
   { separator: true },
   { id: "delete", label: "Delete", enabled: false },
 ]);
@@ -672,37 +678,37 @@ The event bus is bidirectional. Crystal emits to JS with `app.emit(name, data)` 
 import { Events } from "../lunejs/runtime/runtime.js";
 ```
 
-### `Events.On(name, cb)`
+### `Events.on(name, cb)`
 
 Subscribes to an event by name. The callback fires every time the event is emitted (from either side). `cb` receives the event payload.
 
 ```js
-Events.On("myEvent", (data) => console.log(data));
+Events.on("myEvent", (data) => console.log(data));
 ```
 
-### `Events.Once(name, cb)`
+### `Events.once(name, cb)`
 
-Like `Events.On` but fires only for the next occurrence, then removes itself.
+Like `Events.on` but fires only for the next occurrence, then removes itself.
 
 ```js
-Events.Once("ready", () => init());
+Events.once("ready", () => init());
 ```
 
-### `Events.Off(name, cb?)`
+### `Events.off(name, cb?)`
 
 Removes a listener. If `cb` is omitted, removes all listeners for `name`.
 
 ```js
-Events.Off("myEvent", handler);
-Events.Off("myEvent"); // removes all listeners for "myEvent"
+Events.off("myEvent", handler);
+Events.off("myEvent"); // removes all listeners for "myEvent"
 ```
 
-### `Events.Emit(name, data?)`
+### `Events.emit(name, data?)`
 
 Emits an event from JavaScript to Crystal. The Crystal app receives it via `app.on(name) { |data| ... }`.
 
 ```js
-await Events.Emit("userAction", { kind: "save" });
+await Events.emit("userAction", { kind: "save" });
 ```
 
 See the [Events guide](./events) for the Crystal-side API and full examples.

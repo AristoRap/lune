@@ -66,7 +66,7 @@ Lune writes four files into `frontend/lunejs/`:
 
 - `app/App.js` — one stub function per user binding, grouped by namespace
 - `app/App.d.ts` — TypeScript declarations with exact types derived from Crystal signatures
-- `runtime/runtime.js` — built-in functions (`quit`, `openURL`, `on`, `emit`, …)
+- `runtime/runtime.js` — built-in functions (`Lifecycle.quit`, `Lifecycle.openURL`, `Events.on`, `Events.emit`, …)
 - `runtime/runtime.d.ts` — TypeScript declarations for runtime functions
 
 This happens automatically on `lune dev` startup and during `lune build` (before Vite runs).
@@ -100,7 +100,7 @@ frontend/lunejs/
 │   ├── App.js       # binding stubs
 │   └── App.d.ts     # TypeScript declarations
 └── runtime/
-    ├── runtime.js   # quit, openURL, environment, on/once/off/emit
+    ├── runtime.js   # runtime, Lifecycle/Filesystem/Clipboard...
     └── runtime.d.ts # TypeScript declarations
 ```
 
@@ -171,7 +171,7 @@ When using `Lune.run` with `assets:`, the macro internally creates a `Runner` an
 
 ## Event system
 
-The event bus is bidirectional. Crystal pushes to JS via `app.emit`; JS pushes to Crystal via `emit` from `runtime.js`. Both sides share the same event name namespace and use symmetric `on` / `once` / `off` APIs.
+The event bus is bidirectional. Crystal pushes to JS via `app.emit`; JS pushes to Crystal via `Events.emit` from `runtime.js`. Both sides share the same event name namespace and use symmetric `On/on` / `Once/once` / `Off/off` APIs.
 
 ```crystal
 # Crystal → JS
@@ -193,8 +193,8 @@ end
 // JS → Crystal
 import { Events } from "../lunejs/runtime/runtime.js";
 
-Events.On("results", (data) => renderResults(data));
-Events.Emit("search", { query: input.value });
+Events.on("results", (data) => renderResults(data));
+Events.emit("search", { query: input.value });
 ```
 
-Under the hood, `app.emit` calls `window.__lune.crystalEmit` (Crystal→JS); `Events.Emit` calls the `__lune.jsEmit` WebView binding (JS→Crystal). See the [Events](./events) guide for the full API.
+Under the hood, `app.emit` calls `window.__lune.crystalEmit` (Crystal→JS); `Events.emit` calls the `__lune.jsEmit` WebView binding (JS→Crystal). See the [Events](./events) guide for the full API.

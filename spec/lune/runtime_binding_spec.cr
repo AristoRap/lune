@@ -31,14 +31,6 @@ describe Lune::RuntimeBinding do
     end
   end
 
-  describe "#js_method_name" do
-    it "returns PascalCase leaf for use as an object method name" do
-      make_rb(method: "lifecycle.quit").js_method_name.should eq("Quit")
-      make_rb(method: "lifecycle.openURL").js_method_name.should eq("OpenURL")
-      make_rb(method: "screen.info").js_method_name.should eq("Info")
-    end
-  end
-
   describe "#internal?" do
     it "is always true" do
       make_rb.internal?.should be_true

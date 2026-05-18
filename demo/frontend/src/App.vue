@@ -32,12 +32,12 @@ onMounted(async () => {
   const tickH = (ts) => {
     clock.value = new Date(ts).toLocaleTimeString();
   };
-  Events.On("tick", tickH);
+  Events.on("tick", tickH);
 
   const pausedH = (v) => {
     clockPaused.value = v;
   };
-  Events.On("clockPaused", pausedH);
+  Events.on("clockPaused", pausedH);
 });
 </script>
 

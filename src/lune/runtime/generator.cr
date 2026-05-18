@@ -98,6 +98,18 @@ module Lune
           debug: boolean;
         }
 
+        export interface TrayMenuItem {
+          id: string;
+          label: string;
+        }
+
+        export interface ContextMenuItem {
+          id?: string;
+          label?: string;
+          enabled?: boolean;
+          separator?: boolean;
+        }
+
         export declare class LuneError extends Error {
           readonly code: string;
           constructor(code: string, message: string);

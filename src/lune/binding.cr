@@ -22,10 +22,10 @@ module Lune
     end
 
     def js_func_name
-      # casts method name to PascalCase
-      # ping -> Ping
-      # ping_me -> PingMe
-      @method.camelcase(lower: false)
+      # casts method name to camelCase
+      # ping -> ping
+      # ping_me -> pingMe
+      @method.camelcase(lower: true)
     end
 
     def to_js_stub : String

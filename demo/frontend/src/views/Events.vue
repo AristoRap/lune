@@ -59,7 +59,7 @@ async function sendPing() {
     ms: 0,
   });
   scrollRoundsToBottom();
-  await Events.Emit("ping", pingValue.value);
+  await Events.emit("ping", pingValue.value);
 }
 
 function fmtVal(v) {
@@ -69,10 +69,10 @@ function fmtVal(v) {
 }
 
 async function pickAndProcess() {
-  const paths = await Dialogs.OpenFiles("Select files to process");
+  const paths = await Dialogs.openFiles("Select files to process");
   if (!paths.length) return;
   progress.value = null;
-  await api.Demo.ProcessFiles(paths);
+  await api.Demo.processFiles(paths);
 }
 </script>
 
@@ -106,11 +106,7 @@ async function pickAndProcess() {
     <div class="card">
       <span class="card-label">Ping / Pong — JS → Crystal → JS</span>
       <div class="row">
-        <input
-          v-model="pingValue"
-          type="text"
-          @keydown.enter="sendPing"
-        />
+        <input v-model="pingValue" type="text" @keydown.enter="sendPing" />
         <button class="primary" @click="sendPing">Ping</button>
       </div>
       <div ref="roundsEl" class="rounds">
@@ -124,15 +120,9 @@ async function pickAndProcess() {
             <span class="bubble-text">{{ fmtVal(r.ping) }}</span>
           </span>
           <span class="round-arrow">
-            <span
-              class="round-line"
-              :class="{ pending: r.pong === undefined }"
-            ></span>
+            <span class="round-line" :class="{ pending: r.pong === undefined }"></span>
           </span>
-          <span
-            class="bubble bubble-in"
-            :class="{ 'bubble-pending': r.pong === undefined }"
-          >
+          <span class="bubble bubble-in" :class="{ 'bubble-pending': r.pong === undefined }">
             <span class="bubble-tag">PONG</span>
             <span class="bubble-text">
               <template v-if="r.pong !== undefined">{{ fmtVal(r.pong) }}</template>
@@ -188,6 +178,7 @@ async function pickAndProcess() {
   box-shadow: 0 0 8px rgba(52, 211, 153, 0.7);
   display: inline-block;
 }
+
 .progress-wrap {
   display: flex;
   flex-direction: column;
@@ -230,6 +221,7 @@ async function pickAndProcess() {
   border: 1px solid var(--border);
   min-width: 0;
 }
+
 .bubble-tag {
   font-family: var(--font-mono);
   font-size: 0.62em;
@@ -238,6 +230,7 @@ async function pickAndProcess() {
   font-weight: 700;
   opacity: 0.75;
 }
+
 .bubble-text {
   font-family: var(--font-mono);
   font-size: 0.95em;
@@ -247,24 +240,25 @@ async function pickAndProcess() {
 }
 
 .bubble-out {
-  background: linear-gradient(
-    135deg,
-    rgba(167, 139, 250, 0.18),
-    rgba(124, 108, 255, 0.1)
-  );
+  background: linear-gradient(135deg,
+      rgba(167, 139, 250, 0.18),
+      rgba(124, 108, 255, 0.1));
   border-color: rgba(167, 139, 250, 0.32);
   color: var(--moon-2);
   justify-content: flex-end;
 }
+
 .bubble-in {
   background: rgba(52, 211, 153, 0.08);
   border-color: rgba(52, 211, 153, 0.28);
   color: var(--ok);
 }
+
 .bubble-pending {
   border-style: dashed;
   opacity: 0.7;
 }
+
 .bubble-pending .bubble-text {
   animation: dots 1.1s ease-in-out infinite;
 }
@@ -276,12 +270,14 @@ async function pickAndProcess() {
   position: relative;
   height: 100%;
 }
+
 .round-line {
   position: relative;
   width: 100%;
   height: 1px;
   background: linear-gradient(90deg, var(--accent), var(--ok));
 }
+
 .round-line::after {
   content: "";
   position: absolute;
@@ -293,14 +289,14 @@ async function pickAndProcess() {
   border-right: 1.5px solid var(--ok);
   transform: translateY(-50%) rotate(45deg);
 }
+
 .round-line.pending {
-  background: repeating-linear-gradient(
-    90deg,
-    var(--border-hi) 0 4px,
-    transparent 4px 8px
-  );
+  background: repeating-linear-gradient(90deg,
+      var(--border-hi) 0 4px,
+      transparent 4px 8px);
   animation: shimmer 1.2s linear infinite;
 }
+
 .round-line.pending::after {
   border-color: var(--border-hi);
 }
@@ -314,11 +310,24 @@ async function pickAndProcess() {
 }
 
 @keyframes dots {
-  0%, 100% { opacity: 0.4; }
-  50%      { opacity: 1; }
+
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+
+  50% {
+    opacity: 1;
+  }
 }
+
 @keyframes shimmer {
-  from { background-position: 0 0; }
-  to   { background-position: 24px 0; }
+  from {
+    background-position: 0 0;
+  }
+
+  to {
+    background-position: 24px 0;
+  }
 }
 </style>

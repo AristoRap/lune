@@ -10,21 +10,21 @@ const visible = ref(false);
 
 useLuneEvent("trayEvent", (id) => {
   log.value.unshift(`trayEvent: ${JSON.stringify(id)}`);
-  if (id === "quit") Lifecycle.Quit();
+  if (id === "quit") Lifecycle.quit();
 });
 
 async function toggle() {
   if (visible.value) {
-    await Tray.Hide();
+    await Tray.hide();
     visible.value = false;
   } else {
-    await Tray.Show("");
+    await Tray.show("");
     visible.value = true;
   }
 }
 
 function setMenuA() {
-  Tray.SetMenu([
+  Tray.setMenu([
     { id: "open", label: "Open" },
     { id: "---", label: "" },
     { id: "quit", label: "Quit" },
@@ -32,7 +32,7 @@ function setMenuA() {
   activeMenu.value = "a";
 }
 function setMenuB() {
-  Tray.SetMenu([
+  Tray.setMenu([
     { id: "pause", label: "Pause" },
     { id: "resume", label: "Resume" },
     { id: "---", label: "" },
@@ -41,29 +41,20 @@ function setMenuB() {
   activeMenu.value = "b";
 }
 function clearMenu() {
-  Tray.SetMenu([]);
+  Tray.setMenu([]);
   activeMenu.value = null;
 }
 </script>
 
 <template>
-  <SectionHead
-    eyebrow="Status bar"
-    title="System Tray"
-    desc="Show an icon in the status bar with an optional context menu. Click and menu events flow back through the event bus."
-  />
+  <SectionHead eyebrow="Status bar" title="System Tray"
+    desc="Show an icon in the status bar with an optional context menu. Click and menu events flow back through the event bus." />
 
   <div class="card-grid">
     <div class="card">
       <span class="card-label">Icon</span>
       <div class="btn-row align-center">
-        <button
-          class="toggle"
-          :class="{ on: visible }"
-          role="switch"
-          :aria-checked="visible"
-          @click="toggle"
-        >
+        <button class="toggle" :class="{ on: visible }" role="switch" :aria-checked="visible" @click="toggle">
           <span class="toggle-track"><span class="toggle-thumb"></span></span>
           <span class="toggle-label">
             {{ visible ? "Visible in status bar" : "Hidden" }}
@@ -111,10 +102,12 @@ function clearMenu() {
   font-size: 0.92em;
   cursor: pointer;
 }
+
 .toggle:hover {
   background: transparent;
   border-color: transparent;
 }
+
 .toggle:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 4px;
@@ -131,6 +124,7 @@ function clearMenu() {
   transition: background 180ms, border-color 180ms;
   flex-shrink: 0;
 }
+
 .toggle-thumb {
   position: absolute;
   top: 2px;
@@ -141,15 +135,18 @@ function clearMenu() {
   background: var(--text-mid);
   transition: transform 180ms, background 180ms;
 }
+
 .toggle.on .toggle-track {
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
   border-color: transparent;
   box-shadow: 0 0 14px var(--accent-glow);
 }
+
 .toggle.on .toggle-thumb {
   background: #fff;
   transform: translateX(16px);
 }
+
 .toggle.on .toggle-label {
   color: var(--text);
 }

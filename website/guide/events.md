@@ -26,12 +26,12 @@ Import the `Events` namespace from `runtime.js`:
 import { Events } from "../lunejs/runtime/runtime.js";
 
 // Persistent listener
-Events.On("status-changed", (status) => {
+Events.on("status-changed", (status) => {
   console.log("New status:", status);
 });
 
 // One-shot listener — fires once, then removes itself
-Events.Once("connected", () => {
+Events.once("connected", () => {
   showWelcomeMessage();
 });
 ```
@@ -42,17 +42,17 @@ Events.Once("connected", () => {
 
 ### Emitting from JavaScript
 
-Use `Events.Emit` with an event name and an optional payload:
+Use `Events.emit` with an event name and an optional payload:
 
 ```js
 import { Events } from "../lunejs/runtime/runtime.js";
 
-await Events.Emit("search", { query: input.value });
-await Events.Emit("user-action", "button-clicked");
-await Events.Emit("ready"); // no payload
+await Events.emit("search", { query: input.value });
+await Events.emit("user-action", "button-clicked");
+await Events.emit("ready"); // no payload
 ```
 
-`Events.Emit` is async — it resolves once Crystal has received the event.
+`Events.emit` is async — it resolves once Crystal has received the event.
 
 ### Listening in Crystal
 
@@ -93,7 +93,7 @@ end
 
 ```js
 // JS side
-Events.On("results", (data) => renderList(data));
+Events.on("results", (data) => renderList(data));
 
 searchButton.addEventListener("click", () => {
   Events.Emit("search", { query: input.value });
@@ -109,13 +109,13 @@ searchButton.addEventListener("click", () => {
 ```js
 const handler = (data) => console.log(data);
 
-Events.On("tick", handler);
+Events.on("tick", handler);
 
 // Remove this specific handler
-Events.Off("tick", handler);
+Events.off("tick", handler);
 
 // Remove ALL handlers for this event
-Events.Off("tick");
+Events.off("tick");
 ```
 
 **Crystal:**
@@ -148,7 +148,7 @@ end
 ```
 
 ```js
-Events.On("progress", ({ done, total, path }) => {
+Events.on("progress", ({ done, total, path }) => {
   progressBar.value = done / total;
   statusLabel.textContent = `Processing ${path}...`;
 });
@@ -169,7 +169,7 @@ end
 ```
 
 ```js
-Events.On("search-results", (results) => renderResults(results));
+Events.on("search-results", (results) => renderResults(results));
 
 searchInput.addEventListener("input", (e) => {
   Events.Emit("search", { query: e.target.value });
@@ -199,7 +199,7 @@ end
 ```js
 import { Events } from "../lunejs/runtime/runtime.js";
 
-Events.On("config", (cfg) => applyConfig(cfg));
+Events.on("config", (cfg) => applyConfig(cfg));
 
 // After your app has mounted and listeners are registered
 Events.Emit("frontend-ready");
@@ -241,7 +241,7 @@ interface SearchResult {
   url: string;
 }
 
-Events.On("search-results", (data) => {
+Events.on("search-results", (data) => {
   const results = data as SearchResult[];
   renderResults(results);
 });

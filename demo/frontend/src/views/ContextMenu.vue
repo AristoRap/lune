@@ -14,41 +14,32 @@ const items = [
   { id: "inspect", label: "Inspect" },
 ];
 
-ContextMenuBridge.OnContextMenu((id) => {
+ContextMenuBridge.onContextMenu((id) => {
   lastId.value = id;
 });
 
 function toggle() {
   if (active.value) {
-    ContextMenuBridge.ClearContextMenu();
+    ContextMenuBridge.clearContextMenu();
     active.value = false;
   } else {
-    ContextMenuBridge.SetContextMenu(items);
+    ContextMenuBridge.setContextMenu(items);
     active.value = true;
   }
 }
 
-onUnmounted(() => ContextMenuBridge.ClearContextMenu());
+onUnmounted(() => ContextMenuBridge.clearContextMenu());
 </script>
 
 <template>
-  <SectionHead
-    eyebrow="Native"
-    title="Context Menu"
-    desc="Show a native right-click context menu driven from JavaScript."
-  />
+  <SectionHead eyebrow="Native" title="Context Menu"
+    desc="Show a native right-click context menu driven from JavaScript." />
 
   <div class="card-grid">
     <div class="card">
-      <span class="card-label">ContextMenuBridge.SetContextMenu(items)</span>
+      <span class="card-label">ContextMenuBridge.setContextMenu(items)</span>
       <div class="btn-row align-center">
-        <button
-          class="toggle"
-          :class="{ on: active }"
-          role="switch"
-          :aria-checked="active"
-          @click="toggle"
-        >
+        <button class="toggle" :class="{ on: active }" role="switch" :aria-checked="active" @click="toggle">
           <span class="toggle-track"><span class="toggle-thumb"></span></span>
           <span class="toggle-label">
             {{ active ? "Active — right-click anywhere" : "Inactive" }}
@@ -58,7 +49,7 @@ onUnmounted(() => ContextMenuBridge.ClearContextMenu());
     </div>
 
     <div class="card">
-      <span class="card-label">ContextMenuBridge.OnContextMenu(cb)</span>
+      <span class="card-label">ContextMenuBridge.onContextMenu(cb)</span>
       <p class="card-desc">Last selected item id.</p>
       <pre class="result mono">{{ lastId || "(none yet)" }}</pre>
     </div>
@@ -81,10 +72,12 @@ onUnmounted(() => ContextMenuBridge.ClearContextMenu());
   font-size: 0.92em;
   cursor: pointer;
 }
+
 .toggle:hover {
   background: transparent;
   border-color: transparent;
 }
+
 .toggle:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 4px;
@@ -101,6 +94,7 @@ onUnmounted(() => ContextMenuBridge.ClearContextMenu());
   transition: background 180ms, border-color 180ms;
   flex-shrink: 0;
 }
+
 .toggle-thumb {
   position: absolute;
   top: 2px;
@@ -111,15 +105,18 @@ onUnmounted(() => ContextMenuBridge.ClearContextMenu());
   background: var(--text-mid);
   transition: transform 180ms, background 180ms;
 }
+
 .toggle.on .toggle-track {
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
   border-color: transparent;
   box-shadow: 0 0 14px var(--accent-glow);
 }
+
 .toggle.on .toggle-thumb {
   background: #fff;
   transform: translateX(16px);
 }
+
 .toggle.on .toggle-label {
   color: var(--text);
 }

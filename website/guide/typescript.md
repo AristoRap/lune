@@ -149,7 +149,7 @@ interface ProgressEvent {
   total: number;
 }
 
-Events.On("progress", (data) => {
+Events.on("progress", (data) => {
   const { done, total } = data as ProgressEvent;
   updateProgressBar(done / total);
 });

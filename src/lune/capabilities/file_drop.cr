@@ -51,15 +51,15 @@ module Lune
       def js_helpers : String
         bm = BRIDGE_MARKER
         <<-JS
-          OnFileDrop(cb)  { window.#{bm}.on("file_drop", function(data) { cb(data.x, data.y, data.paths); }, -1); },
-          OnFileDropOff() { window.#{bm}.off("file_drop"); },
+          onFileDrop(cb)  { window.#{bm}.on("file_drop", function(data) { cb(data.x, data.y, data.paths); }, -1); },
+          onFileDropOff() { window.#{bm}.off("file_drop"); },
         JS
       end
 
       def dts_helpers : String
         <<-DTS
-          OnFileDrop(cb: (x: number, y: number, paths: string[]) => void): void;
-          OnFileDropOff(): void;
+          onFileDrop(cb: (x: number, y: number, paths: string[]) => void): void;
+          onFileDropOff(): void;
         DTS
       end
 

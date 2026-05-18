@@ -32,17 +32,17 @@ module Lune
       def js_helpers : String
         bm = BRIDGE_MARKER
         <<-JS
-          SetContextMenu(items)  { window.#{bm}.setContextMenu(items || []); },
-          ClearContextMenu()     { window.#{bm}.setContextMenu([]); },
-          OnContextMenu(cb)      { window.#{bm}.on("context_menu", function(data) { cb(data.id); }, -1); },
+          setContextMenu(items)  { window.#{bm}.setContextMenu(items || []); },
+          clearContextMenu()     { window.#{bm}.setContextMenu([]); },
+          onContextMenu(cb)      { window.#{bm}.on("context_menu", function(data) { cb(data.id); }, -1); },
         JS
       end
 
       def dts_helpers : String
         <<-DTS
-          SetContextMenu(items: ContextMenuItem[]): void;
-          ClearContextMenu(): void;
-          OnContextMenu(cb: (id: string) => void): void;
+          setContextMenu(items: ContextMenuItem[]): void;
+          clearContextMenu(): void;
+          onContextMenu(cb: (id: string) => void): void;
         DTS
       end
     end

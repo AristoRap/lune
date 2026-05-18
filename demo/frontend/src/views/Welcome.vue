@@ -10,8 +10,8 @@ const screen = ref(null);
 
 onMounted(async () => {
   try {
-    env.value = await Lifecycle.Environment();
-    screen.value = await Screen.Info();
+    env.value = await Lifecycle.environment();
+    screen.value = await Screen.info();
   } catch (_) {
     /* unavailable in static preview */
   }
@@ -56,7 +56,7 @@ const features = [
           and a custom menu bar. This app is a live tour of every piece.
         </p>
         <div class="hero-actions">
-          <button class="btn-link primary" @click="Lifecycle.OpenUrl('https://github.com/aristorap/lune')">
+          <button class="btn-link primary" @click="Lifecycle.openUrl('https://github.com/aristorap/lune')">
             <Icon name="code" :size="14" /> Source on GitHub
           </button>
           <span class="chip">
@@ -90,7 +90,9 @@ const features = [
 
     <section class="features card-grid">
       <article v-for="f in features" :key="f.title" class="feature">
-        <div class="feature-icon"><Icon :name="f.icon" :size="18" /></div>
+        <div class="feature-icon">
+          <Icon :name="f.icon" :size="18" />
+        </div>
         <h3>{{ f.title }}</h3>
         <p>{{ f.body }}</p>
       </article>
@@ -144,6 +146,7 @@ const features = [
   align-items: center;
   padding: 1.5rem 0 1rem;
 }
+
 @media (max-width: 880px) {
   .hero {
     grid-template-columns: 1fr;
@@ -167,6 +170,7 @@ const features = [
   margin: 0 0 0.85rem;
   letter-spacing: -0.02em;
 }
+
 .hero-text h1 .grad {
   background: linear-gradient(135deg, var(--moon-1), var(--accent) 50%, var(--moon-3));
   -webkit-background-clip: text;
@@ -204,6 +208,7 @@ const features = [
   box-shadow: 0 6px 22px -8px var(--accent-glow);
   transition: filter 200ms;
 }
+
 .btn-link:hover {
   filter: brightness(1.08);
   text-decoration: none;
@@ -219,12 +224,14 @@ const features = [
   padding: 0.3em 0.75em;
   font-size: 0.78em;
 }
+
 .chip-key {
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-size: 0.85em;
 }
+
 .chip-val {
   color: var(--text);
   font-family: var(--font-mono);
@@ -238,6 +245,7 @@ const features = [
   align-items: center;
   min-height: 280px;
 }
+
 .orbit {
   position: relative;
   width: 280px;
@@ -245,12 +253,14 @@ const features = [
   display: grid;
   place-items: center;
 }
+
 .planet {
   width: 130px;
   height: 130px;
   filter: drop-shadow(0 0 36px var(--accent-glow));
   animation: float 7s ease-in-out infinite;
 }
+
 .satellite {
   position: absolute;
   display: grid;
@@ -267,29 +277,36 @@ const features = [
   letter-spacing: 0.02em;
   box-shadow: var(--shadow-1);
 }
+
 .satellite.sat-vue {
   background: #1a2233;
   padding: 8px;
 }
+
 .satellite.sat-c {
   color: #ff8c8c;
 }
+
 .satellite.sat-js {
   color: #fbd34d;
 }
+
 .sat-vue,
 .sat-c,
 .sat-js {
   animation: orbit 18s linear infinite;
 }
+
 .sat-vue {
   --r: 130px;
   --d: 0s;
 }
+
 .sat-c {
   --r: 130px;
   --d: -6s;
 }
+
 .sat-js {
   --r: 130px;
   --d: -12s;
@@ -299,24 +316,35 @@ const features = [
   from {
     transform: rotate(0deg) translateX(var(--r)) rotate(0deg);
   }
+
   to {
     transform: rotate(360deg) translateX(var(--r)) rotate(-360deg);
   }
 }
 
-.sat-vue { animation-delay: var(--d); }
-.sat-c   { animation-delay: var(--d); }
-.sat-js  { animation-delay: var(--d); }
+.sat-vue {
+  animation-delay: var(--d);
+}
+
+.sat-c {
+  animation-delay: var(--d);
+}
+
+.sat-js {
+  animation-delay: var(--d);
+}
 
 .orbit-ring {
   position: absolute;
   border: 1px dashed rgba(255, 255, 255, 0.08);
   border-radius: 99px;
 }
+
 .ring-1 {
   width: 260px;
   height: 260px;
 }
+
 .ring-2 {
   width: 200px;
   height: 200px;
@@ -325,8 +353,15 @@ const features = [
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-6px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
 }
 
 /* features */
@@ -335,6 +370,7 @@ const features = [
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 0.9rem;
 }
+
 .feature {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.012)),
     var(--bg-1);
@@ -348,10 +384,12 @@ const features = [
     border-color 200ms,
     transform 200ms;
 }
+
 .feature:hover {
   border-color: var(--accent);
   transform: translateY(-1px);
 }
+
 .feature-icon {
   width: 34px;
   height: 34px;
@@ -362,10 +400,12 @@ const features = [
   color: var(--accent);
   margin-bottom: 0.25rem;
 }
+
 .feature h3 {
   font-size: 0.98em;
   font-weight: 600;
 }
+
 .feature p {
   color: var(--text-mid);
   font-size: 0.85em;
@@ -378,11 +418,13 @@ const features = [
   grid-template-columns: repeat(4, 1fr);
   gap: 0.75rem;
 }
+
 @media (max-width: 720px) {
   .stats {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
 .stat {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--border);
@@ -392,12 +434,14 @@ const features = [
   flex-direction: column;
   gap: 0.25rem;
 }
+
 .stat-key {
   font-size: 0.7em;
   text-transform: uppercase;
   letter-spacing: 0.14em;
   color: var(--muted);
 }
+
 .stat-val {
   font-family: var(--font-mono);
   font-size: 1em;
@@ -410,18 +454,18 @@ const features = [
   gap: 0.75rem;
   padding: 1rem 1.2rem;
   border-radius: var(--radius);
-  background: linear-gradient(
-      90deg,
+  background: linear-gradient(90deg,
       rgba(167, 139, 250, 0.07),
-      rgba(96, 165, 250, 0.04)
-    );
+      rgba(96, 165, 250, 0.04));
   border: 1px solid rgba(167, 139, 250, 0.18);
 }
+
 .callout p {
   color: var(--text-mid);
   font-size: 0.88em;
   margin-top: 0.2rem;
 }
+
 .callout kbd {
   font-family: var(--font-mono);
   font-size: 0.78em;

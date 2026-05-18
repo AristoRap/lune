@@ -30,13 +30,13 @@ module Lune
       def js_helpers : String
         bridge_id = "#{BRIDGE_MARKER}.#{name}.start"
         <<-JS
-          Start(paths) { return __lune.call(#{bridge_id.inspect}, JSON.stringify(paths || [])); },
+          start(paths) { return __lune.call(#{bridge_id.inspect}, JSON.stringify(paths || [])); },
         JS
       end
 
       def dts_helpers : String
         <<-DTS
-          Start(paths: string[]): Promise<void>;
+          start(paths: string[]): Promise<void>;
         DTS
       end
     end

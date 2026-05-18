@@ -54,19 +54,19 @@ module Lune
         bm = BRIDGE_MARKER
         js_emit_key = "#{BRIDGE_MARKER}.jsEmit"
         <<-JS
-          On(name, cb)     { window.#{bm}.on(name, cb, -1); },
-          Once(name, cb)   { window.#{bm}.on(name, cb,  1); },
-          Off(name, cb)    { window.#{bm}.off(name, cb); },
-          Emit(name, data) { return window[#{js_emit_key.inspect}](name, data); },
+          on(name, cb)     { window.#{bm}.on(name, cb, -1); },
+          once(name, cb)   { window.#{bm}.on(name, cb,  1); },
+          off(name, cb)    { window.#{bm}.off(name, cb); },
+          emit(name, data) { return window[#{js_emit_key.inspect}](name, data); },
         JS
       end
 
       def dts_helpers : String
         <<-DTS
-          On(name: string, cb: (data: unknown) => void): void;
-          Once(name: string, cb: (data: unknown) => void): void;
-          Off(name: string, cb?: (data: unknown) => void): void;
-          Emit(name: string, data?: unknown): Promise<void>;
+          on(name: string, cb: (data: unknown) => void): void;
+          once(name: string, cb: (data: unknown) => void): void;
+          off(name: string, cb?: (data: unknown) => void): void;
+          emit(name: string, data?: unknown): Promise<void>;
         DTS
       end
     end

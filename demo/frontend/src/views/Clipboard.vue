@@ -15,23 +15,23 @@ const imageOut = ref("");
 const imagePreview = ref("");
 
 async function read() {
-  readOut.value = (await Clipboard.Read()) || "(empty)";
+  readOut.value = (await Clipboard.read()) || "(empty)";
 }
 async function write() {
-  await Clipboard.Write(writeIn.value);
+  await Clipboard.write(writeIn.value);
   writeOut.value = `Wrote ${writeIn.value.length} char(s) to clipboard.`;
 }
 
 async function readHtml() {
-  htmlOut.value = (await Clipboard.ReadHtml()) || "(no HTML on clipboard)";
+  htmlOut.value = (await Clipboard.readHtml()) || "(no HTML on clipboard)";
 }
 async function writeHtml() {
-  await Clipboard.WriteHtml(htmlIn.value);
+  await Clipboard.writeHtml(htmlIn.value);
   htmlWriteOut.value = "HTML written to clipboard.";
 }
 
 async function readImage() {
-  const dataUrl = await Clipboard.ReadImage();
+  const dataUrl = await Clipboard.readImage();
   if (dataUrl) {
     imagePreview.value = dataUrl;
     imageOut.value = `PNG read (${Math.round(dataUrl.length / 1024)} KB as base64).`;
@@ -45,27 +45,23 @@ async function writeImage() {
     imageOut.value = "Read an image first, then write it back.";
     return;
   }
-  await Clipboard.WriteImage(imagePreview.value);
+  await Clipboard.writeImage(imagePreview.value);
   imageOut.value = "Image written back to clipboard.";
 }
 </script>
 
 <template>
-  <SectionHead
-    eyebrow="Read / Write"
-    title="Clipboard"
-    desc="Access the system pasteboard — text, HTML, and images."
-  />
+  <SectionHead eyebrow="Read / Write" title="Clipboard" desc="Access the system pasteboard — text, HTML, and images." />
 
   <div class="card-grid">
     <div class="card">
-      <span class="card-label">Clipboard.Read()</span>
+      <span class="card-label">Clipboard.read()</span>
       <button @click="read">Read text</button>
       <div class="result">{{ readOut }}</div>
     </div>
 
     <div class="card">
-      <span class="card-label">Clipboard.Write(text)</span>
+      <span class="card-label">Clipboard.write(text)</span>
       <div class="row">
         <input v-model="writeIn" type="text" placeholder="Text to copy…" />
         <button class="primary" @click="write">Write</button>
@@ -74,13 +70,13 @@ async function writeImage() {
     </div>
 
     <div class="card">
-      <span class="card-label">Clipboard.ReadHtml()</span>
+      <span class="card-label">Clipboard.readHtml()</span>
       <button @click="readHtml">Read HTML</button>
       <pre class="result mono">{{ htmlOut }}</pre>
     </div>
 
     <div class="card">
-      <span class="card-label">Clipboard.WriteHtml(html)</span>
+      <span class="card-label">Clipboard.writeHtml(html)</span>
       <div class="row">
         <input v-model="htmlIn" type="text" placeholder="<b>HTML</b>…" />
         <button class="primary" @click="writeHtml">Write</button>
@@ -89,7 +85,7 @@ async function writeImage() {
     </div>
 
     <div class="card">
-      <span class="card-label">Clipboard.ReadImage() / Clipboard.WriteImage(dataUrl)</span>
+      <span class="card-label">Clipboard.readImage() / Clipboard.writeImage(dataUrl)</span>
       <div class="row">
         <button @click="readImage">Read image</button>
         <button @click="writeImage" :disabled="!imagePreview">Write back</button>
