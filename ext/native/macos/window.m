@@ -3,6 +3,13 @@
 
 typedef struct { int x; int y; int width; int height; } WindowFrame;
 
+// Window operations called from JS binding callbacks may arrive on any Crystal
+// fiber thread.  AppKit requires UI calls on the main thread.
+static void run_on_main(void (^block)(void)) {
+    if ([NSThread isMainThread]) block();
+    else dispatch_sync(dispatch_get_main_queue(), block);
+}
+
 // ── Appearance ────────────────────────────────────────────────────────────────
 
 void set_titlebar_transparent(void *window, BOOL full_size_content) {
@@ -75,8 +82,7 @@ void setup_drag_monitor(void) {
 
 void start_window_drag(void *window) {
     NSWindow *w = (__bridge NSWindow *)window;
-    if (_last_mousedown)
-        [w performWindowDragWithEvent:_last_mousedown];
+    run_on_main(^{ if (_last_mousedown) [w performWindowDragWithEvent:_last_mousedown]; });
 }
 
 // ── File drop ─────────────────────────────────────────────────────────────────
@@ -299,49 +305,56 @@ void lune_start_drag_out(void *nswindow_ptr, const char *paths_json) {
     }
     if (items.count == 0) return;
 
-    [view beginDraggingSessionWithItems:items event:_last_mousedown source:_drag_source];
+    run_on_main(^{
+        [view beginDraggingSessionWithItems:items event:_last_mousedown source:_drag_source];
+    });
 }
 
 // ── Window controls ────────────────────────────────────────────────────────────
 
 void minimize(void *window) {
     NSWindow *w = (__bridge NSWindow *)window;
-    [w miniaturize:nil];
+    run_on_main(^{ [w miniaturize:nil]; });
 }
 
 void maximize(void *window) {
     NSWindow *w = (__bridge NSWindow *)window;
-    [w zoom:nil];
+    run_on_main(^{ [w zoom:nil]; });
 }
 
 void set_title(void *window, const char *title) {
     NSWindow *w = (__bridge NSWindow *)window;
-    [w setTitle:[NSString stringWithUTF8String:title]];
+    NSString *t = [NSString stringWithUTF8String:title];
+    run_on_main(^{ [w setTitle:t]; });
 }
 
 void set_size(void *window, int width, int height) {
     NSWindow *w = (__bridge NSWindow *)window;
-    [w setContentSize:NSMakeSize((CGFloat)width, (CGFloat)height)];
+    run_on_main(^{ [w setContentSize:NSMakeSize((CGFloat)width, (CGFloat)height)]; });
 }
 
 void center(void *window) {
     NSWindow *w = (__bridge NSWindow *)window;
-    [w center];
+    run_on_main(^{ [w center]; });
 }
 
 WindowFrame get_frame(void *window) {
     NSWindow *w = (__bridge NSWindow *)window;
-    NSRect f = w.frame;
-    WindowFrame wf;
-    wf.x = (int)f.origin.x;
-    wf.y = (int)f.origin.y;
-    wf.width = (int)f.size.width;
-    wf.height = (int)f.size.height;
+    __block WindowFrame wf = {0, 0, 0, 0};
+    run_on_main(^{
+        NSRect f = w.frame;
+        wf.x = (int)f.origin.x;
+        wf.y = (int)f.origin.y;
+        wf.width  = (int)f.size.width;
+        wf.height = (int)f.size.height;
+    });
     return wf;
 }
 
 void set_frame(void *window, int x, int y, int width, int height) {
     NSWindow *w = (__bridge NSWindow *)window;
-    [w setFrame:NSMakeRect((CGFloat)x, (CGFloat)y, (CGFloat)width, (CGFloat)height)
-        display:YES animate:NO];
+    run_on_main(^{
+        [w setFrame:NSMakeRect((CGFloat)x, (CGFloat)y, (CGFloat)width, (CGFloat)height)
+            display:YES animate:NO];
+    });
 }

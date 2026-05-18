@@ -1,2 +1,3 @@
 {
+  "crystal-lang.flags": "-Dlune_native_test_mock -Dpreview_mt -Dexecution_context"
 }

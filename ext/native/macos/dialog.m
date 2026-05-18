@@ -1,101 +1,120 @@
 #import <AppKit/AppKit.h>
 #include <string.h>
 
-int open_file_dialog(const char *title, char *out, int out_size) {
-    NSOpenPanel *panel = [NSOpenPanel openPanel];
-    panel.title = [NSString stringWithUTF8String:title];
-    panel.canChooseFiles = YES;
-    panel.canChooseDirectories = NO;
-    panel.allowsMultipleSelection = NO;
+// [NSPanel runModal] / [NSAlert runModal] call nextEventMatchingMask, which
+// AppKit requires to be on the main thread.  Binding callbacks may arrive on
+// any Crystal fiber thread, so dispatch synchronously when needed.
+static void run_on_main(void (^block)(void)) {
+    if ([NSThread isMainThread]) block();
+    else dispatch_sync(dispatch_get_main_queue(), block);
+}
 
-    if ([panel runModal] == NSModalResponseOK) {
-        NSURL *url = panel.URLs.firstObject;
-        const char *path = url.fileSystemRepresentation;
-        strncpy(out, path, out_size - 1);
-        out[out_size - 1] = '\0';
-        return 1;
-    }
-    return 0;
+int open_file_dialog(const char *title, char *out, int out_size) {
+    __block int ret = 0;
+    run_on_main(^{
+        NSOpenPanel *panel = [NSOpenPanel openPanel];
+        panel.title = [NSString stringWithUTF8String:title];
+        panel.canChooseFiles = YES;
+        panel.canChooseDirectories = NO;
+        panel.allowsMultipleSelection = NO;
+        if ([panel runModal] == NSModalResponseOK) {
+            NSURL *url = panel.URLs.firstObject;
+            const char *path = url.fileSystemRepresentation;
+            strncpy(out, path, out_size - 1);
+            out[out_size - 1] = '\0';
+            ret = 1;
+        }
+    });
+    return ret;
 }
 
 int open_dir_dialog(const char *title, char *out, int out_size) {
-    NSOpenPanel *panel = [NSOpenPanel openPanel];
-    panel.title = [NSString stringWithUTF8String:title];
-    panel.canChooseFiles = NO;
-    panel.canChooseDirectories = YES;
-    panel.allowsMultipleSelection = NO;
-
-    if ([panel runModal] == NSModalResponseOK) {
-        NSURL *url = panel.URLs.firstObject;
-        const char *path = url.fileSystemRepresentation;
-        strncpy(out, path, out_size - 1);
-        out[out_size - 1] = '\0';
-        return 1;
-    }
-    return 0;
+    __block int ret = 0;
+    run_on_main(^{
+        NSOpenPanel *panel = [NSOpenPanel openPanel];
+        panel.title = [NSString stringWithUTF8String:title];
+        panel.canChooseFiles = NO;
+        panel.canChooseDirectories = YES;
+        panel.allowsMultipleSelection = NO;
+        if ([panel runModal] == NSModalResponseOK) {
+            NSURL *url = panel.URLs.firstObject;
+            const char *path = url.fileSystemRepresentation;
+            strncpy(out, path, out_size - 1);
+            out[out_size - 1] = '\0';
+            ret = 1;
+        }
+    });
+    return ret;
 }
 
 int open_files_dialog(const char *title, char *out, int out_size) {
-    NSOpenPanel *panel = [NSOpenPanel openPanel];
-    panel.title = [NSString stringWithUTF8String:title];
-    panel.canChooseFiles = YES;
-    panel.canChooseDirectories = NO;
-    panel.allowsMultipleSelection = YES;
-
-    if ([panel runModal] == NSModalResponseOK) {
-        NSMutableString *result = [NSMutableString string];
-        for (NSURL *url in panel.URLs) {
-            if (result.length > 0) [result appendString:@"\n"];
-            [result appendString:@(url.fileSystemRepresentation)];
+    __block int ret = 0;
+    run_on_main(^{
+        NSOpenPanel *panel = [NSOpenPanel openPanel];
+        panel.title = [NSString stringWithUTF8String:title];
+        panel.canChooseFiles = YES;
+        panel.canChooseDirectories = NO;
+        panel.allowsMultipleSelection = YES;
+        if ([panel runModal] == NSModalResponseOK) {
+            NSMutableString *result = [NSMutableString string];
+            for (NSURL *url in panel.URLs) {
+                if (result.length > 0) [result appendString:@"\n"];
+                [result appendString:@(url.fileSystemRepresentation)];
+            }
+            const char *str = result.UTF8String;
+            strncpy(out, str, out_size - 1);
+            out[out_size - 1] = '\0';
+            ret = 1;
         }
-        const char *str = result.UTF8String;
-        strncpy(out, str, out_size - 1);
-        out[out_size - 1] = '\0';
-        return 1;
-    }
-    return 0;
+    });
+    return ret;
 }
 
 // type: 0=info, 1=warning, 2=error, 3=question
 int message_dialog(int type, const char *title, const char *message, char *out, int out_size) {
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = [NSString stringWithUTF8String:title];
-    alert.informativeText = [NSString stringWithUTF8String:message];
+    __block int ret = 0;
+    run_on_main(^{
+        NSAlert *alert = [[NSAlert alloc] init];
+        alert.messageText = [NSString stringWithUTF8String:title];
+        alert.informativeText = [NSString stringWithUTF8String:message];
 
-    switch (type) {
-        case 1: alert.alertStyle = NSAlertStyleWarning; break;
-        case 2: alert.alertStyle = NSAlertStyleCritical; break;
-        default: alert.alertStyle = NSAlertStyleInformational; break;
-    }
+        switch (type) {
+            case 1: alert.alertStyle = NSAlertStyleWarning; break;
+            case 2: alert.alertStyle = NSAlertStyleCritical; break;
+            default: alert.alertStyle = NSAlertStyleInformational; break;
+        }
 
-    const char *result;
-    if (type == 3) {
-        [alert addButtonWithTitle:@"Yes"];
-        [alert addButtonWithTitle:@"No"];
-        result = ([alert runModal] == NSAlertFirstButtonReturn) ? "Yes" : "No";
-    } else {
-        [alert addButtonWithTitle:@"Ok"];
-        [alert runModal];
-        result = "Ok";
-    }
-    strncpy(out, result, out_size - 1);
-    out[out_size - 1] = '\0';
-    return 1;
+        const char *result;
+        if (type == 3) {
+            [alert addButtonWithTitle:@"Yes"];
+            [alert addButtonWithTitle:@"No"];
+            result = ([alert runModal] == NSAlertFirstButtonReturn) ? "Yes" : "No";
+        } else {
+            [alert addButtonWithTitle:@"Ok"];
+            [alert runModal];
+            result = "Ok";
+        }
+        strncpy(out, result, out_size - 1);
+        out[out_size - 1] = '\0';
+        ret = 1;
+    });
+    return ret;
 }
 
 int save_file_dialog(const char *title, const char *default_name, char *out, int out_size) {
-    NSSavePanel *panel = [NSSavePanel savePanel];
-    panel.title = [NSString stringWithUTF8String:title];
-    if (default_name && default_name[0]) {
-        panel.nameFieldStringValue = [NSString stringWithUTF8String:default_name];
-    }
-
-    if ([panel runModal] == NSModalResponseOK) {
-        NSURL *url = panel.URL;
-        const char *path = url.fileSystemRepresentation;
-        strncpy(out, path, out_size - 1);
-        out[out_size - 1] = '\0';
-        return 1;
-    }
-    return 0;
+    __block int ret = 0;
+    run_on_main(^{
+        NSSavePanel *panel = [NSSavePanel savePanel];
+        panel.title = [NSString stringWithUTF8String:title];
+        if (default_name && default_name[0])
+            panel.nameFieldStringValue = [NSString stringWithUTF8String:default_name];
+        if ([panel runModal] == NSModalResponseOK) {
+            NSURL *url = panel.URL;
+            const char *path = url.fileSystemRepresentation;
+            strncpy(out, path, out_size - 1);
+            out[out_size - 1] = '\0';
+            ret = 1;
+        }
+    });
+    return ret;
 }

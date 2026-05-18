@@ -7,6 +7,7 @@ module Lune
     def initialize(@wv : WebviewLike)
       @closed = Atomic(Bool).new(false)
       @all_bindings = {} of String => Binding
+      @async_pool = Fiber::ExecutionContext::Parallel.new("lune-async", System.cpu_count)
     end
 
     def close!
@@ -59,7 +60,7 @@ module Lune
       args : Array(JSON::Any),
     )
       if binding.async
-        Fiber::ExecutionContext::Isolated.new("lune-async") do
+        @async_pool.spawn do
           dispatch_result(wv, seq, closed: -> { @closed.get }) do
             binding.callback.call(args)
           end

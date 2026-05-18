@@ -154,7 +154,7 @@ class FileModule
 end
 ```
 
-From JavaScript the call is identical — it still returns a `Promise`. The difference is that async bindings run on a real OS thread via `Fiber::ExecutionContext::Isolated`, so `sleep`, `Channel`, HTTP, and other blocking operations all work correctly and the UI stays responsive.
+From JavaScript the call is identical — it still returns a `Promise`. The difference is that async bindings run on a background fiber in a shared thread pool (`Fiber::ExecutionContext::Parallel`), so `sleep`, `Channel`, HTTP, and other blocking operations all work correctly and the UI stays responsive.
 
 ---
 
@@ -175,7 +175,7 @@ end
 Lune.run(app, ...) { ... }
 ```
 
-`app.async` starts a `Fiber::ExecutionContext::Isolated` — a real OS thread with its own Crystal scheduler — so `sleep`, channels, and IO all work as expected. An optional name helps with debugging:
+`app.async` spawns a fiber into a shared background thread pool (`Fiber::ExecutionContext::Parallel`) — so `sleep`, channels, and IO all work as expected. An optional name helps with debugging:
 
 ```crystal
 app.async("live-clock") { ... }
