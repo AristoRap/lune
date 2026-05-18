@@ -157,7 +157,7 @@ In your frontend, import the generated API and call it:
 ```js
 import api from "../lunejs/app/App.js";
 
-const message = await api.GreetModule.Greet("world");
+const message = await api.GreetModule.greet("world");
 console.log(message); // "Hello, world!"
 ```
 
@@ -185,19 +185,19 @@ This builds the frontend with Vite, then compiles the Crystal binary with the fr
 
 The repository ships with a full showcase in `demo/` — a Vue 3 app that exercises every part of the Lune API in one window:
 
-| Section      | What it shows                                                                                        |
-| ------------ | ---------------------------------------------------------------------------------------------------- |
-| Bindings     | `@[Lune::Bind]` — calling Crystal methods from JS as async functions                                 |
-| Events       | Live clock (Crystal → JS), ping/pong roundtrip with latency, async file-progress                     |
-| System       | `Lifecycle.Environment()`, `Screen.Info()`, native notifications                                     |
-| Clipboard    | `Clipboard.Read/Write`, `Clipboard.ReadHtml/WriteHtml`, `Clipboard.ReadImage/WriteImage`             |
-| Window       | `Window.Minimize`, `Window.Maximize`, `Window.Center`, `Window.SetTitle`, `Window.SetSize`           |
-| Dialogs      | File pickers (`Dialogs.OpenFile`, `OpenFiles`, `OpenDir`, `SaveFile`) and message dialogs            |
-| Tray         | Status-bar icon with click and menu-item event log                                                   |
-| Context Menu | `ContextMenuBridge.SetContextMenu` / `ClearContextMenu` — native right-click menu with item selection |
-| Drag Out     | `DragOut.Start(paths)` — drag local files out of the window into Finder or other apps                |
-| Deep Links   | `url_schemes` config, `DeepLink.OnDeepLink(cb)` — receive OS-routed custom URL scheme links         |
-| Capabilities | Runtime capability filtering (`include` / `exclude`) with live binding list                          |
+| Section      | What it shows                                                                                   |
+| ------------ | ----------------------------------------------------------------------------------------------- |
+| Bindings     | `@[Lune::Bind]` — calling Crystal methods from JS as async functions                            |
+| Events       | Live clock (Crystal → JS), ping/pong roundtrip with latency, async file-progress                |
+| System       | `Lifecycle.environment()`, `Screen.info()`, native notifications                                |
+| Clipboard    | `Clipboard.read/write`, `Clipboard.readHtml/writeHtml`, `Clipboard.readImage/writeImage`        |
+| Window       | `Window.minimize`, `Window.maximize`, `Window.center`, `Window.setTitle`, `Window.setSize`      |
+| Dialogs      | File pickers (`Dialogs.openFile`, `openFiles`, `openDir`, `saveFile`) and message dialogs       |
+| Tray         | Status-bar icon with click and menu-item event log                                              |
+| Context Menu | `ContextMenu.set` / `clear` / `onSelect` — native right-click menu with item selection          |
+| Drag Out     | `DragOut.start(paths)` — drag local files out of the window into Finder or other apps           |
+| Deep Links   | `url_schemes` config, `DeepLink.onDeepLink(cb)` — receive OS-routed custom URL scheme links     |
+| Capabilities | Runtime capability filtering (`include` / `exclude`) with live binding list                     |
 
 Run it from the repo root:
 

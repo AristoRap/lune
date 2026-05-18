@@ -39,11 +39,11 @@ end
 import { LuneError } from "../lunejs/runtime/runtime.js";
 
 try {
-  await api.Math.Divide(10, 0);
+  await api.Math.divide(10, 0);
 } catch (err) {
   console.log(err instanceof LuneError); // true
-  console.log(err.code);                 // "error"
-  console.log(err.message);             // "division by zero"
+  console.log(err.code); // "error"
+  console.log(err.message); // "division by zero"
 }
 ```
 
@@ -68,7 +68,7 @@ In JavaScript, use `instanceof` or branch on `code`:
 import { LuneError } from "../lunejs/runtime/runtime.js";
 
 try {
-  const user = await api.Users.GetUser(99);
+  const user = await api.Users.getUser(99);
 } catch (err) {
   if (err instanceof LuneError && err.code === "not_found") {
     showNotFoundMessage();
@@ -104,14 +104,17 @@ With TypeScript, `instanceof LuneError` narrows the type automatically — no cu
 import { LuneError } from "../lunejs/runtime/runtime.js";
 
 try {
-  await api.Users.GetUser(99);
+  await api.Users.getUser(99);
 } catch (err) {
   if (err instanceof LuneError) {
     // err is typed as LuneError here
     switch (err.code) {
-      case "not_found":    return showNotFoundMessage();
-      case "unauthorized": return redirectToLogin();
-      default:             console.error("Unexpected:", err.message);
+      case "not_found":
+        return showNotFoundMessage();
+      case "unauthorized":
+        return redirectToLogin();
+      default:
+        console.error("Unexpected:", err.message);
     }
   }
 }

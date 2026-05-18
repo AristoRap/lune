@@ -12,7 +12,6 @@ module Lune
           # Core (JS injection via wv.init / raw wv.bind)
           Capabilities::EventBus.new,
           Capabilities::KeyboardShortcuts.new,
-          Capabilities::ContextMenuBridge.new,
           Capabilities::Navigation.new(options.on_navigate),
           Capabilities::DisableContextMenu.new(options.disable_context_menu),
           Capabilities::DragZone.new(options.drag.zone, options.drag.value),

@@ -38,8 +38,8 @@ In JavaScript:
 ```js
 import api from "../lunejs/app/App.js";
 
-const result = await api.MathModule.Add(2, 3); // 5
-const upper = await api.MathModule.ToUpper("hello"); // "HELLO"
+const result = await api.MathModule.add(2, 3); // 5
+const upper = await api.MathModule.toUpper("hello"); // "HELLO"
 ```
 
 All binding calls return a `Promise`, regardless of whether the Crystal method is synchronous.
@@ -48,15 +48,15 @@ All binding calls return a `Promise`, regardless of whether the Crystal method i
 
 ## Method naming
 
-Crystal methods use `snake_case`. Lune converts them to `PascalCase` (upper camel case) using Crystal's built-in `camelcase`:
+Crystal methods use `snake_case`. Lune converts them to `camelCase` using Crystal's built-in `camelcase`:
 
 | Crystal         | JavaScript    |
 | --------------- | ------------- |
-| `greet`         | `Greet`       |
-| `slow_echo`     | `SlowEcho`    |
-| `get_user_name` | `GetUserName` |
+| `greet`         | `greet`       |
+| `slow_echo`     | `slowEcho`    |
+| `get_user_name` | `getUserName` |
 
-Parameter names are preserved as-is in the generated `.d.ts`. A method `def greet(name : String)` produces `Greet(name: string)`.
+Parameter names are preserved as-is in the generated `.d.ts`. A method `def slow_echo(name : String)` produces `slowEcho(name: string)`.
 
 ---
 
@@ -76,7 +76,7 @@ end
 ```
 
 ```js
-await api.Database.Queries.FindUser(42);
+await api.Database.Queries.findUser(42);
 ```
 
 ---
@@ -190,7 +190,7 @@ The default export is `api`, an object containing all registered namespaces:
 ```js
 import api from "../lunejs/app/App.js";
 
-await api.GreetModule.Greet("world");
+await api.GreetModule.greet("world");
 ```
 
 Named exports are also available for each top-level namespace, which can be more convenient:
@@ -198,8 +198,8 @@ Named exports are also available for each top-level namespace, which can be more
 ```js
 import { GreetModule, MathModule } from "../lunejs/app/App.js";
 
-await GreetModule.Greet("world");
-await MathModule.Add(1, 2);
+await GreetModule.greet("world");
+await MathModule.add(1, 2);
 ```
 
 Both import styles refer to the same underlying stubs.
@@ -237,6 +237,7 @@ class MyPlugin
       args: [] of String,
       return_type: "String",
       async: false,
+      arg_names: [] of String,
     ) do |_args|
       JSON.parse("\"pong\"")
     end

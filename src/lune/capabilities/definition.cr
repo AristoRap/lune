@@ -4,7 +4,7 @@ module Lune
     # `name` must include the camelCase capability prefix, e.g. "clipboard.read".
     # The bridge ID becomes: BRIDGE_MARKER + "." + name = "__lune.clipboard.read".
     # `binding(js_namespace)` receives the PascalCase namespace used for JS grouping,
-    # e.g. "Clipboard" — so the generator emits Clipboard.Read() in the output.
+    # e.g. "Clipboard" — so the generator emits Clipboard.read() in the output.
     class Definition
       def initialize(
         @name : String,

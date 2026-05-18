@@ -19,13 +19,13 @@ module Lune
       def js_helpers : String
         bridge_id = "#{BRIDGE_MARKER}.#{name}.set_menu"
         <<-JS
-          SetMenu(items) { return __lune.call(#{bridge_id.inspect}, JSON.stringify(items || [])); },
+          setMenu(items) { return __lune.call(#{bridge_id.inspect}, JSON.stringify(items || [])); },
         JS
       end
 
       def dts_helpers : String
         <<-DTS
-          SetMenu(items: TrayMenuItem[]): Promise<void>;
+          setMenu(items: TrayMenuItem[]): Promise<void>;
         DTS
       end
 

@@ -45,37 +45,37 @@ describe Lune::Runtime do
     dts.includes?("readonly code: string").should be_true
   end
 
-  it "exports Events namespace with On, Once, Off helpers" do
+  it "exports Events namespace with on, once, off helpers" do
     js = Lune::Runtime::Generator.generate_runtime_js([] of Lune::Binding, event_bus_caps)
 
     js.includes?("export const Events").should be_true
-    js.includes?("On(name, cb)").should be_true
-    js.includes?("Once(name, cb)").should be_true
-    js.includes?("Off(name, cb)").should be_true
+    js.includes?("on(name, cb)").should be_true
+    js.includes?("once(name, cb)").should be_true
+    js.includes?("off(name, cb)").should be_true
     js.includes?("window.__lune.on").should be_true
     js.includes?("window.__lune.off").should be_true
   end
 
-  it "exports Emit for JS-to-Crystal events" do
+  it "exports emit for JS-to-Crystal events" do
     js = Lune::Runtime::Generator.generate_runtime_js([] of Lune::Binding, event_bus_caps)
 
-    js.includes?("Emit(name, data)").should be_true
+    js.includes?("emit(name, data)").should be_true
     js.includes?("__lune.jsEmit").should be_true
   end
 
-  it "declares Emit in runtime.d.ts" do
+  it "declares emit in runtime.d.ts" do
     dts = Lune::Runtime::Generator.generate_runtime_dts([] of Lune::Binding, event_bus_caps)
 
-    dts.includes?("Emit(name: string").should be_true
+    dts.includes?("emit(name: string").should be_true
   end
 
-  it "exports Lifecycle namespace with Quit, OpenUrl, Environment" do
+  it "exports Lifecycle namespace with quit, openUrl, environment" do
     js = Lune::Runtime::Generator.generate_runtime_js(runtime_bindings)
 
     js.includes?("export const Lifecycle").should be_true
-    js.includes?("Quit()").should be_true
-    js.includes?("OpenUrl(").should be_true
-    js.includes?("Environment()").should be_true
+    js.includes?("quit()").should be_true
+    js.includes?("openUrl(").should be_true
+    js.includes?("environment()").should be_true
     js.includes?("__lune.lifecycle.quit").should be_true
     js.includes?("__lune.lifecycle.open_url").should be_true
     js.includes?("__lune.lifecycle.environment").should be_true
@@ -86,27 +86,27 @@ describe Lune::Runtime do
 
     dts.includes?("LuneEnvironment").should be_true
     dts.includes?("export interface Lifecycle").should be_true
-    dts.includes?("Quit()").should be_true
-    dts.includes?("OpenUrl(").should be_true
-    dts.includes?("Environment()").should be_true
+    dts.includes?("quit()").should be_true
+    dts.includes?("openUrl(").should be_true
+    dts.includes?("environment()").should be_true
     dts.includes?("export interface Events").should be_true
-    dts.includes?("On(name: string").should be_true
-    dts.includes?("Once(name: string").should be_true
-    dts.includes?("Off(name: string").should be_true
+    dts.includes?("on(name: string").should be_true
+    dts.includes?("once(name: string").should be_true
+    dts.includes?("off(name: string").should be_true
   end
 
-  it "exports DragOut namespace with Start helper" do
+  it "exports DragOut namespace with start helper" do
     js = Lune::Runtime::Generator.generate_runtime_js([] of Lune::Binding, drag_out_caps)
 
     js.includes?("export const DragOut").should be_true
-    js.includes?("Start(paths)").should be_true
+    js.includes?("start(paths)").should be_true
   end
 
   it "declares DragOut interface in runtime.d.ts" do
     dts = Lune::Runtime::Generator.generate_runtime_dts([] of Lune::Binding, drag_out_caps)
 
     dts.includes?("export interface DragOut").should be_true
-    dts.includes?("Start(paths: string[])").should be_true
+    dts.includes?("start(paths: string[])").should be_true
   end
 
   it "generates App.d.ts with namespace interfaces and camelcased binding names" do
@@ -135,8 +135,8 @@ describe Lune::Runtime do
 
     dts.includes?("export interface alpha").should be_true
     dts.includes?("export interface counter").should be_true
-    dts.includes?("Greet(").should be_true
-    dts.includes?("Inc(").should be_true
+    dts.includes?("greet(").should be_true
+    dts.includes?("inc(").should be_true
     dts.includes?("export interface Api").should be_true
     dts.includes?("alpha: alpha;").should be_true
     dts.includes?("counter: counter;").should be_true
@@ -213,8 +213,8 @@ describe Lune::Runtime do
 
     js.includes?("export const alpha = {").should be_true
     js.includes?("export const counter = {").should be_true
-    js.includes?("Zeta()").should be_true
-    js.includes?("Alpha()").should be_true
+    js.includes?("zeta()").should be_true
+    js.includes?("alpha()").should be_true
   end
 
   it "includes namespace objects and a default export" do
@@ -409,7 +409,7 @@ describe Lune::Runtime do
 
       mtime_after.should_not eq(mtime_before)
       File.read(app_path).includes?("export const alpha = {").should be_true
-      File.read(app_path).includes?("Pong()").should be_true
+      File.read(app_path).includes?("pong()").should be_true
     end
   end
 end

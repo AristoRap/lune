@@ -96,7 +96,7 @@ end
 Events.on("results", (data) => renderList(data));
 
 searchButton.addEventListener("click", () => {
-  Events.Emit("search", { query: input.value });
+  Events.emit("search", { query: input.value });
 });
 ```
 
@@ -153,7 +153,7 @@ Events.on("progress", ({ done, total, path }) => {
   statusLabel.textContent = `Processing ${path}...`;
 });
 
-await api.Files.ProcessFiles(selectedPaths);
+await api.Files.processFiles(selectedPaths);
 ```
 
 ### Search / command dispatch (JS → Crystal → JS)
@@ -172,7 +172,7 @@ end
 Events.on("search-results", (results) => renderResults(results));
 
 searchInput.addEventListener("input", (e) => {
-  Events.Emit("search", { query: e.target.value });
+  Events.emit("search", { query: e.target.value });
 });
 ```
 
@@ -202,7 +202,7 @@ import { Events } from "../lunejs/runtime/runtime.js";
 Events.on("config", (cfg) => applyConfig(cfg));
 
 // After your app has mounted and listeners are registered
-Events.Emit("frontend-ready");
+Events.emit("frontend-ready");
 ```
 
 ---
@@ -247,5 +247,5 @@ Events.on("search-results", (data) => {
 });
 
 const search = (query: string) =>
-  Events.Emit("search", { query } satisfies SearchPayload);
+  Events.emit("search", { query } satisfies SearchPayload);
 ```

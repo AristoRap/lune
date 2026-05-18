@@ -17,7 +17,6 @@ export type {
   ContextMenu,
   DragOut,
   Events,
-  ContextMenuBridge,
   DeepLink,
   FileDrop,
   Runtime,

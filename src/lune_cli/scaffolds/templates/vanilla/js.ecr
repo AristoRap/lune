@@ -35,7 +35,7 @@ document.getElementById("greet-btn")?.addEventListener("click", async () => {
   const name = nameEl?.value?.trim();
 
   try {
-    const msg = await api.Welcome.Greet(name);
+    const msg = await api.Welcome.greet(name);
     greetResult.textContent = msg;
   } catch (err) {
     console.error(err);

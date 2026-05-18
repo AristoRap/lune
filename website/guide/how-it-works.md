@@ -66,14 +66,14 @@ Lune writes four files into `frontend/lunejs/`:
 
 - `app/App.js` — one stub function per user binding, grouped by namespace
 - `app/App.d.ts` — TypeScript declarations with exact types derived from Crystal signatures
-- `runtime/runtime.js` — built-in functions (`Lifecycle.quit`, `Lifecycle.openURL`, `Events.on`, `Events.emit`, …)
+- `runtime/runtime.js` — built-in functions (`Lifecycle.quit`, `Lifecycle.openUrl`, `Events.on`, `Events.emit`, …)
 - `runtime/runtime.d.ts` — TypeScript declarations for runtime functions
 
 This happens automatically on `lune dev` startup and during `lune build` (before Vite runs).
 
 ### 5. The call
 
-When frontend code calls `api.MyModule.Greet("world")`:
+When frontend code calls `api.MyModule.greet("world")`:
 
 1. The JS stub calls the WebView's native binding with the serialized arguments
 2. The Bridge deserializes them and dispatches to the Crystal method
@@ -171,7 +171,7 @@ When using `Lune.run` with `assets:`, the macro internally creates a `Runner` an
 
 ## Event system
 
-The event bus is bidirectional. Crystal pushes to JS via `app.emit`; JS pushes to Crystal via `Events.emit` from `runtime.js`. Both sides share the same event name namespace and use symmetric `On/on` / `Once/once` / `Off/off` APIs.
+The event bus is bidirectional. Crystal pushes to JS via `app.emit`; JS pushes to Crystal via `Events.emit` from `runtime.js`. Both sides share the same event name namespace and use symmetric `on`, `once`, `off` APIs.
 
 ```crystal
 # Crystal → JS
@@ -194,7 +194,7 @@ end
 import { Events } from "../lunejs/runtime/runtime.js";
 
 Events.on("results", (data) => renderResults(data));
-Events.emit("search", { query: input.value });
+await Events.emit("search", { query: input.value });
 ```
 
 Under the hood, `app.emit` calls `window.__lune.crystalEmit` (Crystal→JS); `Events.emit` calls the `__lune.jsEmit` WebView binding (JS→Crystal). See the [Events](./events) guide for the full API.

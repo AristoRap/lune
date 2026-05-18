@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onUnmounted } from "vue";
 import SectionHead from "../components/SectionHead.vue";
-import { ContextMenuBridge } from "../lune.js";
+import { ContextMenu } from "../lune.js";
 
 const active = ref(false);
 const lastId = ref("");
@@ -14,21 +14,21 @@ const items = [
   { id: "inspect", label: "Inspect" },
 ];
 
-ContextMenuBridge.onContextMenu((id) => {
+ContextMenu.onSelect((id) => {
   lastId.value = id;
 });
 
 function toggle() {
   if (active.value) {
-    ContextMenuBridge.clearContextMenu();
+    ContextMenu.clear();
     active.value = false;
   } else {
-    ContextMenuBridge.setContextMenu(items);
+    ContextMenu.set(items);
     active.value = true;
   }
 }
 
-onUnmounted(() => ContextMenuBridge.clearContextMenu());
+onUnmounted(() => ContextMenu.clear());
 </script>
 
 <template>
@@ -37,7 +37,7 @@ onUnmounted(() => ContextMenuBridge.clearContextMenu());
 
   <div class="card-grid">
     <div class="card">
-      <span class="card-label">ContextMenuBridge.setContextMenu(items)</span>
+      <span class="card-label">ContextMenu.set(items)</span>
       <div class="btn-row align-center">
         <button class="toggle" :class="{ on: active }" role="switch" :aria-checked="active" @click="toggle">
           <span class="toggle-track"><span class="toggle-thumb"></span></span>
@@ -49,7 +49,7 @@ onUnmounted(() => ContextMenuBridge.clearContextMenu());
     </div>
 
     <div class="card">
-      <span class="card-label">ContextMenuBridge.onContextMenu(cb)</span>
+      <span class="card-label">ContextMenu.onSelect(cb)</span>
       <p class="card-desc">Last selected item id.</p>
       <pre class="result mono">{{ lastId || "(none yet)" }}</pre>
     </div>

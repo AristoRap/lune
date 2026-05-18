@@ -273,8 +273,8 @@ url_schemes:
 After receiving a URL the `deep_link` runtime event fires in JavaScript:
 
 ```js
-import { DeepLink } from "lune/runtime";
-DeepLink.OnDeepLink((url) => {
+import { DeepLink } from "../lunejs/runtime/runtime.js";
+DeepLink.onDeepLink((url) => {
   /* url = "myapp://..." */
 });
 ```

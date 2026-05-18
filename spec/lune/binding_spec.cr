@@ -27,18 +27,18 @@ describe Lune::Binding do
 
   describe "#js_func_name" do
     it "camelcases the binding name" do
-      make_bd(method: "open_url").js_func_name.should eq("OpenUrl")
+      make_bd(method: "open_url").js_func_name.should eq("openUrl")
     end
 
     it "leaves an already-camel name untouched" do
-      make_bd(method: "ping").js_func_name.should eq("Ping")
+      make_bd(method: "ping").js_func_name.should eq("ping")
     end
   end
 
   describe "#to_js_stub" do
     it "emits a JS function stub with the correct call ID" do
       stub = make_bd(method: "ping", namespace: "alpha").to_js_stub
-      stub.includes?("Ping()").should be_true
+      stub.includes?("ping()").should be_true
       stub.includes?(%("alpha.ping")).should be_true
       stub.includes?("return __lune.call(").should be_true
     end
@@ -50,7 +50,7 @@ describe Lune::Binding do
 
     it "falls back to arg0..argN when arg_names is empty" do
       stub = make_bd(method: "add", namespace: "math", args: ["Int32", "String"]).to_js_stub
-      stub.includes?("Add(arg0, arg1)").should be_true
+      stub.includes?("add(arg0, arg1)").should be_true
     end
 
     it "uses arg_names when provided" do
@@ -62,19 +62,19 @@ describe Lune::Binding do
         callback: ->(_a : Array(JSON::Any)) { JSON::Any.new(0_i64) },
         arg_names: ["n", "label"]
       )
-      bd.to_js_stub.includes?("Add(n, label)").should be_true
+      bd.to_js_stub.includes?("add(n, label)").should be_true
     end
   end
 
   describe "#to_dts_sig" do
     it "emits a typed Promise signature with no params" do
       sig = make_bd(method: "ping", namespace: "alpha", return_type: "String").to_dts_sig
-      sig.should eq("  Ping(): Promise<string>;")
+      sig.should eq("  ping(): Promise<string>;")
     end
 
     it "maps Crystal args to TypeScript parameter types using arg0..argN fallback" do
       sig = make_bd(method: "add", namespace: "math", args: ["Int32", "String"], return_type: "Int32").to_dts_sig
-      sig.should eq("  Add(arg0: number, arg1: string): Promise<number>;")
+      sig.should eq("  add(arg0: number, arg1: string): Promise<number>;")
     end
 
     it "uses arg_names when provided" do
@@ -86,7 +86,7 @@ describe Lune::Binding do
         callback: ->(_a : Array(JSON::Any)) { JSON::Any.new(0_i64) },
         arg_names: ["n", "label"]
       )
-      bd.to_dts_sig.should eq("  Add(n: number, label: string): Promise<number>;")
+      bd.to_dts_sig.should eq("  add(n: number, label: string): Promise<number>;")
     end
 
     it "maps Nil return to void" do

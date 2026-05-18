@@ -14,7 +14,7 @@ frontend/lunejs/
 │   ├── App.js       # binding stubs (runtime)
 │   └── App.d.ts     # TypeScript declarations for your bindings
 └── runtime/
-    ├── runtime.js   # quit, openURL, environment, on/once/off/emit
+    ├── runtime.js   # quit, openUrl, environment, on/once/off/emit
     └── runtime.d.ts # TypeScript declarations for runtime functions
 ```
 
@@ -46,8 +46,8 @@ Generates:
 
 ```ts
 export interface FileModule {
-  Read(path: string): Promise<string>;
-  Exists(path: string): Promise<boolean>;
+  read(path: string): Promise<string>;
+  exists(path: string): Promise<boolean>;
 }
 
 export interface Api {
@@ -82,7 +82,7 @@ export declare function off(name: string, cb?: (data: unknown) => void): void;
 export declare function emit(name: string, data?: unknown): Promise<void>;
 
 export declare function quit(): Promise<void>;
-export declare function openURL(url: string): Promise<void>;
+export declare function openUrl(url: string): Promise<void>;
 export declare function environment(): LuneEnvironment;
 
 export declare function homeDir(): Promise<string>;
@@ -128,10 +128,10 @@ import { Lifecycle, Events } from "../lunejs/runtime/runtime.js";
 import type { LuneError } from "../lunejs/runtime/runtime.js";
 
 // Fully typed — autocomplete works here
-const result = await api.FileModule.Read("/tmp/hello.txt");
+const result = await api.FileModule.read("/tmp/hello.txt");
 
-// Environment() returns LuneEnvironment
-const env = await Lifecycle.Environment();
+// environment() returns LuneEnvironment
+const env = await Lifecycle.environment();
 if (env.os === "darwin") {
   // macOS-specific code
 }
@@ -169,7 +169,7 @@ function isLuneError(e: unknown): e is LuneError {
 }
 
 try {
-  await api.FileModule.Read("/nonexistent");
+  await api.FileModule.read("/nonexistent");
 } catch (e) {
   if (isLuneError(e)) {
     console.error(`[${e.code}] ${e.error}`);

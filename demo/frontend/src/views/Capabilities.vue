@@ -9,42 +9,41 @@ const CAP_NS = "capabilities.__lune";
 
 const ALL = [
   // Bridge — callable bindings registered over the bridge
-  { cap: "lifecycle",            group: "Lifecycle",            core: false, fns: ["Quit", "OpenUrl", "Environment"] },
-  { cap: "filesystem",           group: "Filesystem",           core: false, fns: ["HomeDir", "AppDataDir", "DownloadsDir", "TempDir"] },
-  { cap: "clipboard",            group: "Clipboard",            core: false, fns: ["Read", "Write", "ReadHtml", "WriteHtml", "ReadImage", "WriteImage"] },
-  { cap: "window",               group: "Window",               core: false, fns: ["Minimize", "Maximize", "Center", "SetTitle", "SetSize"] },
-  { cap: "dialogs",              group: "Dialogs",              core: false, fns: ["OpenFile", "OpenDir", "OpenFiles", "SaveFile", "MessageInfo", "MessageWarning", "MessageError", "MessageQuestion"] },
-  { cap: "tray",                 group: "Tray",                 core: false, fns: ["Show", "Hide", "SetIcon", "SetMenu"] },
-  { cap: "notifications",        group: "Notifications",        core: false, fns: ["Notify"] },
-  { cap: "screen",               group: "Screen",               core: false, fns: ["Info"] },
-  { cap: "context_menu",         group: "Context Menu",         core: false, fns: ["Show"] },
-  { cap: "drag_out",             group: "Drag Out",             core: false, fns: ["Start"] },
+  { cap: "lifecycle", group: "Lifecycle", core: false, fns: ["quit", "openUrl", "environment"] },
+  { cap: "filesystem", group: "Filesystem", core: false, fns: ["homeDir", "appDataDir", "downloadsDir", "tempDir"] },
+  { cap: "clipboard", group: "Clipboard", core: false, fns: ["read", "write", "readHtml", "writeHtml", "readImage", "writeImage"] },
+  { cap: "window", group: "Window", core: false, fns: ["minimize", "maximize", "center", "setTitle", "setSize"] },
+  { cap: "dialogs", group: "Dialogs", core: false, fns: ["openFile", "openDir", "openFiles", "saveFile", "messageInfo", "messageWarning", "messageError", "messageQuestion"] },
+  { cap: "tray", group: "Tray", core: false, fns: ["show", "hide", "setIcon", "setMenu"] },
+  { cap: "notifications", group: "Notifications", core: false, fns: ["notify"] },
+  { cap: "screen", group: "Screen", core: false, fns: ["info"] },
+  { cap: "context_menu", group: "Context Menu", core: false, fns: ["set", "clear", "onSelect"] },
+  { cap: "drag_out", group: "Drag Out", core: false, fns: ["start"] },
   // Core — JS-injected infrastructure, no bridge binding
-  { cap: "event_bus",            group: "Event Bus",            core: true,  fns: ["On", "Once", "Off", "Emit"] },
-  { cap: "context_menu_bridge",  group: "Context Menu Bridge",  core: true,  fns: ["SetContextMenu", "ClearContextMenu", "OnContextMenu"] },
-  { cap: "deep_link",            group: "Deep Link",            core: true,  fns: ["OnDeepLink", "OnDeepLinkOff"] },
-  { cap: "file_drop",            group: "File Drop",            core: true,  fns: ["OnFileDrop", "OnFileDropOff"] },
-  { cap: "keyboard_shortcuts",   group: "Keyboard Shortcuts",   core: true,  fns: ["Cmd/Ctrl+C/V/X/Z/Y"] },
-  { cap: "navigation",           group: "Navigation",           core: true,  fns: ["on_navigate callback"] },
-  { cap: "disable_context_menu", group: "Disable Context Menu", core: true,  fns: ["suppresses right-click"] },
-  { cap: "drag_zone",            group: "Drag Zone",            core: true,  fns: ["--lune-draggable drag handle"] },
+  { cap: "event_bus", group: "Event Bus", core: true, fns: ["on", "once", "off", "emit"] },
+  { cap: "deep_link", group: "Deep Link", core: true, fns: ["onDeepLink", "onDeepLinkOff"] },
+  { cap: "file_drop", group: "File Drop", core: true, fns: ["onFileDrop", "onFileDropOff"] },
+  { cap: "keyboard_shortcuts", group: "Keyboard Shortcuts", core: true, fns: ["Cmd/Ctrl+C/V/X/Z/Y"] },
+  { cap: "navigation", group: "Navigation", core: true, fns: ["on_navigate callback"] },
+  { cap: "disable_context_menu", group: "Disable Context Menu", core: true, fns: ["suppresses right-click"] },
+  { cap: "drag_zone", group: "Drag Zone", core: true, fns: ["--lune-draggable drag handle"] },
 ];
 
 const bridgeGroups = ref([]);
-const coreGroups   = ref([]);
-const restricted   = ref(false);
+const coreGroups = ref([]);
+const restricted = ref(false);
 
 onMounted(() => {
   const resolve = (g) => ({
-    cap:       g.cap,
-    group:     g.group,
+    cap: g.cap,
+    group: g.group,
     available: window[`${CAP_NS}.${g.cap}`] === true,
-    fns:       g.fns,
+    fns: g.fns,
   });
 
   bridgeGroups.value = ALL.filter((g) => !g.core).map(resolve);
-  coreGroups.value   = ALL.filter((g) =>  g.core).map(resolve);
-  restricted.value   = bridgeGroups.value.some((g) => !g.available);
+  coreGroups.value = ALL.filter((g) => g.core).map(resolve);
+  restricted.value = bridgeGroups.value.some((g) => !g.available);
 });
 </script>
 
@@ -98,7 +97,8 @@ capabilities:
     - dialogs
     - tray</pre>
     <p class="hint">
-      <code>include</code>/<code>exclude</code> take <strong>capability group names</strong> (e.g. <code>lifecycle</code>, <code>clipboard</code>).
+      <code>include</code>/<code>exclude</code> take <strong>capability group names</strong> (e.g.
+      <code>lifecycle</code>, <code>clipboard</code>).
       Individual function names like <code>quit</code> are not valid — they log a warning and are ignored.
       Omit <code>capabilities</code> entirely to allow everything (the default).
     </p>

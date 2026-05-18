@@ -87,7 +87,7 @@ describe "Lune::Bindable + App bindings" do
     app.install(GreetModule.new)
 
     b = app.bindings.first
-    b.to_dts_sig.should eq("  Greet(msg: string): Promise<string>;")
+    b.to_dts_sig.should eq("  greet(msg: string): Promise<string>;")
   end
 
   it "supports multiple modules in one app" do

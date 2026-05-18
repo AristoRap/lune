@@ -16,7 +16,6 @@ export {
   ContextMenu,
   DragOut,
   Events,
-  ContextMenuBridge,
   DeepLink,
   FileDrop,
 } from "../lunejs/runtime/runtime.js";
