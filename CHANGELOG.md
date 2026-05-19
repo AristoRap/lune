@@ -2,6 +2,10 @@
 
 ## [0.9.0] - 2026-05-19
 
+### Added
+
+- **`hotkeys` capability** — system-wide keyboard shortcuts that fire even when the app window is not focused. Call `Hotkeys.register("Ctrl+Shift+K")` from JS to register a shortcut; listen via `Events.on("hotkey", (data) => ...)` where `data.key` is the accelerator string. `Hotkeys.unregister(accelerator)` removes a shortcut; all shortcuts are released on app quit. On macOS uses Carbon `RegisterEventHotKey` (no Accessibility permission required). On Linux uses `XGrabKey` on the root window in a background fiber. Soft-depends on `event_bus`.
+
 ### Breaking
 
 - **`app.emit/on/once/off` → `app.events.*`** — event bus methods are now accessed via `app.events`: `app.events.emit`, `app.events.on`, `app.events.once`, `app.events.off`. The flat `app.emit` etc. methods are removed. Update all call sites.

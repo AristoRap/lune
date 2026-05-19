@@ -1,10 +1,10 @@
 # Lune Roadmap
 
-## Now — v0.8.x
+## Now
 
 - [x] High-throughput IPC stream — WebSocket-backed ordered delivery for streaming and high-frequency events
 - [x] Shell / process execution — spawn child processes and stream stdout/stderr to the frontend via Stream
-- [ ] Global keyboard shortcuts — system-wide hotkeys that fire even when the window is not focused
+- [x] Global keyboard shortcuts — system-wide hotkeys that fire even when the window is not focused
 - [x] File watching — monitor filesystem paths for changes and emit events to the frontend
 
 ## Next — Production-ready
@@ -44,4 +44,4 @@ Structural improvements that unlock whole categories of apps.
 
 ---
 
-_v0.2 – v0.8.1 shipped: event bus, runtime JS/TS API (namespaced PascalCase objects), codegen bindings, dev error overlay, tray, file dialogs, drag-and-drop, window controls, notifications, screen info, app paths, clipboard (rich: text/HTML/image), window state persistence, capability allowlist (group-level), app icons, default menu bar, demo app (Vue 3 template), real async via OS threads, options API grouped into nested blocks, user-configurable menu bar, context menus, drag-out, deep links, distribution packaging (DMG + AppImage), code signing, notarization, LuneError typed rejections, capability architecture refactoring, WebSocket IPC stream (bidirectional, high-throughput), shell / process execution (Shell.run + Shell.spawn + Shell.kill). See [CHANGELOG.md](CHANGELOG.md) for details._
+_v0.2 – v0.9.0 shipped: event bus, runtime JS/TS API (namespaced PascalCase objects), codegen bindings, dev error overlay, tray, file dialogs, drag-and-drop, window controls, notifications, screen info, app paths, clipboard (rich: text/HTML/image), window state persistence, capability allowlist (group-level), app icons, default menu bar, demo app (Vue 3 template), real async via OS threads, options API grouped into nested blocks, user-configurable menu bar, context menus, drag-out, deep links, distribution packaging (DMG + AppImage), code signing, notarization, LuneError typed rejections, capability architecture refactoring, WebSocket IPC stream (bidirectional, high-throughput), shell / process execution (Shell.run + Shell.spawn + Shell.kill). See [CHANGELOG.md](CHANGELOG.md) for details._

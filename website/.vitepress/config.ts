@@ -52,6 +52,7 @@ export default defineConfig({
               { text: 'Drag Out', link: '/capabilities/drag-out' },
               { text: 'File Drop', link: '/capabilities/file-drop' },
               { text: 'File Watch', link: '/capabilities/file-watch' },
+              { text: 'Hotkeys', link: '/capabilities/hotkeys' },
               { text: 'Filesystem', link: '/capabilities/filesystem' },
               { text: 'Notifications', link: '/capabilities/notifications' },
               { text: 'Screen', link: '/capabilities/screen' },

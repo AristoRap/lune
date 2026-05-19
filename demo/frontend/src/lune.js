@@ -20,5 +20,6 @@ export {
   DeepLink,
   FileDrop,
   FileWatch,
+  Hotkeys,
   Shell,
 } from "../lunejs/runtime/runtime.js";

@@ -37,6 +37,7 @@ module Lune
           Capabilities::DeepLink.new,
           Capabilities::FileWatch.new,
           Capabilities::Shell.new,
+          Capabilities::Hotkeys.new,
         ] of Lune::Capability
 
         setup_ctx = Lune::Capability::SetupCtx.new(options, handle)
