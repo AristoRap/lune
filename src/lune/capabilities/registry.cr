@@ -10,6 +10,29 @@ module Lune
       def active_ids : Set(Symbol)
         Set.new(@capabilities.map(&.descriptor.id))
       end
+
+      # Injects capability sentinels and calls init_webview for every WebviewInject
+      # capability in this set. Safe for both the main window and secondary windows —
+      # capabilities that own shared resources (e.g. Stream) detect reuse internally
+      # and connect as clients instead of re-initialising.
+      def init_all_webviews(wv : Webview::Webview, handle : Pointer(Void), app : Lune::App) : Nil
+        ids = active_ids
+        ctx = Lune::Capability::WebviewCtx.new(wv, handle, app, ids)
+        bm = Lune::Capability::BRIDGE_MARKER
+
+        @capabilities.each do |cap|
+          wv.init("window[#{cap.sentinel_key.inspect}] = true;")
+          cap.init_webview(ctx) if cap.is_a?(Lune::Capability::WebviewInject)
+        end
+
+        unless ids.includes?(:event_bus)
+          js_emit_key = "#{bm}.jsEmit"
+          wv.init("(function(){window.#{bm}=window.#{bm}||{};var n=function(){};window.#{bm}.crystalEmit=n;window.#{bm}.on=n;window.#{bm}.off=n;window[#{js_emit_key.inspect}]=function(){return Promise.resolve();};})();")
+        end
+        unless ids.includes?(:stream)
+          wv.init("(function(){window.#{bm}=window.#{bm}||{};var n=function(){};window.#{bm}.stOn=n;window.#{bm}.stOff=n;window.#{bm}.stSend=n;})();")
+        end
+      end
     end
 
     class Registry

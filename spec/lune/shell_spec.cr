@@ -42,7 +42,7 @@ describe Lune::Capabilities::Shell do
   end
 
   describe "install" do
-    it "registers spawn, kill, and run bindings" do
+    it "registers spawn, kill, run, and list bindings" do
       cap = Lune::Capabilities::Shell.new
       app = Lune::App.new
       app.install(cap)
@@ -50,6 +50,30 @@ describe Lune::Capabilities::Shell do
       ids.should contain("__lune.shell.spawn")
       ids.should contain("__lune.shell.kill")
       ids.should contain("__lune.shell.run")
+      ids.should contain("__lune.shell.list")
+    end
+
+    it "list binding returns empty array when no processes are running" do
+      cap = Lune::Capabilities::Shell.new
+      app = Lune::App.new
+      app.install(cap)
+      list_b = app.bindings.find { |b| b.id == "__lune.shell.list" }.not_nil!
+      result = list_b.callback.call([] of JSON::Any)
+      result.as_a.should be_empty
+    end
+
+    it "list binding returns pid after spawn" do
+      cap = Lune::Capabilities::Shell.new
+      app = Lune::App.new
+      app.install(cap)
+      spawn_b = app.bindings.find { |b| b.id == "__lune.shell.spawn" }.not_nil!
+      list_b = app.bindings.find { |b| b.id == "__lune.shell.list" }.not_nil!
+      pid = spawn_b.callback.call([JSON::Any.new("sleep"), JSON::Any.new([JSON::Any.new("5")])]).as_s
+      pids = list_b.callback.call([] of JSON::Any).as_a.map(&.as_s)
+      pids.should contain(pid)
+      # cleanup
+      kill_b = app.bindings.find { |b| b.id == "__lune.shell.kill" }.not_nil!
+      kill_b.callback.call([JSON::Any.new(pid)])
     end
 
     it "spawn binding returns a string pid" do

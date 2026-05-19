@@ -7,9 +7,18 @@
 - **`windows` capability** — open additional native windows from JavaScript. `Windows.open({ title, url, width, height })` creates a new window, registers all active capability bindings on it, and resolves with an opaque handle. `Windows.close(id)` closes and releases the window. `Windows.list()` returns handles of all open secondary windows. `app.events.emit` in Crystal broadcasts to all open windows simultaneously. Secondary windows join the existing Cocoa/GTK run loop automatically — no extra `run` call needed. A `window_closed` event fires in the main window whenever a secondary window closes (OS × button or programmatic `close()`), with `{ id }` payload — no polling required. Secondary windows receive full capability support: `event_bus`, `stream` (connects as a client to the main window's WebSocket server), `file_drop`, `context_menu`, and all other active capabilities work identically to the main window.
 - **Vue Router (hash mode) in demo** — the demo app now uses hash-based routing (`#/route`). Deep links and secondary windows can target any view by URL. `DeepLink` handles `lune-demo://navigate/<id>` for in-app routing.
 
+### Added
+
+- **`Shell.list()`** — returns the pids of all currently running processes. Use it to hydrate secondary windows that didn't spawn the processes: call `Shell.list()` on mount, then `Shell.listen(pid, ...)` to receive future output.
+
 ### Fixed
 
 - **`context_menu` in secondary windows** — right-clicking in a secondary window showed the native context menu on the main window. Fixed by resolving `[NSApp keyWindow]` at dispatch time instead of capturing the main window handle at binding install time.
+- **`stream` in secondary windows** — `Stream.init_webview` is now idempotent: if the server is already running (`@port != 0`), it connects as a WebSocket client instead of starting a second server. This removes the last special-case from the secondary-window init path.
+
+### Internal
+
+- **Unified window initialisation** — `ResolvedSet#init_all_webviews` is the single method called for both the main window (runner) and secondary windows (Windows capability). Capabilities that manage shared state self-route internally; the caller no longer needs to know which capabilities are special. Removed `Runner#inject_capability_init` and `Windows#inject_sentinels`.
 
 - **`sqlite` capability** — embedded SQLite database access via `crystal-lang/crystal-sqlite3`. `Sqlite.open(path)` returns an opaque handle (pass `":memory:"` for an in-process database or an absolute file path for a persistent one). `Sqlite.exec(db, sql, params)` runs non-SELECT statements and resolves with `{ changes, lastInsertId }`. `Sqlite.query(db, sql, params)` runs SELECT statements and resolves with an array of row objects keyed by column name. `Sqlite.close(db)` releases the handle. SQL and type errors surface as `LuneError` with code `sqlite_error`; accessing an unknown handle raises `sqlite_not_open`. BLOBs arrive in JS as base64 strings. All open databases are closed on app quit via the `Lifecycle` shutdown hook.
 
@@ -47,7 +56,7 @@
 - **Darwin kevent fd leak on registration failure** — `FileWatch.add_watch` now registers the kevent before storing the fd in the watch map, and closes the fd if `kevent()` returns an error. Previously a failed registration left the fd recorded but unwatched (silent no-op).
 - **Tray `setMenu` crash on malformed input** — the `set_menu` bridge callback now uses safe JSON navigation and wraps the parse in a typed rescue; a missing `id`/`label` key or invalid JSON previously caused a hard `TypeCastError` crash.
 - **File-drop callback crash on unexpected JSON** — the native drop callbacks on both macOS and Linux now use `?.try(&.as_i?)`/`?.try(&.as_s?)` with safe defaults; malformed JSON from the native layer previously raised `TypeCastError`.
-- **Bridge TOCTOU race in `dispatch_result`** — the closed guard is now checked both before queuing the dispatch *and* inside the queued block, closing the window where the webview could be torn down between the pre-dispatch check and block execution.
+- **Bridge TOCTOU race in `dispatch_result`** — the closed guard is now checked both before queuing the dispatch _and_ inside the queued block, closing the window where the webview could be torn down between the pre-dispatch check and block execution.
 - **`WindowState.load_from` bare rescue** — replaced with a typed rescue on `JSON::ParseException | TypeCastError | File::Error | IO::Error`; failures now log a warning instead of silently returning nil.
 - **Stream silent message-parse failure** — the bare `rescue` in the WebSocket message handler now captures and logs the exception at debug level.
 - **Clipboard command failures silently ignored** — `DEFAULT_READ` and `DEFAULT_WRITE` now check `Process.run` exit status and log a warning on failure; missing binaries (`xclip`, `pbpaste`) now rescue `File::Error | IO::Error` and log instead of crashing or returning empty silently.

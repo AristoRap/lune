@@ -40,6 +40,18 @@ module Lune
           },
         ).binding(binding_namespace))
 
+        ctx.register(Definition.new(
+          name: "#{name}.list",
+          args: [] of String,
+          return_type: "Array",
+          async: true,
+          ts_return_type: "Promise<string[]>",
+          callback: ->(raw : Array(JSON::Any)) {
+            pids = @mu.synchronize { @processes.keys.map { |k| JSON::Any.new(k) } }
+            JSON::Any.new(pids)
+          },
+        ).binding(binding_namespace))
+
         # Blocking async binding — collects all output then resolves.
         # Avoids the Stream listener race that occurs when a process exits
         # before the JS .then() callback can register Stream handlers.

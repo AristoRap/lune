@@ -374,7 +374,7 @@ describe "Lune::Capabilities" do
       app = Lune::App.new
       Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |cap| app.install(cap) }
 
-      app.bindings.size.should eq(48)
+      app.bindings.size.should eq(49)
     end
   end
 

@@ -1,13 +1,13 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import SectionHead from "../components/SectionHead.vue";
 import { Shell } from "../lune.js";
 
 // ------- spawn mode: stream output live -------
 
-const spawnCmd  = ref("ping");
+const spawnCmd = ref("ping");
 const spawnArgs = ref("-c 5 127.0.0.1");
-const running   = ref(false);
+const running = ref(false);
 const currentPid = ref(null);
 const lines = ref([]);  // { type: "stdout"|"stderr"|"exit", text: string }
 let nextId = 1;
@@ -22,7 +22,7 @@ async function runSpawn() {
   lines.value = [];
   running.value = true;
 
-  const cmd  = spawnCmd.value.trim();
+  const cmd = spawnCmd.value.trim();
   const argv = spawnArgs.value.trim() ? spawnArgs.value.trim().split(/\s+/) : [];
 
   let pid;
@@ -38,9 +38,9 @@ async function runSpawn() {
   Shell.listen(pid, {
     stdout: ({ line }) => pushLine("stdout", line),
     stderr: ({ line }) => pushLine("stderr", line),
-    exit:   ({ code }) => {
+    exit: ({ code }) => {
       pushLine("exit", `Process exited with code ${code}`);
-      running.value   = false;
+      running.value = false;
       currentPid.value = null;
     },
   });
@@ -50,18 +50,45 @@ function killProcess() {
   if (currentPid.value) Shell.kill(currentPid.value);
 }
 
+// ------- background processes (started in another window) -------
+
+const backgroundPids = ref([]);
+
+onMounted(async () => {
+  try {
+    const all = await Shell.list();
+    // filter out the one already tracked locally
+    const foreign = all.filter(p => p !== currentPid.value);
+    backgroundPids.value = foreign;
+    for (const pid of foreign) {
+      Shell.listen(pid, {
+        stdout: ({ line }) => pushLine("stdout", `[${pid.slice(0, 6)}] ${line}`),
+        stderr: ({ line }) => pushLine("stderr", `[${pid.slice(0, 6)}] ${line}`),
+        exit: ({ code }) => {
+          backgroundPids.value = backgroundPids.value.filter(p => p !== pid);
+          pushLine("exit", `[${pid.slice(0, 6)}] exited (${code})`);
+        },
+      });
+    }
+  } catch (_) { }
+});
+
+onBeforeUnmount(() => {
+  for (const pid of backgroundPids.value) Shell.unlisten(pid);
+});
+
 // ------- run mode: collect all output, resolve on exit -------
 
-const runCmd  = ref("uname");
+const runCmd = ref("uname");
 const runArgs = ref("-a");
 const runResult = ref(null);
-const runBusy   = ref(false);
+const runBusy = ref(false);
 
 async function runOnce() {
   if (runBusy.value) return;
   runResult.value = null;
-  runBusy.value   = true;
-  const cmd  = runCmd.value.trim();
+  runBusy.value = true;
+  const cmd = runCmd.value.trim();
   const argv = runArgs.value.trim() ? runArgs.value.trim().split(/\s+/) : [];
   try {
     runResult.value = await Shell.run(cmd, argv);
@@ -93,13 +120,13 @@ async function runOnce() {
       </div>
       <div class="field-row">
         <label class="field-label">Args</label>
-        <input v-model="spawnArgs" type="text" :disabled="running"
-          placeholder="space-separated" @keydown.enter="runSpawn" />
+        <input v-model="spawnArgs" type="text" :disabled="running" placeholder="space-separated"
+          @keydown.enter="runSpawn" />
       </div>
 
       <div class="btn-row">
         <button class="primary" :disabled="running" @click="runSpawn">Run</button>
-        <button class="danger"  :disabled="!running" @click="killProcess">Kill</button>
+        <button class="danger" :disabled="!running" @click="killProcess">Kill</button>
         <span v-if="running" class="badge badge--live">
           <span class="live-dot"></span> running
         </span>
@@ -109,6 +136,19 @@ async function runOnce() {
         <div v-if="!lines.length" class="log-empty">Output will appear here…</div>
         <div v-for="l in lines" :key="l.id" :class="['term-line', `term-${l.type}`]">
           {{ l.text }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Background processes from other windows -->
+    <div v-if="backgroundPids.length" class="card">
+      <span class="card-label">Background processes</span>
+      <p class="card-desc">Processes started in another window. Output streams here in real time.</p>
+      <div class="bg-list">
+        <div v-for="pid in backgroundPids" :key="pid" class="bg-row">
+          <span class="badge badge--live"><span class="live-dot"></span> running</span>
+          <code class="bg-pid">{{ pid }}</code>
+          <button class="danger small" @click="Shell.kill(pid)">Kill</button>
         </div>
       </div>
     </div>
@@ -123,8 +163,8 @@ async function runOnce() {
       </div>
       <div class="field-row">
         <label class="field-label">Args</label>
-        <input v-model="runArgs" type="text" :disabled="runBusy"
-          placeholder="space-separated" @keydown.enter="runOnce" />
+        <input v-model="runArgs" type="text" :disabled="runBusy" placeholder="space-separated"
+          @keydown.enter="runOnce" />
       </div>
 
       <button class="primary" :disabled="runBusy" @click="runOnce">
@@ -196,9 +236,38 @@ async function runOnce() {
   line-height: 1.5;
 }
 
-.term-stdout { color: var(--fg, #e2e8f0); }
-.term-stderr { color: var(--err, #f87171); }
-.term-exit   { color: var(--muted); font-style: italic; }
+.term-stdout {
+  color: var(--fg, #e2e8f0);
+}
+
+.term-stderr {
+  color: var(--err, #f87171);
+}
+
+.term-exit {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.bg-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.bg-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.82em;
+}
+
+.bg-pid {
+  font-family: var(--font-mono);
+  color: var(--muted);
+  flex: 1;
+}
 
 .live-dot {
   width: 6px;
@@ -227,8 +296,13 @@ async function runOnce() {
   border-bottom: 1px solid var(--border);
 }
 
-.result-stdout .result-label { color: var(--moon-2, #a5b4fc); }
-.result-stderr .result-label { color: var(--err, #f87171); }
+.result-stdout .result-label {
+  color: var(--moon-2, #a5b4fc);
+}
+
+.result-stderr .result-label {
+  color: var(--err, #f87171);
+}
 
 .result-block pre {
   margin: 0;
@@ -251,6 +325,13 @@ async function runOnce() {
   border-radius: 4px;
 }
 
-.result-exit.ok  { background: rgba(52, 211, 153, 0.1); color: var(--ok); }
-.result-exit.err { background: rgba(248, 113, 113, 0.1); color: var(--err, #f87171); }
+.result-exit.ok {
+  background: rgba(52, 211, 153, 0.1);
+  color: var(--ok);
+}
+
+.result-exit.err {
+  background: rgba(248, 113, 113, 0.1);
+  color: var(--err, #f87171);
+}
 </style>

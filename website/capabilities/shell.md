@@ -72,6 +72,24 @@ Calling `Shell.kill` on an already-exited pid is a no-op.
 
 ---
 
+## Listing running processes
+
+`Shell.list` returns the pids of all processes currently alive. Use it to hydrate state in secondary windows that didn't spawn the processes.
+
+```js
+const pids = await Shell.list();
+// ["a1b2c3d4...", ...]
+
+for (const pid of pids) {
+  Shell.listen(pid, {
+    stdout: ({ line }) => console.log(line),
+    exit: ({ code }) => console.log("done", code),
+  });
+}
+```
+
+---
+
 ## Unsubscribing early
 
 ```js
@@ -86,13 +104,14 @@ Shell.unlisten(pid);
 
 ## JavaScript API
 
-| Method     | Signature                                            | Description                       |
-| ---------- | ---------------------------------------------------- | --------------------------------- |
-| `spawn`    | `(command, args) → Promise<string>`                  | Start a process; returns pid      |
-| `run`      | `(command, args?) → Promise<{stdout, stderr, code}>` | Spawn and collect all output      |
-| `kill`     | `(pid) → Promise<void>`                              | Send SIGTERM to a running process |
-| `listen`   | `(pid, opts) → void`                                 | Subscribe to output channels      |
-| `unlisten` | `(pid) → void`                                       | Remove all listeners for a pid    |
+| Method     | Signature                                            | Description                               |
+| ---------- | ---------------------------------------------------- | ----------------------------------------- |
+| `spawn`    | `(command, args) → Promise<string>`                  | Start a process; returns pid              |
+| `run`      | `(command, args?) → Promise<{stdout, stderr, code}>` | Spawn and collect all output              |
+| `kill`     | `(pid) → Promise<void>`                              | Send SIGTERM to a running process         |
+| `list`     | `() → Promise<string[]>`                             | List pids of all currently live processes |
+| `listen`   | `(pid, opts) → void`                                 | Subscribe to output channels              |
+| `unlisten` | `(pid) → void`                                       | Remove all listeners for a pid            |
 
 `listen` options:
 

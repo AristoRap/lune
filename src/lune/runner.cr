@@ -94,7 +94,7 @@ module Lune
         setup_navigate_if_set(wv)
         setup_drag_zone_if_set(wv, handle)
 
-        inject_capability_init(wv, handle, resolved)
+        resolved.init_all_webviews(wv, handle, @app)
 
         asset_server = setup_navigation(wv, html, url, registry, resolved)
 
@@ -214,23 +214,6 @@ module Lune
         window.addEventListener('hashchange', _nav);
       })();
       JS
-    end
-
-    private def inject_capability_init(wv : Webview::Webview, handle : Pointer(Void), resolved : Capabilities::ResolvedSet) : Nil
-      webview_ctx = Lune::Capability::WebviewCtx.new(wv, handle, @app, resolved.active_ids)
-      resolved.capabilities.each do |cap|
-        wv.init("window[#{cap.sentinel_key.inspect}] = true;")
-        cap.init_webview(webview_ctx) if cap.is_a?(Lune::Capability::WebviewInject)
-      end
-
-      bm = Lune::Capability::BRIDGE_MARKER
-      unless resolved.active_ids.includes?(:event_bus)
-        js_emit_key = "#{bm}.jsEmit"
-        wv.init("(function(){window.#{bm}=window.#{bm}||{};var n=function(){};window.#{bm}.crystalEmit=n;window.#{bm}.on=n;window.#{bm}.off=n;window[#{js_emit_key.inspect}]=function(){return Promise.resolve();};})();")
-      end
-      unless resolved.active_ids.includes?(:stream)
-        wv.init("(function(){window.#{bm}=window.#{bm}||{};var n=function(){};window.#{bm}.stOn=n;window.#{bm}.stOff=n;window.#{bm}.stSend=n;})();")
-      end
     end
 
     private def setup_navigation(

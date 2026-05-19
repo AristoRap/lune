@@ -22,6 +22,11 @@ module Lune
       @port : Int32 = 0
 
       def init_webview(ctx : WebviewCtx) : Nil
+        if @port != 0
+          inject_client_js(ctx.wv)
+          return
+        end
+
         wv = ctx.wv
         app = ctx.app
         sockets = [] of HTTP::WebSocket
