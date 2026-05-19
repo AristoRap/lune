@@ -26,3 +26,4 @@ demo/frontend/lunejs/
 /node_modules/
 /website/.vitepress/dist/
 /website/.vitepress/cache/
+demo/frontend/package-lock.json
