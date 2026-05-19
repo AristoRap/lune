@@ -12,11 +12,8 @@ module Lune
         binding_groups, helper_groups, all_namespaces = namespace_groups(bindings, capabilities, &.js_helpers)
 
         namespace_blocks = all_namespaces.map do |ns|
-          methods = String.build do |sb|
-            binding_groups[ns]?.try &.each { |b| sb << b.to_js_stub << "\n" }
-            sb << (helper_groups[ns]? || "")
-          end
-          "export const #{ns} = {\n#{methods}};"
+          body = namespace_body(ns, binding_groups, helper_groups, &.to_js_stub)
+          "export const #{ns} = {\n#{body}};"
         end.join("\n\n")
 
         runtime_members = all_namespaces.join(",\n  ")
@@ -57,11 +54,8 @@ module Lune
         binding_groups, helper_groups, all_namespaces = namespace_groups(bindings, capabilities, &.dts_helpers)
 
         interfaces = all_namespaces.map do |ns|
-          members = String.build do |sb|
-            binding_groups[ns]?.try &.each { |b| sb << b.to_dts_sig << "\n" }
-            sb << (helper_groups[ns]? || "")
-          end
-          "export interface #{ns} {\n#{members}}"
+          body = namespace_body(ns, binding_groups, helper_groups, &.to_dts_sig)
+          "export interface #{ns} {\n#{body}}"
         end.join("\n\n")
 
         runtime_members = all_namespaces.map { |ns| "  #{ns}: #{ns};" }.join("\n")
@@ -125,6 +119,18 @@ module Lune
 
         all_namespaces = (binding_groups.keys + helper_groups.keys).uniq
         {binding_groups, helper_groups, all_namespaces}
+      end
+
+      private def self.namespace_body(
+        ns : String,
+        binding_groups : Hash(String, Array(Lune::Binding)),
+        helper_groups : Hash(String, String),
+        &method_fn : Lune::Binding -> String
+      ) : String
+        String.build do |sb|
+          binding_groups[ns]?.try &.each { |b| sb << method_fn.call(b) << "\n" }
+          sb << (helper_groups[ns]? || "")
+        end
       end
 
       # ----------------------------

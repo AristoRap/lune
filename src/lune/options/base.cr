@@ -3,13 +3,13 @@ module Lune
   #
   # ```
   # Lune.run(app) do |o|
-  #   o.title  = "My App"
-  #   o.width  = 1280
+  #   o.title = "My App"
+  #   o.width = 1280
   #   o.height = 720
   #
   #   o.drop do |d|
   #     d.enabled = true
-  #     d.zone    = "--lune-drop-target"
+  #     d.zone = "--lune-drop-target"
   #   end
   #
   #   o.mac do |m|
@@ -66,11 +66,11 @@ module Lune
     # handle (NSWindow* on macOS, GtkWindow* on Linux, HWND on Windows).
     property on_window_ready : (Void* -> Nil)? = nil
 
-    getter drop       : Drop      = Drop.new
-    getter drag       : Drag      = Drag.new
-    getter tray       : Tray      = Tray.new
-    getter mac        : Mac       = Mac.new
-    getter menu       : Menu      = Menu.new
+    getter drop : Drop = Drop.new
+    getter drag : Drag = Drag.new
+    getter tray : Tray = Tray.new
+    getter mac : Mac = Mac.new
+    getter menu : Menu = Menu.new
     getter file_watch : FileWatch = FileWatch.new
 
     def drop(& : Drop ->)
@@ -104,15 +104,33 @@ module Lune
     def initialize; end
 
     def apply(window : Config::Window)
-      if t = window.title;      @title      = t end
-      if w = window.width;      @width      = w end
-      if h = window.height;     @height     = h end
-      if v = window.min_width;  @min_width  = v end
-      if v = window.min_height; @min_height = v end
-      if v = window.max_width;  @max_width  = v end
-      if v = window.max_height; @max_height = v end
-      unless (r = window.resizable).nil?; @resizable = r end
-      unless (d = window.debug).nil?;     @debug     = d end
+      if t = window.title
+        @title = t
+      end
+      if w = window.width
+        @width = w
+      end
+      if h = window.height
+        @height = h
+      end
+      if v = window.min_width
+        @min_width = v
+      end
+      if v = window.min_height
+        @min_height = v
+      end
+      if v = window.max_width
+        @max_width = v
+      end
+      if v = window.max_height
+        @max_height = v
+      end
+      unless (r = window.resizable).nil?
+        @resizable = r
+      end
+      unless (d = window.debug).nil?
+        @debug = d
+      end
     end
   end
 end

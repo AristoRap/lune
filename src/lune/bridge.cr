@@ -87,7 +87,7 @@ module Lune
     rescue ex
       Lune.logger.error { "Binding execution failed: #{ex.message}" }
       Lune.logger.debug(exception: ex) { "Binding execution failed (stacktrace)" }
-      code = ex.is_a?(Lune::Error) ? ex.code : "error"
+      code = ex.as?(Lune::Error).try(&.code) || "error"
       return if closed.try(&.call)
       wv.dispatch {
         next if closed.try(&.call)
