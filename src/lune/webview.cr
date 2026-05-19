@@ -2,6 +2,14 @@ require "webview"
 require "json"
 require "set"
 
+{% if flag?(:darwin) %}
+  # macOS 26+ made nextEventMatchingMask: strict about the OS main thread.
+  # Crystal's preview_mt fiber pool parks Thread 0 and runs NSApp on a worker
+  # thread, so deplete_run_loop_event_queue() in the webview destructor crashes
+  # with std::terminate. Apply an idempotent patch + rebuild once per install.
+  {% system("sh '#{__DIR__}/../../ext/patches/patch_webview.sh' '#{__DIR__}/../../lib/webview'") %}
+{% end %}
+
 module Lune
   module WebviewLike
     abstract def bind_deferred(name : String, &block : String, Array(JSON::Any) -> Nil)

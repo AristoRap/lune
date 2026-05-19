@@ -40,6 +40,9 @@
 
 - **Main-thread crash** — all native AppKit (macOS) and GTK (Linux) UI calls — dialogs, window controls, tray, context menus — now dispatch synchronously to the main thread when invoked from a background fiber. Eliminates the intermittent `NSInternalInconsistencyException: nextEventMatchingMask should only be called from the Main Thread!` crash.
 
+- **macOS 26+ crash on app close** — `deplete_run_loop_event_queue` in the webview destructor called `nextEventMatchingMask:` from a non-main OS thread. macOS 26 (Tahoe) began enforcing main-thread-only for that call; the resulting ObjC exception propagated as `std::terminate` → `SIGABRT`. An idempotent compile-time patch now inserts an `[NSThread isMainThread]` guard — safe to skip because the window is already closed at that point. Affects Crystal `preview_mt` builds where the app runs on a worker thread, not Thread 0.
+- **File-drop JSON parse error swallowed** — the native drop callbacks now wrap the entire parse + dispatch in a typed `rescue JSON::ParseException | TypeCastError | KeyError`, preventing a hard crash if the ObjC layer sends unexpected data.
+
 ### Changed
 
 - **`async: true` bindings use a shared thread pool** — async binding callbacks and `app.async` blocks now spawn fibers into a `Fiber::ExecutionContext::Parallel` pool instead of creating a new OS thread per call. Reduces overhead for apps that fire async bindings frequently.
