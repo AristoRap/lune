@@ -205,11 +205,15 @@ module Lune
             handle,
             ->(json_ptr : LibC::Char*, data : Void*) {
               return if data.null?
-              parsed = JSON.parse(String.new(json_ptr))
-              x = parsed["x"].as_i
-              y = parsed["y"].as_i
-              paths = parsed["paths"].as_a.map(&.as_s)
-              Box(Proc(Int32, Int32, Array(String), Nil)).unbox(data).call(x, y, paths)
+              begin
+                parsed = JSON.parse(String.new(json_ptr))
+                x     = parsed["x"].as_i? || 0
+                y     = parsed["y"].as_i? || 0
+                raw   = parsed["paths"].as_a?
+                paths = raw ? raw.compact_map(&.as_s?) : Array(String).new
+                Box(Proc(Int32, Int32, Array(String), Nil)).unbox(data).call(x, y, paths)
+              rescue JSON::ParseException | TypeCastError | KeyError
+              end
             },
             @@drop_box,
             drag_pos_fn ? drag_pos_fn.to_unsafe : Pointer(LibC::Char).null
@@ -221,11 +225,15 @@ module Lune
             handle,
             ->(json_ptr : LibC::Char*, data : Void*) {
               return if data.null?
-              parsed = JSON.parse(String.new(json_ptr))
-              x = parsed["x"].as_i
-              y = parsed["y"].as_i
-              paths = parsed["paths"].as_a.map(&.as_s)
-              Box(Proc(Int32, Int32, Array(String), Nil)).unbox(data).call(x, y, paths)
+              begin
+                parsed = JSON.parse(String.new(json_ptr))
+                x     = parsed["x"].as_i? || 0
+                y     = parsed["y"].as_i? || 0
+                raw   = parsed["paths"].as_a?
+                paths = raw ? raw.compact_map(&.as_s?) : Array(String).new
+                Box(Proc(Int32, Int32, Array(String), Nil)).unbox(data).call(x, y, paths)
+              rescue JSON::ParseException | TypeCastError | KeyError
+              end
             },
             @@drop_box,
             ->(x : LibC::Int, y : LibC::Int, data : Void*) {

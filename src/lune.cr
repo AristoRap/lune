@@ -20,7 +20,7 @@ require "./lune/single_instance"
 require "./lune/runner"
 
 module Lune
-  VERSION = "0.7.1"
+  VERSION = "0.8.0"
 
   # Default frontend directory name (matches the lune.yml default).
   DEFAULT_FRONTEND_DIR = "frontend"
@@ -45,16 +45,7 @@ module Lune
     {% end %}
 
     {% if flag?(:build_mode) %}
-      ::Lune.logger.info { "Running in build mode" }
-      appl = {{ app }}
-      lunejs_dir = File.join(ENV.fetch(Lune::ENV_FRONTEND_DIR, Lune::DEFAULT_FRONTEND_DIR), Lune::LUNEJS_SUBDIR)
-      _config = ::Lune::Config.load
-      _registry = ::Lune::Capabilities::Registry.new(Pointer(Void).null, ::Lune::Options.new)
-      _registry.validate(_config.capabilities)
-      _active = _registry.active(_config.capabilities)
-      _stubs = ::Lune::App.new
-      _active.each { |cap| cap.install(_stubs) }
-      ::Lune::Runtime::Generator.write_js(appl.bindings + _stubs.bindings.select(&.internal?), lunejs_dir, _active)
+      ::Lune._build_run({{ app }})
     {% else %}
       runner = ::Lune::Runner.new({{ app }}) do |opts|
         {% if block %}
@@ -63,5 +54,19 @@ module Lune
       end
       runner.start
     {% end %}
+  end
+
+  def self._build_run(app : App) : Nil
+    logger.info { "Running in build mode" }
+    lunejs_dir = File.join(ENV.fetch(ENV_FRONTEND_DIR, DEFAULT_FRONTEND_DIR), LUNEJS_SUBDIR)
+    config = Config.load
+    registry = Capabilities::Registry.new(Pointer(Void).null, Options.new)
+    registry.validate(config.capabilities)
+    resolved = registry.resolve(config.capabilities)
+    resolved.warnings.each { |w| logger.warn { w } }
+    stubs = App.new
+    bind_ctx = Capability::BindCtx.new(stubs)
+    resolved.capabilities.each { |cap| cap.install(bind_ctx) if cap.is_a?(Capability::Bindable) }
+    Runtime::Generator.write_js(app.bindings + stubs.bindings.select(&.internal?), lunejs_dir, resolved.capabilities)
   end
 end

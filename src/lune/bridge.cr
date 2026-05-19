@@ -80,13 +80,19 @@ module Lune
     )
       result = block.call
       return if closed.try(&.call)
-      wv.dispatch { wv.resolve(seq, 0, result.to_json) }
+      wv.dispatch {
+        next if closed.try(&.call)
+        wv.resolve(seq, 0, result.to_json)
+      }
     rescue ex
       Lune.logger.error { "Binding execution failed: #{ex.message}" }
       Lune.logger.debug(exception: ex) { "Binding execution failed (stacktrace)" }
+      code = ex.as?(Lune::Error).try(&.code) || "error"
       return if closed.try(&.call)
-      code = ex.is_a?(Lune::Error) ? ex.code : "error"
-      wv.dispatch { wv.resolve(seq, 1, {code: code, error: ex.message}.to_json) }
+      wv.dispatch {
+        next if closed.try(&.call)
+        wv.resolve(seq, 1, {code: code, error: ex.message}.to_json)
+      }
     end
   end
 end

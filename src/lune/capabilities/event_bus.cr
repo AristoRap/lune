@@ -1,18 +1,26 @@
 module Lune
   module Capabilities
     class EventBus < Lune::Capability
-      def name : String
-        "event_bus"
+      include Capability::WebviewInject
+
+      DESCRIPTOR = Descriptor.new(id: :event_bus, label: "EventBus", core: true)
+
+      def descriptor : Descriptor
+        DESCRIPTOR
       end
 
-
-      # Public namespace is "Events" rather than the internal "EventBus".
       def binding_namespace : String
         "Events"
       end
 
       def init_webview(wv : Webview::Webview, handle : Pointer(Void), app : Lune::App) : Nil
+        init_webview(WebviewCtx.new(wv, handle, app, Set(Symbol).new))
+      end
+
+      def init_webview(ctx : WebviewCtx) : Nil
         bm = BRIDGE_MARKER
+        wv = ctx.wv
+        app = ctx.app
 
         js_emit_key = "#{BRIDGE_MARKER}.jsEmit"
         wv.bind(js_emit_key, Webview::JSProc.new { |args|

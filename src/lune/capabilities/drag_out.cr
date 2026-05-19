@@ -1,17 +1,23 @@
 module Lune
   module Capabilities
     class DragOut < Lune::Capability
-      def initialize(@handle : Void*)
+      include Capability::Bindable
+
+      DESCRIPTOR = Descriptor.new(id: :drag_out, label: "DragOut")
+
+      def descriptor : Descriptor
+        DESCRIPTOR
       end
 
-      def name : String
-        "drag_out"
+      @handle : Void* = Pointer(Void).null
+
+      def setup(ctx : SetupCtx) : Nil
+        @handle = ctx.handle
       end
 
-
-      def install(app : Lune::App)
+      def install(ctx : BindCtx) : Nil
         h = @handle
-        app.register(Definition.new(
+        ctx.register(Definition.new(
           name: "#{name}.start",
           args: ["String"],
           return_type: "Nil",
@@ -22,8 +28,6 @@ module Lune
         ).binding(binding_namespace))
       end
 
-      # User-friendly wrapper: accepts a string[] and serialises to JSON for the bridge.
-      # Shadows the raw bridge stub so the user always gets the array-accepting version.
       def js_helpers : String
         bridge_id = "#{BRIDGE_MARKER}.#{name}.start"
         <<-JS

@@ -289,6 +289,119 @@ describe Lune::App do
     end
   end
 
+  # -------------------------------------------------------------------
+  # Stream (WebSocket IPC)
+  # -------------------------------------------------------------------
+
+  describe "#stream_send" do
+    it "is a no-op when no sender is set" do
+      app = Lune::App.new
+      app.stream_send("tick", {price: 100}) # must not raise
+    end
+
+    it "calls the sender proc with name and JSON" do
+      app = Lune::App.new
+      calls = [] of {String, String}
+      app.stream_sender = ->(name : String, json : String) { calls << {name, json} }
+
+      app.stream_send("tick", {price: 42})
+
+      calls.size.should eq(1)
+      calls.first[0].should eq("tick")
+      calls.first[1].should contain("42")
+    end
+
+    it "serialises nil data as JSON null" do
+      app = Lune::App.new
+      calls = [] of {String, String}
+      app.stream_sender = ->(name : String, json : String) { calls << {name, json} }
+
+      app.stream_send("ping")
+
+      calls.first[1].should eq("null")
+    end
+  end
+
+  describe "#stream_on" do
+    it "registers a handler that fires on dispatch_stream_message" do
+      app = Lune::App.new
+      received = [] of JSON::Any
+
+      app.stream_on("trade") { |d| received << d }
+      app.dispatch_stream_message("trade", JSON::Any.new("BTC"))
+
+      received.size.should eq(1)
+      received.first.as_s.should eq("BTC")
+    end
+
+    it "keeps firing on repeated dispatches" do
+      app = Lune::App.new
+      count = 0
+
+      app.stream_on("tick") { |_| count += 1 }
+      app.dispatch_stream_message("tick", JSON::Any.new(nil))
+      app.dispatch_stream_message("tick", JSON::Any.new(nil))
+
+      count.should eq(2)
+    end
+
+    it "does not fire for a different stream name" do
+      app = Lune::App.new
+      fired = false
+
+      app.stream_on("trade") { |_| fired = true }
+      app.dispatch_stream_message("quote", JSON::Any.new(nil))
+
+      fired.should be_false
+    end
+
+    it "supports multiple handlers on the same name" do
+      app = Lune::App.new
+      count = 0
+
+      app.stream_on("tick") { |_| count += 1 }
+      app.stream_on("tick") { |_| count += 1 }
+      app.dispatch_stream_message("tick", JSON::Any.new(nil))
+
+      count.should eq(2)
+    end
+  end
+
+  describe "#stream_off" do
+    it "removes all handlers for a name" do
+      app = Lune::App.new
+      count = 0
+
+      app.stream_on("tick") { |_| count += 1 }
+      app.stream_off("tick")
+      app.dispatch_stream_message("tick", JSON::Any.new(nil))
+
+      count.should eq(0)
+    end
+
+    it "is a no-op for a name with no handlers" do
+      app = Lune::App.new
+      app.stream_off("nonexistent") # must not raise
+    end
+  end
+
+  describe "#dispatch_stream_message" do
+    it "does nothing when no handlers are registered" do
+      app = Lune::App.new
+      app.dispatch_stream_message("tick", JSON::Any.new(nil)) # must not raise
+    end
+
+    it "passes the full JSON::Any payload to handlers" do
+      app = Lune::App.new
+      received = nil
+
+      app.stream_on("data") { |d| received = d }
+      app.dispatch_stream_message("data", JSON.parse(%({"price": 99})))
+
+      received.not_nil!["price"].as_i.should eq(99)
+    end
+  end
+
   describe "bridge requirements" do
     it "raises when calling eval without a bridge" do
       app = Lune::App.new

@@ -1,13 +1,16 @@
 module Lune
   module Capabilities
     class Screen < Lune::Capability
-      def name : String
-        "screen"
+      include Capability::Bindable
+
+      DESCRIPTOR = Descriptor.new(id: :screen, label: "Screen")
+
+      def descriptor : Descriptor
+        DESCRIPTOR
       end
 
-
-      def install(app : Lune::App)
-        app.register(Definition.new(
+      def install(ctx : BindCtx) : Nil
+        ctx.register(Definition.new(
           name: "#{name}.info",
           args: [] of String,
           return_type: "String",

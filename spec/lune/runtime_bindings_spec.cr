@@ -278,7 +278,7 @@ describe "Lune::Capabilities" do
       app = Lune::App.new
       app.bridge = bridge
 
-      app.install(Lune::Capabilities::ContextMenu.new(Pointer(Void).null))
+      app.install(Lune::Capabilities::ContextMenu.new)
       bridge.register_bindings(app.bindings)
 
       items_json = "[{\"id\":\"copy\",\"label\":\"Copy\"}]"
@@ -301,7 +301,7 @@ describe "Lune::Capabilities" do
 
       Lune::Native::MenuMock.stub_context_selection("copy")
 
-      app.install(Lune::Capabilities::ContextMenu.new(Pointer(Void).null))
+      app.install(Lune::Capabilities::ContextMenu.new)
       bridge.register_bindings(app.bindings)
 
       items_json = "[{\"id\":\"copy\",\"label\":\"Copy\"}]"
@@ -323,7 +323,7 @@ describe "Lune::Capabilities" do
     it "drag_out.start calls start_drag_out with the given paths" do
       fake, bridge = make_bridge
       app = Lune::App.new
-      app.install(Lune::Capabilities::DragOut.new(Pointer(Void).null))
+      app.install(Lune::Capabilities::DragOut.new)
       bridge.register_bindings(app.bindings)
 
       paths_json = "[\"/etc/hosts\",\"/etc/shells\"]"
@@ -339,7 +339,7 @@ describe "Lune::Capabilities" do
   describe "Registry" do
     it "registers all capability bindings" do
       app = Lune::App.new
-      Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new).all.each(&.install(app))
+      Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |cap| app.install(cap) }
 
       methods = app.bindings.map(&.method)
 
@@ -365,16 +365,16 @@ describe "Lune::Capabilities" do
 
     it "marks every capability binding as internal" do
       app = Lune::App.new
-      Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new).all.each(&.install(app))
+      Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |cap| app.install(cap) }
 
       app.bindings.all?(&.internal?).should be_true
     end
 
-    it "registers 34 bindings total" do
+    it "registers 39 bindings total" do
       app = Lune::App.new
-      Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new).all.each(&.install(app))
+      Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |cap| app.install(cap) }
 
-      app.bindings.size.should eq(34)
+      app.bindings.size.should eq(39)
     end
   end
 

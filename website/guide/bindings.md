@@ -245,4 +245,4 @@ class MyPlugin
 end
 ```
 
-This is rarely needed for application code — prefer `Lune::Bindable` for most cases. Internally, Lune uses `Lune::Installable` for all of its own built-in capabilities (lifecycle, filesystem, clipboard, window controls, dialogs, tray, notifications, screen), so the interface is well-exercised.
+This is rarely needed for application code — prefer `Lune::Bindable` for most cases.

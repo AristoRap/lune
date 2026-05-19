@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitepress'
 
-const version = '0.7.1'
+const version = '0.8.0'
 
 export default defineConfig({
   title: 'Lune',
@@ -26,10 +26,13 @@ export default defineConfig({
           { text: 'Error Handling', link: '/guide/error-handling' },
           { text: 'Runtime Functions', link: '/guide/runtime' },
           { text: 'Events', link: '/guide/events' },
+          { text: 'Stream', link: '/guide/stream' },
           { text: 'TypeScript', link: '/guide/typescript' },
           { text: 'Window', link: '/guide/window' },
           { text: 'Distribution', link: '/guide/distribution' },
           { text: 'Deep Links', link: '/guide/deep-links' },
+          { text: 'File Watch', link: '/guide/file-watch' },
+          { text: 'Shell', link: '/guide/shell' },
         ],
       },
       { text: 'CLI Reference', link: '/cli-reference' },

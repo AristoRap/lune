@@ -3,12 +3,12 @@ require "yaml"
 require "digest/sha256"
 
 describe "Vendor dependency guardrails" do
-  it "pins vendored webview version" do
-    shard = YAML.parse(File.read("lib/webview/shard.yml"))
-    version = shard["version"].as_s
+  it "pins webview to the expected upstream commit" do
+    lock = YAML.parse(File.read("shard.lock"))
+    version = lock["shards"]["webview"]["version"].as_s
 
-    # Update this only when intentionally upgrading vendored webview.
-    version.should eq("0.2.5")
+    # Update this only when intentionally upgrading webview.
+    version.should contain("fff6c392dace786cdab31f54fc5b8073c5efa95d")
   end
 
   it "pins upstream source location in root shard.yml" do

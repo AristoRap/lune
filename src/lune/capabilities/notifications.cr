@@ -1,13 +1,16 @@
 module Lune
   module Capabilities
     class Notifications < Lune::Capability
-      def name : String
-        "notifications"
+      include Capability::Bindable
+
+      DESCRIPTOR = Descriptor.new(id: :notifications, label: "Notifications")
+
+      def descriptor : Descriptor
+        DESCRIPTOR
       end
 
-
-      def install(app : Lune::App)
-        app.register(Definition.new(
+      def install(ctx : BindCtx) : Nil
+        ctx.register(Definition.new(
           name: "#{name}.notify",
           args: ["String", "String"],
           return_type: "Nil",

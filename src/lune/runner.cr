@@ -25,9 +25,26 @@ module Lune
         end
         done.receive.try { |ex| raise ex }
       {% else %}
+        start_sigchld_pump
         webview(html, url)
       {% end %}
     end
+
+    # On Unix, Crystal's signal-loop fiber lives in the default execution
+    # context (main thread). When wv.run hands the main thread to Cocoa/GTK,
+    # that fiber is starved — so SIGCHLD signals queue up in the signal pipe
+    # but never get dispatched, and `Process#wait` (used by `Process.run`)
+    # hangs forever. Drain pending SIGCHLDs from a dedicated thread.
+    {% unless flag?(:win32) %}
+      private def start_sigchld_pump : Nil
+        Fiber::ExecutionContext::Isolated.new("lune-sigchld-pump") do
+          loop do
+            Crystal::System::SignalChildHandler.call
+            sleep 10.milliseconds
+          end
+        end
+      end
+    {% end %}
 
     private def webview(html : String? = nil, url : String? = nil) : Nil
       Webview.with_window(@options.width, @options.height, @options.hint, @options.title, @options.debug) do |wv|
@@ -43,16 +60,13 @@ module Lune
 
         registry = Capabilities::Registry.new(handle, @options, on_quit: -> { wv.dispatch { wv.terminate } })
         registry.validate(@config.capabilities)
-        active = registry.active(@config.capabilities)
+        resolved = registry.resolve(@config.capabilities)
+        resolved.warnings.each { |w| Lune.logger.warn { w } }
 
-        if @options.debug
-          registry.all.each do |cap|
-            next if active.includes?(cap)
-            Lune.logger.warn { "\"#{cap.name}\" is configured but not active — enable it in lune.yml capabilities" } if cap.configured?
-          end
+        bind_ctx = Lune::Capability::BindCtx.new(@app)
+        resolved.capabilities.each do |cap|
+          cap.install(bind_ctx) if cap.is_a?(Lune::Capability::Bindable)
         end
-
-        active.each { |cap| cap.install(@app) }
 
         bridge = Bridge.new(wv)
         bridge.register_bindings(@app.bindings.reject(&.internal?))
@@ -76,38 +90,15 @@ module Lune
         setup_navigate_if_set(wv)
         setup_drag_zone_if_set(wv, handle)
 
-        active.each do |cap|
-          wv.init("window[#{cap.sentinel_key.inspect}] = true;")
-          cap.init_webview(wv, handle, @app)
-        end
+        inject_capability_init(wv, handle, resolved)
 
-        asset_server : AssetServer? = nil
-
-        if h = html
-          wv.html = h
-        elsif u = url
-          wv.navigate(u)
-        elsif dev_url = ENV[Lune::ENV_DEV_URL]?
-          # In dev mode runtime.js carries all capabilities so the dev view can
-          # show which are active vs excluded. The bridge is still filtered.
-          all_stubs = App.new
-          registry.all.each { |cap| cap.install(all_stubs) }
-          Lune::Runtime::Generator.write_js(
-            @app.bindings.reject(&.internal?) + all_stubs.bindings.select(&.internal?),
-            @lunejs_dir,
-            registry.all
-          )
-          wv.navigate(dev_url)
-        elsif !Assets.empty?
-          s = AssetServer.new
-          s.start
-          wv.navigate(s.url)
-          asset_server = s
-        else
-          raise "Lune.run: provide html:, url:, LUNE_DEV_URL, or assets:"
-        end
+        asset_server = setup_navigation(wv, html, url, registry, resolved)
 
         wv.run
+
+        resolved.capabilities.each do |cap|
+          cap.shutdown if cap.is_a?(Lune::Capability::Lifecycle)
+        end
 
         x, y, width, height = Native::Window.get_frame(handle)
         WindowState.save(window_app_name, x, y, width, height)
@@ -219,6 +210,58 @@ module Lune
         window.addEventListener('hashchange', _nav);
       })();
       JS
+    end
+
+    private def inject_capability_init(wv : Webview::Webview, handle : Pointer(Void), resolved : Capabilities::ResolvedSet) : Nil
+      webview_ctx = Lune::Capability::WebviewCtx.new(wv, handle, @app, resolved.active_ids)
+      resolved.capabilities.each do |cap|
+        wv.init("window[#{cap.sentinel_key.inspect}] = true;")
+        cap.init_webview(webview_ctx) if cap.is_a?(Lune::Capability::WebviewInject)
+      end
+
+      bm = Lune::Capability::BRIDGE_MARKER
+      unless resolved.active_ids.includes?(:event_bus)
+        js_emit_key = "#{bm}.jsEmit"
+        wv.init("(function(){window.#{bm}=window.#{bm}||{};var n=function(){};window.#{bm}.crystalEmit=n;window.#{bm}.on=n;window.#{bm}.off=n;window[#{js_emit_key.inspect}]=function(){return Promise.resolve();};})();")
+      end
+      unless resolved.active_ids.includes?(:stream)
+        wv.init("(function(){window.#{bm}=window.#{bm}||{};var n=function(){};window.#{bm}.stOn=n;window.#{bm}.stOff=n;window.#{bm}.stSend=n;})();")
+      end
+    end
+
+    private def setup_navigation(
+      wv : Webview::Webview,
+      html : String?,
+      url : String?,
+      registry : Capabilities::Registry,
+      resolved : Capabilities::ResolvedSet,
+    ) : AssetServer?
+      if h = html
+        wv.html = h
+      elsif u = url
+        wv.navigate(u)
+      elsif dev_url = ENV[Lune::ENV_DEV_URL]?
+        all_stubs = App.new
+        all_bind_ctx = Lune::Capability::BindCtx.new(all_stubs)
+        registry.all.each do |cap|
+          next if resolved.active_ids.includes?(cap.descriptor.id)
+          cap.install(all_bind_ctx) if cap.is_a?(Lune::Capability::Bindable)
+        end
+        Lune::Runtime::Generator.write_js(
+          @app.bindings + all_stubs.bindings.select(&.internal?),
+          @lunejs_dir,
+          registry.all
+        )
+        wv.navigate(dev_url)
+      elsif !Assets.empty?
+        s = AssetServer.new
+        s.start
+        wv.navigate(s.url)
+        return s
+      else
+        raise "Lune.run: provide html:, url:, LUNE_DEV_URL, or assets:"
+      end
+      nil
     end
 
     private def callback_window_loaded_if_set(wv : Webview::Webview) : Nil
