@@ -13,6 +13,15 @@
 
 ### Fixed
 
+- **Linux inotify buffer overread** — the inotify event loop now validates `buf.size >= sizeof(InotifyEvent)` and `step <= buf.size` before advancing the pointer; a short read or an oversized `ev.len` could previously walk past the buffer end.
+- **Darwin kevent fd leak on registration failure** — `FileWatch.add_watch` now registers the kevent before storing the fd in the watch map, and closes the fd if `kevent()` returns an error. Previously a failed registration left the fd recorded but unwatched (silent no-op).
+- **Tray `setMenu` crash on malformed input** — the `set_menu` bridge callback now uses safe JSON navigation and wraps the parse in a typed rescue; a missing `id`/`label` key or invalid JSON previously caused a hard `TypeCastError` crash.
+- **File-drop callback crash on unexpected JSON** — the native drop callbacks on both macOS and Linux now use `?.try(&.as_i?)`/`?.try(&.as_s?)` with safe defaults; malformed JSON from the native layer previously raised `TypeCastError`.
+- **Bridge TOCTOU race in `dispatch_result`** — the closed guard is now checked both before queuing the dispatch *and* inside the queued block, closing the window where the webview could be torn down between the pre-dispatch check and block execution.
+- **`WindowState.load_from` bare rescue** — replaced with a typed rescue on `JSON::ParseException | TypeCastError | File::Error | IO::Error`; failures now log a warning instead of silently returning nil.
+- **Channel silent message-parse failure** — the bare `rescue` in the WebSocket message handler now captures and logs the exception at debug level.
+- **Clipboard command failures silently ignored** — `DEFAULT_READ` and `DEFAULT_WRITE` now check `Process.run` exit status and log a warning on failure; missing binaries (`xclip`, `pbpaste`) now rescue `File::Error | IO::Error` and log instead of crashing or returning empty silently.
+
 - **`file_watch` double-start in dev mode** — in dev mode the runner called `install` twice on the same capability instances (once for the real app, once to collect bindings for JS codegen). `FileWatch` opened two kqueue/inotify fds and the second fiber held a reference to a stub app with no bridge, so all file events were silently dropped. `start` is now idempotent, and the dev-mode binding collection pass skips capabilities already installed for the real app.
 - **`app.emit` crash when `event_bus` excluded** — calling `app.emit` with the event bus capability disabled threw `TypeError: crystalEmit is not a function` in JS. The Crystal side now guards the call, and no-op JS stubs are injected for `crystalEmit`, `on`, `off`, and `jsEmit` so frontend code that references them doesn't throw.
 - **Channel JS stubs when `channel` excluded** — similarly, `chOn`, `chOff`, and `chSend` are stubbed as no-ops when the channel capability is inactive, preventing crashes in frontend code that references them unconditionally.

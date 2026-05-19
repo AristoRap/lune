@@ -32,7 +32,8 @@ module Lune
               begin
                 msg = JSON.parse(raw)
                 app.dispatch_channel_message(msg["n"].as_s, msg["d"])
-              rescue
+              rescue ex
+                Lune.logger.debug { "Channel: malformed message — #{ex.message}" }
               end
             end
             ws.on_close { mu.synchronize { sockets.delete(ws) } }

@@ -11,24 +11,34 @@ module Lune
 
       DEFAULT_READ = -> {
         output = IO::Memory.new
-        {% if flag?(:darwin) %}
-          Process.run("pbpaste", output: output)
-        {% elsif flag?(:win32) %}
-          Process.run("powershell.exe", ["-NoProfile", "-Command", "Get-Clipboard"], output: output)
-        {% else %}
-          Process.run("xclip", ["-o", "-selection", "clipboard"], output: output)
-        {% end %}
+        begin
+          status = {% if flag?(:darwin) %}
+            Process.run("pbpaste", output: output)
+          {% elsif flag?(:win32) %}
+            Process.run("powershell.exe", ["-NoProfile", "-Command", "Get-Clipboard"], output: output)
+          {% else %}
+            Process.run("xclip", ["-o", "-selection", "clipboard"], output: output)
+          {% end %}
+          Lune.logger.warn { "Clipboard: read command failed (exit #{status.exit_code})" } unless status.success?
+        rescue ex : File::Error | IO::Error
+          Lune.logger.warn { "Clipboard: read command unavailable — #{ex.message}" }
+        end
         output.to_s.chomp
       }
 
       DEFAULT_WRITE = ->(text : String) {
-        {% if flag?(:darwin) %}
-          Process.run("pbcopy", input: IO::Memory.new(text))
-        {% elsif flag?(:win32) %}
-          Process.run("clip.exe", input: IO::Memory.new(text))
-        {% else %}
-          Process.run("xclip", ["-i", "-selection", "clipboard"], input: IO::Memory.new(text))
-        {% end %}
+        begin
+          status = {% if flag?(:darwin) %}
+            Process.run("pbcopy", input: IO::Memory.new(text))
+          {% elsif flag?(:win32) %}
+            Process.run("clip.exe", input: IO::Memory.new(text))
+          {% else %}
+            Process.run("xclip", ["-i", "-selection", "clipboard"], input: IO::Memory.new(text))
+          {% end %}
+          Lune.logger.warn { "Clipboard: write command failed (exit #{status.exit_code})" } unless status.success?
+        rescue ex : File::Error | IO::Error
+          Lune.logger.warn { "Clipboard: write command unavailable — #{ex.message}" }
+        end
         nil
       }
 

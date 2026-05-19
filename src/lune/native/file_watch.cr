@@ -99,7 +99,6 @@ module Lune
               Lune.logger.warn { "FileWatch: cannot open #{path}" }
               return
             end
-            @watch_fds[path] = fd
             ev = LibC::Kevent.new
             ev.ident  = fd.to_u64
             ev.filter = EVFILT_VNODE
@@ -107,7 +106,12 @@ module Lune
             ev.fflags = NOTE_DELETE | NOTE_WRITE | NOTE_ATTRIB | NOTE_RENAME
             ev.data   = 0
             ev.udata  = Pointer(Void).null
-            LibC.kevent(@kq, pointerof(ev), 1, Pointer(LibC::Kevent).null, 0, Pointer(LibC::Timespec).null)
+            if LibC.kevent(@kq, pointerof(ev), 1, Pointer(LibC::Kevent).null, 0, Pointer(LibC::Timespec).null) < 0
+              LibC.close(fd)
+              Lune.logger.warn { "FileWatch: kevent registration failed for #{path}" }
+              return
+            end
+            @watch_fds[path] = fd
           end
         end
 
@@ -151,8 +155,13 @@ module Lune
               break if n <= 0
               offset = 0
               while offset < n
-                ev   = buf.to_unsafe.as(LibInotify::InotifyEvent*).value
-                wd   = ev.wd
+                event_size = sizeof(LibInotify::InotifyEvent)
+                break if buf.size < event_size
+                ev       = buf.to_unsafe.as(LibInotify::InotifyEvent*).value
+                wd       = ev.wd
+                name_len = ev.len.to_i
+                step     = event_size + name_len
+                break if step > buf.size
                 path = mu.synchronize { watch_ids[wd]? }
                 if path
                   now = Time.instant
@@ -171,8 +180,8 @@ module Lune
                     app.emit("file_watch", {"path" => path, "kind" => kind})
                   end
                 end
-                offset += sizeof(LibInotify::InotifyEvent) + ev.len
-                buf = buf[sizeof(LibInotify::InotifyEvent) + ev.len..]
+                offset += step
+                buf = buf[step..]
               end
               buf = Bytes.new(4096)
             end

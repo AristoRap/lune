@@ -206,9 +206,9 @@ module Lune
             ->(json_ptr : LibC::Char*, data : Void*) {
               return if data.null?
               parsed = JSON.parse(String.new(json_ptr))
-              x = parsed["x"].as_i
-              y = parsed["y"].as_i
-              paths = parsed["paths"].as_a.map(&.as_s)
+              x = parsed["x"]?.try(&.as_i?) || 0
+              y = parsed["y"]?.try(&.as_i?) || 0
+              paths = parsed["paths"]?.try(&.as_a?)&.compact_map(&.as_s?) || [] of String
               Box(Proc(Int32, Int32, Array(String), Nil)).unbox(data).call(x, y, paths)
             },
             @@drop_box,
@@ -222,9 +222,9 @@ module Lune
             ->(json_ptr : LibC::Char*, data : Void*) {
               return if data.null?
               parsed = JSON.parse(String.new(json_ptr))
-              x = parsed["x"].as_i
-              y = parsed["y"].as_i
-              paths = parsed["paths"].as_a.map(&.as_s)
+              x = parsed["x"]?.try(&.as_i?) || 0
+              y = parsed["y"]?.try(&.as_i?) || 0
+              paths = parsed["paths"]?.try(&.as_a?)&.compact_map(&.as_s?) || [] of String
               Box(Proc(Int32, Int32, Array(String), Nil)).unbox(data).call(x, y, paths)
             },
             @@drop_box,

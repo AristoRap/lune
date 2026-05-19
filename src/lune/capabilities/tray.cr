@@ -72,8 +72,18 @@ module Lune
           args: ["String"],
           return_type: "Nil",
           callback: ->(args : Array(JSON::Any)) {
-            raw = Array(Hash(String, JSON::Any)).from_json(args[0].as_s)
-            items = raw.map { |h| {id: h["id"].as_s, label: h["label"].as_s} }
+            items = begin
+              raw = Array(Hash(String, JSON::Any)).from_json(args[0].as_s)
+              raw.compact_map do |h|
+                id    = h["id"]?.try(&.as_s?)
+                label = h["label"]?.try(&.as_s?)
+                next unless id && label
+                {id: id, label: label}
+              end
+            rescue ex : JSON::ParseException
+              Lune.logger.warn { "Tray.set_menu: invalid menu JSON — #{ex.message}" }
+              [] of {id: String, label: String}
+            end
             Lune::Native::Tray.set_menu(items, on_menu_click)
             JSON::Any.new(nil)
           },
