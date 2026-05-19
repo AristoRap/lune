@@ -44,13 +44,13 @@ module Lune
       {% end %}
 
       {% if flag?(:lune_native_test_mock) %}
-        def start(app : Lune::App) : Nil; end
+        def start(app : Lune::App, debounce : Time::Span = 50.milliseconds) : Nil; end
         def add_watch(path : String) : Nil; end
         def remove_watch(path : String) : Nil; end
         def stop : Nil; end
 
       {% elsif flag?(:darwin) %}
-        def start(app : Lune::App) : Nil
+        def start(app : Lune::App, debounce : Time::Span = 50.milliseconds) : Nil
           return if @mu.synchronize { @kq >= 0 }
           kq = LibC.kqueue
           if kq < 0
@@ -64,7 +64,8 @@ module Lune
           watch_fds = @watch_fds
 
           Fiber::ExecutionContext::Isolated.new("lune-file-watch") do
-            events = StaticArray(LibC::Kevent, 32).new { LibC::Kevent.new }
+            events     = StaticArray(LibC::Kevent, 32).new { LibC::Kevent.new }
+            last_fired = {} of String => Time::Instant
             loop do
               n = LibC.kevent(kq_val, Pointer(LibC::Kevent).null, 0, events.to_unsafe, 32, Pointer(LibC::Timespec).null)
               break if n < 0
@@ -74,6 +75,9 @@ module Lune
                 fflags = ev.fflags
                 path   = mu.synchronize { watch_fds.key_for?(fd) }
                 next unless path
+                now = Time.instant
+                next if (prev = last_fired[path]?) && (now - prev) < debounce
+                last_fired[path] = now
                 kind = if fflags & NOTE_DELETE != 0
                          "deleted"
                        elsif fflags & NOTE_RENAME != 0
@@ -126,7 +130,7 @@ module Lune
         end
 
       {% elsif flag?(:linux) %}
-        def start(app : Lune::App) : Nil
+        def start(app : Lune::App, debounce : Time::Span = 50.milliseconds) : Nil
           return if @mu.synchronize { @inotify_fd >= 0 }
           ifd = LibInotify.inotify_init
           if ifd < 0
@@ -140,7 +144,8 @@ module Lune
           watch_ids = @watch_ids
 
           Fiber::ExecutionContext::Isolated.new("lune-file-watch") do
-            buf = Bytes.new(4096)
+            buf        = Bytes.new(4096)
+            last_fired = {} of String => Time::Instant
             loop do
               n = LibC.read(ifd_val, buf.to_unsafe.as(Void*), buf.size)
               break if n <= 0
@@ -150,17 +155,21 @@ module Lune
                 wd   = ev.wd
                 path = mu.synchronize { watch_ids[wd]? }
                 if path
-                  mask = ev.mask
-                  kind = if mask & (LibInotify::IN_DELETE | LibInotify::IN_DELETE_SELF) != 0
-                           "deleted"
-                         elsif mask & (LibInotify::IN_MOVED_FROM | LibInotify::IN_MOVED_TO | LibInotify::IN_MOVE_SELF) != 0
-                           "renamed"
-                         elsif mask & LibInotify::IN_CREATE != 0
-                           "created"
-                         else
-                           "modified"
-                         end
-                  app.emit("file_watch", {"path" => path, "kind" => kind})
+                  now = Time.instant
+                  unless (prev = last_fired[path]?) && (now - prev) < debounce
+                    last_fired[path] = now
+                    mask = ev.mask
+                    kind = if mask & (LibInotify::IN_DELETE | LibInotify::IN_DELETE_SELF) != 0
+                             "deleted"
+                           elsif mask & (LibInotify::IN_MOVED_FROM | LibInotify::IN_MOVED_TO | LibInotify::IN_MOVE_SELF) != 0
+                             "renamed"
+                           elsif mask & LibInotify::IN_CREATE != 0
+                             "created"
+                           else
+                             "modified"
+                           end
+                    app.emit("file_watch", {"path" => path, "kind" => kind})
+                  end
                 end
                 offset += sizeof(LibInotify::InotifyEvent) + ev.len
                 buf = buf[sizeof(LibInotify::InotifyEvent) + ev.len..]
@@ -209,7 +218,7 @@ module Lune
         end
 
       {% else %}
-        def start(app : Lune::App) : Nil; end
+        def start(app : Lune::App, debounce : Time::Span = 50.milliseconds) : Nil; end
         def add_watch(path : String) : Nil; end
         def remove_watch(path : String) : Nil; end
         def stop : Nil; end

@@ -19,7 +19,7 @@ Lune wraps a native WebView and lets you call Crystal code from JavaScript over 
 
 > **Experimental Crystal flags:** Lune requires `-Dpreview_mt -Dexecution_context` at compile time. The `lune` CLI passes these automatically. If you compile your app manually (`crystal build`), you must include both flags. These unlock Crystal's multi-threading execution context API — the mechanism Lune uses to run `async:` bindings on real OS threads without blocking the native GUI event loop.
 
-## Documentations
+## Documentation
 
 Full docs live at the project `website` folder
 

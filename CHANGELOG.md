@@ -9,9 +9,11 @@
 ### Added
 
 - **`file_watch` capability** — monitor files and directories for filesystem changes. Call `FileWatch.watch(path)` / `FileWatch.unwatch(path)` from JavaScript; subscribe to change events with `FileWatch.on(cb)`. Events carry `{path, kind}` where `kind` is `"modified"`, `"created"`, `"deleted"`, or `"renamed"`. Backed by kqueue (`EVFILT_VNODE`) on macOS and inotify on Linux — no polling, no extra system dependencies. Hard-depends on `event_bus`; automatically disabled with a warning if `event_bus` is excluded.
+- **`opts.file_watch.debounce`** — configurable debounce window (default 50 ms) that collapses the burst of raw OS events produced by a single editor save into one logical event per path. Set to `0.milliseconds` to receive raw events.
 
 ### Fixed
 
+- **`file_watch` double-start in dev mode** — in dev mode the runner called `install` twice on the same capability instances (once for the real app, once to collect bindings for JS codegen). `FileWatch` opened two kqueue/inotify fds and the second fiber held a reference to a stub app with no bridge, so all file events were silently dropped. `start` is now idempotent, and the dev-mode binding collection pass skips capabilities already installed for the real app.
 - **`app.emit` crash when `event_bus` excluded** — calling `app.emit` with the event bus capability disabled threw `TypeError: crystalEmit is not a function` in JS. The Crystal side now guards the call, and no-op JS stubs are injected for `crystalEmit`, `on`, `off`, and `jsEmit` so frontend code that references them doesn't throw.
 - **Channel JS stubs when `channel` excluded** — similarly, `chOn`, `chOff`, and `chSend` are stubbed as no-ops when the channel capability is inactive, preventing crashes in frontend code that references them unconditionally.
 

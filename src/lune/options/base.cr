@@ -66,11 +66,12 @@ module Lune
     # handle (NSWindow* on macOS, GtkWindow* on Linux, HWND on Windows).
     property on_window_ready : (Void* -> Nil)? = nil
 
-    getter drop : Drop = Drop.new
-    getter drag : Drag = Drag.new
-    getter tray : Tray = Tray.new
-    getter mac  : Mac  = Mac.new
-    getter menu : Menu = Menu.new
+    getter drop       : Drop      = Drop.new
+    getter drag       : Drag      = Drag.new
+    getter tray       : Tray      = Tray.new
+    getter mac        : Mac       = Mac.new
+    getter menu       : Menu      = Menu.new
+    getter file_watch : FileWatch = FileWatch.new
 
     def drop(& : Drop ->)
       yield @drop
@@ -94,6 +95,10 @@ module Lune
 
     def menu(m : Menu)
       @menu = m
+    end
+
+    def file_watch(& : FileWatch ->)
+      yield @file_watch
     end
 
     def initialize; end

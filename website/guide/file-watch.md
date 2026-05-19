@@ -91,6 +91,27 @@ Passing a directory path watches the directory itself for structural changes (fi
 
 ---
 
+## Debounce
+
+Editors typically generate several raw OS events per save (write temp file → rename → delete temp, or truncate + write + touch mtime). Lune suppresses this noise by debouncing events per path: only one event is emitted per path within the debounce window.
+
+The default is **50 ms**, which is enough to collapse any editor save sequence into a single event. You can adjust it in the `Lune.run` block:
+
+```crystal
+Lune.run(app) do |opts|
+  opts.file_watch do |fw|
+    fw.debounce = 100.milliseconds   # slower editors / network filesystems
+    fw.debounce = 0.milliseconds     # no debouncing — raw OS events
+  end
+end
+```
+
+| Option     | Type          | Default | Description                                                                 |
+| ---------- | ------------- | ------- | --------------------------------------------------------------------------- |
+| `debounce` | `Time::Span`  | `50ms`  | Minimum time between emitted events for the same path. Set to `0` to disable. |
+
+---
+
 ## Notes
 
 - **No recursive watching** — each path must be registered individually. To watch a tree, enumerate the paths and call `watch` for each.

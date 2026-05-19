@@ -14,11 +14,16 @@ module Lune
         "FileWatch"
       end
 
-      @watcher = Lune::Native::FileWatch.new
+      @watcher  = Lune::Native::FileWatch.new
+      @debounce = 50.milliseconds
+
+      def setup(ctx : SetupCtx) : Nil
+        @debounce = ctx.options.file_watch.debounce
+      end
 
       def install(ctx : BindCtx) : Nil
         app = ctx.app
-        @watcher.start(app)
+        @watcher.start(app, @debounce)
 
         watcher = @watcher
         ctx.register(Definition.new(
