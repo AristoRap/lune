@@ -1,5 +1,6 @@
 #import <AppKit/AppKit.h>
 #import <WebKit/WebKit.h>
+#import <objc/runtime.h>
 
 typedef struct { int x; int y; int width; int height; } WindowFrame;
 
@@ -357,4 +358,32 @@ void set_frame(void *window, int x, int y, int width, int height) {
         [w setFrame:NSMakeRect((CGFloat)x, (CGFloat)y, (CGFloat)width, (CGFloat)height)
             display:YES animate:NO];
     });
+}
+
+void lune_window_close(void *window) {
+    NSWindow *w = (__bridge NSWindow *)window;
+    run_on_main(^{ [w close]; });
+}
+
+// ── Window close observer ──────────────────────────────────────────────────────
+// Fires cb(arg) exactly once when the NSWindow receives NSWindowWillCloseNotification.
+// Uses NSNotificationCenter (not the delegate) so it never conflicts with the
+// webview library's own window delegate.  Retains the observer via associated
+// object on the window so ARC cannot release it before the notification fires.
+static const char kLuneCloseObserver;
+
+void lune_window_observe_close(void *window, void (*cb)(void *), void *arg) {
+    NSWindow *w = (__bridge NSWindow *)window;
+    __block id observer = nil;
+    observer = [[NSNotificationCenter defaultCenter]
+        addObserverForName:NSWindowWillCloseNotification
+                    object:w
+                     queue:nil
+                usingBlock:^(NSNotification *n) {
+        cb(arg);
+        [[NSNotificationCenter defaultCenter] removeObserver:observer];
+        objc_setAssociatedObject(w, &kLuneCloseObserver, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        observer = nil;
+    }];
+    objc_setAssociatedObject(w, &kLuneCloseObserver, observer, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }

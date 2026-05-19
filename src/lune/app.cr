@@ -1,7 +1,7 @@
 module Lune
   class App
     class Events
-      def initialize(@bridge_fn : -> Bridge?)
+      def initialize(@bridge_fn : -> Bridge?, @extra_bridges : Array(Bridge))
         @handlers = {} of String => Array(Proc(JSON::Any, Nil))
         @once_handlers = {} of String => Array(Proc(JSON::Any, Nil))
       end
@@ -11,6 +11,7 @@ module Lune
         json = data.nil? ? "null" : data.to_json
         bm = Lune::Capability::BRIDGE_MARKER
         b.dispatch_eval("if(window.#{bm}&&typeof window.#{bm}.crystalEmit==='function')window.#{bm}.crystalEmit(#{event.inspect},#{json})")
+        @extra_bridges.each(&.dispatch_eval("if(window.#{bm}&&typeof window.#{bm}.crystalEmit==='function')window.#{bm}.crystalEmit(#{event.inspect},#{json})"))
       end
 
       def on(event : String, &block : JSON::Any -> Nil)
@@ -69,9 +70,18 @@ module Lune
     def initialize
       @bindings = [] of Binding
       @bridge = nil
-      @events = Events.new(-> { @bridge })
+      @extra_bridges = [] of Bridge
+      @events = Events.new(-> { @bridge }, @extra_bridges)
       @stream = Stream.new
       @async_pool = Fiber::ExecutionContext::Parallel.new("lune-tasks", System.cpu_count)
+    end
+
+    def add_bridge(b : Bridge) : Nil
+      @extra_bridges << b
+    end
+
+    def remove_bridge(b : Bridge) : Nil
+      @extra_bridges.delete(b)
     end
 
     # ----------------------------

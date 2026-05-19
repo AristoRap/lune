@@ -17,6 +17,7 @@ import FileWatch from "./views/FileWatch.vue";
 import Hotkeys from "./views/Hotkeys.vue";
 import Shell from "./views/Shell.vue";
 import Sqlite from "./views/Sqlite.vue";
+import Windows from "./views/Windows.vue";
 import Capabilities from "./views/Capabilities.vue";
 
 export const navGroups = [
@@ -57,6 +58,7 @@ export const navGroups = [
       { id: "hotkeys", label: "Hotkeys", icon: "key", view: Hotkeys },
       { id: "shell", label: "Shell", icon: "cpu", view: Shell },
       { id: "sqlite", label: "SQLite", icon: "database", view: Sqlite },
+      { id: "windows", label: "Windows", icon: "window", view: Windows },
       {
         id: "capabilities",
         label: "Capabilities",

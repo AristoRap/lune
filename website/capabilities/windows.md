@@ -1,0 +1,122 @@
+# Windows
+
+> Open and manage additional native windows from JavaScript.
+
+|                  |                      |
+| ---------------- | -------------------- |
+| **Config key**   | `windows`            |
+| **JS namespace** | `Windows`            |
+| **Core**         | No                   |
+| **Phases**       | Bindable · Lifecycle |
+| **Hard deps**    | —                    |
+| **Platforms**    | all                  |
+
+The Windows capability lets you open additional native windows from JavaScript. Each new window gets its own `WKWebView` (macOS) or equivalent, shares all active capability bindings with the main window, and participates in `app.events.emit` broadcasts. Use it for settings panels, secondary views, or any multi-window layout.
+
+---
+
+## Enabling
+
+```yaml
+capabilities:
+  include:
+    - windows
+```
+
+Or omit `capabilities:` entirely — Windows is active by default.
+
+---
+
+## Opening a window
+
+```js
+import { Windows } from "../lunejs/runtime/runtime.js";
+
+const id = await Windows.open({
+  title: "Settings",
+  url: "https://localhost:5173/settings",
+  width: 640,
+  height: 480,
+});
+```
+
+`Windows.open` returns an opaque string handle you pass to subsequent calls. The window appears immediately on the main thread; the Promise resolves once the window is created and all bindings are wired up.
+
+### Options
+
+| Key      | Type     | Default    | Description                           |
+| -------- | -------- | ---------- | ------------------------------------- |
+| `title`  | `string` | `"Window"` | Native title bar text                 |
+| `url`    | `string` | —          | URL to navigate to on open            |
+| `width`  | `number` | `800`      | Initial window width in logical pixels |
+| `height` | `number` | `600`      | Initial window height in logical pixels |
+
+---
+
+## Closing a window
+
+```js
+await Windows.close(id);
+```
+
+Closes the native window and releases all resources. Call this rather than letting the user close the window via the title bar — see [Notes](#notes).
+
+---
+
+## Listing open windows
+
+```js
+const ids = await Windows.list();
+// ["a3f2b1c0...", ...]
+```
+
+Returns the handles of all currently open secondary windows (the main window is not included).
+
+---
+
+## JavaScript API
+
+| Method  | Signature                               | Description                       |
+| ------- | --------------------------------------- | --------------------------------- |
+| `open`  | `(opts: Record<string, any>) → Promise<string>` | Open a new window, return its handle |
+| `close` | `(id: string) → Promise<void>`          | Close the window by handle        |
+| `list`  | `() → Promise<string[]>`               | List all open secondary window handles |
+
+---
+
+## Window closed event
+
+When a secondary window is closed — either via `Windows.close(id)` or by the user clicking the OS × button — the `window_closed` event fires in the main window:
+
+```js
+import { Events } from "../lunejs/runtime/runtime.js";
+
+Events.on("window_closed", (data) => {
+  console.log("window closed:", data.id);
+});
+```
+
+`data.id` is the same handle returned by `Windows.open`. Use this to keep UI state in sync without polling `Windows.list()`.
+
+---
+
+## Shared capabilities
+
+Secondary windows share all registered bindings. Any capability available in the main window (`Sqlite`, `Filesystem`, `Clipboard`, etc.) works identically in a secondary window. `app.events.emit` in Crystal broadcasts to all open windows simultaneously.
+
+---
+
+## Notes
+
+- **No `run` needed.** Secondary windows join the existing Cocoa/GTK run loop automatically; you don't need to do anything extra to keep them alive.
+- **Stream.** The WebSocket stream (`Stream` capability) connects to the main window's HTTP server. Secondary windows opened with the same base URL will reconnect automatically on load.
+
+---
+
+## Disabling
+
+```yaml
+capabilities:
+  exclude:
+    - windows
+```

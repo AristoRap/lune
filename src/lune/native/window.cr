@@ -146,6 +146,9 @@ module Lune
                             drop_cb : DropCallback, drop_ud : Void*,
                             drag_pos_fn : LibC::Char*) : Void
         fun lune_start_drag_out(window : Void*, paths_json : LibC::Char*) : Void
+        fun lune_window_close(window : Void*) : Void
+        alias CloseCallback = Void* ->
+        fun lune_window_observe_close(window : Void*, cb : CloseCallback, arg : Void*) : Void
       end
     {% elsif flag?(:linux) %}
       {% system("cd '#{__DIR__}/../../../ext/native/linux' && gcc -c window.c -o window.o `pkg-config --cflags gtk+-3.0` 2>/dev/null") %}
@@ -179,6 +182,8 @@ module Lune
       # Kept at class level so GC never collects boxed callbacks while the window is live.
       @@drop_box : Pointer(Void) = Pointer(Void).null
       @@drop_pos_box : Pointer(Void) = Pointer(Void).null
+      # Keyed by window handle; holds close procs until they fire (prevents GC).
+      @@close_procs = {} of Void* => Proc(Nil)
 
       def self.disable_webview_drop(handle : Void*)
         {% if flag?(:lune_native_test_mock) %}
@@ -373,6 +378,28 @@ module Lune
           WindowMock.record_set_always_on_top
         {% elsif flag?(:darwin) %}
           LibNativeWindow.set_always_on_top(handle, enabled ? 1 : 0)
+        {% end %}
+      end
+
+      def self.close(handle : Void*)
+        {% if !flag?(:lune_native_test_mock) && flag?(:darwin) %}
+          LibNativeWindow.lune_window_close(handle)
+        {% end %}
+      end
+
+      # Registers a one-shot callback that fires on the main thread when the
+      # NSWindow receives NSWindowWillCloseNotification (OS × button OR programmatic
+      # close). The block is always called exactly once and then discarded.
+      def self.on_close(handle : Void*, &block : ->) : Nil
+        captured = block
+        {% if !flag?(:lune_native_test_mock) && flag?(:darwin) %}
+          @@close_procs[handle] = captured
+          LibNativeWindow.lune_window_observe_close(handle, ->(arg : Void*) {
+            if cb = @@close_procs[arg]?
+              @@close_procs.delete(arg)
+              cb.call
+            end
+          }, handle)
         {% end %}
       end
     end

@@ -1,5 +1,6 @@
 <script setup>
-import { computed, onMounted, ref, shallowRef } from "vue";
+import { computed, onMounted, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import Starfield from "./components/Starfield.vue";
 import Titlebar from "./components/Titlebar.vue";
 import Sidebar from "./components/Sidebar.vue";
@@ -8,18 +9,16 @@ import Toast from "./components/Toast.vue";
 import { flatNav } from "./nav.js";
 import { System, Events } from "./lune.js";
 
-const active = ref("welcome");
+const route = useRoute();
+const router = useRouter();
+const active = computed(() => route.path.slice(1) || "welcome");
 const env = ref({});
 const clock = ref("");
 const clockPaused = ref(false);
 const status = ref("Ready");
 
-const activeView = computed(
-  () => flatNav.find((n) => n.id === active.value)?.view,
-);
-
 function select(id) {
-  active.value = id;
+  router.push("/" + id);
   status.value = `Viewing → ${flatNav.find((n) => n.id === id)?.label}`;
 }
 
@@ -49,7 +48,7 @@ onMounted(async () => {
   <div id="shell">
     <Sidebar :active="active" :env="env" @select="select" />
     <main id="content">
-      <component :is="activeView" />
+      <RouterView />
     </main>
   </div>
 

@@ -39,6 +39,7 @@ module Lune
           Capabilities::Shell.new,
           Capabilities::Hotkeys.new,
           Capabilities::Sqlite.new,
+          Capabilities::Windows.new,
         ] of Lune::Capability
 
         setup_ctx = Lune::Capability::SetupCtx.new(options, handle)

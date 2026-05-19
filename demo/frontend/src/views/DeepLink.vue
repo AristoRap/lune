@@ -1,20 +1,37 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from "vue";
+import { useRouter } from "vue-router";
 import SectionHead from "../components/SectionHead.vue";
 
+const router = useRouter();
 const lastUrl = ref(null);
 const log = ref([]);
 
-function handleDeepLink(url) {
+function handleDeepLink(data) {
+  const url = data.url;
   lastUrl.value = url;
   log.value.unshift({ url, ts: new Date().toLocaleTimeString() });
+
+  // lune-demo://navigate/<view-id> routes directly to that view
+  try {
+    const u = new URL(url);
+    if (u.protocol === "lune-demo:" && u.hostname === "navigate") {
+      const id = u.pathname.replace(/^\//, "");
+      if (id) router.push("/" + id);
+    }
+  } catch {}
 }
 
-onMounted(() => window.__lune.on("deep_link", (data) => handleDeepLink(data.url), -1));
-onBeforeUnmount(() => window.__lune.off("deep_link", handleDeepLink));
+const handler = (data) => handleDeepLink(data);
+onMounted(() => window.__lune.on("deep_link", handler, -1));
+onBeforeUnmount(() => window.__lune.off("deep_link", handler));
 
 function simulate() {
   window.__lune.crystalEmit("deep_link", { url: "lune-demo://open/path?token=demo123" });
+}
+
+function simulateNavigate() {
+  window.__lune.crystalEmit("deep_link", { url: "lune-demo://navigate/windows" });
 }
 </script>
 
@@ -40,11 +57,14 @@ function simulate() {
 
     <div class="card">
       <span class="card-label">Simulate (dev / build)</span>
-      <button class="primary" @click="simulate">Fire lune-demo://open/path?token=demo123</button>
+      <div class="btn-col">
+        <button class="primary" @click="simulate">Fire lune-demo://open/path?token=demo123</button>
+        <button class="primary" @click="simulateNavigate">Fire lune-demo://navigate/windows</button>
+      </div>
       <p class="hint">
-        Calls <code>window.__lune.crystalEmit</code> directly to test the UI without
-        going through the OS. Works in both <code>lune dev</code> and
-        <code>lune build</code>.
+        <code>navigate/&lt;id&gt;</code> routes the app directly to that view.
+        Calls <code>window.__lune.crystalEmit</code> directly — works in both
+        <code>lune dev</code> and <code>lune build</code>.
       </p>
     </div>
 
@@ -109,6 +129,13 @@ function simulate() {
 .code-comment {
   color: var(--muted);
   font-style: italic;
+}
+
+.btn-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .code-comment.mt {

@@ -4,6 +4,9 @@
 
 ### Added
 
+- **`windows` capability** — open additional native windows from JavaScript. `Windows.open({ title, url, width, height })` creates a new window, registers all active capability bindings on it, and resolves with an opaque handle. `Windows.close(id)` closes and releases the window. `Windows.list()` returns handles of all open secondary windows. `app.events.emit` in Crystal broadcasts to all open windows simultaneously. Secondary windows join the existing Cocoa/GTK run loop automatically — no extra `run` call needed. A `window_closed` event fires in the main window whenever a secondary window closes (OS × button or programmatic `close()`), with `{ id }` payload — no polling required.
+- **Vue Router (hash mode) in demo** — the demo app now uses hash-based routing (`#/route`). Deep links and secondary windows can target any view by URL. `DeepLink` handles `lune-demo://navigate/<id>` for in-app routing.
+
 - **`sqlite` capability** — embedded SQLite database access via `crystal-lang/crystal-sqlite3`. `Sqlite.open(path)` returns an opaque handle (pass `":memory:"` for an in-process database or an absolute file path for a persistent one). `Sqlite.exec(db, sql, params)` runs non-SELECT statements and resolves with `{ changes, lastInsertId }`. `Sqlite.query(db, sql, params)` runs SELECT statements and resolves with an array of row objects keyed by column name. `Sqlite.close(db)` releases the handle. SQL and type errors surface as `LuneError` with code `sqlite_error`; accessing an unknown handle raises `sqlite_not_open`. BLOBs arrive in JS as base64 strings. All open databases are closed on app quit via the `Lifecycle` shutdown hook.
 
 ## [0.9.0] - 2026-05-19

@@ -72,6 +72,7 @@ Two capabilities are marked **core**: `event_bus` and `stream`. They are enabled
 | [System](./system)               | `system`        | `System`        | No      | Bindable                 | —           | —           | all            |
 | [Tray](./tray)                   | `tray`          | `Tray`          | No      | Bindable                 | —           | `event_bus` | macOS · Linux¹ |
 | [Window](./window)               | `window`        | `Window`        | No      | Bindable                 | —           | —           | macOS · Linux  |
+| [Windows](./windows)             | `windows`       | `Windows`       | No      | Bindable · Lifecycle     | —           | —           | all            |
 
 ¹ Requires XWayland on Wayland compositors.
 

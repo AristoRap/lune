@@ -61,6 +61,7 @@ export default defineConfig({
               { text: 'System', link: '/capabilities/system' },
               { text: 'Tray', link: '/capabilities/tray' },
               { text: 'Window', link: '/capabilities/window' },
+              { text: 'Windows', link: '/capabilities/windows' },
             ],
           },
         ],

@@ -24,7 +24,7 @@ Features the platform exposes that Lune doesn't yet surface.
 - [x] Rich clipboard — image and HTML read/write beyond current text-only support
 - [x] Drag-out — native drag of files from the WebView into the system (complement to existing drop-in)
 - [x] SQLite — embedded database access via Crystal's `sqlite3` shard with a typed JS bridge; pairs naturally with the Stream for reactive data flows
-- [ ] Multiple windows
+- [x] Multiple windows
 
 ## Backlog — Architecture
 
