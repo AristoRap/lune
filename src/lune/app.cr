@@ -58,7 +58,8 @@ module Lune
     def emit(event : String, data = nil)
       return unless (b = @bridge)
       json = data.nil? ? "null" : data.to_json
-      b.dispatch_eval("window.#{Lune::Capability::BRIDGE_MARKER}.crystalEmit(#{event.inspect}, #{json})")
+      bm = Lune::Capability::BRIDGE_MARKER
+      b.dispatch_eval("if(window.#{bm}&&typeof window.#{bm}.crystalEmit==='function')window.#{bm}.crystalEmit(#{event.inspect},#{json})")
     end
 
     def on(event : String, &block : JSON::Any -> Nil)

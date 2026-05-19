@@ -27,7 +27,7 @@ end
 streaming = Atomic(Int32).new(0)
 
 app.channel_on("stream-start") { |_| streaming.set(1) }
-app.channel_on("stream-stop")  { |_| streaming.set(0) }
+app.channel_on("stream-stop") { |_| streaming.set(0) }
 app.channel_on("channel-ping") { |data| app.channel_send("channel-pong", data) }
 
 prices = {"BTC" => 45000.0_f64, "ETH" => 2800.0_f64, "SOL" => 120.0_f64, "AAPL" => 185.0_f64, "MSFT" => 380.0_f64}

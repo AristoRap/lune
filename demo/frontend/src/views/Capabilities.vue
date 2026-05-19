@@ -21,6 +21,7 @@ const ALL = [
   { cap: "drag_out", group: "Drag Out", core: false, fns: ["start"] },
   // Core — JS-injected infrastructure, no bridge binding
   { cap: "event_bus", group: "Event Bus", core: true, fns: ["on", "once", "off", "emit"] },
+  { cap: "channel", group: "Channel", core: true, fns: ["on", "once", "off", "send"] },
   { cap: "deep_link", group: "Deep Link", core: true, fns: ["on", "off"] },
   { cap: "file_drop", group: "File Drop", core: true, fns: ["on", "off"] },
 ];
@@ -39,7 +40,7 @@ onMounted(() => {
 
   bridgeGroups.value = ALL.filter((g) => !g.core).map(resolve);
   coreGroups.value = ALL.filter((g) => g.core).map(resolve);
-  restricted.value = bridgeGroups.value.some((g) => !g.available);
+  restricted.value = bridgeGroups.value.some((g) => !g.available) || coreGroups.value.some((g) => !g.available);
 });
 </script>
 

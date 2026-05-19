@@ -51,10 +51,12 @@ module Lune
       _config = ::Lune::Config.load
       _registry = ::Lune::Capabilities::Registry.new(Pointer(Void).null, ::Lune::Options.new)
       _registry.validate(_config.capabilities)
-      _active = _registry.active(_config.capabilities)
+      _resolved = _registry.resolve(_config.capabilities)
+      _resolved.warnings.each { |w| ::Lune.logger.warn { w } }
       _stubs = ::Lune::App.new
-      _active.each { |cap| cap.install(_stubs) }
-      ::Lune::Runtime::Generator.write_js(appl.bindings + _stubs.bindings.select(&.internal?), lunejs_dir, _active)
+      _bind_ctx = ::Lune::Capability::BindCtx.new(_stubs)
+      _resolved.capabilities.each { |cap| cap.install(_bind_ctx) if cap.is_a?(::Lune::Capability::Bindable) }
+      ::Lune::Runtime::Generator.write_js(appl.bindings + _stubs.bindings.select(&.internal?), lunejs_dir, _resolved.capabilities)
     {% else %}
       runner = ::Lune::Runner.new({{ app }}) do |opts|
         {% if block %}

@@ -6,6 +6,11 @@
 
 - **WebSocket IPC channel** — a new `Channel` capability provides a bidirectional, ordered, low-latency channel backed by a local WebSocket server. Use `app.channel_send(name, data)` from Crystal and `Channel.on` / `Channel.send` from JavaScript for high-frequency or continuous data streams (tickers, log tails, LLM token output) where the event bus's per-call `evaluateJavaScript` overhead would become a bottleneck. The channel auto-reconnects on disconnect and can be excluded via `lune.yml` if not needed.
 
+### Fixed
+
+- **`app.emit` crash when `event_bus` excluded** — calling `app.emit` with the event bus capability disabled threw `TypeError: crystalEmit is not a function` in JS. The Crystal side now guards the call, and no-op JS stubs are injected for `crystalEmit`, `on`, `off`, and `jsEmit` so frontend code that references them doesn't throw.
+- **Channel JS stubs when `channel` excluded** — similarly, `chOn`, `chOff`, and `chSend` are stubbed as no-ops when the channel capability is inactive, preventing crashes in frontend code that references them unconditionally.
+
 ### Internal
 
 - **Capability architecture** — each capability now declares a `Descriptor` (id, label, deps, soft_deps, core) and opts into lifecycle phases via modules (`Capability::Bindable`, `Capability::WebviewInject`, `Capability::Lifecycle`) rather than overriding no-op base methods. Context structs (`SetupCtx`, `BindCtx`, `WebviewCtx`) replace scattered argument lists. `name` derives from `descriptor.id` — no per-capability override needed. The registry runs a `setup` pass so handle- and options-dependent capabilities pull state from context instead of constructor injection. `Registry#resolve` applies include/exclude config, cascade-disables capabilities whose hard deps are inactive (with logged warnings), emits soft-dep warnings, and topologically sorts the result. The runner dispatches through `is_a?` phase checks and calls `shutdown` on `Lifecycle` capabilities after `wv.run`. `App#install(cap : Capability)` added as a convenience for installing capabilities from user code.
