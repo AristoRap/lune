@@ -6,6 +6,10 @@
 
 - **WebSocket IPC channel** — a new `Channel` capability provides a bidirectional, ordered, low-latency channel backed by a local WebSocket server. Use `app.channel_send(name, data)` from Crystal and `Channel.on` / `Channel.send` from JavaScript for high-frequency or continuous data streams (tickers, log tails, LLM token output) where the event bus's per-call `evaluateJavaScript` overhead would become a bottleneck. The channel auto-reconnects on disconnect and can be excluded via `lune.yml` if not needed.
 
+### Internal
+
+- **Capability architecture — phase 1** — each capability now declares a `Descriptor` (id, label, deps, soft_deps, core) and opts into lifecycle phases via modules (`Capability::Bindable`, `Capability::WebviewInject`, `Capability::Lifecycle`) rather than overriding no-op base methods. Context structs (`SetupCtx`, `BindCtx`, `WebviewCtx`) replace scattered argument lists. `name` is derived from `descriptor.id` — no per-capability override needed. The registry runs a `setup` pass so handle- and options-dependent capabilities pull state via context instead of constructor injection. Dependency declarations (`deps`, `soft_deps`) are in place on all capabilities; cascade resolution and runner phase-dispatch are the next step.
+
 ## [0.7.1] - 2026-05-19
 
 ### Fixed

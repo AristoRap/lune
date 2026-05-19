@@ -2,50 +2,113 @@ module Lune
   abstract class Capability
     include Installable
 
-    # Single source of truth for the internal bridge marker.
-    # Interpolate everywhere instead of hardcoding the string literal.
     BRIDGE_MARKER = "__lune"
     SENTINEL_NS   = "capabilities.#{BRIDGE_MARKER}"
 
-    # Unique camelCase name used in lune.yml capabilities include/exclude lists.
-    abstract def name : String
+    # -------------------------------------------------------------------------
+    # Descriptor — static self-description for each capability.
+    # Read by the registry before instantiation to build the dependency graph.
+    # -------------------------------------------------------------------------
+    record Descriptor,
+      id : Symbol,
+      label : String,
+      deps : Array(Symbol) = [] of Symbol,       # hard: auto-disabled if dep missing
+      soft_deps : Array(Symbol) = [] of Symbol,  # optional: degrades gracefully
+      core : Bool = false                        # true = cannot be excluded via config
 
-    # PascalCase JS namespace for generated exports: System, Filesystem, DragOut, …
-    # Uses Crystal's built-in .camelcase (lower: false = PascalCase by default).
-    # Override in subclasses when a different public name is needed (e.g. "Events").
+    # -------------------------------------------------------------------------
+    # Context structs — passed to each lifecycle phase instead of raw args.
+    # -------------------------------------------------------------------------
+
+    struct SetupCtx
+      getter options : Options
+      getter handle : Pointer(Void)
+
+      def initialize(@options : Options, @handle : Pointer(Void))
+      end
+    end
+
+    struct BindCtx
+      getter app : App
+
+      def initialize(@app : App)
+      end
+
+      delegate register, to: @app
+    end
+
+    struct WebviewCtx
+      getter wv : Webview::Webview
+      getter handle : Pointer(Void)
+      getter app : App
+      getter active : Set(Symbol)
+
+      def initialize(@wv : Webview::Webview, @handle : Pointer(Void), @app : App, @active : Set(Symbol))
+      end
+
+      def dep_active?(id : Symbol) : Bool
+        @active.includes?(id)
+      end
+    end
+
+    # -------------------------------------------------------------------------
+    # Phase modules — include only the phases a capability participates in.
+    # The compiler then enforces the abstract method for that phase.
+    # -------------------------------------------------------------------------
+
+    # Include if this capability registers bridge bindings (also runs in build mode).
+    module Bindable
+      abstract def install(ctx : BindCtx) : Nil
+    end
+
+    # Include if this capability injects JS or registers raw wv.bind calls (runtime only).
+    module WebviewInject
+      abstract def init_webview(ctx : WebviewCtx) : Nil
+    end
+
+    # Include if this capability holds resources that must be released on quit.
+    module Lifecycle
+      abstract def shutdown : Nil
+    end
+
+    # -------------------------------------------------------------------------
+    # Base — existing interface kept intact while migration is in progress.
+    # -------------------------------------------------------------------------
+
+    abstract def descriptor : Descriptor
+
+    def name : String
+      descriptor.id.to_s
+    end
+
     def binding_namespace : String
       name.camelcase
     end
 
-    # Namespaced JS key written as a sentinel when this capability is active.
     def sentinel_key : String
       "#{SENTINEL_NS}.#{name}"
     end
 
-    # Returns true if the user has configured any options for this capability.
-    # Used to warn in dev when a capability is inactive but its opts are set.
+    # Phase 0: pull options / handle into instance vars before install or init_webview.
+    # Default no-op — stateless capabilities don't need to override.
+    def setup(ctx : SetupCtx) : Nil
+    end
+
+    # Legacy signatures — kept until all capabilities are migrated to ctx variants.
     def configured? : Bool
       false
     end
 
-    # Register bindings on the app. Called in both build mode and runtime.
     def install(app : App) : Nil
     end
 
-    # Inject JS or set up raw webview bindings. Called in runtime only (no webview in build mode).
     def init_webview(wv : Webview::Webview, handle : Pointer(Void), app : Lune::App) : Nil
     end
 
-    # Method bodies for the generated `export const <Namespace> = { … }` object.
-    # Return comma-separated object method definitions (PascalCase names, no `export` prefix).
-    # Empty string means this capability contributes no JS helpers.
     def js_helpers : String
       ""
     end
 
-    # Interface members for the generated `export interface <Namespace> { … }` block.
-    # Return method signatures (no `export declare` prefix).
-    # Empty string means this capability contributes no DTS helpers.
     def dts_helpers : String
       ""
     end

@@ -1,20 +1,33 @@
 module Lune
   module Capabilities
     class FileDrop < Lune::Capability
-      def initialize(@options : Lune::Options::Drop)
+      include Capability::WebviewInject
+
+      DESCRIPTOR = Descriptor.new(id: :file_drop, label: "FileDrop", deps: [:event_bus])
+
+      def descriptor : Descriptor
+        DESCRIPTOR
       end
 
-      def name : String
-        "file_drop"
-      end
+      @options : Lune::Options::Drop = Lune::Options::Drop.new
 
+      def setup(ctx : SetupCtx) : Nil
+        @options = ctx.options.drop
+      end
 
       def configured? : Bool
         !@options.zone.empty? || !@options.on_drop.nil? || @options.disable_webview_drop
       end
 
       def init_webview(wv : Webview::Webview, handle : Pointer(Void), app : Lune::App) : Nil
+        init_webview(WebviewCtx.new(wv, handle, app, Set(Symbol).new))
+      end
+
+      def init_webview(ctx : WebviewCtx) : Nil
         drop = @options
+        wv = ctx.wv
+        handle = ctx.handle
+        app = ctx.app
 
         Native::Window.disable_webview_drop(handle)
 

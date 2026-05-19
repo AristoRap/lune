@@ -12,20 +12,23 @@ module Lune
           # Core (JS injection via wv.init / raw wv.bind)
           Capabilities::EventBus.new,
           Capabilities::Channel.new,
-          Capabilities::FileDrop.new(options.drop),
+          Capabilities::FileDrop.new,
           # Runtime (bridge bindings)
-          Capabilities::System.new(on_quit: on_quit, debug: options.debug),
+          Capabilities::System.new(on_quit),
           Capabilities::Filesystem.new,
           Capabilities::Clipboard.new,
-          Capabilities::Window.new(handle),
+          Capabilities::Window.new,
           Capabilities::Dialogs.new,
-          Capabilities::Tray.new(event_name: options.tray.event, on_tray_click: options.tray.on_click, on_menu_click: options.tray.on_menu_click),
+          Capabilities::Tray.new,
           Capabilities::Notifications.new,
           Capabilities::Screen.new,
-          Capabilities::ContextMenu.new(handle),
-          Capabilities::DragOut.new(handle),
+          Capabilities::ContextMenu.new,
+          Capabilities::DragOut.new,
           Capabilities::DeepLink.new,
         ] of Lune::Capability
+
+        setup_ctx = Lune::Capability::SetupCtx.new(options, handle)
+        @all.each { |cap| cap.setup(setup_ctx) }
       end
 
       # All capabilities, unfiltered.

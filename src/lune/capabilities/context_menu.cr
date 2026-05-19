@@ -1,23 +1,34 @@
 module Lune
   module Capabilities
     class ContextMenu < Lune::Capability
-      def initialize(@handle : Void*)
+      include Capability::Bindable
+      include Capability::WebviewInject
+
+      DESCRIPTOR = Descriptor.new(id: :context_menu, label: "ContextMenu", deps: [:event_bus])
+
+      def descriptor : Descriptor
+        DESCRIPTOR
       end
 
-      def name : String
-        "context_menu"
+      @handle : Void* = Pointer(Void).null
+
+      def setup(ctx : SetupCtx) : Nil
+        @handle = ctx.handle
       end
 
+      def install(app : App) : Nil
+        install(BindCtx.new(app))
+      end
 
-      def install(app : Lune::App)
+      def install(ctx : BindCtx) : Nil
         h = @handle
-        app.register(Definition.new(
+        ctx.register(Definition.new(
           name: "#{name}.show",
           args: ["Float64", "Float64", "String"],
           return_type: "Nil",
           callback: ->(args : Array(JSON::Any)) {
             Lune::Native::Menu.show_context_menu(h, args[0].as_f.to_f32, args[1].as_f.to_f32, args[2].as_s) do |id|
-              app.emit("context_menu", {"id" => id})
+              ctx.app.emit("context_menu", {"id" => id})
             end
             JSON::Any.new(nil)
           },
@@ -25,9 +36,13 @@ module Lune
       end
 
       def init_webview(wv : Webview::Webview, handle : Pointer(Void), app : Lune::App) : Nil
+        init_webview(WebviewCtx.new(wv, handle, app, Set(Symbol).new))
+      end
+
+      def init_webview(ctx : WebviewCtx) : Nil
         bm = BRIDGE_MARKER
         ctx_show_id = "#{bm}.context_menu.show"
-        wv.init(<<-JS)
+        ctx.wv.init(<<-JS)
         (function(){
           window.#{bm} = window.#{bm} || {};
           var _ctx_items = null;

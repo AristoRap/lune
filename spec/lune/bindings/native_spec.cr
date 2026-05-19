@@ -2,8 +2,10 @@ require "../../spec_helper"
 
 private def install_all(handle, on_tray_click = nil, on_menu_click = nil)
   app = Lune::App.new
+  window_cap = Lune::Capabilities::Window.new
+  window_cap.setup(Lune::Capability::SetupCtx.new(Lune::Options.new, handle))
   app.install(
-    Lune::Capabilities::Window.new(handle),
+    window_cap,
     Lune::Capabilities::Tray.new(on_tray_click: on_tray_click, on_menu_click: on_menu_click),
     Lune::Capabilities::Dialogs.new,
     Lune::Capabilities::Notifications.new,
@@ -61,7 +63,9 @@ describe "Lune::Capabilities (native)" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
-      app.install(Lune::Capabilities::Window.new(handle))
+      window_cap = Lune::Capabilities::Window.new
+      window_cap.setup(Lune::Capability::SetupCtx.new(Lune::Options.new, handle))
+      app.install(window_cap)
       bridge.register_bindings(app.bindings)
 
       wv.invoke("__lune.window.minimize", "seq1", [] of JSON::Any)
@@ -72,7 +76,9 @@ describe "Lune::Capabilities (native)" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
-      app.install(Lune::Capabilities::Window.new(handle))
+      window_cap = Lune::Capabilities::Window.new
+      window_cap.setup(Lune::Capability::SetupCtx.new(Lune::Options.new, handle))
+      app.install(window_cap)
       bridge.register_bindings(app.bindings)
 
       wv.invoke("__lune.window.maximize", "seq2", [] of JSON::Any)
@@ -83,7 +89,9 @@ describe "Lune::Capabilities (native)" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
-      app.install(Lune::Capabilities::Window.new(handle))
+      window_cap = Lune::Capabilities::Window.new
+      window_cap.setup(Lune::Capability::SetupCtx.new(Lune::Options.new, handle))
+      app.install(window_cap)
       bridge.register_bindings(app.bindings)
 
       wv.invoke("__lune.window.set_title", "seq3", [JSON::Any.new("My App")])
@@ -94,7 +102,9 @@ describe "Lune::Capabilities (native)" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
-      app.install(Lune::Capabilities::Window.new(handle))
+      window_cap = Lune::Capabilities::Window.new
+      window_cap.setup(Lune::Capability::SetupCtx.new(Lune::Options.new, handle))
+      app.install(window_cap)
       bridge.register_bindings(app.bindings)
 
       wv.invoke("__lune.window.set_size", "seq4", [JSON::Any.new(1920_i64), JSON::Any.new(1080_i64)])
@@ -105,7 +115,9 @@ describe "Lune::Capabilities (native)" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
-      app.install(Lune::Capabilities::Window.new(handle))
+      window_cap = Lune::Capabilities::Window.new
+      window_cap.setup(Lune::Capability::SetupCtx.new(Lune::Options.new, handle))
+      app.install(window_cap)
       bridge.register_bindings(app.bindings)
 
       wv.invoke("__lune.window.center", "seq5", [] of JSON::Any)

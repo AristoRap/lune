@@ -12,7 +12,7 @@ private def event_bus_caps
 end
 
 private def drag_out_caps
-  [Lune::Capabilities::DragOut.new(Pointer(Void).null)] of Lune::Capability
+  [Lune::Capabilities::DragOut.new] of Lune::Capability
 end
 
 describe Lune::Runtime do

@@ -1,6 +1,14 @@
 module Lune
   module Capabilities
     class Clipboard < Lune::Capability
+      include Capability::Bindable
+
+      DESCRIPTOR = Descriptor.new(id: :clipboard, label: "Clipboard")
+
+      def descriptor : Descriptor
+        DESCRIPTOR
+      end
+
       DEFAULT_READ = -> {
         output = IO::Memory.new
         {% if flag?(:darwin) %}
@@ -39,14 +47,13 @@ module Lune
       )
       end
 
-      def name : String
-        "clipboard"
+      def install(app : App) : Nil
+        install(BindCtx.new(app))
       end
 
-
-      def install(app : Lune::App)
+      def install(ctx : BindCtx) : Nil
         on_read = @on_read
-        app.register(Definition.new(
+        ctx.register(Definition.new(
           name: "#{name}.read",
           args: [] of String,
           return_type: "String",
@@ -54,7 +61,7 @@ module Lune
         ).binding(binding_namespace))
 
         on_write = @on_write
-        app.register(Definition.new(
+        ctx.register(Definition.new(
           name: "#{name}.write",
           args: ["String"],
           return_type: "Nil",
@@ -63,7 +70,7 @@ module Lune
         ).binding(binding_namespace))
 
         on_read_html = @on_read_html
-        app.register(Definition.new(
+        ctx.register(Definition.new(
           name: "#{name}.read_html",
           args: [] of String,
           return_type: "String",
@@ -71,7 +78,7 @@ module Lune
         ).binding(binding_namespace))
 
         on_write_html = @on_write_html
-        app.register(Definition.new(
+        ctx.register(Definition.new(
           name: "#{name}.write_html",
           args: ["String"],
           return_type: "Nil",
@@ -80,7 +87,7 @@ module Lune
         ).binding(binding_namespace))
 
         on_read_image = @on_read_image
-        app.register(Definition.new(
+        ctx.register(Definition.new(
           name: "#{name}.read_image",
           args: [] of String,
           return_type: "String",
@@ -88,7 +95,7 @@ module Lune
         ).binding(binding_namespace))
 
         on_write_image = @on_write_image
-        app.register(Definition.new(
+        ctx.register(Definition.new(
           name: "#{name}.write_image",
           args: ["String"],
           return_type: "Nil",

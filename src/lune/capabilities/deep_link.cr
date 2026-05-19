@@ -1,19 +1,26 @@
 module Lune
   module Capabilities
     class DeepLink < Lune::Capability
-      def name : String
-        "deep_link"
+      include Capability::Bindable
+
+      DESCRIPTOR = Descriptor.new(id: :deep_link, label: "DeepLink", deps: [:event_bus])
+
+      def descriptor : Descriptor
+        DESCRIPTOR
       end
 
+      def install(app : App) : Nil
+        install(BindCtx.new(app))
+      end
 
-      def install(app : Lune::App)
+      def install(ctx : BindCtx) : Nil
         {% if flag?(:lune_native_test_mock) || flag?(:darwin) %}
           Native::DeepLink.install do |url|
-            app.emit("deep_link", {"url" => url})
+            ctx.app.emit("deep_link", {"url" => url})
           end
         {% elsif flag?(:linux) %}
           if url = ARGV.find { |arg| arg.includes?("://") }
-            app.emit("deep_link", {"url" => url})
+            ctx.app.emit("deep_link", {"url" => url})
           end
         {% end %}
       end

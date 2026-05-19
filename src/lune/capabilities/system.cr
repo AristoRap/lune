@@ -1,6 +1,14 @@
 module Lune
   module Capabilities
     class System < Lune::Capability
+      include Capability::Bindable
+
+      DESCRIPTOR = Descriptor.new(id: :system, label: "System")
+
+      def descriptor : Descriptor
+        DESCRIPTOR
+      end
+
       DEFAULT_OPEN_URL = ->(url : String) {
         {% if flag?(:darwin) %}
           Process.run("open", [url])
@@ -17,14 +25,17 @@ module Lune
       )
       end
 
-      def name : String
-        "system"
+      def setup(ctx : SetupCtx) : Nil
+        @debug = ctx.options.debug
       end
 
+      def install(app : App) : Nil
+        install(BindCtx.new(app))
+      end
 
-      def install(app : Lune::App)
+      def install(ctx : BindCtx) : Nil
         on_quit = @on_quit
-        app.register(Definition.new(
+        ctx.register(Definition.new(
           name: "#{name}.quit",
           args: [] of String,
           return_type: "Nil",
@@ -32,7 +43,7 @@ module Lune
         ).binding(binding_namespace))
 
         on_open_url = @on_open_url
-        app.register(Definition.new(
+        ctx.register(Definition.new(
           name: "#{name}.open_url",
           args: ["String"],
           return_type: "Nil",
@@ -42,7 +53,7 @@ module Lune
         ).binding(binding_namespace))
 
         debug = @debug
-        app.register(Definition.new(
+        ctx.register(Definition.new(
           name: "#{name}.environment",
           args: [] of String,
           return_type: "JSON",

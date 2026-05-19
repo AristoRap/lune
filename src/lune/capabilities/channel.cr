@@ -3,8 +3,12 @@ require "http/web_socket"
 module Lune
   module Capabilities
     class Channel < Lune::Capability
-      def name : String
-        "channel"
+      include Capability::WebviewInject
+
+      DESCRIPTOR = Descriptor.new(id: :channel, label: "Channel", core: true)
+
+      def descriptor : Descriptor
+        DESCRIPTOR
       end
 
       def binding_namespace : String
@@ -12,6 +16,12 @@ module Lune
       end
 
       def init_webview(wv : Webview::Webview, handle : Pointer(Void), app : Lune::App) : Nil
+        init_webview(WebviewCtx.new(wv, handle, app, Set(Symbol).new))
+      end
+
+      def init_webview(ctx : WebviewCtx) : Nil
+        wv = ctx.wv
+        app = ctx.app
         sockets = [] of HTTP::WebSocket
         mu = Mutex.new
 

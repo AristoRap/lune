@@ -278,7 +278,7 @@ describe "Lune::Capabilities" do
       app = Lune::App.new
       app.bridge = bridge
 
-      app.install(Lune::Capabilities::ContextMenu.new(Pointer(Void).null))
+      app.install(Lune::Capabilities::ContextMenu.new)
       bridge.register_bindings(app.bindings)
 
       items_json = "[{\"id\":\"copy\",\"label\":\"Copy\"}]"
@@ -301,7 +301,7 @@ describe "Lune::Capabilities" do
 
       Lune::Native::MenuMock.stub_context_selection("copy")
 
-      app.install(Lune::Capabilities::ContextMenu.new(Pointer(Void).null))
+      app.install(Lune::Capabilities::ContextMenu.new)
       bridge.register_bindings(app.bindings)
 
       items_json = "[{\"id\":\"copy\",\"label\":\"Copy\"}]"
@@ -323,7 +323,7 @@ describe "Lune::Capabilities" do
     it "drag_out.start calls start_drag_out with the given paths" do
       fake, bridge = make_bridge
       app = Lune::App.new
-      app.install(Lune::Capabilities::DragOut.new(Pointer(Void).null))
+      app.install(Lune::Capabilities::DragOut.new)
       bridge.register_bindings(app.bindings)
 
       paths_json = "[\"/etc/hosts\",\"/etc/shells\"]"
