@@ -19,6 +19,8 @@ module Lune
         init_webview(WebviewCtx.new(wv, handle, app, Set(Symbol).new))
       end
 
+      @port : Int32 = 0
+
       def init_webview(ctx : WebviewCtx) : Nil
         wv = ctx.wv
         app = ctx.app
@@ -41,7 +43,7 @@ module Lune
         ])
 
         addr = server.bind_tcp("127.0.0.1", 0)
-        port = addr.port
+        @port = addr.port
 
         pool = Fiber::ExecutionContext::Parallel.new("lune-stream-pool", 2)
         ready = ::Channel(Nil).new
@@ -56,6 +58,14 @@ module Lune
           copies.each { |ws| ws.send(%({"n":#{n.to_json},"d":#{json}})) rescue nil }
         }
 
+        inject_client_js(wv)
+      end
+
+      # Injects only the WebSocket client JS — used by secondary windows to
+      # connect to the already-running stream server without starting a new one.
+      def inject_client_js(wv : Webview::Webview) : Nil
+        return if @port == 0
+        port = @port
         bm = BRIDGE_MARKER
         wv.init(<<-JS)
         (function(){

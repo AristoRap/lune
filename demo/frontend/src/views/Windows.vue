@@ -52,7 +52,7 @@ const onWindowClosed = (data) => {
   }
 };
 
-onMounted(() => Events.on("window_closed", onWindowClosed, -1));
+onMounted(() => Events.on("window_closed", onWindowClosed));
 onBeforeUnmount(() => Events.off("window_closed", onWindowClosed));
 </script>
 
@@ -69,16 +69,11 @@ onBeforeUnmount(() => Events.off("window_closed", onWindowClosed));
     <div class="card">
       <span class="card-label">Open a window</span>
       <div class="btn-col">
-        <button
-          class="primary"
-          @click="openWindow({ title: 'Windows — copy', url: currentUrl, width: 800, height: 600 })"
-        >
+        <button class="primary"
+          @click="openWindow({ title: 'Windows — copy', url: currentUrl, width: 800, height: 600 })">
           Open this view in a new window
         </button>
-        <button
-          class="primary"
-          @click="openWindow({ title: 'SQLite', url: sqliteUrl, width: 800, height: 600 })"
-        >
+        <button class="primary" @click="openWindow({ title: 'SQLite', url: sqliteUrl, width: 800, height: 600 })">
           Open SQLite view in a new window
         </button>
       </div>

@@ -54,14 +54,13 @@ module Lune
             main_wv.dispatch do
               wv2 = Webview::Webview.new(false, title)
               wv2.size(width, height, Webview::SizeHints::NONE)
+              handle = wv2.native_handle(Webview::NativeHandleKind::UI_WINDOW)
 
-              inject_sentinels(wv2, resolved)
+              inject_sentinels(wv2, handle, resolved, app)
 
               bridge = Bridge.new(wv2)
               bridge.register_bindings(bindings.reject(&.internal?))
               bridge.register_bindings(bindings.select(&.internal?))
-
-              handle = wv2.native_handle(Webview::NativeHandleKind::UI_WINDOW)
 
               # NSWindowWillCloseNotification fires for both OS × and programmatic close.
               # For programmatic close the guard skips (maps already cleared by close binding);
@@ -140,16 +139,30 @@ module Lune
         @bridges.clear
       end
 
-      private def inject_sentinels(wv : Webview::Webview, resolved : Capabilities::ResolvedSet) : Nil
+      private def inject_sentinels(wv : Webview::Webview, handle : Void*, resolved : Capabilities::ResolvedSet, app : Lune::App) : Nil
+        webview_ctx = Lune::Capability::WebviewCtx.new(wv, handle, app, resolved.active_ids)
+        bm = Lune::Capability::BRIDGE_MARKER
+        stream_cap : Capabilities::Stream? = nil
+
         resolved.capabilities.each do |cap|
           wv.init("window[#{cap.sentinel_key.inspect}] = true;")
+          if cap.is_a?(Capabilities::Stream)
+            stream_cap = cap
+            next
+          end
+          if wi = cap.as?(Lune::Capability::WebviewInject)
+            wi.init_webview(webview_ctx)
+          end
         end
-        bm = Lune::Capability::BRIDGE_MARKER
+
         unless resolved.active_ids.includes?(:event_bus)
           js_emit_key = "#{bm}.jsEmit"
           wv.init("(function(){window.#{bm}=window.#{bm}||{};var n=function(){};window.#{bm}.crystalEmit=n;window.#{bm}.on=n;window.#{bm}.off=n;window[#{js_emit_key.inspect}]=function(){return Promise.resolve();};})();")
         end
-        unless resolved.active_ids.includes?(:stream)
+
+        if s = stream_cap
+          s.inject_client_js(wv)
+        else
           wv.init("(function(){window.#{bm}=window.#{bm}||{};var n=function(){};window.#{bm}.stOn=n;window.#{bm}.stOff=n;window.#{bm}.stSend=n;})();")
         end
       end

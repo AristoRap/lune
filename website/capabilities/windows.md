@@ -44,11 +44,11 @@ const id = await Windows.open({
 
 ### Options
 
-| Key      | Type     | Default    | Description                           |
-| -------- | -------- | ---------- | ------------------------------------- |
-| `title`  | `string` | `"Window"` | Native title bar text                 |
-| `url`    | `string` | —          | URL to navigate to on open            |
-| `width`  | `number` | `800`      | Initial window width in logical pixels |
+| Key      | Type     | Default    | Description                             |
+| -------- | -------- | ---------- | --------------------------------------- |
+| `title`  | `string` | `"Window"` | Native title bar text                   |
+| `url`    | `string` | —          | URL to navigate to on open              |
+| `width`  | `number` | `800`      | Initial window width in logical pixels  |
 | `height` | `number` | `600`      | Initial window height in logical pixels |
 
 ---
@@ -76,11 +76,11 @@ Returns the handles of all currently open secondary windows (the main window is 
 
 ## JavaScript API
 
-| Method  | Signature                               | Description                       |
-| ------- | --------------------------------------- | --------------------------------- |
-| `open`  | `(opts: Record<string, any>) → Promise<string>` | Open a new window, return its handle |
-| `close` | `(id: string) → Promise<void>`          | Close the window by handle        |
-| `list`  | `() → Promise<string[]>`               | List all open secondary window handles |
+| Method  | Signature                                       | Description                            |
+| ------- | ----------------------------------------------- | -------------------------------------- |
+| `open`  | `(opts: Record<string, any>) → Promise<string>` | Open a new window, return its handle   |
+| `close` | `(id: string) → Promise<void>`                  | Close the window by handle             |
+| `list`  | `() → Promise<string[]>`                        | List all open secondary window handles |
 
 ---
 
@@ -102,14 +102,19 @@ Events.on("window_closed", (data) => {
 
 ## Shared capabilities
 
-Secondary windows share all registered bindings. Any capability available in the main window (`Sqlite`, `Filesystem`, `Clipboard`, etc.) works identically in a secondary window. `app.events.emit` in Crystal broadcasts to all open windows simultaneously.
+Secondary windows are fully capable — every capability active in the main window works identically in a secondary window:
+
+- **Bindings** (`Sqlite`, `Filesystem`, `Clipboard`, etc.) — all JS APIs work normally.
+- **Event bus** — `Events.on` / `Events.emit` work; Crystal's `app.events.emit` broadcasts to all open windows simultaneously.
+- **Stream** — the WebSocket stream connects as an additional client to the main window's existing server. No second server is started.
+- **FileDrop** — drag-and-drop targets work per window.
+- **Context menu, hotkeys, and all other capabilities** — active in secondary windows automatically.
 
 ---
 
 ## Notes
 
 - **No `run` needed.** Secondary windows join the existing Cocoa/GTK run loop automatically; you don't need to do anything extra to keep them alive.
-- **Stream.** The WebSocket stream (`Stream` capability) connects to the main window's HTTP server. Secondary windows opened with the same base URL will reconnect automatically on load.
 
 ---
 

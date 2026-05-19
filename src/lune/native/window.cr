@@ -179,9 +179,10 @@ module Lune
     {% end %}
 
     module Window
-      # Kept at class level so GC never collects boxed callbacks while the window is live.
-      @@drop_box : Pointer(Void) = Pointer(Void).null
-      @@drop_pos_box : Pointer(Void) = Pointer(Void).null
+      # Keyed by window handle so multiple windows can each have a live drop callback
+      # without one overwriting another's GC pin.
+      @@drop_boxes = {} of Void* => Pointer(Void)
+      @@drop_pos_boxes = {} of Void* => Pointer(Void)
       # Keyed by window handle; holds close procs until they fire (prevents GC).
       @@close_procs = {} of Void* => Proc(Nil)
 
@@ -203,7 +204,7 @@ module Lune
         {% if flag?(:lune_native_test_mock) %}
           WindowMock.record_setup_file_drop(on_drop)
         {% elsif flag?(:darwin) %}
-          @@drop_box = Box.box(on_drop)
+          @@drop_boxes[handle] = Box.box(on_drop)
           # on_pos is unused on macOS — the ObjC overlay calls evaluateJavaScript:
           # directly via drag_pos_fn, eliminating the double-async dispatch chain.
           LibNativeWindow.setup_file_drop(
@@ -220,12 +221,12 @@ module Lune
               rescue JSON::ParseException | TypeCastError | KeyError
               end
             },
-            @@drop_box,
+            @@drop_boxes[handle],
             drag_pos_fn ? drag_pos_fn.to_unsafe : Pointer(LibC::Char).null
           )
         {% elsif flag?(:linux) %}
-          @@drop_box = Box.box(on_drop)
-          @@drop_pos_box = Box.box(on_pos)
+          @@drop_boxes[handle] = Box.box(on_drop)
+          @@drop_pos_boxes[handle] = Box.box(on_pos)
           LibNativeWindow.setup_file_drop(
             handle,
             ->(json_ptr : LibC::Char*, data : Void*) {
@@ -240,12 +241,12 @@ module Lune
               rescue JSON::ParseException | TypeCastError | KeyError
               end
             },
-            @@drop_box,
+            @@drop_boxes[handle],
             ->(x : LibC::Int, y : LibC::Int, data : Void*) {
               return if data.null?
               Box(Proc(Int32, Int32, Nil)).unbox(data).call(x.to_i32, y.to_i32)
             },
-            @@drop_pos_box
+            @@drop_pos_boxes[handle]
           )
         {% end %}
       end
