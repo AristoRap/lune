@@ -13,12 +13,12 @@ module Lune
         output = IO::Memory.new
         begin
           status = {% if flag?(:darwin) %}
-            Process.run("pbpaste", output: output)
-          {% elsif flag?(:win32) %}
-            Process.run("powershell.exe", ["-NoProfile", "-Command", "Get-Clipboard"], output: output)
-          {% else %}
-            Process.run("xclip", ["-o", "-selection", "clipboard"], output: output)
-          {% end %}
+                     Process.run("pbpaste", output: output)
+                   {% elsif flag?(:win32) %}
+                     Process.run("powershell.exe", ["-NoProfile", "-Command", "Get-Clipboard"], output: output)
+                   {% else %}
+                     Process.run("xclip", ["-o", "-selection", "clipboard"], output: output)
+                   {% end %}
           Lune.logger.warn { "Clipboard: read command failed (exit #{status.exit_code})" } unless status.success?
         rescue ex : File::Error | IO::Error
           Lune.logger.warn { "Clipboard: read command unavailable — #{ex.message}" }
@@ -29,12 +29,12 @@ module Lune
       DEFAULT_WRITE = ->(text : String) {
         begin
           status = {% if flag?(:darwin) %}
-            Process.run("pbcopy", input: IO::Memory.new(text))
-          {% elsif flag?(:win32) %}
-            Process.run("clip.exe", input: IO::Memory.new(text))
-          {% else %}
-            Process.run("xclip", ["-i", "-selection", "clipboard"], input: IO::Memory.new(text))
-          {% end %}
+                     Process.run("pbcopy", input: IO::Memory.new(text))
+                   {% elsif flag?(:win32) %}
+                     Process.run("clip.exe", input: IO::Memory.new(text))
+                   {% else %}
+                     Process.run("xclip", ["-i", "-selection", "clipboard"], input: IO::Memory.new(text))
+                   {% end %}
           Lune.logger.warn { "Clipboard: write command failed (exit #{status.exit_code})" } unless status.success?
         rescue ex : File::Error | IO::Error
           Lune.logger.warn { "Clipboard: write command unavailable — #{ex.message}" }
@@ -57,11 +57,10 @@ module Lune
       )
       end
 
-
       def install(ctx : BindCtx) : Nil
         [
-          {"read",       @on_read},
-          {"read_html",  @on_read_html},
+          {"read", @on_read},
+          {"read_html", @on_read_html},
           {"read_image", @on_read_image},
         ].each do |(method, reader)|
           ctx.register(Definition.new(
@@ -73,8 +72,8 @@ module Lune
         end
 
         [
-          {"write",       "text",    @on_write},
-          {"write_html",  "html",    @on_write_html},
+          {"write", "text", @on_write},
+          {"write_html", "html", @on_write_html},
           {"write_image", "dataUrl", @on_write_image},
         ].each do |(method, arg_name, writer)|
           ctx.register(Definition.new(

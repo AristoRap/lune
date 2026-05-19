@@ -9,7 +9,6 @@ module Lune
         DESCRIPTOR
       end
 
-
       def install(ctx : BindCtx) : Nil
         ctx.register(Definition.new(
           name: "#{name}.home_dir",

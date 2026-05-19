@@ -39,7 +39,6 @@ module Lune
         DTS
       end
 
-
       def install(ctx : BindCtx) : Nil
         event_name = @event_name
         on_tray_click = @on_tray_click || -> { ctx.app.emit(event_name, "click"); nil }
@@ -75,7 +74,7 @@ module Lune
             items = begin
               raw = Array(Hash(String, JSON::Any)).from_json(args[0].as_s)
               raw.compact_map do |h|
-                id    = h["id"]?.try(&.as_s?)
+                id = h["id"]?.try(&.as_s?)
                 label = h["label"]?.try(&.as_s?)
                 next unless id && label
                 {id: id, label: label}

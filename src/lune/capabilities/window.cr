@@ -15,14 +15,13 @@ module Lune
         @handle = ctx.handle
       end
 
-
       def install(ctx : BindCtx) : Nil
         h = @handle
 
         [
-          {"minimize", ->{ Lune::Native::Window.minimize(h) }},
-          {"maximize", ->{ Lune::Native::Window.maximize(h) }},
-          {"center",   ->{ Lune::Native::Window.center(h) }},
+          {"minimize", -> { Lune::Native::Window.minimize(h) }},
+          {"maximize", -> { Lune::Native::Window.maximize(h) }},
+          {"center", -> { Lune::Native::Window.center(h) }},
         ].each do |(method, action)|
           ctx.register(Definition.new(
             name: "#{name}.#{method}",

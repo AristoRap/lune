@@ -4,15 +4,16 @@ module Lune
       include Capability::Bindable
 
       DESCRIPTOR = Descriptor.new(id: :drag_out, label: "DragOut")
-      def descriptor : Descriptor; DESCRIPTOR; end
+
+      def descriptor : Descriptor
+        DESCRIPTOR
+      end
 
       @handle : Void* = Pointer(Void).null
-
 
       def setup(ctx : SetupCtx) : Nil
         @handle = ctx.handle
       end
-
 
       def install(ctx : BindCtx) : Nil
         h = @handle

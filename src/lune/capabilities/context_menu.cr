@@ -16,7 +16,6 @@ module Lune
         @handle = ctx.handle
       end
 
-
       def install(ctx : BindCtx) : Nil
         h = @handle
         ctx.register(Definition.new(

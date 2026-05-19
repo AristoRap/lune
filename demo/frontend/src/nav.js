@@ -14,6 +14,7 @@ import ContextMenu from "./views/ContextMenu.vue";
 import DragOut from "./views/DragOut.vue";
 import DeepLink from "./views/DeepLink.vue";
 import FileWatch from "./views/FileWatch.vue";
+import Shell from "./views/Shell.vue";
 import Capabilities from "./views/Capabilities.vue";
 
 export const navGroups = [
@@ -51,6 +52,7 @@ export const navGroups = [
       { id: "dragout", label: "Drag Out", icon: "drag", view: DragOut },
       { id: "deeplink", label: "Deep Links", icon: "link", view: DeepLink },
       { id: "filewatch", label: "File Watch", icon: "eye", view: FileWatch },
+      { id: "shell", label: "Shell", icon: "cpu", view: Shell },
       {
         id: "capabilities",
         label: "Capabilities",

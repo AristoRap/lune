@@ -25,9 +25,26 @@ module Lune
         end
         done.receive.try { |ex| raise ex }
       {% else %}
+        start_sigchld_pump
         webview(html, url)
       {% end %}
     end
+
+    # On Unix, Crystal's signal-loop fiber lives in the default execution
+    # context (main thread). When wv.run hands the main thread to Cocoa/GTK,
+    # that fiber is starved — so SIGCHLD signals queue up in the signal pipe
+    # but never get dispatched, and `Process#wait` (used by `Process.run`)
+    # hangs forever. Drain pending SIGCHLDs from a dedicated thread.
+    {% unless flag?(:win32) %}
+      private def start_sigchld_pump : Nil
+        Fiber::ExecutionContext::Isolated.new("lune-sigchld-pump") do
+          loop do
+            Crystal::System::SignalChildHandler.call
+            sleep 10.milliseconds
+          end
+        end
+      end
+    {% end %}
 
     private def webview(html : String? = nil, url : String? = nil) : Nil
       Webview.with_window(@options.width, @options.height, @options.hint, @options.title, @options.debug) do |wv|
@@ -217,7 +234,7 @@ module Lune
       html : String?,
       url : String?,
       registry : Capabilities::Registry,
-      resolved : Capabilities::ResolvedSet
+      resolved : Capabilities::ResolvedSet,
     ) : AssetServer?
       if h = html
         wv.html = h

@@ -14,7 +14,7 @@ module Lune
         "FileWatch"
       end
 
-      @watcher  = Lune::Native::FileWatch.new
+      @watcher = Lune::Native::FileWatch.new
       @debounce = 50.milliseconds
 
       def setup(ctx : SetupCtx) : Nil

@@ -32,6 +32,7 @@ export default defineConfig({
           { text: 'Distribution', link: '/guide/distribution' },
           { text: 'Deep Links', link: '/guide/deep-links' },
           { text: 'File Watch', link: '/guide/file-watch' },
+          { text: 'Shell', link: '/guide/shell' },
         ],
       },
       { text: 'CLI Reference', link: '/cli-reference' },

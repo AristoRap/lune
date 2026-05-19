@@ -36,6 +36,7 @@ module Lune
           Capabilities::DragOut.new,
           Capabilities::DeepLink.new,
           Capabilities::FileWatch.new,
+          Capabilities::Shell.new,
         ] of Lune::Capability
 
         setup_ctx = Lune::Capability::SetupCtx.new(options, handle)

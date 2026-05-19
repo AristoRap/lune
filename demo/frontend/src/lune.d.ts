@@ -21,5 +21,6 @@ export type {
   DeepLink,
   FileDrop,
   FileWatch,
+  Shell,
   Runtime,
 } from "../lunejs/runtime/runtime.js";

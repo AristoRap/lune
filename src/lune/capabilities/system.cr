@@ -29,7 +29,6 @@ module Lune
         @debug = ctx.options.debug
       end
 
-
       def install(ctx : BindCtx) : Nil
         on_quit = @on_quit
         ctx.register(Definition.new(

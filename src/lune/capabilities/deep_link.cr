@@ -9,7 +9,6 @@ module Lune
         DESCRIPTOR
       end
 
-
       def install(ctx : BindCtx) : Nil
         {% if flag?(:lune_native_test_mock) || flag?(:darwin) %}
           Native::DeepLink.install do |url|

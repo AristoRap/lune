@@ -4,9 +4,10 @@ module Lune
       include Capability::Bindable
 
       DESCRIPTOR = Descriptor.new(id: :dialogs, label: "Dialogs")
-      def descriptor : Descriptor; DESCRIPTOR; end
 
-
+      def descriptor : Descriptor
+        DESCRIPTOR
+      end
 
       def install(ctx : BindCtx) : Nil
         ctx.register(Definition.new(
@@ -43,9 +44,9 @@ module Lune
         ).binding(binding_namespace))
 
         [
-          {"info",     0, false},
-          {"warning",  1, false},
-          {"error",    2, false},
+          {"info", 0, false},
+          {"warning", 1, false},
+          {"error", 2, false},
           {"question", 3, true},
         ].each do |(variant, code, returns_value)|
           return_type = returns_value ? "String" : "Nil"

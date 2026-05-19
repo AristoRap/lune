@@ -20,4 +20,5 @@ export {
   DeepLink,
   FileDrop,
   FileWatch,
+  Shell,
 } from "../lunejs/runtime/runtime.js";
