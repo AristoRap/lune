@@ -676,6 +676,24 @@ Hides the window title text while keeping the title bar (and traffic lights) vis
 
 ---
 
+#### `mac.hide_traffic_lights`
+
+**Type:** `Bool` — **Default:** `false`
+
+Hides the close, minimise, and zoom buttons (the traffic lights). Combined with `full_size_content`, `hide_title`, and CSS drag zones, this gives you a fully chrome-free window with completely custom UI.
+
+```crystal
+opts.mac do |m|
+  m.full_size_content   = true
+  m.hide_title          = true
+  m.hide_traffic_lights = true
+end
+```
+
+> Remember to provide your own close/minimise controls in your frontend when using this option — the user will have no OS-level way to close the window otherwise.
+
+---
+
 #### `mac.appearance`
 
 **Type:** `Lune::Options::Mac::Appearance` — **Default:** `Auto`
@@ -717,10 +735,11 @@ Lune.run(app, assets: "frontend/dist") do |opts|
   end
 
   opts.mac do |m|
-    m.full_size_content = true
-    m.transparent       = true
-    m.hide_title        = true
-    m.appearance        = Lune::Options::Mac::Appearance::Dark
+    m.full_size_content   = true
+    m.transparent         = true
+    m.hide_title          = true
+    m.hide_traffic_lights = true
+    m.appearance          = Lune::Options::Mac::Appearance::Dark
   end
 end
 ```

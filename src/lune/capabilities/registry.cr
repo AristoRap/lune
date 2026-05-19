@@ -62,6 +62,7 @@ module Lune
           Capabilities::Shell.new,
           Capabilities::Hotkeys.new,
           Capabilities::Sqlite.new,
+          Capabilities::Kv.new,
           Capabilities::Windows.new,
         ] of Lune::Capability
 

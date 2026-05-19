@@ -370,11 +370,11 @@ describe "Lune::Capabilities" do
       app.bindings.all?(&.internal?).should be_true
     end
 
-    it "registers 48 bindings total" do
+    it "registers the correct number of bindings" do
       app = Lune::App.new
       Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |cap| app.install(cap) }
 
-      app.bindings.size.should eq(49)
+      app.bindings.size.should eq(57)
     end
   end
 

@@ -42,7 +42,7 @@ describe Lune::Capabilities::Shell do
   end
 
   describe "install" do
-    it "registers spawn, kill, run, and list bindings" do
+    it "registers spawn, kill, run, list, write, and close_stdin bindings" do
       cap = Lune::Capabilities::Shell.new
       app = Lune::App.new
       app.install(cap)
@@ -51,6 +51,8 @@ describe Lune::Capabilities::Shell do
       ids.should contain("__lune.shell.kill")
       ids.should contain("__lune.shell.run")
       ids.should contain("__lune.shell.list")
+      ids.should contain("__lune.shell.write")
+      ids.should contain("__lune.shell.close_stdin")
     end
 
     it "list binding returns empty array when no processes are running" do
@@ -105,6 +107,37 @@ describe Lune::Capabilities::Shell do
       result["stderr"].as_s.should eq("")
       result["code"].as_i.should eq(0)
     end
+
+    it "write to nonexistent pid is a no-op" do
+      cap = Lune::Capabilities::Shell.new
+      app = Lune::App.new
+      app.install(cap)
+      write_b = app.bindings.find { |b| b.id == "__lune.shell.write" }.not_nil!
+      result = write_b.callback.call([JSON::Any.new("nonexistent"), JSON::Any.new("hello\n")])
+      result.raw.should be_nil
+    end
+
+    it "close_stdin to nonexistent pid is a no-op" do
+      cap = Lune::Capabilities::Shell.new
+      app = Lune::App.new
+      app.install(cap)
+      close_b = app.bindings.find { |b| b.id == "__lune.shell.close_stdin" }.not_nil!
+      result = close_b.callback.call([JSON::Any.new("nonexistent")])
+      result.raw.should be_nil
+    end
+
+    it "write sends text to a live process stdin" do
+      cap = Lune::Capabilities::Shell.new
+      app = Lune::App.new
+      app.install(cap)
+      spawn_b = app.bindings.find { |b| b.id == "__lune.shell.spawn" }.not_nil!
+      write_b = app.bindings.find { |b| b.id == "__lune.shell.write" }.not_nil!
+      close_b = app.bindings.find { |b| b.id == "__lune.shell.close_stdin" }.not_nil!
+      # cat reads stdin and echoes to stdout — test that write + close_stdin doesn't raise
+      pid = spawn_b.callback.call([JSON::Any.new("cat"), JSON::Any.new([] of JSON::Any)]).as_s
+      write_b.callback.call([JSON::Any.new(pid), JSON::Any.new("hello\n")]).raw.should be_nil
+      close_b.callback.call([JSON::Any.new(pid)]).raw.should be_nil
+    end
   end
 
   describe "js_helpers" do
@@ -134,6 +167,12 @@ describe Lune::Capabilities::Shell do
 
     it "types unlisten" do
       Lune::Capabilities::Shell.new.dts_helpers.should contain("unlisten(pid: string)")
+    end
+
+    it "types write and close_stdin" do
+      h = Lune::Capabilities::Shell.new.dts_helpers
+      h.should contain("write(pid: string")
+      h.should contain("closeStdin(pid: string)")
     end
   end
 

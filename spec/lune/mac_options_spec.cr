@@ -25,6 +25,10 @@ describe Lune::Options::Mac do
     it "always_on_top is false" do
       Lune::Options::Mac.new.always_on_top.should be_false
     end
+
+    it "hide_traffic_lights is false" do
+      Lune::Options::Mac.new.hide_traffic_lights.should be_false
+    end
   end
 
   describe "via opts.mac block" do
@@ -47,6 +51,12 @@ describe Lune::Options::Mac do
       opts.mac.appearance.should eq(Lune::Options::Mac::Appearance::Dark)
       opts.mac.content_protection.should be_true
       opts.mac.always_on_top.should be_true
+    end
+
+    it "hide_traffic_lights is settable" do
+      opts = Lune::Options.new
+      opts.mac { |m| m.hide_traffic_lights = true }
+      opts.mac.hide_traffic_lights.should be_true
     end
   end
 end

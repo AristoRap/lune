@@ -25,6 +25,11 @@ Features the platform exposes that Lune doesn't yet surface.
 - [x] Drag-out — native drag of files from the WebView into the system (complement to existing drop-in)
 - [x] SQLite — embedded database access via Crystal's `sqlite3` shard with a typed JS bridge; pairs naturally with the Stream for reactive data flows
 - [x] Multiple windows
+- [x] KV store — persistent JSON key-value store scoped per app; simpler than SQLite for preferences and config
+- [x] Shell.write / Shell.close_stdin — write to stdin of a running process; enables interactive CLIs and REPLs
+- [x] Frameless windows / custom titlebar — `mac.full_size_content` + `mac.hide_title` + `mac.hide_traffic_lights` for fully chrome-free windows; CSS drag zones via `opts.drag { |d| d.zone = "..." }`; `mac.transparent` for blur/vibrancy
+- [ ] `autostart` capability — register the app to launch at login (LaunchAgent on macOS, `.desktop` on Linux)
+- [ ] Reactive SQLite — `Sqlite.watch(db, sql, params, cb)` re-runs a query and pushes updated rows whenever the database is written; pairs with Stream for live Vue reactivity
 
 ## Backlog — Architecture
 
@@ -35,6 +40,7 @@ Structural improvements that unlock whole categories of apps.
 - [ ] Plugin system — a Crystal shard interface (`Lune::Plugin`) with lifecycle hooks and runtime binding registration so community authors can publish Lune plugins
 - [ ] Per-window capabilities — scope `include`/`exclude` lists to individual windows rather than globally (depends on multiple windows)
 - [ ] Multiple webviews in one window — stack or embed multiple WebView panels within a single native window
+- [ ] Menubar-only mode — `mode: menubar` in `lune.yml` hides the dock icon and positions the window anchored below the tray icon; first-class pattern for utility apps
 
 ## Backlog — DX & Templates
 

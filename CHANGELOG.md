@@ -8,6 +8,9 @@
 - **`sqlite` capability** — embedded SQLite via `crystal-lang/crystal-sqlite3`. `Sqlite.open(path)` returns a handle (`":memory:"` for in-process, absolute path for persistent). `Sqlite.exec(db, sql, params)` runs writes and returns `{ changes, lastInsertId }`; `Sqlite.query(db, sql, params)` runs reads and returns rows as objects. `Sqlite.close(db)` releases the handle. All open databases are closed on quit.
 - **`hotkeys` capability** — system-wide keyboard shortcuts that fire even when the app is not focused. `Hotkeys.register("Cmd+Shift+K")` registers a shortcut; listen via `Events.on("hotkey", cb)`. `Hotkeys.unregister(accelerator)` removes it; all are released on quit. macOS uses Carbon `RegisterEventHotKey`; Linux uses `XGrabKey`.
 - **`Shell.list()`** — returns pids of all currently running processes. Use it to hydrate secondary windows that didn't spawn the processes: call `Shell.list()` on mount, then `Shell.listen(pid, ...)` to receive future output.
+- **`Shell.write(pid, text)` / `Shell.closeStdin(pid)`** — write text to a running process's stdin, and close it to send EOF. Enables interactive programs: shells, REPLs, `sort`, `wc`, and anything else that reads from stdin.
+- **`mac.hide_traffic_lights`** — hides the close/minimise/zoom buttons. Combined with `full_size_content`, `hide_title`, `transparent`, and CSS drag zones, this enables fully chrome-free custom windows on macOS.
+- **`kv` capability** — persistent JSON key-value store scoped per app. `Kv.set(key, value)` / `Kv.get(key)` / `Kv.delete(key)` / `Kv.has(key)` / `Kv.keys()` / `Kv.clear()`. Values are any JSON-serialisable type and survive app restarts. Stored in the platform-standard app data directory (`~/Library/Application Support/<app>` on macOS).
 
 ### Breaking
 

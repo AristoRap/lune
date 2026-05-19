@@ -90,6 +90,35 @@ for (const pid of pids) {
 
 ---
 
+## Writing to stdin
+
+`Shell.write` sends text to the standard input of a running process. Use it for interactive programs that read commands from stdin — shells, REPLs, password prompts, etc.
+
+```js
+const pid = await Shell.spawn("/bin/sh", ["-i"]);
+
+Shell.listen(pid, {
+  stdout: ({ line }) => console.log(line),
+  exit: ({ code }) => console.log("exited", code),
+});
+
+await Shell.write(pid, "echo hello\n");
+await Shell.write(pid, "exit\n");
+```
+
+`Shell.close_stdin` closes the stdin pipe, which sends EOF to the process. Many programs (e.g. `sort`, `cat`, `wc`) only flush their output once stdin is closed:
+
+```js
+const pid = await Shell.spawn("sort", []);
+await Shell.write(pid, "banana\n");
+await Shell.write(pid, "apple\n");
+Shell.closeStdin(pid); // EOF → sort prints sorted output and exits
+```
+
+`Shell.kill` also closes stdin automatically.
+
+---
+
 ## Unsubscribing early
 
 ```js
@@ -104,14 +133,16 @@ Shell.unlisten(pid);
 
 ## JavaScript API
 
-| Method     | Signature                                            | Description                               |
-| ---------- | ---------------------------------------------------- | ----------------------------------------- |
-| `spawn`    | `(command, args) → Promise<string>`                  | Start a process; returns pid              |
-| `run`      | `(command, args?) → Promise<{stdout, stderr, code}>` | Spawn and collect all output              |
-| `kill`     | `(pid) → Promise<void>`                              | Send SIGTERM to a running process         |
-| `list`     | `() → Promise<string[]>`                             | List pids of all currently live processes |
-| `listen`   | `(pid, opts) → void`                                 | Subscribe to output channels              |
-| `unlisten` | `(pid) → void`                                       | Remove all listeners for a pid            |
+| Method       | Signature                                            | Description                                    |
+| ------------ | ---------------------------------------------------- | ---------------------------------------------- |
+| `spawn`      | `(command, args) → Promise<string>`                  | Start a process; returns pid                   |
+| `run`        | `(command, args?) → Promise<{stdout, stderr, code}>` | Spawn and collect all output                   |
+| `kill`       | `(pid) → Promise<void>`                              | Send SIGTERM to a running process               |
+| `list`       | `() → Promise<string[]>`                             | List pids of all currently live processes      |
+| `write`      | `(pid, text) → Promise<void>`                        | Write text to a process's stdin                |
+| `closeStdin` | `(pid) → Promise<void>`                              | Close stdin, sending EOF to the process         |
+| `listen`     | `(pid, opts) → void`                                 | Subscribe to output channels                   |
+| `unlisten`   | `(pid) → void`                                       | Remove all listeners for a pid                 |
 
 `listen` options:
 

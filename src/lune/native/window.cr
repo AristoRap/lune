@@ -99,6 +99,10 @@ module Lune
           @@calls << :hide_title
         end
 
+        def self.record_hide_traffic_lights
+          @@calls << :hide_traffic_lights
+        end
+
         def self.record_set_appearance(mode : Int32)
           @@calls << :set_appearance
           @@last_appearance = mode
@@ -136,6 +140,7 @@ module Lune
         fun setup_drag_monitor : Void
         fun start_window_drag(window : Void*) : Void
         fun hide_title(window : Void*) : Void
+        fun hide_traffic_lights(window : Void*) : Void
         fun set_appearance(window : Void*, mode : LibC::Int) : Void
         fun set_content_protection(window : Void*, enabled : LibC::Int) : Void
         fun set_always_on_top(window : Void*, enabled : LibC::Int) : Void
@@ -355,6 +360,14 @@ module Lune
           WindowMock.record_hide_title
         {% elsif flag?(:darwin) %}
           LibNativeWindow.hide_title(handle)
+        {% end %}
+      end
+
+      def self.hide_traffic_lights(handle : Void*)
+        {% if flag?(:lune_native_test_mock) %}
+          WindowMock.record_hide_traffic_lights
+        {% elsif flag?(:darwin) %}
+          LibNativeWindow.hide_traffic_lights(handle)
         {% end %}
       end
 

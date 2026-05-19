@@ -11,6 +11,7 @@ module Lune
       end
 
       @processes = {} of String => Process
+      @stdins = {} of String => IO::FileDescriptor
       @mu = Mutex.new
 
       def install(ctx : BindCtx) : Nil
@@ -35,7 +36,35 @@ module Lune
           arg_names: ["pid"],
           callback: ->(raw : Array(JSON::Any)) {
             pid = raw[0].as_s
-            @mu.synchronize { @processes[pid]?.try(&.terminate) }
+            @mu.synchronize do
+              @processes[pid]?.try(&.terminate)
+              @stdins.delete(pid).try { |io| io.close rescue nil }
+            end
+            JSON::Any.new(nil)
+          },
+        ).binding(binding_namespace))
+
+        ctx.register(Definition.new(
+          name: "#{name}.write",
+          args: ["String", "String"],
+          return_type: "Nil",
+          arg_names: ["pid", "text"],
+          callback: ->(raw : Array(JSON::Any)) {
+            pid = raw[0].as_s
+            text = raw[1].as_s
+            @mu.synchronize { @stdins[pid]? }.try { |io| io.print(text) rescue nil }
+            JSON::Any.new(nil)
+          },
+        ).binding(binding_namespace))
+
+        ctx.register(Definition.new(
+          name: "#{name}.close_stdin",
+          args: ["String"],
+          return_type: "Nil",
+          arg_names: ["pid"],
+          callback: ->(raw : Array(JSON::Any)) {
+            pid = raw[0].as_s
+            @mu.synchronize { @stdins.delete(pid) }.try { |io| io.close rescue nil }
             JSON::Any.new(nil)
           },
         ).binding(binding_namespace))
@@ -77,7 +106,11 @@ module Lune
       def shutdown : Nil
         procs = @mu.synchronize { @processes.dup }
         procs.each_value { |pr| pr.terminate rescue nil }
-        @mu.synchronize { @processes.clear }
+        @mu.synchronize do
+          @processes.clear
+          @stdins.each_value { |io| io.close rescue nil }
+          @stdins.clear
+        end
       end
 
       def js_helpers : String
@@ -111,13 +144,18 @@ module Lune
         <<-DTS
           listen(pid: string, opts: { stdout?: (data: { line: string }) => void; stderr?: (data: { line: string }) => void; exit?: (data: { code: number }) => void }): void;
           unlisten(pid: string): void;
+          write(pid: string, text: string): Promise<void>;
+          closeStdin(pid: string): Promise<void>;
         DTS
       end
 
       private def spawn_proc(app : Lune::App, cmd : String, argv : Array(String)) : String
         pid = Random.new.hex(8)
-        process = Process.new(cmd, args: argv, output: :pipe, error: :pipe)
-        @mu.synchronize { @processes[pid] = process }
+        process = Process.new(cmd, args: argv, input: :pipe, output: :pipe, error: :pipe)
+        @mu.synchronize do
+          @processes[pid] = process
+          @stdins[pid] = process.input
+        end
 
         stdout_io = process.output
         stderr_io = process.error
@@ -140,7 +178,10 @@ module Lune
         app.async("shell-#{pid}-wait") do
           2.times { done.receive }
           status = process.wait
-          @mu.synchronize { @processes.delete(pid) }
+          @mu.synchronize do
+            @processes.delete(pid)
+            @stdins.delete(pid).try { |io| io.close rescue nil }
+          end
           # exit_code? returns nil for signal-terminated processes (e.g. SIGTERM from kill)
           app.stream.send("shell:#{pid}:exit", {"code" => (status.exit_code? || -1)})
         end

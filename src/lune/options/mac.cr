@@ -20,6 +20,10 @@ module Lune
       # Commonly combined with `full_size_content` for a clean custom header.
       property hide_title : Bool = false
 
+      # Hides the close, minimise, and zoom buttons (traffic lights).
+      # Combine with `full_size_content` and `hide_title` for a fully chrome-free window.
+      property hide_traffic_lights : Bool = false
+
       # Forces a specific appearance mode for the window. Defaults to `Auto` (system setting).
       property appearance : Appearance = Appearance::Auto
 

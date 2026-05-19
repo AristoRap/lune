@@ -87,6 +87,13 @@ describe Lune::Native::Window do
     end
   end
 
+  describe ".hide_traffic_lights" do
+    it "records the call" do
+      Lune::Native::Window.hide_traffic_lights(handle)
+      Lune::Native::WindowMock.calls.should contain(:hide_traffic_lights)
+    end
+  end
+
   describe ".set_appearance" do
     it "records the call with the mode value" do
       Lune::Native::Window.set_appearance(handle, 1)

@@ -56,6 +56,7 @@ export default defineConfig({
               { text: 'Filesystem', link: '/capabilities/filesystem' },
               { text: 'Notifications', link: '/capabilities/notifications' },
               { text: 'Screen', link: '/capabilities/screen' },
+              { text: 'KV', link: '/capabilities/kv' },
               { text: 'Shell', link: '/capabilities/shell' },
               { text: 'SQLite', link: '/capabilities/sqlite' },
               { text: 'System', link: '/capabilities/system' },

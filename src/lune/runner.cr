@@ -127,6 +127,7 @@ module Lune
       Native::Window.set_titlebar_transparent(handle, true) if mac.full_size_content
       Native::Window.set_background_transparent(handle) if mac.transparent
       Native::Window.hide_title(handle) if mac.hide_title
+      Native::Window.hide_traffic_lights(handle) if mac.hide_traffic_lights
       Native::Window.set_appearance(handle, mac.appearance.value) unless mac.appearance.auto?
       Native::Window.set_content_protection(handle, true) if mac.content_protection
       Native::Window.set_always_on_top(handle, true) if mac.always_on_top

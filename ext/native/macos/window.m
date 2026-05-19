@@ -36,6 +36,13 @@ void hide_title(void *window) {
     w.titleVisibility = NSWindowTitleHidden;
 }
 
+void hide_traffic_lights(void *window) {
+    NSWindow *w = (__bridge NSWindow *)window;
+    [[w standardWindowButton:NSWindowCloseButton]     setHidden:YES];
+    [[w standardWindowButton:NSWindowMiniaturizeButton] setHidden:YES];
+    [[w standardWindowButton:NSWindowZoomButton]       setHidden:YES];
+}
+
 // ── Appearance ────────────────────────────────────────────────────────────────
 // mode: 0 = auto (system default), 1 = dark, 2 = light
 
