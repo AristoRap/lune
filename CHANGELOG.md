@@ -28,6 +28,10 @@
 
 ### Internal
 
+- **Binding boilerplate reduced** — `Dialogs` message variants, `Clipboard` read/write registrations, and `Window` zero-arg operations (minimize/maximize/center) are now table-driven loops; the four identical `message_*` blocks, six identical clipboard blocks, and three identical window blocks each collapse to a single descriptor array. No behaviour change.
+- **`Runner#webview` decomposed** — capability webview-init (sentinel injection + stub JS for excluded capabilities) extracted to `inject_capability_init`; the navigation branch (html/url/dev_url/assets) extracted to `setup_navigation`. The `webview` body drops from ~100 lines to ~60.
+- **`Generator` JS/DTS grouping deduplicated** — `generate_runtime_js` and `generate_runtime_dts` shared identical 10-line namespace-grouping logic; extracted to `namespace_groups(&helper_fn)` called with `&.js_helpers` / `&.dts_helpers`.
+
 - **Capability architecture** — each capability now declares a `Descriptor` (id, label, deps, soft_deps, core) and opts into lifecycle phases via modules (`Capability::Bindable`, `Capability::WebviewInject`, `Capability::Lifecycle`) rather than overriding no-op base methods. Context structs (`SetupCtx`, `BindCtx`, `WebviewCtx`) replace scattered argument lists. `name` derives from `descriptor.id` — no per-capability override needed. The registry runs a `setup` pass so handle- and options-dependent capabilities pull state from context instead of constructor injection. `Registry#resolve` applies include/exclude config, cascade-disables capabilities whose hard deps are inactive (with logged warnings), emits soft-dep warnings, and topologically sorts the result. The runner dispatches through `is_a?` phase checks and calls `shutdown` on `Lifecycle` capabilities after `wv.run`. `App#install(cap : Capability)` added as a convenience for installing capabilities from user code.
 
 ## [0.7.1] - 2026-05-19

@@ -73,48 +73,9 @@ module Lune
         setup_navigate_if_set(wv)
         setup_drag_zone_if_set(wv, handle)
 
-        webview_ctx = Lune::Capability::WebviewCtx.new(wv, handle, @app, resolved.active_ids)
-        resolved.capabilities.each do |cap|
-          wv.init("window[#{cap.sentinel_key.inspect}] = true;")
-          cap.init_webview(webview_ctx) if cap.is_a?(Lune::Capability::WebviewInject)
-        end
+        inject_capability_init(wv, handle, resolved)
 
-        bm = Lune::Capability::BRIDGE_MARKER
-        unless resolved.active_ids.includes?(:event_bus)
-          js_emit_key = "#{bm}.jsEmit"
-          wv.init("(function(){window.#{bm}=window.#{bm}||{};var n=function(){};window.#{bm}.crystalEmit=n;window.#{bm}.on=n;window.#{bm}.off=n;window[#{js_emit_key.inspect}]=function(){return Promise.resolve();};})();")
-        end
-        unless resolved.active_ids.includes?(:channel)
-          wv.init("(function(){window.#{bm}=window.#{bm}||{};var n=function(){};window.#{bm}.chOn=n;window.#{bm}.chOff=n;window.#{bm}.chSend=n;})();")
-        end
-
-        asset_server : AssetServer? = nil
-
-        if h = html
-          wv.html = h
-        elsif u = url
-          wv.navigate(u)
-        elsif dev_url = ENV[Lune::ENV_DEV_URL]?
-          all_stubs = App.new
-          all_bind_ctx = Lune::Capability::BindCtx.new(all_stubs)
-          registry.all.each do |cap|
-            next if resolved.active_ids.includes?(cap.descriptor.id)
-            cap.install(all_bind_ctx) if cap.is_a?(Lune::Capability::Bindable)
-          end
-          Lune::Runtime::Generator.write_js(
-            @app.bindings + all_stubs.bindings.select(&.internal?),
-            @lunejs_dir,
-            registry.all
-          )
-          wv.navigate(dev_url)
-        elsif !Assets.empty?
-          s = AssetServer.new
-          s.start
-          wv.navigate(s.url)
-          asset_server = s
-        else
-          raise "Lune.run: provide html:, url:, LUNE_DEV_URL, or assets:"
-        end
+        asset_server = setup_navigation(wv, html, url, registry, resolved)
 
         wv.run
 
@@ -232,6 +193,58 @@ module Lune
         window.addEventListener('hashchange', _nav);
       })();
       JS
+    end
+
+    private def inject_capability_init(wv : Webview::Webview, handle : Pointer(Void), resolved : Capabilities::ResolvedSet) : Nil
+      webview_ctx = Lune::Capability::WebviewCtx.new(wv, handle, @app, resolved.active_ids)
+      resolved.capabilities.each do |cap|
+        wv.init("window[#{cap.sentinel_key.inspect}] = true;")
+        cap.init_webview(webview_ctx) if cap.is_a?(Lune::Capability::WebviewInject)
+      end
+
+      bm = Lune::Capability::BRIDGE_MARKER
+      unless resolved.active_ids.includes?(:event_bus)
+        js_emit_key = "#{bm}.jsEmit"
+        wv.init("(function(){window.#{bm}=window.#{bm}||{};var n=function(){};window.#{bm}.crystalEmit=n;window.#{bm}.on=n;window.#{bm}.off=n;window[#{js_emit_key.inspect}]=function(){return Promise.resolve();};})();")
+      end
+      unless resolved.active_ids.includes?(:channel)
+        wv.init("(function(){window.#{bm}=window.#{bm}||{};var n=function(){};window.#{bm}.chOn=n;window.#{bm}.chOff=n;window.#{bm}.chSend=n;})();")
+      end
+    end
+
+    private def setup_navigation(
+      wv : Webview::Webview,
+      html : String?,
+      url : String?,
+      registry : Capabilities::Registry,
+      resolved : Capabilities::ResolvedSet
+    ) : AssetServer?
+      if h = html
+        wv.html = h
+      elsif u = url
+        wv.navigate(u)
+      elsif dev_url = ENV[Lune::ENV_DEV_URL]?
+        all_stubs = App.new
+        all_bind_ctx = Lune::Capability::BindCtx.new(all_stubs)
+        registry.all.each do |cap|
+          next if resolved.active_ids.includes?(cap.descriptor.id)
+          cap.install(all_bind_ctx) if cap.is_a?(Lune::Capability::Bindable)
+        end
+        Lune::Runtime::Generator.write_js(
+          @app.bindings + all_stubs.bindings.select(&.internal?),
+          @lunejs_dir,
+          registry.all
+        )
+        wv.navigate(dev_url)
+      elsif !Assets.empty?
+        s = AssetServer.new
+        s.start
+        wv.navigate(s.url)
+        return s
+      else
+        raise "Lune.run: provide html:, url:, LUNE_DEV_URL, or assets:"
+      end
+      nil
     end
 
     private def callback_window_loaded_if_set(wv : Webview::Webview) : Nil

@@ -18,19 +18,19 @@ module Lune
 
       def install(ctx : BindCtx) : Nil
         h = @handle
-        ctx.register(Definition.new(
-          name: "#{name}.minimize",
-          args: [] of String,
-          return_type: "Nil",
-          callback: ->(_args : Array(JSON::Any)) { Lune::Native::Window.minimize(h); JSON::Any.new(nil) },
-        ).binding(binding_namespace))
 
-        ctx.register(Definition.new(
-          name: "#{name}.maximize",
-          args: [] of String,
-          return_type: "Nil",
-          callback: ->(_args : Array(JSON::Any)) { Lune::Native::Window.maximize(h); JSON::Any.new(nil) },
-        ).binding(binding_namespace))
+        [
+          {"minimize", ->{ Lune::Native::Window.minimize(h) }},
+          {"maximize", ->{ Lune::Native::Window.maximize(h) }},
+          {"center",   ->{ Lune::Native::Window.center(h) }},
+        ].each do |(method, action)|
+          ctx.register(Definition.new(
+            name: "#{name}.#{method}",
+            args: [] of String,
+            return_type: "Nil",
+            callback: ->(_args : Array(JSON::Any)) { action.call; JSON::Any.new(nil) },
+          ).binding(binding_namespace))
+        end
 
         ctx.register(Definition.new(
           name: "#{name}.set_title",
@@ -46,13 +46,6 @@ module Lune
           return_type: "Nil",
           arg_names: ["width", "height"],
           callback: ->(args : Array(JSON::Any)) { Lune::Native::Window.set_size(h, args[0].as_i, args[1].as_i); JSON::Any.new(nil) },
-        ).binding(binding_namespace))
-
-        ctx.register(Definition.new(
-          name: "#{name}.center",
-          args: [] of String,
-          return_type: "Nil",
-          callback: ->(_args : Array(JSON::Any)) { Lune::Native::Window.center(h); JSON::Any.new(nil) },
         ).binding(binding_namespace))
       end
     end

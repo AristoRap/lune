@@ -9,19 +9,7 @@ module Lune
       # Runtime JS
       # ----------------------------
       def self.generate_runtime_js(bindings : Array(Lune::Binding), capabilities : Array(Lune::Capability) = [] of Lune::Capability) : String
-        # Group RuntimeBinding stubs by namespace (same structure as generate_app_js).
-        binding_groups = Hash(String, Array(Lune::Binding)).new { |h, k| h[k] = [] of Lune::Binding }
-        bindings.each { |b| binding_groups[b.namespace] << b }
-
-        # Group capability js_helpers by binding_namespace; merge with binding stubs for shared namespaces.
-        helper_groups = Hash(String, String).new
-        capabilities.each do |cap|
-          h = cap.js_helpers
-          next if h.empty?
-          helper_groups[cap.binding_namespace] = (helper_groups[cap.binding_namespace]? || "") + h
-        end
-
-        all_namespaces = (binding_groups.keys + helper_groups.keys).uniq
+        binding_groups, helper_groups, all_namespaces = namespace_groups(bindings, capabilities, &.js_helpers)
 
         namespace_blocks = all_namespaces.map do |ns|
           methods = String.build do |sb|
@@ -66,18 +54,7 @@ module Lune
       end
 
       def self.generate_runtime_dts(bindings : Array(Lune::Binding), capabilities : Array(Lune::Capability) = [] of Lune::Capability) : String
-        # Group by namespace, same logic as JS.
-        binding_groups = Hash(String, Array(Lune::Binding)).new { |h, k| h[k] = [] of Lune::Binding }
-        bindings.each { |b| binding_groups[b.namespace] << b }
-
-        helper_groups = Hash(String, String).new
-        capabilities.each do |cap|
-          h = cap.dts_helpers
-          next if h.empty?
-          helper_groups[cap.binding_namespace] = (helper_groups[cap.binding_namespace]? || "") + h
-        end
-
-        all_namespaces = (binding_groups.keys + helper_groups.keys).uniq
+        binding_groups, helper_groups, all_namespaces = namespace_groups(bindings, capabilities, &.dts_helpers)
 
         interfaces = all_namespaces.map do |ns|
           members = String.build do |sb|
@@ -126,6 +103,28 @@ module Lune
         export declare const runtime: Runtime;
         export default runtime;
         DTS
+      end
+
+      # ----------------------------
+      # Shared grouping
+      # ----------------------------
+      private def self.namespace_groups(
+        bindings : Array(Lune::Binding),
+        capabilities : Array(Lune::Capability),
+        &helper_fn : Lune::Capability -> String
+      ) : Tuple(Hash(String, Array(Lune::Binding)), Hash(String, String), Array(String))
+        binding_groups = Hash(String, Array(Lune::Binding)).new { |h, k| h[k] = [] of Lune::Binding }
+        bindings.each { |b| binding_groups[b.namespace] << b }
+
+        helper_groups = Hash(String, String).new
+        capabilities.each do |cap|
+          h = helper_fn.call(cap)
+          next if h.empty?
+          helper_groups[cap.binding_namespace] = (helper_groups[cap.binding_namespace]? || "") + h
+        end
+
+        all_namespaces = (binding_groups.keys + helper_groups.keys).uniq
+        {binding_groups, helper_groups, all_namespaces}
       end
 
       # ----------------------------
