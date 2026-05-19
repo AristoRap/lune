@@ -4,6 +4,7 @@ import Starfield from "./components/Starfield.vue";
 import Titlebar from "./components/Titlebar.vue";
 import Sidebar from "./components/Sidebar.vue";
 import Statusbar from "./components/Statusbar.vue";
+import Toast from "./components/Toast.vue";
 import { flatNav } from "./nav.js";
 import { System, Events } from "./lune.js";
 
@@ -53,6 +54,7 @@ onMounted(async () => {
   </div>
 
   <Statusbar :message="status" :clock="clock" :clock-paused="clockPaused" />
+  <Toast />
 </template>
 
 <style scoped>
