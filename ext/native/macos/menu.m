@@ -231,9 +231,6 @@ void lune_show_context_menu(void *nswindow_ptr, float x, float y,
 
     if (!_item_handler) _item_handler = [[LuneMenuItemHandler alloc] init];
 
-    NSWindow *window = (__bridge NSWindow *)nswindow_ptr;
-    NSView   *view   = window.contentView;
-
     NSData  *data  = [[NSString stringWithUTF8String:json_utf8] dataUsingEncoding:NSUTF8StringEncoding];
     NSArray *items = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
     if (!items) return;
@@ -242,9 +239,13 @@ void lune_show_context_menu(void *nswindow_ptr, float x, float y,
     menu.autoenablesItems = NO;
     build_context_children(items, menu);
 
-    // WKWebView is a flipped view (isFlipped=YES, y=0 at top), so web clientY maps directly.
-    // popUpMenuPositioningItem: runs a modal tracking loop — must be on the main thread.
+    // Resolve the view on the main thread so we always use the window that
+    // triggered the right-click (its key window at dispatch time), not the
+    // handle captured at binding install time which is always the main window.
+    // WKWebView is a flipped view (isFlipped=YES), so web clientY maps directly.
     run_on_main(^{
+        NSView *view = [NSApp keyWindow].contentView;
+        if (!view) return;
         [menu popUpMenuPositioningItem:nil atLocation:NSMakePoint(x, y) inView:view];
     });
 }
