@@ -15,17 +15,6 @@ The `lune` CLI passes both flags automatically for `lune dev` and `lune build`. 
 crystal build src/main.cr -Dpreview_mt -Dexecution_context -o build/my_app
 ```
 
-**`spawn` does not work for background tasks.** The native event loop owns the main thread, so fibers in the default cooperative context are never scheduled while the window is open. Use `app.async` for any long-running background work:
-
-```crystal
-app.async do
-  loop do
-    app.emit("tick", Time.utc.to_rfc3339)
-    sleep 1.second
-  end
-end
-```
-
 :::
 
 **macOS only:** Xcode Command Line Tools are required for the native WebView headers.
@@ -185,21 +174,21 @@ This builds the frontend with Vite, then compiles the Crystal binary with the fr
 
 The repository ships with a full showcase in `demo/` — a Vue 3 app that exercises every part of the Lune API in one window:
 
-| Section      | What it shows                                                                                   |
-| ------------ | ----------------------------------------------------------------------------------------------- |
-| Bindings     | `@[Lune::Bind]` — calling Crystal methods from JS as async functions                            |
-| Events       | Live clock (Crystal → JS), ping/pong roundtrip with latency, async file-progress                |
-| Stream       | Live ticker and ping/pong over `Stream` — high-throughput WebSocket IPC                         |
-| System       | `System.environment()`, `Screen.info()`, native notifications                                   |
-| Clipboard    | `Clipboard.read/write`, `Clipboard.readHtml/writeHtml`, `Clipboard.readImage/writeImage`        |
-| Window       | `Window.minimize`, `Window.maximize`, `Window.center`, `Window.setTitle`, `Window.setSize`      |
-| Dialogs      | File pickers (`Dialogs.openFile`, `openFiles`, `openDir`, `saveFile`) and message dialogs       |
-| Tray         | Status-bar icon with click and menu-item event log                                              |
-| Context Menu | `ContextMenu.set` / `clear` / `onSelect` — native right-click menu with item selection          |
-| Drag Out     | `DragOut.start(paths)` — drag local files out of the window into Finder or other apps           |
-| Deep Links   | `url_schemes` config, `DeepLink.on(cb)` — receive OS-routed custom URL scheme links             |
-| File Watch   | `FileWatch.watch(path)` / `on(cb)` — live filesystem change events, no polling                  |
-| Capabilities | Runtime capability filtering (`include` / `exclude`) with live binding list                     |
+| Section      | What it shows                                                                              |
+| ------------ | ------------------------------------------------------------------------------------------ |
+| Bindings     | `@[Lune::Bind]` — calling Crystal methods from JS as async functions                       |
+| Events       | Live clock (Crystal → JS), ping/pong roundtrip with latency, async file-progress           |
+| Stream       | Live ticker and ping/pong over `Stream` — high-throughput WebSocket IPC                    |
+| System       | `System.environment()`, `Screen.info()`, native notifications                              |
+| Clipboard    | `Clipboard.read/write`, `Clipboard.readHtml/writeHtml`, `Clipboard.readImage/writeImage`   |
+| Window       | `Window.minimize`, `Window.maximize`, `Window.center`, `Window.setTitle`, `Window.setSize` |
+| Dialogs      | File pickers (`Dialogs.openFile`, `openFiles`, `openDir`, `saveFile`) and message dialogs  |
+| Tray         | Status-bar icon with click and menu-item event log                                         |
+| Context Menu | `ContextMenu.set` / `clear` / `onSelect` — native right-click menu with item selection     |
+| Drag Out     | `DragOut.start(paths)` — drag local files out of the window into Finder or other apps      |
+| Deep Links   | `url_schemes` config, `DeepLink.on(cb)` — receive OS-routed custom URL scheme links        |
+| File Watch   | `FileWatch.watch(path)` / `on(cb)` — live filesystem change events, no polling             |
+| Capabilities | Runtime capability filtering (`include` / `exclude`) with live binding list                |
 
 Run it from the repo root:
 

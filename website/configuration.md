@@ -279,7 +279,7 @@ DeepLink.on((url) => {
 });
 ```
 
-See [Deep Links](./guide/deep-links) for the full guide.
+See [Deep Link capability](./capabilities/deep-link) for the full guide.
 
 ---
 
@@ -312,16 +312,16 @@ Controls which built-in capabilities are active. The unit is a **capability** �
 
 Values must be **capability names** (e.g. `system`, `clipboard`). Individual function names like `quit` are not valid — they will log a warning and be ignored.
 
-| `include`                    | `exclude`            | result               |
-| ---------------------------- | -------------------- | -------------------- |
-| omitted or `[]`              | omitted              | all capabilities     |
-| `["system"]`                 | omitted              | system only          |
-| `["*"]` or `["all"]`         | omitted              | all (explicit)       |
-| omitted or `[]`              | `["clipboard"]`      | all except clipboard |
-| omitted                      | `["*"]` or `["all"]` | none                 |
-| `["system", "clipboard"]`    | `["clipboard"]`      | only system          |
+| `include`                 | `exclude`            | result               |
+| ------------------------- | -------------------- | -------------------- |
+| omitted or `[]`           | omitted              | all capabilities     |
+| `["system"]`              | omitted              | system only          |
+| `["*"]` or `["all"]`      | omitted              | all (explicit)       |
+| omitted or `[]`           | `["clipboard"]`      | all except clipboard |
+| omitted                   | `["*"]` or `["all"]` | none                 |
+| `["system", "clipboard"]` | `["clipboard"]`      | only system          |
 
-See [Runtime → Capabilities](./guide/runtime#capabilities) for the full list of capability names and the functions each one controls.
+See [Capabilities](./capabilities/) for the full list of capability names and the JS namespaces each one controls.
 
 #### Dev vs build behaviour
 

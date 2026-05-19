@@ -399,7 +399,7 @@ end
 
 ---
 
-### `tray.on_click` *(advanced override)*
+### `tray.on_click` _(advanced override)_
 
 **Type:** `(-> Nil)?` — **Default:** `nil`
 
@@ -407,7 +407,7 @@ When set, replaces the default `app.emit` for tray icon clicks entirely. Use whe
 
 ---
 
-### `tray.on_menu_click` *(advanced override)*
+### `tray.on_menu_click` _(advanced override)_
 
 **Type:** `(String -> Nil)?` — **Default:** `nil`
 
