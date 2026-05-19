@@ -189,7 +189,8 @@ The repository ships with a full showcase in `demo/` — a Vue 3 app that exerci
 | ------------ | ----------------------------------------------------------------------------------------------- |
 | Bindings     | `@[Lune::Bind]` — calling Crystal methods from JS as async functions                            |
 | Events       | Live clock (Crystal → JS), ping/pong roundtrip with latency, async file-progress                |
-| System       | `System.environment()`, `Screen.info()`, native notifications                                |
+| Stream       | Live ticker and ping/pong over `Stream` — high-throughput WebSocket IPC                         |
+| System       | `System.environment()`, `Screen.info()`, native notifications                                   |
 | Clipboard    | `Clipboard.read/write`, `Clipboard.readHtml/writeHtml`, `Clipboard.readImage/writeImage`        |
 | Window       | `Window.minimize`, `Window.maximize`, `Window.center`, `Window.setTitle`, `Window.setSize`      |
 | Dialogs      | File pickers (`Dialogs.openFile`, `openFiles`, `openDir`, `saveFile`) and message dialogs       |
@@ -197,6 +198,7 @@ The repository ships with a full showcase in `demo/` — a Vue 3 app that exerci
 | Context Menu | `ContextMenu.set` / `clear` / `onSelect` — native right-click menu with item selection          |
 | Drag Out     | `DragOut.start(paths)` — drag local files out of the window into Finder or other apps           |
 | Deep Links   | `url_schemes` config, `DeepLink.on(cb)` — receive OS-routed custom URL scheme links             |
+| File Watch   | `FileWatch.watch(path)` / `on(cb)` — live filesystem change events, no polling                  |
 | Capabilities | Runtime capability filtering (`include` / `exclude`) with live binding list                     |
 
 Run it from the repo root:

@@ -17,7 +17,7 @@ export type {
   ContextMenu,
   DragOut,
   Events,
-  Channel,
+  Stream,
   DeepLink,
   FileDrop,
   FileWatch,

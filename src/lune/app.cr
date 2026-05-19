@@ -4,15 +4,15 @@ module Lune
     property bridge : Bridge?
     property title : String = ""
     property menu_options : Options::Menu = Options::Menu.new
-    property channel_sender : Proc(String, String, Nil)?
+    property stream_sender : Proc(String, String, Nil)?
 
     def initialize
       @bindings = [] of Binding
       @bridge = nil
       @event_handlers = {} of String => Array(Proc(JSON::Any, Nil))
       @event_once_handlers = {} of String => Array(Proc(JSON::Any, Nil))
-      @channel_sender = nil
-      @channel_handlers = {} of String => Array(Proc(JSON::Any, Nil))
+      @stream_sender = nil
+      @stream_handlers = {} of String => Array(Proc(JSON::Any, Nil))
       @async_pool = Fiber::ExecutionContext::Parallel.new("lune-tasks", System.cpu_count)
     end
 
@@ -76,25 +76,25 @@ module Lune
     end
 
     # ----------------------------
-    # Channel (WebSocket IPC)
+    # Stream (WebSocket IPC)
     # ----------------------------
 
-    def channel_send(name : String, data = nil)
-      return unless (s = @channel_sender)
+    def stream_send(name : String, data = nil)
+      return unless (s = @stream_sender)
       json = data.nil? ? "null" : data.to_json
       s.call(name, json)
     end
 
-    def channel_on(name : String, &block : JSON::Any -> Nil)
-      (@channel_handlers[name] ||= [] of Proc(JSON::Any, Nil)) << block
+    def stream_on(name : String, &block : JSON::Any -> Nil)
+      (@stream_handlers[name] ||= [] of Proc(JSON::Any, Nil)) << block
     end
 
-    def channel_off(name : String)
-      @channel_handlers.delete(name)
+    def stream_off(name : String)
+      @stream_handlers.delete(name)
     end
 
-    def dispatch_channel_message(name : String, data : JSON::Any)
-      @channel_handlers[name]?.try(&.each(&.call(data)))
+    def dispatch_stream_message(name : String, data : JSON::Any)
+      @stream_handlers[name]?.try(&.each(&.call(data)))
     end
 
     # Replaces the application menu bar at runtime.

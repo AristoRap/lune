@@ -290,21 +290,21 @@ describe Lune::App do
   end
 
   # -------------------------------------------------------------------
-  # Channel (WebSocket IPC)
+  # Stream (WebSocket IPC)
   # -------------------------------------------------------------------
 
-  describe "#channel_send" do
+  describe "#stream_send" do
     it "is a no-op when no sender is set" do
       app = Lune::App.new
-      app.channel_send("tick", {price: 100}) # must not raise
+      app.stream_send("tick", {price: 100}) # must not raise
     end
 
     it "calls the sender proc with name and JSON" do
       app = Lune::App.new
       calls = [] of {String, String}
-      app.channel_sender = ->(name : String, json : String) { calls << {name, json} }
+      app.stream_sender = ->(name : String, json : String) { calls << {name, json} }
 
-      app.channel_send("tick", {price: 42})
+      app.stream_send("tick", {price: 42})
 
       calls.size.should eq(1)
       calls.first[0].should eq("tick")
@@ -314,21 +314,21 @@ describe Lune::App do
     it "serialises nil data as JSON null" do
       app = Lune::App.new
       calls = [] of {String, String}
-      app.channel_sender = ->(name : String, json : String) { calls << {name, json} }
+      app.stream_sender = ->(name : String, json : String) { calls << {name, json} }
 
-      app.channel_send("ping")
+      app.stream_send("ping")
 
       calls.first[1].should eq("null")
     end
   end
 
-  describe "#channel_on" do
-    it "registers a handler that fires on dispatch_channel_message" do
+  describe "#stream_on" do
+    it "registers a handler that fires on dispatch_stream_message" do
       app = Lune::App.new
       received = [] of JSON::Any
 
-      app.channel_on("trade") { |d| received << d }
-      app.dispatch_channel_message("trade", JSON::Any.new("BTC"))
+      app.stream_on("trade") { |d| received << d }
+      app.dispatch_stream_message("trade", JSON::Any.new("BTC"))
 
       received.size.should eq(1)
       received.first.as_s.should eq("BTC")
@@ -338,19 +338,19 @@ describe Lune::App do
       app = Lune::App.new
       count = 0
 
-      app.channel_on("tick") { |_| count += 1 }
-      app.dispatch_channel_message("tick", JSON::Any.new(nil))
-      app.dispatch_channel_message("tick", JSON::Any.new(nil))
+      app.stream_on("tick") { |_| count += 1 }
+      app.dispatch_stream_message("tick", JSON::Any.new(nil))
+      app.dispatch_stream_message("tick", JSON::Any.new(nil))
 
       count.should eq(2)
     end
 
-    it "does not fire for a different channel name" do
+    it "does not fire for a different stream name" do
       app = Lune::App.new
       fired = false
 
-      app.channel_on("trade") { |_| fired = true }
-      app.dispatch_channel_message("quote", JSON::Any.new(nil))
+      app.stream_on("trade") { |_| fired = true }
+      app.dispatch_stream_message("quote", JSON::Any.new(nil))
 
       fired.should be_false
     end
@@ -359,44 +359,44 @@ describe Lune::App do
       app = Lune::App.new
       count = 0
 
-      app.channel_on("tick") { |_| count += 1 }
-      app.channel_on("tick") { |_| count += 1 }
-      app.dispatch_channel_message("tick", JSON::Any.new(nil))
+      app.stream_on("tick") { |_| count += 1 }
+      app.stream_on("tick") { |_| count += 1 }
+      app.dispatch_stream_message("tick", JSON::Any.new(nil))
 
       count.should eq(2)
     end
   end
 
-  describe "#channel_off" do
+  describe "#stream_off" do
     it "removes all handlers for a name" do
       app = Lune::App.new
       count = 0
 
-      app.channel_on("tick") { |_| count += 1 }
-      app.channel_off("tick")
-      app.dispatch_channel_message("tick", JSON::Any.new(nil))
+      app.stream_on("tick") { |_| count += 1 }
+      app.stream_off("tick")
+      app.dispatch_stream_message("tick", JSON::Any.new(nil))
 
       count.should eq(0)
     end
 
     it "is a no-op for a name with no handlers" do
       app = Lune::App.new
-      app.channel_off("nonexistent") # must not raise
+      app.stream_off("nonexistent") # must not raise
     end
   end
 
-  describe "#dispatch_channel_message" do
+  describe "#dispatch_stream_message" do
     it "does nothing when no handlers are registered" do
       app = Lune::App.new
-      app.dispatch_channel_message("tick", JSON::Any.new(nil)) # must not raise
+      app.dispatch_stream_message("tick", JSON::Any.new(nil)) # must not raise
     end
 
     it "passes the full JSON::Any payload to handlers" do
       app = Lune::App.new
       received = nil
 
-      app.channel_on("data") { |d| received = d }
-      app.dispatch_channel_message("data", JSON.parse(%({"price": 99})))
+      app.stream_on("data") { |d| received = d }
+      app.dispatch_stream_message("data", JSON.parse(%({"price": 99})))
 
       received.not_nil!["price"].as_i.should eq(99)
     end

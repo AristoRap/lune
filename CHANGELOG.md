@@ -4,33 +4,31 @@
 
 ### Added
 
-- **WebSocket IPC channel** — a new `Channel` capability provides a bidirectional, ordered, low-latency channel backed by a local WebSocket server. Use `app.channel_send(name, data)` from Crystal and `Channel.on` / `Channel.send` from JavaScript for high-frequency or continuous data streams (tickers, log tails, LLM token output) where the event bus's per-call `evaluateJavaScript` overhead would become a bottleneck. The channel auto-reconnects on disconnect and can be excluded via `lune.yml` if not needed.
-
-### Added
-
+- **`Stream` capability** — bidirectional, ordered, low-latency WebSocket IPC stream. Use `app.stream_send(name, data)` from Crystal and `Stream.on` / `Stream.send` from JavaScript for high-frequency or continuous data flows (tickers, log tails, LLM token output) where the event bus's per-call `evaluateJavaScript` overhead would become a bottleneck. Auto-reconnects on disconnect; excludable via `lune.yml`.
 - **`file_watch` capability** — monitor files and directories for filesystem changes. Call `FileWatch.watch(path)` / `FileWatch.unwatch(path)` from JavaScript; subscribe to change events with `FileWatch.on(cb)`. Events carry `{path, kind}` where `kind` is `"modified"`, `"created"`, `"deleted"`, or `"renamed"`. Backed by kqueue (`EVFILT_VNODE`) on macOS and inotify on Linux — no polling, no extra system dependencies. Hard-depends on `event_bus`; automatically disabled with a warning if `event_bus` is excluded.
 - **`opts.file_watch.debounce`** — configurable debounce window (default 50 ms) that collapses the burst of raw OS events produced by a single editor save into one logical event per path. Set to `0.milliseconds` to receive raw events.
 
 ### Fixed
 
+- **macOS 26+ crash on app close** — `deplete_run_loop_event_queue` in the webview destructor called `nextEventMatchingMask:` from a non-main OS thread. macOS 26 (Tahoe) began enforcing main-thread-only for that call; the resulting ObjC exception propagated as `std::terminate` → `SIGABRT`. Fixed upstream in `naqvis/webview` (`fff6c392`); the fix is now pulled in directly without a local patch.
+- **File-drop JSON parse error swallowed** — the native drop callbacks now wrap the entire parse + dispatch in a typed `rescue JSON::ParseException | TypeCastError | KeyError`, preventing a hard crash if the ObjC layer sends unexpected data.
 - **Linux inotify buffer overread** — the inotify event loop now validates `buf.size >= sizeof(InotifyEvent)` and `step <= buf.size` before advancing the pointer; a short read or an oversized `ev.len` could previously walk past the buffer end.
 - **Darwin kevent fd leak on registration failure** — `FileWatch.add_watch` now registers the kevent before storing the fd in the watch map, and closes the fd if `kevent()` returns an error. Previously a failed registration left the fd recorded but unwatched (silent no-op).
 - **Tray `setMenu` crash on malformed input** — the `set_menu` bridge callback now uses safe JSON navigation and wraps the parse in a typed rescue; a missing `id`/`label` key or invalid JSON previously caused a hard `TypeCastError` crash.
 - **File-drop callback crash on unexpected JSON** — the native drop callbacks on both macOS and Linux now use `?.try(&.as_i?)`/`?.try(&.as_s?)` with safe defaults; malformed JSON from the native layer previously raised `TypeCastError`.
 - **Bridge TOCTOU race in `dispatch_result`** — the closed guard is now checked both before queuing the dispatch *and* inside the queued block, closing the window where the webview could be torn down between the pre-dispatch check and block execution.
 - **`WindowState.load_from` bare rescue** — replaced with a typed rescue on `JSON::ParseException | TypeCastError | File::Error | IO::Error`; failures now log a warning instead of silently returning nil.
-- **Channel silent message-parse failure** — the bare `rescue` in the WebSocket message handler now captures and logs the exception at debug level.
+- **Stream silent message-parse failure** — the bare `rescue` in the WebSocket message handler now captures and logs the exception at debug level.
 - **Clipboard command failures silently ignored** — `DEFAULT_READ` and `DEFAULT_WRITE` now check `Process.run` exit status and log a warning on failure; missing binaries (`xclip`, `pbpaste`) now rescue `File::Error | IO::Error` and log instead of crashing or returning empty silently.
-
 - **`file_watch` double-start in dev mode** — in dev mode the runner called `install` twice on the same capability instances (once for the real app, once to collect bindings for JS codegen). `FileWatch` opened two kqueue/inotify fds and the second fiber held a reference to a stub app with no bridge, so all file events were silently dropped. `start` is now idempotent, and the dev-mode binding collection pass skips capabilities already installed for the real app.
 - **`app.emit` crash when `event_bus` excluded** — calling `app.emit` with the event bus capability disabled threw `TypeError: crystalEmit is not a function` in JS. The Crystal side now guards the call, and no-op JS stubs are injected for `crystalEmit`, `on`, `off`, and `jsEmit` so frontend code that references them doesn't throw.
-- **Channel JS stubs when `channel` excluded** — similarly, `chOn`, `chOff`, and `chSend` are stubbed as no-ops when the channel capability is inactive, preventing crashes in frontend code that references them unconditionally.
+- **Stream JS stubs when `stream` excluded** — `stOn`, `stOff`, and `stSend` are stubbed as no-ops when the stream capability is inactive, preventing crashes in frontend code that references them unconditionally.
 - **Drop-zone highlight flickering** — `dragPos` previously removed the `lune-drop-target-active` class and re-added it on every drag-move event, restarting any CSS transition on each tick. The class is now only toggled when the active element actually changes, eliminating the flicker and fixing cases where slow CSS transitions never completed.
 
 ### Internal
 
-- **macOS 26+ webview patch upstreamed** — the compile-time `patch_webview.sh` workaround (introduced in 0.7.1) has been merged into `naqvis/webview` master. The patch script and its `{% system(...) %}` invocation are removed; `shard.yml` now pins to commit `fff6c392` which contains the fix.
-
+- **macOS 26+ webview fix upstreamed** — our `[NSThread isMainThread]` guard was merged into `naqvis/webview` master (`fff6c392`). The local `patch_webview.sh` and its `{% system(...) %}` compile-time invocation are removed; `shard.yml` pins to the upstream commit directly.
+- **Capability architecture** — each capability now declares a `Descriptor` (id, label, deps, soft_deps, core) and opts into lifecycle phases via modules (`Capability::Bindable`, `Capability::WebviewInject`, `Capability::Lifecycle`) rather than overriding no-op base methods. Context structs (`SetupCtx`, `BindCtx`, `WebviewCtx`) replace scattered argument lists. `name` derives from `descriptor.id` — no per-capability override needed. The registry runs a `setup` pass so handle- and options-dependent capabilities pull state from context instead of constructor injection. `Registry#resolve` applies include/exclude config, cascade-disables capabilities whose hard deps are inactive (with logged warnings), emits soft-dep warnings, and topologically sorts the result. The runner dispatches through `is_a?` phase checks and calls `shutdown` on `Lifecycle` capabilities after `wv.run`. `App#install(cap : Capability)` added as a convenience for installing capabilities from user code.
 - **Binding boilerplate reduced** — `Dialogs` message variants, `Clipboard` read/write registrations, and `Window` zero-arg operations (minimize/maximize/center) are now table-driven loops; the four identical `message_*` blocks, six identical clipboard blocks, and three identical window blocks each collapse to a single descriptor array. No behaviour change.
 - **`Runner#webview` decomposed** — capability webview-init (sentinel injection + stub JS for excluded capabilities) extracted to `inject_capability_init`; the navigation branch (html/url/dev_url/assets) extracted to `setup_navigation`. The `webview` body drops from ~100 lines to ~60.
 - **`Generator` JS/DTS grouping deduplicated** — `generate_runtime_js` and `generate_runtime_dts` shared identical 10-line namespace-grouping logic; extracted to `namespace_groups(&helper_fn)` called with `&.js_helpers` / `&.dts_helpers`.
@@ -40,16 +38,11 @@
 - **`FileWatch::WatchMap`** — Linux inotify's two manually-synced bidirectional maps (`@watch_ids : Hash(Int32, String)` and `@path_to_wd : Hash(String, Int32)`) are now encapsulated in a private `WatchMap` class whose `add`/`remove`/`path_for`/`includes?`/`clear` methods guarantee the maps stay in sync.
 - **`FileWatch#maybe_emit`** — Darwin (kqueue) and Linux (inotify) fiber loops duplicated the debounce guard and `app.emit` call; extracted to a private `maybe_emit` helper shared by both platforms.
 
-- **Capability architecture** — each capability now declares a `Descriptor` (id, label, deps, soft_deps, core) and opts into lifecycle phases via modules (`Capability::Bindable`, `Capability::WebviewInject`, `Capability::Lifecycle`) rather than overriding no-op base methods. Context structs (`SetupCtx`, `BindCtx`, `WebviewCtx`) replace scattered argument lists. `name` derives from `descriptor.id` — no per-capability override needed. The registry runs a `setup` pass so handle- and options-dependent capabilities pull state from context instead of constructor injection. `Registry#resolve` applies include/exclude config, cascade-disables capabilities whose hard deps are inactive (with logged warnings), emits soft-dep warnings, and topologically sorts the result. The runner dispatches through `is_a?` phase checks and calls `shutdown` on `Lifecycle` capabilities after `wv.run`. `App#install(cap : Capability)` added as a convenience for installing capabilities from user code.
-
 ## [0.7.1] - 2026-05-19
 
 ### Fixed
 
 - **Main-thread crash** — all native AppKit (macOS) and GTK (Linux) UI calls — dialogs, window controls, tray, context menus — now dispatch synchronously to the main thread when invoked from a background fiber. Eliminates the intermittent `NSInternalInconsistencyException: nextEventMatchingMask should only be called from the Main Thread!` crash.
-
-- **macOS 26+ crash on app close** — `deplete_run_loop_event_queue` in the webview destructor called `nextEventMatchingMask:` from a non-main OS thread. macOS 26 (Tahoe) began enforcing main-thread-only for that call; the resulting ObjC exception propagated as `std::terminate` → `SIGABRT`. An idempotent compile-time patch now inserts an `[NSThread isMainThread]` guard — safe to skip because the window is already closed at that point. Affects Crystal `preview_mt` builds where the app runs on a worker thread, not Thread 0.
-- **File-drop JSON parse error swallowed** — the native drop callbacks now wrap the entire parse + dispatch in a typed `rescue JSON::ParseException | TypeCastError | KeyError`, preventing a hard crash if the ObjC layer sends unexpected data.
 
 ### Changed
 

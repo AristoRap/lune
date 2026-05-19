@@ -2,8 +2,8 @@
 
 ## Now — v0.8.x
 
-- [x] High-throughput IPC channel — WebSocket-backed ordered delivery for streaming and high-frequency events
-- [ ] Shell / process execution — spawn child processes and stream stdout/stderr to the frontend via Channel
+- [x] High-throughput IPC stream — WebSocket-backed ordered delivery for streaming and high-frequency events
+- [ ] Shell / process execution — spawn child processes and stream stdout/stderr to the frontend via Stream
 - [ ] Global keyboard shortcuts — system-wide hotkeys that fire even when the window is not focused
 - [x] File watching — monitor filesystem paths for changes and emit events to the frontend
 
@@ -23,7 +23,7 @@ Features the platform exposes that Lune doesn't yet surface.
 
 - [x] Rich clipboard — image and HTML read/write beyond current text-only support
 - [x] Drag-out — native drag of files from the WebView into the system (complement to existing drop-in)
-- [ ] SQLite — embedded database access via Crystal's `sqlite3` shard with a typed JS bridge; pairs naturally with the Channel for reactive data flows
+- [ ] SQLite — embedded database access via Crystal's `sqlite3` shard with a typed JS bridge; pairs naturally with the Stream for reactive data flows
 - [ ] Multiple windows
 
 ## Backlog — Architecture
@@ -44,4 +44,4 @@ Structural improvements that unlock whole categories of apps.
 
 ---
 
-_v0.2 – v0.8.1 shipped: event bus, runtime JS/TS API (namespaced PascalCase objects), codegen bindings, dev error overlay, tray, file dialogs, drag-and-drop, window controls, notifications, screen info, app paths, clipboard (rich: text/HTML/image), window state persistence, capability allowlist (group-level), app icons, default menu bar, demo app (Vue 3 template), real async via OS threads, options API grouped into nested blocks, user-configurable menu bar, context menus, drag-out, deep links, distribution packaging (DMG + AppImage), code signing, notarization, LuneError typed rejections, capability architecture refactoring, WebSocket IPC channel (bidirectional, high-throughput), shell / process execution (Shell.run + Shell.spawn + Shell.kill). See [CHANGELOG.md](CHANGELOG.md) for details._
+_v0.2 – v0.8.1 shipped: event bus, runtime JS/TS API (namespaced PascalCase objects), codegen bindings, dev error overlay, tray, file dialogs, drag-and-drop, window controls, notifications, screen info, app paths, clipboard (rich: text/HTML/image), window state persistence, capability allowlist (group-level), app icons, default menu bar, demo app (Vue 3 template), real async via OS threads, options API grouped into nested blocks, user-configurable menu bar, context menus, drag-out, deep links, distribution packaging (DMG + AppImage), code signing, notarization, LuneError typed rejections, capability architecture refactoring, WebSocket IPC stream (bidirectional, high-throughput), shell / process execution (Shell.run + Shell.spawn + Shell.kill). See [CHANGELOG.md](CHANGELOG.md) for details._

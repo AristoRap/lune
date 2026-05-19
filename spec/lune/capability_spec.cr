@@ -7,13 +7,13 @@ describe Lune::Capability do
         id: :my_cap,
         label: "MyCap",
         deps: [:event_bus],
-        soft_deps: [:channel],
+        soft_deps: [:stream],
         core: true,
       )
       d.id.should eq(:my_cap)
       d.label.should eq("MyCap")
       d.deps.should eq([:event_bus])
-      d.soft_deps.should eq([:channel])
+      d.soft_deps.should eq([:stream])
       d.core.should be_true
     end
 
@@ -54,7 +54,7 @@ describe Lune::Capability do
     end
 
     it "Channel includes WebviewInject" do
-      Lune::Capabilities::Channel.new.is_a?(Lune::Capability::WebviewInject).should be_true
+      Lune::Capabilities::Stream.new.is_a?(Lune::Capability::WebviewInject).should be_true
     end
 
     it "FileDrop includes WebviewInject" do
@@ -80,7 +80,7 @@ describe Lune::Capability do
     end
 
     it "Channel is core with no deps" do
-      d = Lune::Capabilities::Channel::DESCRIPTOR
+      d = Lune::Capabilities::Stream::DESCRIPTOR
       d.core.should be_true
       d.deps.should be_empty
     end

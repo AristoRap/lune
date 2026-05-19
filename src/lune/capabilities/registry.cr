@@ -22,7 +22,7 @@ module Lune
       )
         @all = [
           Capabilities::EventBus.new,
-          Capabilities::Channel.new,
+          Capabilities::Stream.new,
           Capabilities::FileDrop.new,
           Capabilities::System.new(on_quit),
           Capabilities::Filesystem.new,

@@ -26,7 +26,7 @@ export default defineConfig({
           { text: 'Error Handling', link: '/guide/error-handling' },
           { text: 'Runtime Functions', link: '/guide/runtime' },
           { text: 'Events', link: '/guide/events' },
-          { text: 'Channel', link: '/guide/channel' },
+          { text: 'Stream', link: '/guide/stream' },
           { text: 'TypeScript', link: '/guide/typescript' },
           { text: 'Window', link: '/guide/window' },
           { text: 'Distribution', link: '/guide/distribution' },

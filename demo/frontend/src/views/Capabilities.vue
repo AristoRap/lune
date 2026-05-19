@@ -22,7 +22,7 @@ const ALL = [
   { cap: "file_watch", group: "File Watch", core: false, fns: ["watch", "unwatch", "on", "once", "off"] },
   // Core — JS-injected infrastructure, no bridge binding
   { cap: "event_bus", group: "Event Bus", core: true, fns: ["on", "once", "off", "emit"] },
-  { cap: "channel", group: "Channel", core: true, fns: ["on", "once", "off", "send"] },
+  { cap: "stream", group: "Stream", core: true, fns: ["on", "once", "off", "send"] },
   { cap: "deep_link", group: "Deep Link", core: true, fns: ["on", "off"] },
   { cap: "file_drop", group: "File Drop", core: true, fns: ["on", "off"] },
 ];

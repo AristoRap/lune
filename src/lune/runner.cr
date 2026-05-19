@@ -207,8 +207,8 @@ module Lune
         js_emit_key = "#{bm}.jsEmit"
         wv.init("(function(){window.#{bm}=window.#{bm}||{};var n=function(){};window.#{bm}.crystalEmit=n;window.#{bm}.on=n;window.#{bm}.off=n;window[#{js_emit_key.inspect}]=function(){return Promise.resolve();};})();")
       end
-      unless resolved.active_ids.includes?(:channel)
-        wv.init("(function(){window.#{bm}=window.#{bm}||{};var n=function(){};window.#{bm}.chOn=n;window.#{bm}.chOff=n;window.#{bm}.chSend=n;})();")
+      unless resolved.active_ids.includes?(:stream)
+        wv.init("(function(){window.#{bm}=window.#{bm}||{};var n=function(){};window.#{bm}.stOn=n;window.#{bm}.stOff=n;window.#{bm}.stSend=n;})();")
       end
     end
 

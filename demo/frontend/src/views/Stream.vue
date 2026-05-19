@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import SectionHead from "../components/SectionHead.vue";
-import { Channel } from "../lune.js";
+import { Stream } from "../lune.js";
 
 // ------- live ticker (Crystal → JS) -------
 
@@ -17,23 +17,23 @@ const msgPerSec = ref(0);
 let secCount = 0;
 setInterval(() => { msgPerSec.value = secCount; secCount = 0; }, 1000);
 
-Channel.on("tick", ({ symbol, price, change }) => {
+Stream.on("tick", ({ symbol, price, change }) => {
   prices.value[symbol] = { price, change };
   secCount++;
 });
 
 function toggleStream() {
   streaming.value = !streaming.value;
-  Channel.send(streaming.value ? "stream-start" : "stream-stop");
+  Stream.send(streaming.value ? "stream-start" : "stream-stop");
 }
 
-// ------- channel ping/pong (JS → Crystal → JS) -------
+// ------- stream ping/pong (JS → Crystal → JS) -------
 
 const pingValue = ref("hello");
 const rounds = ref([]);
 let nextId = 1;
 
-Channel.on("channel-pong", (data) => {
+Stream.on("stream-pong", (data) => {
   const pending = rounds.value.find((r) => r.pong === undefined);
   if (pending) {
     pending.pong = data;
@@ -43,14 +43,14 @@ Channel.on("channel-pong", (data) => {
 
 function sendPing() {
   rounds.value.push({ id: nextId++, ping: pingValue.value, pong: undefined, sentAt: performance.now(), ms: 0 });
-  Channel.send("channel-ping", pingValue.value);
+  Stream.send("stream-ping", pingValue.value);
 }
 </script>
 
 <template>
-  <SectionHead eyebrow="High-throughput" title="Channel">
+  <SectionHead eyebrow="High-throughput" title="Stream">
     <template #desc>
-      A WebSocket-backed IPC channel for ordered, low-latency data delivery.
+      A WebSocket-backed IPC stream for ordered, low-latency data delivery.
       Use it for streaming data or high-frequency events where the event bus
       would saturate with per-message <code>evaluateJavaScript</code> calls.
     </template>
@@ -85,13 +85,13 @@ function sendPing() {
     </div>
 
     <div class="card">
-      <span class="card-label">Channel ping — JS → Crystal → JS</span>
+      <span class="card-label">Stream ping — JS → Crystal → JS</span>
       <div class="row">
         <input v-model="pingValue" type="text" @keydown.enter="sendPing" />
         <button class="primary" @click="sendPing">Send</button>
       </div>
       <p class="hint">
-        Uses <code>Channel.send</code> / <code>app.channel_on</code> — fire-and-forget,
+        Uses <code>Stream.send</code> / <code>app.stream_on</code> — fire-and-forget,
         no <code>await</code> needed.
       </p>
       <div class="rounds">
