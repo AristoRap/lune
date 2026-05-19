@@ -47,9 +47,6 @@ module Lune
       )
       end
 
-      def install(app : App) : Nil
-        install(BindCtx.new(app))
-      end
 
       def install(ctx : BindCtx) : Nil
         on_read = @on_read

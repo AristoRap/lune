@@ -1,7 +1,5 @@
 module Lune
   abstract class Capability
-    include Installable
-
     BRIDGE_MARKER = "__lune"
     SENTINEL_NS   = "capabilities.#{BRIDGE_MARKER}"
 
@@ -94,15 +92,8 @@ module Lune
     def setup(ctx : SetupCtx) : Nil
     end
 
-    # Legacy signatures — kept until all capabilities are migrated to ctx variants.
     def configured? : Bool
       false
-    end
-
-    def install(app : App) : Nil
-    end
-
-    def init_webview(wv : Webview::Webview, handle : Pointer(Void), app : Lune::App) : Nil
     end
 
     def js_helpers : String

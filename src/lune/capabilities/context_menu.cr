@@ -16,9 +16,6 @@ module Lune
         @handle = ctx.handle
       end
 
-      def install(app : App) : Nil
-        install(BindCtx.new(app))
-      end
 
       def install(ctx : BindCtx) : Nil
         h = @handle

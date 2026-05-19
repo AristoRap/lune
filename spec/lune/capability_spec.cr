@@ -112,7 +112,7 @@ describe Lune::Capability do
       ))
 
       app = Lune::App.new
-      sys.install(app)
+      app.install(sys)
 
       binding = app.bindings.find { |b| b.id.ends_with?("system.environment") }
       binding.should_not be_nil
@@ -133,6 +133,82 @@ describe Lune::Capability do
       opts.tray { |t| t.event = "myTrayEvent" }
       cap.setup(Lune::Capability::SetupCtx.new(opts, Pointer(Void).null))
       cap.@event_name.should eq("myTrayEvent")
+    end
+  end
+end
+
+private def make_registry
+  Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new, -> { })
+end
+
+private def config_only(*names : String) : Lune::ConfigCapabilities
+  Lune::ConfigCapabilities.new(only: names.to_a, exclude: nil)
+end
+
+private def config_exclude(*names : String) : Lune::ConfigCapabilities
+  Lune::ConfigCapabilities.new(only: nil, exclude: names.to_a)
+end
+
+private def empty_config : Lune::ConfigCapabilities
+  Lune::ConfigCapabilities.new(only: nil, exclude: nil)
+end
+
+describe Lune::Capabilities::Registry do
+  describe "#resolve" do
+    it "returns all capabilities when config is empty" do
+      r = make_registry
+      resolved = r.resolve(empty_config)
+      resolved.capabilities.size.should eq(r.all.size)
+      resolved.warnings.should be_empty
+    end
+
+    it "respects include list" do
+      resolved = make_registry.resolve(config_only("clipboard", "filesystem"))
+      resolved.capabilities.map(&.name).should contain("clipboard")
+      resolved.capabilities.map(&.name).should contain("filesystem")
+      resolved.capabilities.size.should eq(2)
+    end
+
+    it "respects exclude list" do
+      resolved = make_registry.resolve(config_exclude("clipboard"))
+      resolved.capabilities.map(&.name).should_not contain("clipboard")
+    end
+
+    it "cascade-disables a capability when its hard dep is excluded" do
+      resolved = make_registry.resolve(config_exclude("event_bus"))
+      names = resolved.capabilities.map(&.name)
+      names.should_not contain("context_menu")
+      names.should_not contain("file_drop")
+      names.should_not contain("deep_link")
+    end
+
+    it "emits a warning for each cascade-disabled capability" do
+      resolved = make_registry.resolve(config_exclude("event_bus"))
+      resolved.warnings.any? { |w| w.includes?("ContextMenu") }.should be_true
+      resolved.warnings.any? { |w| w.includes?("FileDrop") }.should be_true
+    end
+
+    it "keeps a soft-dep capability active when its soft dep is excluded" do
+      resolved = make_registry.resolve(config_exclude("event_bus"))
+      resolved.capabilities.map(&.name).should contain("tray")
+    end
+
+    it "emits a soft-dep warning when soft dep is absent" do
+      resolved = make_registry.resolve(config_exclude("event_bus"))
+      resolved.warnings.any? { |w| w.includes?("Tray") && w.includes?("event_bus") }.should be_true
+    end
+
+    it "places deps before dependents in the sorted result" do
+      resolved = make_registry.resolve(empty_config)
+      names = resolved.capabilities.map(&.name)
+      event_bus_pos = names.index("event_bus").not_nil!
+      context_menu_pos = names.index("context_menu").not_nil!
+      event_bus_pos.should be < context_menu_pos
+    end
+
+    it "active_ids returns a set of symbols for the resolved capabilities" do
+      resolved = make_registry.resolve(config_only("clipboard"))
+      resolved.active_ids.should eq(Set{:clipboard})
     end
   end
 end

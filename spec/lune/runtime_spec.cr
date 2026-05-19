@@ -3,7 +3,7 @@ require "file_utils"
 
 private def runtime_bindings
   app = Lune::App.new
-  Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new).all.each(&.install(app))
+  Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |cap| app.install(cap) }
   app.bindings.select(&.internal?)
 end
 

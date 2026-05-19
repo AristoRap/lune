@@ -42,7 +42,7 @@ describe Lune::Capabilities::DeepLink do
     app.bridge = bridge
 
     before = fake.dispatch_count
-    Lune::Capabilities::DeepLink.new.install(app)
+    app.install(Lune::Capabilities::DeepLink.new)
     Lune::Native::DeepLinkMock.simulate("myapp://open/path")
     fake.dispatch_count.should be > before
   end

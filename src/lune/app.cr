@@ -26,6 +26,10 @@ module Lune
       end
     end
 
+    def install(cap : Capability)
+      cap.install(Capability::BindCtx.new(self)) if cap.is_a?(Capability::Bindable)
+    end
+
     # ----------------------------
     # Bindings
     # ----------------------------

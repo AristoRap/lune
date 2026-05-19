@@ -339,7 +339,7 @@ describe "Lune::Capabilities" do
   describe "Registry" do
     it "registers all capability bindings" do
       app = Lune::App.new
-      Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new).all.each(&.install(app))
+      Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |cap| app.install(cap) }
 
       methods = app.bindings.map(&.method)
 
@@ -365,14 +365,14 @@ describe "Lune::Capabilities" do
 
     it "marks every capability binding as internal" do
       app = Lune::App.new
-      Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new).all.each(&.install(app))
+      Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |cap| app.install(cap) }
 
       app.bindings.all?(&.internal?).should be_true
     end
 
     it "registers 34 bindings total" do
       app = Lune::App.new
-      Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new).all.each(&.install(app))
+      Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |cap| app.install(cap) }
 
       app.bindings.size.should eq(34)
     end

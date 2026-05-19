@@ -7,9 +7,6 @@ module Lune
       def descriptor : Descriptor; DESCRIPTOR; end
 
 
-      def install(app : App) : Nil
-        install(BindCtx.new(app))
-      end
 
       def install(ctx : BindCtx) : Nil
         ctx.register(Definition.new(

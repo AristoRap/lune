@@ -39,9 +39,6 @@ module Lune
         DTS
       end
 
-      def install(app : App) : Nil
-        install(BindCtx.new(app))
-      end
 
       def install(ctx : BindCtx) : Nil
         event_name = @event_name

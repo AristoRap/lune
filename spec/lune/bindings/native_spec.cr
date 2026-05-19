@@ -4,13 +4,11 @@ private def install_all(handle, on_tray_click = nil, on_menu_click = nil)
   app = Lune::App.new
   window_cap = Lune::Capabilities::Window.new
   window_cap.setup(Lune::Capability::SetupCtx.new(Lune::Options.new, handle))
-  app.install(
-    window_cap,
-    Lune::Capabilities::Tray.new(on_tray_click: on_tray_click, on_menu_click: on_menu_click),
-    Lune::Capabilities::Dialogs.new,
-    Lune::Capabilities::Notifications.new,
-    Lune::Capabilities::Screen.new
-  )
+  app.install(window_cap)
+  app.install(Lune::Capabilities::Tray.new(on_tray_click: on_tray_click, on_menu_click: on_menu_click))
+  app.install(Lune::Capabilities::Dialogs.new)
+  app.install(Lune::Capabilities::Notifications.new)
+  app.install(Lune::Capabilities::Screen.new)
   app.bindings
 end
 

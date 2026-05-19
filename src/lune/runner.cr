@@ -43,16 +43,13 @@ module Lune
 
         registry = Capabilities::Registry.new(handle, @options, on_quit: -> { wv.dispatch { wv.terminate } })
         registry.validate(@config.capabilities)
-        active = registry.active(@config.capabilities)
+        resolved = registry.resolve(@config.capabilities)
+        resolved.warnings.each { |w| Lune.logger.warn { w } }
 
-        if @options.debug
-          registry.all.each do |cap|
-            next if active.includes?(cap)
-            Lune.logger.warn { "\"#{cap.name}\" is configured but not active — enable it in lune.yml capabilities" } if cap.configured?
-          end
+        bind_ctx = Lune::Capability::BindCtx.new(@app)
+        resolved.capabilities.each do |cap|
+          cap.install(bind_ctx) if cap.is_a?(Lune::Capability::Bindable)
         end
-
-        active.each { |cap| cap.install(@app) }
 
         bridge = Bridge.new(wv)
         bridge.register_bindings(@app.bindings.reject(&.internal?))
@@ -76,9 +73,10 @@ module Lune
         setup_navigate_if_set(wv)
         setup_drag_zone_if_set(wv, handle)
 
-        active.each do |cap|
+        webview_ctx = Lune::Capability::WebviewCtx.new(wv, handle, @app, resolved.active_ids)
+        resolved.capabilities.each do |cap|
           wv.init("window[#{cap.sentinel_key.inspect}] = true;")
-          cap.init_webview(wv, handle, @app)
+          cap.init_webview(webview_ctx) if cap.is_a?(Lune::Capability::WebviewInject)
         end
 
         asset_server : AssetServer? = nil
@@ -88,10 +86,11 @@ module Lune
         elsif u = url
           wv.navigate(u)
         elsif dev_url = ENV[Lune::ENV_DEV_URL]?
-          # In dev mode runtime.js carries all capabilities so the dev view can
-          # show which are active vs excluded. The bridge is still filtered.
           all_stubs = App.new
-          registry.all.each { |cap| cap.install(all_stubs) }
+          all_bind_ctx = Lune::Capability::BindCtx.new(all_stubs)
+          registry.all.each do |cap|
+            cap.install(all_bind_ctx) if cap.is_a?(Lune::Capability::Bindable)
+          end
           Lune::Runtime::Generator.write_js(
             @app.bindings.reject(&.internal?) + all_stubs.bindings.select(&.internal?),
             @lunejs_dir,
@@ -108,6 +107,10 @@ module Lune
         end
 
         wv.run
+
+        resolved.capabilities.each do |cap|
+          cap.shutdown if cap.is_a?(Lune::Capability::Lifecycle)
+        end
 
         x, y, width, height = Native::Window.get_frame(handle)
         WindowState.save(window_app_name, x, y, width, height)

@@ -9,9 +9,6 @@ module Lune
         DESCRIPTOR
       end
 
-      def install(app : App) : Nil
-        install(BindCtx.new(app))
-      end
 
       def install(ctx : BindCtx) : Nil
         {% if flag?(:lune_native_test_mock) || flag?(:darwin) %}
