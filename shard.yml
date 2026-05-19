@@ -16,6 +16,9 @@ dependencies:
   argy:
     github: AristoRap/argy
     version: ~> 0.3
+  sqlite3:
+    github: crystal-lang/crystal-sqlite3
+    version: ~> 0.23
 
 targets:
   lune:

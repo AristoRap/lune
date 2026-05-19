@@ -16,6 +16,7 @@ import DeepLink from "./views/DeepLink.vue";
 import FileWatch from "./views/FileWatch.vue";
 import Hotkeys from "./views/Hotkeys.vue";
 import Shell from "./views/Shell.vue";
+import Sqlite from "./views/Sqlite.vue";
 import Capabilities from "./views/Capabilities.vue";
 
 export const navGroups = [
@@ -55,6 +56,7 @@ export const navGroups = [
       { id: "filewatch", label: "File Watch", icon: "eye", view: FileWatch },
       { id: "hotkeys", label: "Hotkeys", icon: "key", view: Hotkeys },
       { id: "shell", label: "Shell", icon: "cpu", view: Shell },
+      { id: "sqlite", label: "SQLite", icon: "database", view: Sqlite },
       {
         id: "capabilities",
         label: "Capabilities",

@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- **`sqlite` capability** — embedded SQLite database access via `crystal-lang/crystal-sqlite3`. `Sqlite.open(path)` returns an opaque handle (pass `":memory:"` for an in-process database or an absolute file path for a persistent one). `Sqlite.exec(db, sql, params)` runs non-SELECT statements and resolves with `{ changes, lastInsertId }`. `Sqlite.query(db, sql, params)` runs SELECT statements and resolves with an array of row objects keyed by column name. `Sqlite.close(db)` releases the handle. SQL and type errors surface as `LuneError` with code `sqlite_error`; accessing an unknown handle raises `sqlite_not_open`. BLOBs arrive in JS as base64 strings. All open databases are closed on app quit via the `Lifecycle` shutdown hook.
+
 ## [0.9.0] - 2026-05-19
 
 ### Added

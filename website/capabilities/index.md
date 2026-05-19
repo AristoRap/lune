@@ -68,6 +68,7 @@ Two capabilities are marked **core**: `event_bus` and `stream`. They are enabled
 | [Notifications](./notifications) | `notifications` | `Notifications` | No      | Bindable                 | —           | —           | macOS · Linux  |
 | [Screen](./screen)               | `screen`        | `Screen`        | No      | Bindable                 | —           | —           | macOS · Linux  |
 | [Shell](./shell)                 | `shell`         | `Shell`         | No      | Bindable · Lifecycle     | `stream`    | —           | macOS · Linux  |
+| [SQLite](./sqlite)               | `sqlite`        | `Sqlite`        | No      | Bindable · Lifecycle     | —           | —           | all            |
 | [System](./system)               | `system`        | `System`        | No      | Bindable                 | —           | —           | all            |
 | [Tray](./tray)                   | `tray`          | `Tray`          | No      | Bindable                 | —           | `event_bus` | macOS · Linux¹ |
 | [Window](./window)               | `window`        | `Window`        | No      | Bindable                 | —           | —           | macOS · Linux  |

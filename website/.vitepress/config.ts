@@ -57,6 +57,7 @@ export default defineConfig({
               { text: 'Notifications', link: '/capabilities/notifications' },
               { text: 'Screen', link: '/capabilities/screen' },
               { text: 'Shell', link: '/capabilities/shell' },
+              { text: 'SQLite', link: '/capabilities/sqlite' },
               { text: 'System', link: '/capabilities/system' },
               { text: 'Tray', link: '/capabilities/tray' },
               { text: 'Window', link: '/capabilities/window' },

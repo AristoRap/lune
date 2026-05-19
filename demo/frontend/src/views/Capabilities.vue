@@ -21,6 +21,7 @@ const ALL = [
   { cap: "drag_out", group: "Drag Out", core: false, fns: ["start"] },
   { cap: "file_watch", group: "File Watch", core: false, fns: ["watch", "unwatch", "on", "once", "off"] },
   { cap: "shell", group: "Shell", core: false, fns: ["spawn", "kill", "listen", "unlisten", "run"] },
+  { cap: "sqlite", group: "SQLite", core: false, fns: ["open", "close", "exec", "query"] },
   // Core — JS-injected infrastructure, no bridge binding
   { cap: "event_bus", group: "Event Bus", core: true, fns: ["on", "once", "off", "emit"] },
   { cap: "stream", group: "Stream", core: true, fns: ["on", "once", "off", "send"] },
