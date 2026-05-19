@@ -12,6 +12,7 @@ license: MIT
 dependencies:
   webview:
     github: naqvis/webview
+    commit: fff6c392dace786cdab31f54fc5b8073c5efa95d
   argy:
     github: AristoRap/argy
     version: ~> 0.3

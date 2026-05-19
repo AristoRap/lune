@@ -27,7 +27,6 @@ help:
 
 setup:
 	shards install
-	@[ "$$(uname)" = "Darwin" ] && sh ext/patches/patch_webview.sh lib/webview || true
 
 CRYSTAL_FLAGS := -Dpreview_mt -Dexecution_context
 

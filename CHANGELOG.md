@@ -29,6 +29,8 @@
 
 ### Internal
 
+- **macOS 26+ webview patch upstreamed** — the compile-time `patch_webview.sh` workaround (introduced in 0.7.1) has been merged into `naqvis/webview` master. The patch script and its `{% system(...) %}` invocation are removed; `shard.yml` now pins to commit `fff6c392` which contains the fix.
+
 - **Binding boilerplate reduced** — `Dialogs` message variants, `Clipboard` read/write registrations, and `Window` zero-arg operations (minimize/maximize/center) are now table-driven loops; the four identical `message_*` blocks, six identical clipboard blocks, and three identical window blocks each collapse to a single descriptor array. No behaviour change.
 - **`Runner#webview` decomposed** — capability webview-init (sentinel injection + stub JS for excluded capabilities) extracted to `inject_capability_init`; the navigation branch (html/url/dev_url/assets) extracted to `setup_navigation`. The `webview` body drops from ~100 lines to ~60.
 - **`Generator` JS/DTS grouping deduplicated** — `generate_runtime_js` and `generate_runtime_dts` shared identical 10-line namespace-grouping logic; extracted to `namespace_groups(&helper_fn)` called with `&.js_helpers` / `&.dts_helpers`.
