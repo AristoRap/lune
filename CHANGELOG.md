@@ -25,6 +25,7 @@
 - **`file_watch` double-start in dev mode** — in dev mode the runner called `install` twice on the same capability instances (once for the real app, once to collect bindings for JS codegen). `FileWatch` opened two kqueue/inotify fds and the second fiber held a reference to a stub app with no bridge, so all file events were silently dropped. `start` is now idempotent, and the dev-mode binding collection pass skips capabilities already installed for the real app.
 - **`app.emit` crash when `event_bus` excluded** — calling `app.emit` with the event bus capability disabled threw `TypeError: crystalEmit is not a function` in JS. The Crystal side now guards the call, and no-op JS stubs are injected for `crystalEmit`, `on`, `off`, and `jsEmit` so frontend code that references them doesn't throw.
 - **Channel JS stubs when `channel` excluded** — similarly, `chOn`, `chOff`, and `chSend` are stubbed as no-ops when the channel capability is inactive, preventing crashes in frontend code that references them unconditionally.
+- **Drop-zone highlight flickering** — `dragPos` previously removed the `lune-drop-target-active` class and re-added it on every drag-move event, restarting any CSS transition on each tick. The class is now only toggled when the active element actually changes, eliminating the flicker and fixing cases where slow CSS transitions never completed.
 
 ### Internal
 

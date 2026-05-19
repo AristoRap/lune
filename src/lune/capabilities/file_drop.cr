@@ -97,20 +97,26 @@ module Lune
             var _lune_dz_val  = #{css_val.inspect};
             var _lune_dz_active = null;
             window.#{bm}.dragPos = function(x, y) {
-              if (_lune_dz_active) {
-                _lune_dz_active.classList.remove('lune-drop-target-active');
-                _lune_dz_active = null;
+              if (x < 0) {
+                if (_lune_dz_active) {
+                  _lune_dz_active.classList.remove('lune-drop-target-active');
+                  _lune_dz_active = null;
+                }
+                return;
               }
-              if (x < 0) return;
               var el = document.elementFromPoint(x, y);
+              var next = null;
               while (el) {
                 if (el.style && el.style.getPropertyValue(_lune_dz_prop).trim() === _lune_dz_val) {
-                  _lune_dz_active = el;
-                  el.classList.add('lune-drop-target-active');
-                  return;
+                  next = el;
+                  break;
                 }
                 el = el.parentElement;
               }
+              if (next === _lune_dz_active) return;
+              if (_lune_dz_active) _lune_dz_active.classList.remove('lune-drop-target-active');
+              _lune_dz_active = next;
+              if (next) next.classList.add('lune-drop-target-active');
             };
             window.#{bm}.dropCheck = function(x, y, pathsJson) {
               if (_lune_dz_active) {
