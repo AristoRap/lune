@@ -59,56 +59,32 @@ module Lune
 
 
       def install(ctx : BindCtx) : Nil
-        on_read = @on_read
-        ctx.register(Definition.new(
-          name: "#{name}.read",
-          args: [] of String,
-          return_type: "String",
-          callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(on_read.call) },
-        ).binding(binding_namespace))
+        [
+          {"read",       @on_read},
+          {"read_html",  @on_read_html},
+          {"read_image", @on_read_image},
+        ].each do |(method, reader)|
+          ctx.register(Definition.new(
+            name: "#{name}.#{method}",
+            args: [] of String,
+            return_type: "String",
+            callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(reader.call) },
+          ).binding(binding_namespace))
+        end
 
-        on_write = @on_write
-        ctx.register(Definition.new(
-          name: "#{name}.write",
-          args: ["String"],
-          return_type: "Nil",
-          arg_names: ["text"],
-          callback: ->(args : Array(JSON::Any)) { on_write.call(args[0].as_s); JSON::Any.new(nil) },
-        ).binding(binding_namespace))
-
-        on_read_html = @on_read_html
-        ctx.register(Definition.new(
-          name: "#{name}.read_html",
-          args: [] of String,
-          return_type: "String",
-          callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(on_read_html.call) },
-        ).binding(binding_namespace))
-
-        on_write_html = @on_write_html
-        ctx.register(Definition.new(
-          name: "#{name}.write_html",
-          args: ["String"],
-          return_type: "Nil",
-          arg_names: ["html"],
-          callback: ->(args : Array(JSON::Any)) { on_write_html.call(args[0].as_s); JSON::Any.new(nil) },
-        ).binding(binding_namespace))
-
-        on_read_image = @on_read_image
-        ctx.register(Definition.new(
-          name: "#{name}.read_image",
-          args: [] of String,
-          return_type: "String",
-          callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(on_read_image.call) },
-        ).binding(binding_namespace))
-
-        on_write_image = @on_write_image
-        ctx.register(Definition.new(
-          name: "#{name}.write_image",
-          args: ["String"],
-          return_type: "Nil",
-          arg_names: ["dataUrl"],
-          callback: ->(args : Array(JSON::Any)) { on_write_image.call(args[0].as_s); JSON::Any.new(nil) },
-        ).binding(binding_namespace))
+        [
+          {"write",       "text",    @on_write},
+          {"write_html",  "html",    @on_write_html},
+          {"write_image", "dataUrl", @on_write_image},
+        ].each do |(method, arg_name, writer)|
+          ctx.register(Definition.new(
+            name: "#{name}.#{method}",
+            args: ["String"],
+            return_type: "Nil",
+            arg_names: [arg_name],
+            callback: ->(args : Array(JSON::Any)) { writer.call(args[0].as_s); JSON::Any.new(nil) },
+          ).binding(binding_namespace))
+        end
       end
     end
   end
