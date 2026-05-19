@@ -84,7 +84,7 @@ module Lune
       private def drop_global(wv : Webview::Webview, app : Lune::App, user_callback : ((Int32, Int32, Array(String)) -> Nil)?, bm : String) : (Int32, Int32, Array(String)) -> Nil
         ->(x : Int32, y : Int32, paths : Array(String)) {
           user_callback.try(&.call(x, y, paths))
-          app.emit("file_drop", {"x" => x, "y" => y, "paths" => paths})
+          app.events.emit("file_drop", {"x" => x, "y" => y, "paths" => paths})
         }
       end
 

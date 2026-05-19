@@ -32,9 +32,9 @@ capabilities:
 ### Emitting from Crystal
 
 ```crystal
-app.emit("status-changed", "ready")
-app.emit("progress", { "percent" => 42 })
-app.emit("file-saved")  # no payload
+app.events.emit("status-changed", "ready")
+app.events.emit("progress", { "percent" => 42 })
+app.events.emit("file-saved")  # no payload
 ```
 
 The payload can be any Crystal value that serializes to JSON — strings, numbers, booleans, arrays, hashes, or `JSON::Serializable` structs.
@@ -69,17 +69,17 @@ await Events.emit("ready");
 ### Listening in Crystal
 
 ```crystal
-app.on("search") do |data|
+app.events.on("search") do |data|
   query = data["query"].as_s
   results = search_index(query)
-  app.emit("results", results)
+  app.events.emit("results", results)
 end
 
-app.once("ready") do |_|
+app.events.once("ready") do |_|
   puts "Frontend is ready"
 end
 
-app.off("search")  # remove all Crystal-side handlers
+app.events.off("search")  # remove all Crystal-side handlers
 ```
 
 The `data` argument is a `JSON::Any` — use `.as_s`, `.as_i`, `.as_a`, `[]` etc.
@@ -118,7 +118,7 @@ Events.off("tick"); // remove ALL handlers for "tick"
 def process_files(paths : Array(String)) : Nil
   paths.each_with_index do |path, i|
     do_work(path)
-    @app.emit("progress", { "done" => i + 1, "total" => paths.size })
+    @app.events.emit("progress", { "done" => i + 1, "total" => paths.size })
   end
 end
 ```
@@ -132,9 +132,9 @@ Events.on("progress", ({ done, total }) => {
 ### Request/reply pattern
 
 ```crystal
-app.on("search") do |data|
+app.events.on("search") do |data|
   results = run_search(data["query"].as_s)
-  app.emit("search-results", results.map(&.to_h))
+  app.events.emit("search-results", results.map(&.to_h))
 end
 ```
 
@@ -148,8 +148,8 @@ searchInput.addEventListener("input", (e) => {
 ### Signal from JS when frontend is ready
 
 ```crystal
-app.once("frontend-ready") do |_|
-  app.emit("config", load_config.to_h)
+app.events.once("frontend-ready") do |_|
+  app.events.emit("config", load_config.to_h)
 end
 ```
 
@@ -162,7 +162,7 @@ Events.emit("frontend-ready");
 
 ## Notes
 
-- `app.emit` is safe to call from any fiber — `app.async` tasks, async binding callbacks, or the main thread.
+- `app.events.emit` is safe to call from any fiber — `app.async` tasks, async binding callbacks, or the main thread.
 - Events emitted before the WebView has opened are silently dropped. Emit from `on_load` or in response to a JS event to guarantee delivery.
-- Crystal `app.on` handlers run on the webview main thread. Keep them short; dispatch long work to `app.async`.
+- Crystal `app.events.on` handlers run on the webview main thread. Keep them short; dispatch long work to `app.async`.
 - For high-frequency or ordered streams, use [Stream](./stream) instead.

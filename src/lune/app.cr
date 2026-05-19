@@ -1,18 +1,76 @@
 module Lune
   class App
+    class Events
+      def initialize(@bridge_fn : -> Bridge?)
+        @handlers = {} of String => Array(Proc(JSON::Any, Nil))
+        @once_handlers = {} of String => Array(Proc(JSON::Any, Nil))
+      end
+
+      def emit(event : String, data = nil)
+        return unless (b = @bridge_fn.call)
+        json = data.nil? ? "null" : data.to_json
+        bm = Lune::Capability::BRIDGE_MARKER
+        b.dispatch_eval("if(window.#{bm}&&typeof window.#{bm}.crystalEmit==='function')window.#{bm}.crystalEmit(#{event.inspect},#{json})")
+      end
+
+      def on(event : String, &block : JSON::Any -> Nil)
+        (@handlers[event] ||= [] of Proc(JSON::Any, Nil)) << block
+      end
+
+      def once(event : String, &block : JSON::Any -> Nil)
+        (@once_handlers[event] ||= [] of Proc(JSON::Any, Nil)) << block
+      end
+
+      def off(event : String)
+        @handlers.delete(event)
+        @once_handlers.delete(event)
+      end
+
+      def dispatch(event : String, data : JSON::Any)
+        @handlers[event]?.try(&.each(&.call(data)))
+        @once_handlers.delete(event).try(&.each(&.call(data)))
+      end
+    end
+
+    class Stream
+      property sender : Proc(String, String, Nil)?
+
+      def initialize
+        @sender = nil
+        @handlers = {} of String => Array(Proc(JSON::Any, Nil))
+      end
+
+      def send(name : String, data = nil)
+        return unless (s = @sender)
+        json = data.nil? ? "null" : data.to_json
+        s.call(name, json)
+      end
+
+      def on(name : String, &block : JSON::Any -> Nil)
+        (@handlers[name] ||= [] of Proc(JSON::Any, Nil)) << block
+      end
+
+      def off(name : String)
+        @handlers.delete(name)
+      end
+
+      def dispatch(name : String, data : JSON::Any)
+        @handlers[name]?.try(&.each(&.call(data)))
+      end
+    end
+
     getter bindings = [] of Binding
     property bridge : Bridge?
     property title : String = ""
     property menu_options : Options::Menu = Options::Menu.new
-    property stream_sender : Proc(String, String, Nil)?
+    getter events : Events
+    getter stream : Stream
 
     def initialize
       @bindings = [] of Binding
       @bridge = nil
-      @event_handlers = {} of String => Array(Proc(JSON::Any, Nil))
-      @event_once_handlers = {} of String => Array(Proc(JSON::Any, Nil))
-      @stream_sender = nil
-      @stream_handlers = {} of String => Array(Proc(JSON::Any, Nil))
+      @events = Events.new(-> { @bridge })
+      @stream = Stream.new
       @async_pool = Fiber::ExecutionContext::Parallel.new("lune-tasks", System.cpu_count)
     end
 
@@ -51,52 +109,6 @@ module Lune
       @bindings << binding
     end
 
-    # ----------------------------
-    # Events
-    # ----------------------------
-
-    def emit(event : String, data = nil)
-      return unless (b = @bridge)
-      json = data.nil? ? "null" : data.to_json
-      bm = Lune::Capability::BRIDGE_MARKER
-      b.dispatch_eval("if(window.#{bm}&&typeof window.#{bm}.crystalEmit==='function')window.#{bm}.crystalEmit(#{event.inspect},#{json})")
-    end
-
-    def on(event : String, &block : JSON::Any -> Nil)
-      (@event_handlers[event] ||= [] of Proc(JSON::Any, Nil)) << block
-    end
-
-    def once(event : String, &block : JSON::Any -> Nil)
-      (@event_once_handlers[event] ||= [] of Proc(JSON::Any, Nil)) << block
-    end
-
-    def off(event : String)
-      @event_handlers.delete(event)
-      @event_once_handlers.delete(event)
-    end
-
-    # ----------------------------
-    # Stream (WebSocket IPC)
-    # ----------------------------
-
-    def stream_send(name : String, data = nil)
-      return unless (s = @stream_sender)
-      json = data.nil? ? "null" : data.to_json
-      s.call(name, json)
-    end
-
-    def stream_on(name : String, &block : JSON::Any -> Nil)
-      (@stream_handlers[name] ||= [] of Proc(JSON::Any, Nil)) << block
-    end
-
-    def stream_off(name : String)
-      @stream_handlers.delete(name)
-    end
-
-    def dispatch_stream_message(name : String, data : JSON::Any)
-      @stream_handlers[name]?.try(&.each(&.call(data)))
-    end
-
     # Replaces the application menu bar at runtime.
     def set_menu(& : Options::Menu ->)
       opts = Options::Menu.new
@@ -113,11 +125,6 @@ module Lune
 
     def async(name : String = "lune-task", &block : ->) : Nil
       @async_pool.spawn(name: name, &block)
-    end
-
-    def dispatch_event(event : String, data : JSON::Any)
-      @event_handlers[event]?.try(&.each(&.call(data)))
-      @event_once_handlers.delete(event).try(&.each(&.call(data)))
     end
 
     # ----------------------------

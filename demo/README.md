@@ -38,7 +38,7 @@ frontend/
 ## What's demonstrated
 
 - `@[Lune::Bind]` — calling Crystal methods from JavaScript
-- Bidirectional event bus — `app.emit` / `app.on` (Crystal↔JS)
+- Bidirectional event bus — `app.events.emit` / `app.events.on` (Crystal↔JS)
 - Runtime functions — `quit`, `environment`, `clipboardRead/Write`, `notify`, `screenInfo`
 - Window controls — `minimize`, `maximize`, `center`, `setTitle`, `setSize`
 - File dialogs — `openFile`, `openFiles`, `openDir`, `saveFile`

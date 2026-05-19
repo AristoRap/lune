@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.9.0] - 2026-05-19
+
+### Breaking
+
+- **`app.emit/on/once/off` → `app.events.*`** — event bus methods are now accessed via `app.events`: `app.events.emit`, `app.events.on`, `app.events.once`, `app.events.off`. The flat `app.emit` etc. methods are removed. Update all call sites.
+- **`app.stream_send/stream_on/stream_off` → `app.stream.*`** — stream methods are now accessed via `app.stream`: `app.stream.send`, `app.stream.on`, `app.stream.off`. `app.stream_sender` is replaced by `app.stream.sender`. Update all call sites.
+
+### Internal
+
+- **`App::Events` inner class** — event bus state (`@handlers`, `@once_handlers`) and methods (`emit`, `on`, `once`, `off`, `dispatch`) are encapsulated in `App::Events`, constructed in `App#initialize` and exposed via `app.events`.
+- **`App::Stream` inner class** — stream state (`@sender`, `@handlers`) and methods (`send`, `on`, `off`, `dispatch`) are encapsulated in `App::Stream`, constructed in `App#initialize` and exposed via `app.stream`.
+
 ## [0.8.0] - 2026-05-19
 
 ### Added

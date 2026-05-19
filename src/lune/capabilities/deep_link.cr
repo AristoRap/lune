@@ -12,11 +12,11 @@ module Lune
       def install(ctx : BindCtx) : Nil
         {% if flag?(:lune_native_test_mock) || flag?(:darwin) %}
           Native::DeepLink.install do |url|
-            ctx.app.emit("deep_link", {"url" => url})
+            ctx.app.events.emit("deep_link", {"url" => url})
           end
         {% elsif flag?(:linux) %}
           if url = ARGV.find { |arg| arg.includes?("://") }
-            ctx.app.emit("deep_link", {"url" => url})
+            ctx.app.events.emit("deep_link", {"url" => url})
           end
         {% end %}
       end

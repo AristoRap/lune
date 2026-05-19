@@ -113,14 +113,14 @@ module Lune
 
         app.async("shell-#{pid}-out") do
           while line = stdout_io.gets
-            app.stream_send("shell:#{pid}:stdout", {"line" => line})
+            app.stream.send("shell:#{pid}:stdout", {"line" => line})
           end
           done.send(nil)
         end
 
         app.async("shell-#{pid}-err") do
           while line = stderr_io.gets
-            app.stream_send("shell:#{pid}:stderr", {"line" => line})
+            app.stream.send("shell:#{pid}:stderr", {"line" => line})
           end
           done.send(nil)
         end
@@ -130,7 +130,7 @@ module Lune
           status = process.wait
           @mu.synchronize { @processes.delete(pid) }
           # exit_code? returns nil for signal-terminated processes (e.g. SIGTERM from kill)
-          app.stream_send("shell:#{pid}:exit", {"code" => (status.exit_code? || -1)})
+          app.stream.send("shell:#{pid}:exit", {"code" => (status.exit_code? || -1)})
         end
 
         pid

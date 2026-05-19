@@ -8,11 +8,11 @@ For the full API reference see [Stream capability](../capabilities/stream).
 
 ## Crystal → JavaScript
 
-Call `app.stream_send` from any fiber:
+Call `app.stream.send` from any fiber:
 
 ```crystal
-app.stream_send("tick", { "price" => 45123.50 })
-app.stream_send("log-line", "build finished in 4.2s")
+app.stream.send("tick", { "price" => 45123.50 })
+app.stream.send("log-line", "build finished in 4.2s")
 ```
 
 Listen in JavaScript with `Stream.on`:
@@ -35,10 +35,10 @@ Stream.send("stream-start");
 Stream.send("order", { symbol: "BTC", qty: 1 });
 ```
 
-Listen in Crystal with `app.stream_on`:
+Listen in Crystal with `app.stream.on`:
 
 ```crystal
-app.stream_on("order") do |data|
+app.stream.on("order") do |data|
   place_order(data["symbol"].as_s, data["qty"].as_i)
 end
 ```

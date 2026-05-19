@@ -91,7 +91,7 @@ function sendPing() {
         <button class="primary" @click="sendPing">Send</button>
       </div>
       <p class="hint">
-        Uses <code>Stream.send</code> / <code>app.stream_on</code> — fire-and-forget,
+        Uses <code>Stream.send</code> / <code>app.stream.on</code> — fire-and-forget,
         no <code>await</code> needed.
       </p>
       <div class="rounds">

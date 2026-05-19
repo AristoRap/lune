@@ -32,12 +32,12 @@ capabilities:
 ### Sending from Crystal
 
 ```crystal
-app.stream_send("trade", { "symbol" => "BTC", "price" => 45123.50 })
-app.stream_send("log-line", "build finished in 4.2s")
-app.stream_send("heartbeat")  # no payload
+app.stream.send("trade", { "symbol" => "BTC", "price" => 45123.50 })
+app.stream.send("log-line", "build finished in 4.2s")
+app.stream.send("heartbeat")  # no payload
 ```
 
-`stream_send` is safe to call from any fiber. If no WebSocket client is connected, the call is a silent no-op.
+`app.stream.send` is safe to call from any fiber. If no WebSocket client is connected, the call is a silent no-op.
 
 ### Listening in JavaScript
 
@@ -67,11 +67,11 @@ Stream.send("order", { symbol: "BTC", qty: 1, side: "buy" });
 ### Listening in Crystal
 
 ```crystal
-app.stream_on("order") do |data|
+app.stream.on("order") do |data|
   place_order(data["symbol"].as_s, data["qty"].as_i)
 end
 
-app.stream_off("order")  # remove all handlers for this name
+app.stream.off("order")  # remove all handlers for this name
 ```
 
 Handlers run in the stream's background fiber pool — keep them short or hand off to `app.async`.
@@ -96,13 +96,13 @@ Handlers run in the stream's background fiber pool — keep them short or hand o
 ```crystal
 streaming = Atomic(Int32).new(0)
 
-app.stream_on("stream-start") { |_| streaming.set(1) }
-app.stream_on("stream-stop")  { |_| streaming.set(0) }
+app.stream.on("stream-start") { |_| streaming.set(1) }
+app.stream.on("stream-stop")  { |_| streaming.set(0) }
 
 app.async("ticker") do
   loop do
     if streaming.get == 1
-      app.stream_send("tick", { "price" => current_price })
+      app.stream.send("tick", { "price" => current_price })
       sleep 50.milliseconds
     else
       sleep 100.milliseconds
@@ -122,9 +122,9 @@ stopButton.addEventListener("click", () => Stream.send("stream-stop"));
 ```crystal
 app.async do
   client.stream_chat(prompt) do |token|
-    app.stream_send("token", token)
+    app.stream.send("token", token)
   end
-  app.stream_send("done", nil)
+  app.stream.send("done", nil)
 end
 ```
 
@@ -147,7 +147,7 @@ app.async do
     f.seek(0, IO::Seek::End)
     loop do
       line = f.gets
-      line ? app.stream_send("log", line) : sleep(200.milliseconds)
+      line ? app.stream.send("log", line) : sleep(200.milliseconds)
     end
   end
 end

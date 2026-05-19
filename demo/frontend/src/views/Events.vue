@@ -80,7 +80,7 @@ async function pickAndProcess() {
   <SectionHead eyebrow="Bidirectional" title="Events">
     <template #desc>
       A small bus connects Crystal and JS. Crystal calls
-      <code>app.emit</code>; JavaScript calls <code>emit()</code>. Either
+      <code>app.events.emit</code>; JavaScript calls <code>emit()</code>. Either
       side can subscribe with <code>on()</code>.
     </template>
   </SectionHead>

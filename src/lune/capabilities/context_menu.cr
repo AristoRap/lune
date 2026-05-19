@@ -24,7 +24,7 @@ module Lune
           return_type: "Nil",
           callback: ->(args : Array(JSON::Any)) {
             Lune::Native::Menu.show_context_menu(h, args[0].as_f.to_f32, args[1].as_f.to_f32, args[2].as_s) do |id|
-              ctx.app.emit("context_menu", {"id" => id})
+              ctx.app.events.emit("context_menu", {"id" => id})
             end
             JSON::Any.new(nil)
           },

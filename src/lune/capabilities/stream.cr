@@ -31,7 +31,7 @@ module Lune
             ws.on_message do |raw|
               begin
                 msg = JSON.parse(raw)
-                app.dispatch_stream_message(msg["n"].as_s, msg["d"])
+                app.stream.dispatch(msg["n"].as_s, msg["d"])
               rescue ex
                 Lune.logger.debug { "Stream: malformed message — #{ex.message}" }
               end
@@ -51,7 +51,7 @@ module Lune
         end
         ready.receive
 
-        app.stream_sender = ->(n : String, json : String) {
+        app.stream.sender = ->(n : String, json : String) {
           copies = mu.synchronize { sockets.dup }
           copies.each { |ws| ws.send(%({"n":#{n.to_json},"d":#{json}})) rescue nil }
         }

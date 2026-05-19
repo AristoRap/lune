@@ -41,7 +41,7 @@ module Lune
 
       def install(ctx : BindCtx) : Nil
         event_name = @event_name
-        on_tray_click = @on_tray_click || -> { ctx.app.emit(event_name, "click"); nil }
+        on_tray_click = @on_tray_click || -> { ctx.app.events.emit(event_name, "click"); nil }
         ctx.register(Definition.new(
           name: "#{name}.show",
           args: ["String"],
@@ -65,7 +65,7 @@ module Lune
           callback: ->(args : Array(JSON::Any)) { Lune::Native::Tray.set_icon(args[0].as_s); JSON::Any.new(nil) },
         ).binding(binding_namespace))
 
-        on_menu_click = @on_menu_click || ->(id : String) { ctx.app.emit(event_name, id); nil }
+        on_menu_click = @on_menu_click || ->(id : String) { ctx.app.events.emit(event_name, id); nil }
         ctx.register(Definition.new(
           name: "#{name}.set_menu",
           args: ["String"],

@@ -8,12 +8,12 @@ For the full API reference see [EventBus capability](../capabilities/event-bus).
 
 ## Crystal → JavaScript
 
-Call `app.emit` with an event name and an optional payload:
+Call `app.events.emit` with an event name and an optional payload:
 
 ```crystal
-app.emit("status-changed", "ready")
-app.emit("progress", { "percent" => 42 })
-app.emit("file-saved")
+app.events.emit("status-changed", "ready")
+app.events.emit("progress", { "percent" => 42 })
+app.events.emit("file-saved")
 ```
 
 Listen in JavaScript with `Events.on` or `Events.once`:
@@ -35,12 +35,12 @@ Emit from JavaScript with `Events.emit`:
 await Events.emit("search", { query: input.value });
 ```
 
-Listen in Crystal with `app.on` or `app.once`:
+Listen in Crystal with `app.events.on` or `app.events.once`:
 
 ```crystal
-app.on("search") do |data|
+app.events.on("search") do |data|
   results = search_index(data["query"].as_s)
-  app.emit("results", results)
+  app.events.emit("results", results)
 end
 ```
 
@@ -52,8 +52,8 @@ Crystal-emitted events are received by JS listeners and vice versa — names liv
 
 ```crystal
 # Crystal side
-app.on("search") do |data|
-  app.emit("results", run_search(data["query"].as_s))
+app.events.on("search") do |data|
+  app.events.emit("results", run_search(data["query"].as_s))
 end
 ```
 
@@ -69,9 +69,9 @@ searchButton.addEventListener("click", () =>
 
 ## Timing
 
-`app.emit` is safe to call from any fiber. Events emitted before the WebView is open are silently dropped — emit from `on_load` or in response to a JS event to guarantee delivery.
+`app.events.emit` is safe to call from any fiber. Events emitted before the WebView is open are silently dropped — emit from `on_load` or in response to a JS event to guarantee delivery.
 
-Crystal `app.on` handlers run on the webview main thread. Keep them short; dispatch long work to `app.async`.
+Crystal `app.events.on` handlers run on the webview main thread. Keep them short; dispatch long work to `app.async`.
 
 ---
 

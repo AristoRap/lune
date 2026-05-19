@@ -17,7 +17,7 @@ Lune connects a Crystal backend to a web frontend running inside a native WebVie
 │  │   await api.MyModule.doSomething(args)  ──────────┼──┼──┐
 │  └───────────────────────────────────────────────────┘  │  │
 │                    ↕ events (bidirectional)             │  │
-│          app.emit() · app.on()  ↔  emit() · on()        │  │ binding call
+│  app.events.emit() · app.events.on()  ↔  emit() · on()   │  │ binding call
 │  ┌────────────────────────────────────────────────────┐ │  │
 │  │  Crystal App                                       │ │  │
 │  │                                                    │ │  │
@@ -171,21 +171,21 @@ When using `Lune.run` with `assets:`, the macro internally creates a `Runner` an
 
 ## Event system
 
-The event bus is bidirectional. Crystal pushes to JS via `app.emit`; JS pushes to Crystal via `Events.emit` from `runtime.js`. Both sides share the same event name namespace and use symmetric `on`, `once`, `off` APIs.
+The event bus is bidirectional. Crystal pushes to JS via `app.events.emit`; JS pushes to Crystal via `Events.emit` from `runtime.js`. Both sides share the same event name namespace and use symmetric `on`, `once`, `off` APIs.
 
 ```crystal
 # Crystal → JS
 app.async do
   loop do
-    app.emit("tick", Time.utc.to_s)
+    app.events.emit("tick", Time.utc.to_s)
     sleep 1.second
   end
 end
 
 # Crystal listening for JS events — dispatch heavy work to app.async
-app.on("search") do |data|
+app.events.on("search") do |data|
   query = data["query"].as_s
-  app.async { app.emit("results", run_search(query).map(&.to_h)) }
+  app.async { app.events.emit("results", run_search(query).map(&.to_h)) }
 end
 ```
 
@@ -197,4 +197,4 @@ Events.on("results", (data) => renderResults(data));
 await Events.emit("search", { query: input.value });
 ```
 
-Under the hood, `app.emit` calls `window.__lune.crystalEmit` (Crystal→JS); `Events.emit` calls the `__lune.jsEmit` WebView binding (JS→Crystal). See the [Events](./events) guide for the full API.
+Under the hood, `app.events.emit` calls `window.__lune.crystalEmit` (Crystal→JS); `Events.emit` calls the `__lune.jsEmit` WebView binding (JS→Crystal). See the [Events](./events) guide for the full API.

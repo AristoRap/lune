@@ -26,7 +26,7 @@ module Lune
         wv.bind(js_emit_key, Webview::JSProc.new { |args|
           event = args[0]?.try(&.as_s) || ""
           data = args[1]? || JSON::Any.new(nil)
-          app.dispatch_event(event, data)
+          app.events.dispatch(event, data)
           JSON::Any.new(nil)
         })
 

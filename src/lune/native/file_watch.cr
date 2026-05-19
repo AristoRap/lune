@@ -266,7 +266,7 @@ module Lune
         now = Time.instant
         return if (prev = last_fired[path]?) && (now - prev) < debounce
         last_fired[path] = now
-        app.emit("file_watch", {"path" => path, "kind" => kind})
+        app.events.emit("file_watch", {"path" => path, "kind" => kind})
       end
     end
   end

@@ -168,7 +168,7 @@ Called once when the page's `load` event fires — i.e. the DOM is fully ready. 
 ```crystal
 opts.on_load = -> {
   puts "Frontend ready"
-  app.emit("init", { "version" => "1.0.0" })
+  app.events.emit("init", { "version" => "1.0.0" })
 }
 ```
 
@@ -301,7 +301,7 @@ Crystal-side callback fired when the user drops files. Receives the drop positio
 opts.drop do |d|
   d.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
     puts "Dropped #{paths.size} file(s) at (#{x}, #{y})"
-    app.emit("fileDrop", {"x" => x, "y" => y, "paths" => paths})
+    app.events.emit("fileDrop", {"x" => x, "y" => y, "paths" => paths})
   }
 end
 ```
@@ -403,7 +403,7 @@ end
 
 **Type:** `(-> Nil)?` — **Default:** `nil`
 
-When set, replaces the default `app.emit` for tray icon clicks entirely. Use when you need Crystal-side side-effects beyond event emission.
+When set, replaces the default `app.events.emit` for tray icon clicks entirely. Use when you need Crystal-side side-effects beyond event emission.
 
 ---
 
@@ -411,7 +411,7 @@ When set, replaces the default `app.emit` for tray icon clicks entirely. Use whe
 
 **Type:** `(String -> Nil)?` — **Default:** `nil`
 
-When set, replaces the default `app.emit` for menu item selection entirely. Receives the item's `id`.
+When set, replaces the default `app.events.emit` for menu item selection entirely. Receives the item's `id`.
 
 ---
 
@@ -501,7 +501,7 @@ The block receives the new checked state as a `Bool`. The visual checkmark is to
 ```crystal
 m.submenu "View" do |view|
   view.checkbox "Show Sidebar", checked: true, shortcut: "cmd+\\" do |on|
-    app.emit("sidebar", on)
+    app.events.emit("sidebar", on)
   end
 end
 ```
@@ -748,7 +748,7 @@ class FileMenu < Lune::Options::Menu::Group
     @clock_paused = !@clock_paused
     @pause_item.not_nil!.label = @clock_paused ? "Resume Clock" : "Pause Clock"
     @app.update_menu
-    @app.emit("clockPaused", @clock_paused)
+    @app.events.emit("clockPaused", @clock_paused)
   end
 end
 
@@ -768,7 +768,7 @@ Lune.run(app) do |opts|
   opts.drop do |d|
     d.zone    = "--lune-drop-target"
     d.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
-      app.emit("file_drop", {"x" => x, "y" => y, "paths" => paths})
+      app.events.emit("file_drop", {"x" => x, "y" => y, "paths" => paths})
     }
   end
 
@@ -793,8 +793,8 @@ Lune.run(app) do |opts|
     m.hide_title        = true
   end
 
-  opts.on_window_ready = ->(_handle : Void*) { app.emit("windowReady", nil) }
-  opts.on_load         = -> { app.emit("ready", nil) }
+  opts.on_window_ready = ->(_handle : Void*) { app.events.emit("windowReady", nil) }
+  opts.on_load         = -> { app.events.emit("ready", nil) }
   opts.on_navigate     = ->(url : String) { puts "navigated: #{url}" }
   opts.on_close        = -> { puts "closed" }
 end

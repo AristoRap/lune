@@ -6,8 +6,8 @@ app = Lune::App.new
 app.install(Demo.new)
 
 # ping → pong relay
-app.on("ping") do |data|
-  app.emit("pong", data)
+app.events.on("ping") do |data|
+  app.events.emit("pong", data)
 end
 
 # Class-based style: state and callbacks live inside the menu class.
@@ -15,7 +15,7 @@ file_menu = FileMenu.new(app)
 
 app.async("clock") do
   loop do
-    app.emit("tick", Time.utc.to_rfc3339) unless file_menu.clock_paused
+    app.events.emit("tick", Time.utc.to_rfc3339) unless file_menu.clock_paused
     sleep 1.second
   end
 end
@@ -26,9 +26,9 @@ end
 
 streaming = Atomic(Int32).new(0)
 
-app.stream_on("stream-start") { |_| streaming.set(1) }
-app.stream_on("stream-stop") { |_| streaming.set(0) }
-app.stream_on("stream-ping") { |data| app.stream_send("stream-pong", data) }
+app.stream.on("stream-start") { |_| streaming.set(1) }
+app.stream.on("stream-stop") { |_| streaming.set(0) }
+app.stream.on("stream-ping") { |data| app.stream.send("stream-pong", data) }
 
 prices = {"BTC" => 45000.0_f64, "ETH" => 2800.0_f64, "SOL" => 120.0_f64, "AAPL" => 185.0_f64, "MSFT" => 380.0_f64}
 syms = prices.keys
@@ -39,7 +39,7 @@ app.async("ticker") do
       sym = syms.sample
       delta = (Random.rand - 0.5) * prices[sym] * 0.002
       prices[sym] = (prices[sym] + delta).round(2)
-      app.stream_send("tick", {"symbol" => sym, "price" => prices[sym], "change" => delta.round(4)})
+      app.stream.send("tick", {"symbol" => sym, "price" => prices[sym], "change" => delta.round(4)})
       sleep 50.milliseconds
     else
       sleep 100.milliseconds

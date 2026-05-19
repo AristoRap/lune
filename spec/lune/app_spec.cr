@@ -122,29 +122,146 @@ describe Lune::App do
     end
   end
 
-  describe "#emit" do
-    it "emits an event through the bridge" do
-      app = Lune::App.new
-      bridge = MockBridge.new
+  describe "#events" do
+    describe "#emit" do
+      it "emits an event through the bridge" do
+        app = Lune::App.new
+        bridge = MockBridge.new
 
-      app.bridge = bridge
+        app.bridge = bridge
 
-      app.emit("ready", {status: "ok"})
+        app.events.emit("ready", {status: "ok"})
 
-      bridge.last_eval.should contain("window.__lune.crystalEmit")
-      bridge.last_eval.should contain("ready")
-      bridge.last_eval.should contain(%("status":"ok"))
+        bridge.last_eval.should contain("window.__lune.crystalEmit")
+        bridge.last_eval.should contain("ready")
+        bridge.last_eval.should contain(%("status":"ok"))
+      end
+
+      it "emits null when no data is provided" do
+        app = Lune::App.new
+        bridge = MockBridge.new
+
+        app.bridge = bridge
+
+        app.events.emit("ready")
+
+        bridge.last_eval.should contain("null")
+      end
     end
 
-    it "emits null when no data is provided" do
-      app = Lune::App.new
-      bridge = MockBridge.new
+    describe "#on" do
+      it "registers a handler that fires when dispatch is called" do
+        app = Lune::App.new
+        received = [] of JSON::Any
 
-      app.bridge = bridge
+        app.events.on("ping") { |data| received << data }
+        app.events.dispatch("ping", JSON::Any.new("hello"))
 
-      app.emit("ready")
+        received.size.should eq(1)
+        received.first.as_s.should eq("hello")
+      end
 
-      bridge.last_eval.should contain("null")
+      it "registers multiple handlers for the same event" do
+        app = Lune::App.new
+        count = 0
+
+        app.events.on("ping") { |_| count += 1 }
+        app.events.on("ping") { |_| count += 1 }
+        app.events.dispatch("ping", JSON::Any.new(nil))
+
+        count.should eq(2)
+      end
+
+      it "does not fire for a different event name" do
+        app = Lune::App.new
+        fired = false
+
+        app.events.on("ping") { |_| fired = true }
+        app.events.dispatch("pong", JSON::Any.new(nil))
+
+        fired.should be_false
+      end
+
+      it "keeps firing on repeated dispatches" do
+        app = Lune::App.new
+        count = 0
+
+        app.events.on("tick") { |_| count += 1 }
+        app.events.dispatch("tick", JSON::Any.new(nil))
+        app.events.dispatch("tick", JSON::Any.new(nil))
+        app.events.dispatch("tick", JSON::Any.new(nil))
+
+        count.should eq(3)
+      end
+    end
+
+    describe "#once" do
+      it "fires exactly once then removes itself" do
+        app = Lune::App.new
+        count = 0
+
+        app.events.once("ping") { |_| count += 1 }
+        app.events.dispatch("ping", JSON::Any.new(nil))
+        app.events.dispatch("ping", JSON::Any.new(nil))
+
+        count.should eq(1)
+      end
+
+      it "passes data to the handler" do
+        app = Lune::App.new
+        received = [] of JSON::Any
+
+        app.events.once("ping") { |data| received << data }
+        app.events.dispatch("ping", JSON::Any.new("only-once"))
+
+        received.first.as_s.should eq("only-once")
+      end
+    end
+
+    describe "#off" do
+      it "removes all persistent handlers for an event" do
+        app = Lune::App.new
+        count = 0
+
+        app.events.on("ping") { |_| count += 1 }
+        app.events.off("ping")
+        app.events.dispatch("ping", JSON::Any.new(nil))
+
+        count.should eq(0)
+      end
+
+      it "removes once handlers too" do
+        app = Lune::App.new
+        count = 0
+
+        app.events.once("ping") { |_| count += 1 }
+        app.events.off("ping")
+        app.events.dispatch("ping", JSON::Any.new(nil))
+
+        count.should eq(0)
+      end
+
+      it "is a no-op for an event with no handlers" do
+        app = Lune::App.new
+        app.events.off("nonexistent") # must not raise
+      end
+    end
+
+    describe "#dispatch" do
+      it "does nothing when no handlers are registered" do
+        app = Lune::App.new
+        app.events.dispatch("ping", JSON::Any.new(nil)) # must not raise
+      end
+
+      it "passes raw JSON::Any to handlers" do
+        app = Lune::App.new
+        received = nil
+
+        app.events.on("data") { |d| received = d }
+        app.events.dispatch("data", JSON.parse(%({"x": 1})))
+
+        received.not_nil!["x"].as_i.should eq(1)
+      end
     end
   end
 
@@ -174,231 +291,118 @@ describe Lune::App do
     end
   end
 
-  describe "#on" do
-    it "registers a handler that fires when dispatch_event is called" do
-      app = Lune::App.new
-      received = [] of JSON::Any
-
-      app.on("ping") { |data| received << data }
-      app.dispatch_event("ping", JSON::Any.new("hello"))
-
-      received.size.should eq(1)
-      received.first.as_s.should eq("hello")
-    end
-
-    it "registers multiple handlers for the same event" do
-      app = Lune::App.new
-      count = 0
-
-      app.on("ping") { |_| count += 1 }
-      app.on("ping") { |_| count += 1 }
-      app.dispatch_event("ping", JSON::Any.new(nil))
-
-      count.should eq(2)
-    end
-
-    it "does not fire for a different event name" do
-      app = Lune::App.new
-      fired = false
-
-      app.on("ping") { |_| fired = true }
-      app.dispatch_event("pong", JSON::Any.new(nil))
-
-      fired.should be_false
-    end
-
-    it "keeps firing on repeated dispatches" do
-      app = Lune::App.new
-      count = 0
-
-      app.on("tick") { |_| count += 1 }
-      app.dispatch_event("tick", JSON::Any.new(nil))
-      app.dispatch_event("tick", JSON::Any.new(nil))
-      app.dispatch_event("tick", JSON::Any.new(nil))
-
-      count.should eq(3)
-    end
-  end
-
-  describe "#once" do
-    it "fires exactly once then removes itself" do
-      app = Lune::App.new
-      count = 0
-
-      app.once("ping") { |_| count += 1 }
-      app.dispatch_event("ping", JSON::Any.new(nil))
-      app.dispatch_event("ping", JSON::Any.new(nil))
-
-      count.should eq(1)
-    end
-
-    it "passes data to the handler" do
-      app = Lune::App.new
-      received = [] of JSON::Any
-
-      app.once("ping") { |data| received << data }
-      app.dispatch_event("ping", JSON::Any.new("only-once"))
-
-      received.first.as_s.should eq("only-once")
-    end
-  end
-
-  describe "#off" do
-    it "removes all persistent handlers for an event" do
-      app = Lune::App.new
-      count = 0
-
-      app.on("ping") { |_| count += 1 }
-      app.off("ping")
-      app.dispatch_event("ping", JSON::Any.new(nil))
-
-      count.should eq(0)
-    end
-
-    it "removes once handlers too" do
-      app = Lune::App.new
-      count = 0
-
-      app.once("ping") { |_| count += 1 }
-      app.off("ping")
-      app.dispatch_event("ping", JSON::Any.new(nil))
-
-      count.should eq(0)
-    end
-
-    it "is a no-op for an event with no handlers" do
-      app = Lune::App.new
-      app.off("nonexistent") # must not raise
-    end
-  end
-
-  describe "#dispatch_event" do
-    it "does nothing when no handlers are registered" do
-      app = Lune::App.new
-      app.dispatch_event("ping", JSON::Any.new(nil)) # must not raise
-    end
-
-    it "passes raw JSON::Any to handlers" do
-      app = Lune::App.new
-      received = nil
-
-      app.on("data") { |d| received = d }
-      app.dispatch_event("data", JSON.parse(%({"x": 1})))
-
-      received.not_nil!["x"].as_i.should eq(1)
-    end
-  end
-
   # -------------------------------------------------------------------
   # Stream (WebSocket IPC)
   # -------------------------------------------------------------------
 
-  describe "#stream_send" do
-    it "is a no-op when no sender is set" do
-      app = Lune::App.new
-      app.stream_send("tick", {price: 100}) # must not raise
+  describe "#stream" do
+    describe "#send" do
+      it "is a no-op when no sender is set" do
+        app = Lune::App.new
+        app.stream.send("tick", {price: 100}) # must not raise
+      end
+
+      it "calls the sender proc with name and JSON" do
+        app = Lune::App.new
+        calls = [] of {String, String}
+        app.stream.sender = ->(name : String, json : String) { calls << {name, json} }
+
+        app.stream.send("tick", {price: 42})
+
+        calls.size.should eq(1)
+        calls.first[0].should eq("tick")
+        calls.first[1].should contain("42")
+      end
+
+      it "serialises nil data as JSON null" do
+        app = Lune::App.new
+        calls = [] of {String, String}
+        app.stream.sender = ->(name : String, json : String) { calls << {name, json} }
+
+        app.stream.send("ping")
+
+        calls.first[1].should eq("null")
+      end
     end
 
-    it "calls the sender proc with name and JSON" do
-      app = Lune::App.new
-      calls = [] of {String, String}
-      app.stream_sender = ->(name : String, json : String) { calls << {name, json} }
+    describe "#on" do
+      it "registers a handler that fires on dispatch" do
+        app = Lune::App.new
+        received = [] of JSON::Any
 
-      app.stream_send("tick", {price: 42})
+        app.stream.on("trade") { |d| received << d }
+        app.stream.dispatch("trade", JSON::Any.new("BTC"))
 
-      calls.size.should eq(1)
-      calls.first[0].should eq("tick")
-      calls.first[1].should contain("42")
+        received.size.should eq(1)
+        received.first.as_s.should eq("BTC")
+      end
+
+      it "keeps firing on repeated dispatches" do
+        app = Lune::App.new
+        count = 0
+
+        app.stream.on("tick") { |_| count += 1 }
+        app.stream.dispatch("tick", JSON::Any.new(nil))
+        app.stream.dispatch("tick", JSON::Any.new(nil))
+
+        count.should eq(2)
+      end
+
+      it "does not fire for a different stream name" do
+        app = Lune::App.new
+        fired = false
+
+        app.stream.on("trade") { |_| fired = true }
+        app.stream.dispatch("quote", JSON::Any.new(nil))
+
+        fired.should be_false
+      end
+
+      it "supports multiple handlers on the same name" do
+        app = Lune::App.new
+        count = 0
+
+        app.stream.on("tick") { |_| count += 1 }
+        app.stream.on("tick") { |_| count += 1 }
+        app.stream.dispatch("tick", JSON::Any.new(nil))
+
+        count.should eq(2)
+      end
     end
 
-    it "serialises nil data as JSON null" do
-      app = Lune::App.new
-      calls = [] of {String, String}
-      app.stream_sender = ->(name : String, json : String) { calls << {name, json} }
+    describe "#off" do
+      it "removes all handlers for a name" do
+        app = Lune::App.new
+        count = 0
 
-      app.stream_send("ping")
+        app.stream.on("tick") { |_| count += 1 }
+        app.stream.off("tick")
+        app.stream.dispatch("tick", JSON::Any.new(nil))
 
-      calls.first[1].should eq("null")
-    end
-  end
+        count.should eq(0)
+      end
 
-  describe "#stream_on" do
-    it "registers a handler that fires on dispatch_stream_message" do
-      app = Lune::App.new
-      received = [] of JSON::Any
-
-      app.stream_on("trade") { |d| received << d }
-      app.dispatch_stream_message("trade", JSON::Any.new("BTC"))
-
-      received.size.should eq(1)
-      received.first.as_s.should eq("BTC")
+      it "is a no-op for a name with no handlers" do
+        app = Lune::App.new
+        app.stream.off("nonexistent") # must not raise
+      end
     end
 
-    it "keeps firing on repeated dispatches" do
-      app = Lune::App.new
-      count = 0
+    describe "#dispatch" do
+      it "does nothing when no handlers are registered" do
+        app = Lune::App.new
+        app.stream.dispatch("tick", JSON::Any.new(nil)) # must not raise
+      end
 
-      app.stream_on("tick") { |_| count += 1 }
-      app.dispatch_stream_message("tick", JSON::Any.new(nil))
-      app.dispatch_stream_message("tick", JSON::Any.new(nil))
+      it "passes the full JSON::Any payload to handlers" do
+        app = Lune::App.new
+        received = nil
 
-      count.should eq(2)
-    end
+        app.stream.on("data") { |d| received = d }
+        app.stream.dispatch("data", JSON.parse(%({"price": 99})))
 
-    it "does not fire for a different stream name" do
-      app = Lune::App.new
-      fired = false
-
-      app.stream_on("trade") { |_| fired = true }
-      app.dispatch_stream_message("quote", JSON::Any.new(nil))
-
-      fired.should be_false
-    end
-
-    it "supports multiple handlers on the same name" do
-      app = Lune::App.new
-      count = 0
-
-      app.stream_on("tick") { |_| count += 1 }
-      app.stream_on("tick") { |_| count += 1 }
-      app.dispatch_stream_message("tick", JSON::Any.new(nil))
-
-      count.should eq(2)
-    end
-  end
-
-  describe "#stream_off" do
-    it "removes all handlers for a name" do
-      app = Lune::App.new
-      count = 0
-
-      app.stream_on("tick") { |_| count += 1 }
-      app.stream_off("tick")
-      app.dispatch_stream_message("tick", JSON::Any.new(nil))
-
-      count.should eq(0)
-    end
-
-    it "is a no-op for a name with no handlers" do
-      app = Lune::App.new
-      app.stream_off("nonexistent") # must not raise
-    end
-  end
-
-  describe "#dispatch_stream_message" do
-    it "does nothing when no handlers are registered" do
-      app = Lune::App.new
-      app.dispatch_stream_message("tick", JSON::Any.new(nil)) # must not raise
-    end
-
-    it "passes the full JSON::Any payload to handlers" do
-      app = Lune::App.new
-      received = nil
-
-      app.stream_on("data") { |d| received = d }
-      app.dispatch_stream_message("data", JSON.parse(%({"price": 99})))
-
-      received.not_nil!["price"].as_i.should eq(99)
+        received.not_nil!["price"].as_i.should eq(99)
+      end
     end
   end
 
@@ -413,7 +417,7 @@ describe Lune::App do
 
     it "silently drops emit when bridge is not yet set" do
       app = Lune::App.new
-      app.emit("ready") # must not raise
+      app.events.emit("ready") # must not raise
     end
 
     it "silently drops emit after bridge is closed" do
@@ -422,7 +426,7 @@ describe Lune::App do
       app.bridge = bridge
       bridge.close!
 
-      app.emit("after-close") # must not raise or dispatch
+      app.events.emit("after-close") # must not raise or dispatch
       bridge.last_eval.should eq("")
     end
 
