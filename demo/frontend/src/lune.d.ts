@@ -20,5 +20,6 @@ export type {
   Channel,
   DeepLink,
   FileDrop,
+  FileWatch,
   Runtime,
 } from "../lunejs/runtime/runtime.js";

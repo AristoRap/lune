@@ -5,7 +5,7 @@
 - [x] High-throughput IPC channel — WebSocket-backed ordered delivery for streaming and high-frequency events
 - [ ] Shell / process execution — spawn child processes and stream stdout/stderr to the frontend via Channel
 - [ ] Global keyboard shortcuts — system-wide hotkeys that fire even when the window is not focused
-- [ ] File watching — monitor filesystem paths for changes and emit events to the frontend
+- [x] File watching — monitor filesystem paths for changes and emit events to the frontend
 
 ## Next — Production-ready
 

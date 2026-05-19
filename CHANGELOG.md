@@ -6,6 +6,10 @@
 
 - **WebSocket IPC channel** — a new `Channel` capability provides a bidirectional, ordered, low-latency channel backed by a local WebSocket server. Use `app.channel_send(name, data)` from Crystal and `Channel.on` / `Channel.send` from JavaScript for high-frequency or continuous data streams (tickers, log tails, LLM token output) where the event bus's per-call `evaluateJavaScript` overhead would become a bottleneck. The channel auto-reconnects on disconnect and can be excluded via `lune.yml` if not needed.
 
+### Added
+
+- **`file_watch` capability** — monitor files and directories for filesystem changes. Call `FileWatch.watch(path)` / `FileWatch.unwatch(path)` from JavaScript; subscribe to change events with `FileWatch.on(cb)`. Events carry `{path, kind}` where `kind` is `"modified"`, `"created"`, `"deleted"`, or `"renamed"`. Backed by kqueue (`EVFILT_VNODE`) on macOS and inotify on Linux — no polling, no extra system dependencies. Hard-depends on `event_bus`; automatically disabled with a warning if `event_bus` is excluded.
+
 ### Fixed
 
 - **`app.emit` crash when `event_bus` excluded** — calling `app.emit` with the event bus capability disabled threw `TypeError: crystalEmit is not a function` in JS. The Crystal side now guards the call, and no-op JS stubs are injected for `crystalEmit`, `on`, `off`, and `jsEmit` so frontend code that references them doesn't throw.

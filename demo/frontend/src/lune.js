@@ -19,4 +19,5 @@ export {
   Channel,
   DeepLink,
   FileDrop,
+  FileWatch,
 } from "../lunejs/runtime/runtime.js";

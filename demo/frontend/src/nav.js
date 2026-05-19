@@ -13,6 +13,7 @@ import Tray from "./views/Tray.vue";
 import ContextMenu from "./views/ContextMenu.vue";
 import DragOut from "./views/DragOut.vue";
 import DeepLink from "./views/DeepLink.vue";
+import FileWatch from "./views/FileWatch.vue";
 import Capabilities from "./views/Capabilities.vue";
 
 export const navGroups = [
@@ -49,6 +50,7 @@ export const navGroups = [
       },
       { id: "dragout", label: "Drag Out", icon: "drag", view: DragOut },
       { id: "deeplink", label: "Deep Links", icon: "link", view: DeepLink },
+      { id: "filewatch", label: "File Watch", icon: "eye", view: FileWatch },
       {
         id: "capabilities",
         label: "Capabilities",

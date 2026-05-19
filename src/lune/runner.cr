@@ -98,10 +98,11 @@ module Lune
           all_stubs = App.new
           all_bind_ctx = Lune::Capability::BindCtx.new(all_stubs)
           registry.all.each do |cap|
+            next if resolved.active_ids.includes?(cap.descriptor.id)
             cap.install(all_bind_ctx) if cap.is_a?(Lune::Capability::Bindable)
           end
           Lune::Runtime::Generator.write_js(
-            @app.bindings.reject(&.internal?) + all_stubs.bindings.select(&.internal?),
+            @app.bindings + all_stubs.bindings.select(&.internal?),
             @lunejs_dir,
             registry.all
           )
