@@ -1,42 +1,18 @@
 # Changelog
 
-## [Unreleased]
-
-### Added
-
-- **`windows` capability** — open additional native windows from JavaScript. `Windows.open({ title, url, width, height })` creates a new window, registers all active capability bindings on it, and resolves with an opaque handle. `Windows.close(id)` closes and releases the window. `Windows.list()` returns handles of all open secondary windows. `app.events.emit` in Crystal broadcasts to all open windows simultaneously. Secondary windows join the existing Cocoa/GTK run loop automatically — no extra `run` call needed. A `window_closed` event fires in the main window whenever a secondary window closes (OS × button or programmatic `close()`), with `{ id }` payload — no polling required. Secondary windows receive full capability support: `event_bus`, `stream` (connects as a client to the main window's WebSocket server), `file_drop`, `context_menu`, and all other active capabilities work identically to the main window.
-- **Vue Router (hash mode) in demo** — the demo app now uses hash-based routing (`#/route`). Deep links and secondary windows can target any view by URL. `DeepLink` handles `lune-demo://navigate/<id>` for in-app routing.
-
-### Added
-
-- **`Shell.list()`** — returns the pids of all currently running processes. Use it to hydrate secondary windows that didn't spawn the processes: call `Shell.list()` on mount, then `Shell.listen(pid, ...)` to receive future output.
-
-### Fixed
-
-- **`context_menu` in secondary windows** — right-clicking in a secondary window showed the native context menu on the main window. Fixed by resolving `[NSApp keyWindow]` at dispatch time instead of capturing the main window handle at binding install time.
-- **`stream` in secondary windows** — `Stream.init_webview` is now idempotent: if the server is already running (`@port != 0`), it connects as a WebSocket client instead of starting a second server. This removes the last special-case from the secondary-window init path.
-
-### Internal
-
-- **Unified window initialisation** — `ResolvedSet#init_all_webviews` is the single method called for both the main window (runner) and secondary windows (Windows capability). Capabilities that manage shared state self-route internally; the caller no longer needs to know which capabilities are special. Removed `Runner#inject_capability_init` and `Windows#inject_sentinels`.
-
-- **`sqlite` capability** — embedded SQLite database access via `crystal-lang/crystal-sqlite3`. `Sqlite.open(path)` returns an opaque handle (pass `":memory:"` for an in-process database or an absolute file path for a persistent one). `Sqlite.exec(db, sql, params)` runs non-SELECT statements and resolves with `{ changes, lastInsertId }`. `Sqlite.query(db, sql, params)` runs SELECT statements and resolves with an array of row objects keyed by column name. `Sqlite.close(db)` releases the handle. SQL and type errors surface as `LuneError` with code `sqlite_error`; accessing an unknown handle raises `sqlite_not_open`. BLOBs arrive in JS as base64 strings. All open databases are closed on app quit via the `Lifecycle` shutdown hook.
-
 ## [0.9.0] - 2026-05-19
 
 ### Added
 
-- **`hotkeys` capability** — system-wide keyboard shortcuts that fire even when the app window is not focused. Call `Hotkeys.register("Ctrl+Shift+K")` from JS to register a shortcut; listen via `Events.on("hotkey", (data) => ...)` where `data.key` is the accelerator string. `Hotkeys.unregister(accelerator)` removes a shortcut; all shortcuts are released on app quit. On macOS uses Carbon `RegisterEventHotKey` (no Accessibility permission required). On Linux uses `XGrabKey` on the root window in a background fiber. Soft-depends on `event_bus`.
+- **`windows` capability** — open additional native windows from JavaScript. `Windows.open({ title, url, width, height })` creates a new window sharing all active capability bindings, and resolves with an opaque handle. `Windows.close(id)` closes it; `Windows.list()` returns all open handles. A `window_closed` event fires on OS × or programmatic close. Every capability works identically in secondary windows — `stream` connects as a client to the main window's WebSocket server, `file_drop`, `context_menu`, `hotkeys`, and all others are fully active.
+- **`sqlite` capability** — embedded SQLite via `crystal-lang/crystal-sqlite3`. `Sqlite.open(path)` returns a handle (`":memory:"` for in-process, absolute path for persistent). `Sqlite.exec(db, sql, params)` runs writes and returns `{ changes, lastInsertId }`; `Sqlite.query(db, sql, params)` runs reads and returns rows as objects. `Sqlite.close(db)` releases the handle. All open databases are closed on quit.
+- **`hotkeys` capability** — system-wide keyboard shortcuts that fire even when the app is not focused. `Hotkeys.register("Cmd+Shift+K")` registers a shortcut; listen via `Events.on("hotkey", cb)`. `Hotkeys.unregister(accelerator)` removes it; all are released on quit. macOS uses Carbon `RegisterEventHotKey`; Linux uses `XGrabKey`.
+- **`Shell.list()`** — returns pids of all currently running processes. Use it to hydrate secondary windows that didn't spawn the processes: call `Shell.list()` on mount, then `Shell.listen(pid, ...)` to receive future output.
 
 ### Breaking
 
-- **`app.emit/on/once/off` → `app.events.*`** — event bus methods are now accessed via `app.events`: `app.events.emit`, `app.events.on`, `app.events.once`, `app.events.off`. The flat `app.emit` etc. methods are removed. Update all call sites.
-- **`app.stream_send/stream_on/stream_off` → `app.stream.*`** — stream methods are now accessed via `app.stream`: `app.stream.send`, `app.stream.on`, `app.stream.off`. `app.stream_sender` is replaced by `app.stream.sender`. Update all call sites.
-
-### Internal
-
-- **`App::Events` inner class** — event bus state (`@handlers`, `@once_handlers`) and methods (`emit`, `on`, `once`, `off`, `dispatch`) are encapsulated in `App::Events`, constructed in `App#initialize` and exposed via `app.events`.
-- **`App::Stream` inner class** — stream state (`@sender`, `@handlers`) and methods (`send`, `on`, `off`, `dispatch`) are encapsulated in `App::Stream`, constructed in `App#initialize` and exposed via `app.stream`.
+- **`app.emit/on/once/off` → `app.events.*`** — event bus is now accessed via `app.events`: `app.events.emit`, `app.events.on`, `app.events.once`, `app.events.off`. The flat methods are removed.
+- **`app.stream_send/stream_on/stream_off` → `app.stream.*`** — stream is now accessed via `app.stream`: `app.stream.send`, `app.stream.on`, `app.stream.off`. `app.stream_sender` is replaced by `app.stream.sender`.
 
 ## [0.8.0] - 2026-05-19
 
