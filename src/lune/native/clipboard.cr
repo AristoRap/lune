@@ -33,11 +33,78 @@ module Lune
         fun clipboard_read_image(out : LibC::Char*, out_size : LibC::Int) : LibC::Int
         fun clipboard_write_image(data_url : LibC::Char*) : Void
       end
+    {% elsif flag?(:win32) %}
+      @[Link("user32")]
+      lib LibUser32Clip
+        fun open_clipboard = OpenClipboard(hwnd : Void*) : LibC::Int
+        fun close_clipboard = CloseClipboard : LibC::Int
+        fun empty_clipboard = EmptyClipboard : LibC::Int
+        fun get_clipboard_data = GetClipboardData(format : UInt32) : Void*
+        fun set_clipboard_data = SetClipboardData(format : UInt32, mem : Void*) : Void*
+        fun register_clipboard_format_w = RegisterClipboardFormatW(name : UInt16*) : UInt32
+      end
+
+      @[Link("kernel32")]
+      lib LibKernel32Clip
+        GMEM_MOVEABLE = 0x0002_u32
+        fun global_alloc = GlobalAlloc(flags : UInt32, bytes : LibC::SizeT) : Void*
+        fun global_lock = GlobalLock(mem : Void*) : Void*
+        fun global_unlock = GlobalUnlock(mem : Void*) : LibC::Int
+        fun global_size = GlobalSize(mem : Void*) : LibC::SizeT
+      end
     {% end %}
 
     module Clipboard
       HTML_BUF_SIZE  =  1 * 1024 * 1024  # 1 MB — generous for any HTML payload
       IMAGE_BUF_SIZE = 10 * 1024 * 1024  # 10 MB — covers base64 of most clipboard images
+
+      {% if flag?(:win32) %}
+        # The CF_HTML clipboard format ("HTML Format") is registered, not
+        # built-in, so the format ID is obtained once at runtime.
+        @@cf_html : UInt32 = 0_u32
+
+        private def self.cf_html : UInt32
+          if @@cf_html == 0_u32
+            name = "HTML Format".to_utf16
+            buf = Pointer(UInt16).malloc(name.size + 1)
+            name.size.times { |i| buf[i] = name[i] }
+            buf[name.size] = 0_u16
+            @@cf_html = LibUser32Clip.register_clipboard_format_w(buf)
+          end
+          @@cf_html
+        end
+
+        # Wraps an HTML fragment in the CF_HTML envelope. The header lists
+        # byte offsets of each section; we patch them in after building the
+        # body, since the offset widths are fixed (10 digits) but their
+        # values depend on the body length.
+        private def self.wrap_cf_html(html : String) : String
+          header_template = "Version:0.9\r\n" \
+                            "StartHTML:%010d\r\n" \
+                            "EndHTML:%010d\r\n" \
+                            "StartFragment:%010d\r\n" \
+                            "EndFragment:%010d\r\n"
+          prefix = "<html><body><!--StartFragment-->"
+          suffix = "<!--EndFragment--></body></html>"
+          header_size = (header_template % {0, 0, 0, 0}).bytesize
+          start_html      = header_size
+          start_fragment  = start_html + prefix.bytesize
+          end_fragment    = start_fragment + html.bytesize
+          end_html        = end_fragment + suffix.bytesize
+          header = header_template % {start_html, end_html, start_fragment, end_fragment}
+          "#{header}#{prefix}#{html}#{suffix}"
+        end
+
+        # Strip the CF_HTML envelope and return just the user-visible fragment.
+        private def self.unwrap_cf_html(raw : String) : String
+          start_marker = "<!--StartFragment-->"
+          end_marker   = "<!--EndFragment-->"
+          si = raw.index(start_marker)
+          ei = raw.index(end_marker)
+          return raw unless si && ei && ei > si
+          raw[(si + start_marker.bytesize)...ei]
+        end
+      {% end %}
 
       def self.read_html : String
         {% if flag?(:lune_native_test_mock) %}
@@ -51,7 +118,22 @@ module Lune
           Process.run("xclip", ["-o", "-selection", "clipboard", "-t", "text/html"], output: output)
           output.to_s
         {% elsif flag?(:win32) %}
-          raise NotImplementedError.new("Lune::Native::Clipboard.read_html is not implemented on Windows yet (v0.10.0 backlog)")
+          return "" if LibUser32Clip.open_clipboard(Pointer(Void).null) == 0
+          begin
+            mem = LibUser32Clip.get_clipboard_data(cf_html)
+            return "" if mem.null?
+            ptr = LibKernel32Clip.global_lock(mem)
+            return "" if ptr.null?
+            begin
+              size = LibKernel32Clip.global_size(mem).to_i
+              raw = String.new(Slice.new(ptr.as(UInt8*), size))
+              unwrap_cf_html(raw)
+            ensure
+              LibKernel32Clip.global_unlock(mem)
+            end
+          ensure
+            LibUser32Clip.close_clipboard
+          end
         {% else %}
           ""
         {% end %}
@@ -66,7 +148,24 @@ module Lune
           input = IO::Memory.new(html)
           Process.run("xclip", ["-i", "-selection", "clipboard", "-t", "text/html"], input: input)
         {% elsif flag?(:win32) %}
-          raise NotImplementedError.new("Lune::Native::Clipboard.write_html is not implemented on Windows yet (v0.10.0 backlog)")
+          payload = wrap_cf_html(html)
+          bytes = payload.to_slice
+          return if LibUser32Clip.open_clipboard(Pointer(Void).null) == 0
+          begin
+            LibUser32Clip.empty_clipboard
+            # SetClipboardData takes ownership of the HGLOBAL on success.
+            # +1 for the trailing null byte — CF_HTML is a UTF-8 byte stream.
+            mem = LibKernel32Clip.global_alloc(LibKernel32Clip::GMEM_MOVEABLE, LibC::SizeT.new(bytes.size + 1))
+            return if mem.null?
+            ptr = LibKernel32Clip.global_lock(mem)
+            return if ptr.null?
+            bytes.copy_to(Slice.new(ptr.as(UInt8*), bytes.size))
+            ptr.as(UInt8*)[bytes.size] = 0_u8
+            LibKernel32Clip.global_unlock(mem)
+            LibUser32Clip.set_clipboard_data(cf_html, mem)
+          ensure
+            LibUser32Clip.close_clipboard
+          end
         {% end %}
       end
 
