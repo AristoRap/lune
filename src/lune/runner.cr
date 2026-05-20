@@ -89,7 +89,8 @@ module Lune
         {% end %}
 
         window_app_name = WindowState.app_name(@options.title)
-        unless {% if flag?(:darwin) %}@options.mac.menubar_mode{% else %}false{% end %}
+        menubar_mode = {% if flag?(:darwin) %}@options.mac.menubar_mode{% else %}false{% end %}
+        if @options.remember_frame && !menubar_mode
           if saved = WindowState.load(window_app_name)
             Native::Window.set_frame(handle, saved[:x], saved[:y], saved[:width], saved[:height])
           end
@@ -124,7 +125,7 @@ module Lune
         {% unless flag?(:win32) %}
           # Windows persists the frame live via WindowState.start_tracker;
           # the HWND is already destroyed at this point.
-          unless {% if flag?(:darwin) %}@options.mac.menubar_mode{% else %}false{% end %}
+          if @options.remember_frame && !menubar_mode
             x, y, width, height = Native::Window.get_frame(handle)
             WindowState.save(window_app_name, x, y, width, height)
           end

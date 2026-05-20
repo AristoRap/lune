@@ -203,9 +203,28 @@ opts.on_close = -> {
 
 ## Window state persistence
 
-Lune automatically saves and restores the window's position and size. No configuration required — it just works.
+Lune can save and restore the window's position and size between launches. Opt-in via `opts.remember_frame = true` — the default is `false` so apps don't end up restoring to off-screen coordinates if the user's monitor setup changed between sessions.
 
-When the window closes, the current frame is written to a JSON file. On the next launch, that file is read and the window is restored to the same position and size before the page loads.
+When the window closes (or, on Windows, on a 500 ms tracker while it's alive), the current frame is written to a JSON file. On the next launch, that file is read and the window is restored to the same position and size before the page loads.
+
+### `opts.remember_frame`
+
+**Type:** `Bool` — **Default:** `false`
+
+```crystal
+Lune.run(app) do |opts|
+  opts.remember_frame = true
+end
+```
+
+Or in `lune.yml`:
+
+```yaml
+window:
+  remember_frame: true
+```
+
+When `false` (the default), Lune ignores any previously saved state and opens the window at `opts.width` / `opts.height` every launch. On macOS in menubar mode (`mac.menubar_mode = true`), persistence is always disabled regardless of this flag — the window position there is derived from the tray icon on each toggle.
 
 ### Storage location
 
@@ -226,9 +245,10 @@ On the first launch no file exists yet, so the window opens at the size and posi
 
 ```crystal
 Lune.run(app) do |opts|
-  opts.title  = "My App"   # → stored at .../my-app/window.json
-  opts.width  = 1280
-  opts.height = 800
+  opts.title           = "My App"   # → stored at .../my-app/window.json
+  opts.width           = 1280
+  opts.height          = 800
+  opts.remember_frame  = true
 end
 ```
 

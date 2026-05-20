@@ -50,6 +50,13 @@ module Lune
     # When true, suppresses the browser's default right-click context menu.
     property disable_context_menu : Bool = false
 
+    # When true, the window's last position and size are written to a JSON file
+    # on close and restored on the next launch. Default `false` (opt-in) so
+    # apps don't restore to off-screen coordinates if the user's monitor setup
+    # changed between sessions. Suppressed in macOS menubar mode regardless,
+    # since the window position there is derived from the tray icon.
+    property remember_frame : Bool = false
+
     # Called on every client-side navigation with the new URL as argument.
     # Fires on `popstate` and `hashchange` events.
     property on_navigate : (String -> Nil)? = nil
@@ -129,6 +136,9 @@ module Lune
       end
       unless (d = window.devtools).nil?
         @devtools = d
+      end
+      unless (r = window.remember_frame).nil?
+        @remember_frame = r
       end
     end
   end
