@@ -1,16 +1,16 @@
 module Lune
   class Options
-    # File drop options, configured via `opts.drop { |d| ... }`.
+    # File drop options, configured via `opts.file_drop { |fd| ... }`.
     #
     # ```
     # Lune.run(app) do |opts|
-    #   opts.drop do |d|
-    #     d.zone    = "--lune-drop-target"
-    #     d.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) { puts paths.inspect; nil }
+    #   opts.file_drop do |fd|
+    #     fd.zone = "--lune-drop-target"
+    #     fd.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) { puts paths.inspect; nil }
     #   end
     # end
     # ```
-    class Drop
+    class FileDrop
       # Disables the webview's built-in drag handling globally.
       # Prevents files from accidentally opening or navigating in the webview.
       # Enable the `file_drop` capability in lune.yml to receive drops in your app.

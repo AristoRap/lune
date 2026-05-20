@@ -2,6 +2,10 @@
 
 ## [0.11.0] - 2026-05-20
 
+### Breaking
+
+- **`opts.drop` → `opts.file_drop`** — the options block and its backing class now match the `file_drop` capability key (in `lune.yml`) and the `FileDrop` JS namespace. `Lune::Options::Drop` is renamed to `Lune::Options::FileDrop`. Migration is mechanical: replace `opts.drop do |d| … d.zone = … end` with `opts.file_drop do |fd| … fd.zone = … end`. Property names inside the block (`zone`, `value`, `on_drop`, `disable_webview_drop`) are unchanged.
+
 ## [0.10.0] - 2026-05-20
 
 ### Added

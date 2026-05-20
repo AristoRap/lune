@@ -1,5 +1,5 @@
 require "./mac"
-require "./drop"
+require "./file_drop"
 require "./drag"
 require "./tray"
 require "./menu"
