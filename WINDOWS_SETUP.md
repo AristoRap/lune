@@ -62,6 +62,7 @@ To work around this on Crystal 1.20.2, apply the fix manually to your Crystal in
    - MinGW build: `C:\crystal-mingw\share\crystal\src\process.cr`
 
 2. Open the file and find the section around line 599-604:
+
    ```crystal
    {% unless flag?(:interpreted) %}
      # :nodoc:
@@ -90,6 +91,7 @@ Lune depends on two C libraries for Windows: sqlite3 and webview. Both must be b
 ### sqlite3.lib
 
 1. Download pre-compiled sqlite3 binaries from [sqlite.org](https://www.sqlite.org/download.html):
+
    ```powershell
    $url = "https://www.sqlite.org/2024/sqlite-dll-win-x64-3450000.zip"
    Invoke-WebRequest -Uri $url -OutFile "C:\temp\sqlite3.zip"
@@ -105,6 +107,7 @@ Lune depends on two C libraries for Windows: sqlite3 and webview. Both must be b
 ### webview.lib
 
 1. Clone and build the webview repository:
+
    ```cmd
    cd C:\temp
    git clone https://github.com/webview/webview
@@ -112,6 +115,7 @@ Lune depends on two C libraries for Windows: sqlite3 and webview. Both must be b
    ```
 
 2. Configure and build with CMake (requires CMake and Ninja):
+
    ```cmd
    cmake -G Ninja -B build -S . -D CMAKE_BUILD_TYPE=Release
    cmake --build build
@@ -160,31 +164,15 @@ Replace the MSVC and Windows Kits version numbers with whatever's installed on y
 
 ### Capability exclusions
 
-Several capabilities are not yet implemented on Windows. Until they land, exclude them in your app's `lune.yml`, otherwise the runtime raises `NotImplementedError`:
+Several capabilities aren't yet implemented on Windows and raise `NotImplementedError` if active. The canonical list lives at [`website/guide/windows-checklist.md`](website/guide/windows-checklist.md) — exclude any of those in your app's `lune.yml` until the implementations land. The demo's `lune.yml` carries a commented-out exclude block you can copy from.
 
-```yaml
-capabilities:
-  exclude:
-    - file_watch      # planned: ReadDirectoryChangesW
-    - file_drop
-    - drag_out
-    - context_menu
-    - deep_link
-    - filesystem      # partial
-    - screen          # limited
-    - windows         # multi-window not fully supported
-```
+## Known setup limitations
 
-## Known Limitations
+- **WebView2 Runtime**: end-users on Windows 10 and earlier need it installed (Windows 11+ ships it).
+- **Crystal 1.21.0**: Step 3's stdlib patch becomes unnecessary once Crystal 1.21 ships ([crystal#16933](https://github.com/crystal-lang/crystal/pull/16933)). Drop the patch and re-upgrade Crystal at that point.
+- **Running Specs**: `crystal spec` hits the same `LibC::PidT` error. Until Crystal 1.21+, CI type-checks with `--no-codegen`.
 
-- **WebView2 Runtime**: Developers and end-users need the WebView2 runtime installed on Windows 10 and earlier (Windows 11+ includes it).
-- **Crystal 1.21.0**: Once released, the stdlib patch in Step 3 becomes unnecessary. Upgrade Crystal and remove the manual fix.
-- **Running Specs**: `crystal spec` fails with the same `LibC::PidT` error. Until Crystal 1.21+, type-checking with `--no-codegen` is the workaround used in CI.
-- **Isolated-context concurrency**: On Windows the webview runs inside `Fiber::ExecutionContext::Isolated` so it can own its thread (Win32 message-loop requirement). Bindings invoked from the webview thread cannot use `Future`, `spawn`, or `Channel#receive` directly — those code paths now route through the `@async_pool` (Parallel) via `async: true` bindings, or via native Win32 APIs that don't spawn fibers (e.g. `Lune::Native::Clipboard.read` on Windows uses `CF_UNICODETEXT` instead of `Process.run("powershell.exe", ...)`).
-- **Toast notifications**: `Notifications.notify` calls into PowerShell + WinRT. The script runs cleanly (both `Windows.UI.Notifications` and `Windows.Data.Xml.Dom` projections are loaded), but Windows silently drops the toast because the AUMID `"Lune"` isn't registered with the OS. To actually see toasts, a Start Menu shortcut with `System.AppUserModel.ID` set to `"Lune"` is required — distributed apps should bake this into their installer. See the ROADMAP entry for plans.
-- **Window menus**: `Native::Menu` is macOS-only. Windows apps currently launch without a window menu bar. See ROADMAP.
-- **Shell builtins**: `Shell.spawn("echo …")`, `dir`, `type`, etc. fail with `File::NotFoundError` because those are cmd builtins, not standalone `.exe`s. Use a real executable or wrap with `cmd /c`.
-- **Unimplemented capabilities**: `file_watch`, `file_drop`, `drag_out`, `context_menu`, `deep_link`, and parts of `filesystem`/`screen`/`windows` are not yet wired up on Windows. Exclude them in `lune.yml` (see Step 6) until they're implemented.
+For per-capability status (what's verified, what's broken, what's not yet implemented) see [`website/guide/windows-checklist.md`](website/guide/windows-checklist.md). For the path to parity see [`ROADMAP.md`](ROADMAP.md).
 
 ## Troubleshooting
 

@@ -36,9 +36,9 @@ Windows hardware and what's known to be broken. Items marked
   polls `GetWindowRect` every 500 ms — the HWND is destroyed by the
   time `wv.run` returns, so the usual on-close save would persist
   zeros.
-- **Sqlite** / **Kv**: not exercised yet; should work since both are
-  pure Crystal + the bundled `sqlite3.dll` (see `WINDOWS_SETUP.md`
-  step 4 for the sqlite3 import-library build).
+- **Sqlite** / **Kv**: confirmed working. Sqlite goes through the
+  bundled `sqlite3.dll` (`WINDOWS_SETUP.md` step 4 builds the import
+  library); Kv is pure Crystal on top of the filesystem.
 - **Shell**:
   - Real executables work (`Shell.run("git", ["status"])`, etc.).
   - Async-marked bindings (`Shell.spawn`, `Shell.run`) route through
