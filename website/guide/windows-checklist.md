@@ -2,14 +2,13 @@
 
 Real-hardware testing of Lune on Windows is in progress. As of v0.11.0
 the toolchain compiles (with the Crystal 1.20.2 `Process.initialize`
-patch documented in [`WINDOWS_SETUP.md`](../../WINDOWS_SETUP.md)) and
-the demo runs end-to-end via `lune dev --debug`.
+patch documented in `WINDOWS_SETUP.md`) and the demo runs end-to-end
+via `lune dev --debug`.
 
 This page tracks which capabilities have been exercised on real
 Windows hardware and what's known to be broken. Items marked
 **verified** have been run interactively; items marked **broken** or
-**not implemented** have known gaps tracked in
-[`ROADMAP.md`](../../ROADMAP.md).
+**not implemented** have known gaps tracked in `ROADMAP.md`.
 
 ## Verified working
 
@@ -54,7 +53,7 @@ Windows hardware and what's known to be broken. Items marked
   Windows **silently drops the toast** because the AUMID `"Lune"`
   isn't registered with the OS. Distributed apps need a Start Menu
   shortcut with `System.AppUserModel.ID` set. Tracked under "Windows
-  toast notifications" in [`ROADMAP.md`](../../ROADMAP.md).
+  toast notifications" in `ROADMAP.md`.
 - **Drag-and-drop** (`file_drop` capability) — currently raises
   `NotImplementedError` (`Native::Window.disable_webview_drop` and the
   underlying drop-target plumbing are macOS-only). Exclude `file_drop`
