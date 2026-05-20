@@ -70,7 +70,7 @@ const features = [
           <span class="chip">
             <span class="chip-key">build</span>
             <span class="chip-val">
-              {{ env?.debug === undefined ? "—" : env.debug ? "dev" : "release" }}
+              {{ env?.devtools === undefined ? "—" : env.devtools ? "dev" : "release" }}
             </span>
           </span>
         </div>

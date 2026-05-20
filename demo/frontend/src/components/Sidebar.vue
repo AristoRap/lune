@@ -54,7 +54,7 @@ const groups = navGroups;
       <div class="foot-row">
         <span class="dot dot-warn"></span>
         <span class="foot-key">build</span>
-        <span class="foot-val">{{ env.debug === undefined ? "—" : env.debug ? "dev" : "release" }}</span>
+        <span class="foot-val">{{ env.devtools === undefined ? "—" : env.devtools ? "dev" : "release" }}</span>
       </div>
     </div>
   </nav>
