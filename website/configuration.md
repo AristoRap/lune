@@ -263,7 +263,7 @@ See [Distribution → Notarization](./guide/distribution#notarization) for the f
 
 **Type:** `Array(String)` — **Default:** `[]`
 
-URL schemes to register with the OS so the system routes `myapp://...` links into your app. Each entry becomes a `CFBundleURLTypes` entry in `Info.plist` (macOS, injected by `lune build`) or a `MimeType` entry in the `.desktop` file (Linux, injected by `lune dist`).
+URL schemes to register with the OS so the system routes `myapp://...` links into your app. Each entry becomes a `CFBundleURLTypes` entry in `Info.plist` on macOS (injected by `lune build`); on Linux a `MimeType` entry is written into the `.desktop` file (injected by `lune dist`), but the runtime handler that forwards URLs to `DeepLink.on` is **macOS-only** in this release — see [Deep Link → Roadmap](./capabilities/deep-link#roadmap).
 
 ```yaml
 url_schemes:

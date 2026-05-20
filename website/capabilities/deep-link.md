@@ -2,14 +2,14 @@
 
 > Receive custom URL scheme events (`myapp://...`) from the OS.
 
-|                  |               |
-| ---------------- | ------------- |
-| **Config key**   | `deep_link`   |
-| **JS namespace** | `DeepLink`    |
-| **Core**         | No            |
-| **Phases**       | Bindable      |
-| **Hard deps**    | `event_bus`   |
-| **Platforms**    | macOS · Linux |
+|                  |             |
+| ---------------- | ----------- |
+| **Config key**   | `deep_link` |
+| **JS namespace** | `DeepLink`  |
+| **Core**         | No          |
+| **Phases**       | Bindable    |
+| **Hard deps**    | `event_bus` |
+| **Platforms**    | macOS       |
 
 Register a custom URL scheme so the OS routes URLs into your running app — for OAuth redirects, shell integrations, or any external trigger that needs to pass data to your app.
 
@@ -43,7 +43,7 @@ Scheme names must be lowercase alphanumeric.
 
 **macOS** — `lune build` injects `CFBundleURLTypes` into `Info.plist`. After the app is installed (or run once from Finder), macOS registers the scheme automatically. URLs are routed to the running instance via Apple Events.
 
-**Linux** — `lune dist` injects `MimeType=x-scheme-handler/myapp;` into the `.desktop` file. After installation, run `update-desktop-database`. The URL is passed as a command-line argument to the app process.
+**Linux** — `lune dist` injects `MimeType=x-scheme-handler/myapp;` into the generated `.desktop` file, so the OS will associate the scheme with your app at install time. However, there is **no runtime handler yet** — the launched process receives the URL as `ARGV[1]` but Lune does not currently parse it or fire `DeepLink.on`. See [Roadmap](#roadmap) below.
 
 ---
 
@@ -97,14 +97,16 @@ Scheme registration is build-time only — `Info.plist` must contain `CFBundleUR
 
 ### Linux
 
-After distributing your AppImage, users need to register the `.desktop` file:
+Linux runtime support is not implemented in this release. `lune dist` writes the scheme into the `.desktop` file so the OS will route URLs to your binary, but the Crystal runtime does not yet inspect `ARGV` or forward URLs to `event_bus`, so `DeepLink.on` will not fire. Treat this capability as macOS-only until the work below lands.
 
-```sh
-cp myapp.desktop ~/.local/share/applications/
-update-desktop-database ~/.local/share/applications
-```
+---
 
-> **Single-instance note:** If your app is already running when a URL is opened, Linux spawns a new process. The single-instance lock prevents a second window from opening, but the URL will be lost. Socket-based forwarding to the existing instance is not yet implemented.
+## Roadmap
+
+Planned for a follow-up release:
+
+- Parse `ARGV` on startup for a registered scheme and emit the initial URL through `event_bus`.
+- Socket-based forwarding to the running instance when the OS spawns a second process (warm-start case).
 
 ---
 
