@@ -1,116 +1,113 @@
 # Windows verification checklist
 
-Most Lune capabilities have shipped a Win32 implementation but **none
-have been exercised on real hardware yet**: Crystal 1.20.x can't
-produce a working binary on Windows MSVC ([crystal#16929](https://github.com/crystal-lang/crystal/issues/16929)),
-and the fix is gated on Crystal 1.21.0 (PR
-[#16933](https://github.com/crystal-lang/crystal/pull/16933) merged
-to master). Until that release ships, every checklist item below
-should be considered **unverified**.
+Real-hardware testing of Lune on Windows is in progress. As of v0.11.0
+the toolchain compiles (with the Crystal 1.20.2 `Process.initialize`
+patch documented in [`WINDOWS_SETUP.md`](../../WINDOWS_SETUP.md)) and
+the demo runs end-to-end via `lune dev --debug`.
 
-Once Crystal 1.21 is out and you can produce `lune.exe`, run the demo
-(`lune dev` in the `demo/` folder) on a real Windows 10/11 machine and
-tick each item.
+This page tracks which capabilities have been exercised on real
+Windows hardware and what's known to be broken. Items marked
+**verified** have been run interactively; items marked **broken** or
+**not implemented** have known gaps tracked in
+[`ROADMAP.md`](../../ROADMAP.md).
 
-## Smoke
+## Verified working
 
-- [ ] `lune build` produces `build/bin/<name>.exe` and `lune run` launches it
-- [ ] The window opens, navigates to the dev URL, doesn't immediately
-      crash or hang
-- [ ] `System.environment()` reports `{ os: "windows", arch: "x86_64" }`
-- [ ] `System.openUrl("https://example.com")` opens the default browser
-- [ ] `System.quit()` from the JS side closes the window cleanly
+- **Smoke**: `lune dev` boots, the window opens, navigates to the Vite
+  dev URL, no crash or hang.
+- **System**:
+  - `System.environment()` returns `{ os: "windows", arch: "x86_64" }`
+  - `System.openUrl(...)` opens the default browser
+  - `System.quit()` closes the window cleanly
+- **Stream**: WebSocket bidirectional IPC works (bind + listen on the
+  same execution context so IOCP completions route correctly — see
+  `src/lune/capabilities/stream.cr` win32 branch).
+- **Events**: `app.events.emit` / `Events.on` round-trip works.
+- **Clipboard** (plaintext + HTML):
+  - `Clipboard.read()` / `Clipboard.write(text)` are instant — they go
+    through Win32 `CF_UNICODETEXT` directly (no PowerShell shellout).
+  - `Clipboard.readHtml()` / `writeHtml(html)` work via the existing
+    `CF_HTML` clipboard format.
+- **Hotkeys**: `Hotkeys.register` / `unregister` work; `unregister_all`
+  on shutdown is fire-and-forget (Channel-receive across Isolated
+  contexts isn't safe). Per-binding async dispatch means the pump
+  thread is reachable from binding callbacks without a deadlock.
+- **Window state**: opt-in via `opts.remember_frame = true`. The
+  Windows path uses a live tracker (`WindowState.start_tracker`) that
+  polls `GetWindowRect` every 500 ms — the HWND is destroyed by the
+  time `wv.run` returns, so the usual on-close save would persist
+  zeros.
+- **Sqlite** / **Kv**: not exercised yet; should work since both are
+  pure Crystal + the bundled `sqlite3.dll` (see `WINDOWS_SETUP.md`
+  step 4 for the sqlite3 import-library build).
+- **Shell**:
+  - Real executables work (`Shell.run("git", ["status"])`, etc.).
+  - Async-marked bindings (`Shell.spawn`, `Shell.run`) route through
+    the @async_pool so `Process.run`'s internal copy_io / wait fibers
+    don't trip the Isolated-context concurrency check.
 
-## Window basics
+## Broken / partial
 
-- [ ] `Window.setSize(800, 600)` actually resizes
-- [ ] `Window.setTitle("foo")` changes the title bar text
-- [ ] `Window.minimize()` and `Window.maximize()` work
-- [ ] `Window.center()` recenters on the active monitor
-- [ ] Frame restore on relaunch — close at a non-default position/size,
-      relaunch, window comes back to that position and size
+- **Notifications** (`Notifications.notify`) — the PowerShell + WinRT
+  script now exits cleanly (both `Windows.UI.Notifications` and
+  `Windows.Data.Xml.Dom` projections are explicitly loaded) but
+  Windows **silently drops the toast** because the AUMID `"Lune"`
+  isn't registered with the OS. Distributed apps need a Start Menu
+  shortcut with `System.AppUserModel.ID` set. Tracked under "Windows
+  toast notifications" in [`ROADMAP.md`](../../ROADMAP.md).
+- **Drag-and-drop** (`file_drop` capability) — currently raises
+  `NotImplementedError` (`Native::Window.disable_webview_drop` and the
+  underlying drop-target plumbing are macOS-only). Exclude `file_drop`
+  in `lune.yml` until the Win32 `IDropTarget` shim lands. The demo's
+  drop zone won't fire any callbacks.
+- **Shell builtins** — `Shell.spawn("echo …")`, `dir`, `type`, etc.
+  fail with `File::NotFoundError` because those are cmd builtins, not
+  real `.exe`s. Wrap them as `cmd /c <builtin> …` or use a real
+  binary. Tracked in `ROADMAP.md`.
+- **Privileged commands** — anything that needs Administrator (e.g.
+  `ping -t …`, low-level network probes) errors with "Access denied"
+  or "requires administrative privileges". Run the parent shell as
+  admin if you need these, or use a non-privileged equivalent. Not a
+  Lune bug.
 
-## Screen
+## Not implemented (raise `NotImplementedError`)
 
-- [ ] `Screen.info()` returns sensible `{ width, height, scale }`
-- [ ] `scale` matches your Windows display setting
-      (1.0 at 100%, 1.5 at 150%, etc.)
+Each of these needs to be added to your app's `lune.yml`
+`capabilities.exclude` list on Windows until the implementation lands.
+All are tracked under v0.12.0 in `ROADMAP.md`:
 
-## Dialogs
-
-- [ ] `Dialogs.openFile()` shows the Windows file picker; cancel returns `""`
-- [ ] `Dialogs.openDir()` shows the Browse-Folder picker
-- [ ] `Dialogs.openFiles()` allows multi-select; returns array of full paths
-- [ ] `Dialogs.saveFile()` warns on overwrite, returns chosen path
-- [ ] `Dialogs.info/question/warning/error` show the right icon and
-      buttons; `Ok` / `Cancel` / `Yes` / `No` are returned correctly
-
-## Clipboard
-
-- [ ] `Clipboard.write("text")` then paste somewhere — text appears
-- [ ] `Clipboard.read()` returns clipboard text
-- [ ] `Clipboard.writeHtml("<b>x</b>")` then paste into Word — formatting applies
-- [ ] `Clipboard.readHtml()` reads HTML copied from a browser
-- [ ] `Clipboard.readImage()` / `writeImage()` — currently raise
-      `NotImplementedError` (expected, scheduled for v0.12.0)
-
-## ContextMenu
-
-- [ ] Right-click on the demo's right-click area shows the native menu
-- [ ] Selecting an item fires the `context_menu` event with the right `id`
-- [ ] Dismissing (Esc or click outside) doesn't crash
-
-## Notifications
-
-- [ ] `Notifications.show("Title", "Body")` shows a Windows toast banner
-- [ ] If toasts don't show — check Windows → Settings → System →
-      Notifications & actions → "Get notifications from these senders" is
-      enabled. The "Lune" AUMID is unregistered so the toast may not
-      persist in Action Center; the transient banner is the success
-      signal.
-
-## Hotkeys
-
-- [ ] `Hotkeys.register("Ctrl+Shift+K")` returns `true`; pressing the
-      keys (from anywhere, including with the app unfocused) fires the
-      `hotkey` event with the accelerator string
-- [ ] `Hotkeys.unregister("Ctrl+Shift+K")` returns `true`; pressing
-      keys after that no longer fires
-- [ ] `F1`-`F12` work as single-key shortcuts (no modifier)
-- [ ] `Cmd+…` and `Win+…` both map to the Windows key modifier
-- [ ] Closing the app releases all hotkeys (open another app that uses
-      the same combo to verify)
-
-## DeepLink
-
-- [ ] Register your scheme in the registry (one-time):
-      `HKCU\Software\Classes\myapp\shell\open\command` default value =
-      `"C:\path\to\app.exe" "%1"`. Lune doesn't auto-register schemes
-      on Windows yet — track this as a v0.12.0 follow-up.
-- [ ] Launch from cmd: `start myapp://hello`. The app launches, the
-      `deep_link` event fires with `{ url: "myapp://hello" }`
-- [ ] If the app is already running, today the URL spawns a second
-      instance (no warm-start forwarding yet — Linux has the same gap)
-
-## Known not-yet-implemented on Win32
-
-These raise `NotImplementedError` and are tracked for v0.12.0:
-
-- `Tray` — needs hidden HWND + Shell_NotifyIconW
-- `FileWatch` — needs ReadDirectoryChangesW
+- `tray` — needs hidden HWND + `Shell_NotifyIconW`
+- `file_watch` — needs `ReadDirectoryChangesW`
+- `file_drop` — needs `IDropTarget`/`OleInitialize` + drop callback
+- `drag_out` — macOS-only by design
+- `context_menu` — needs `TrackPopupMenuEx` + `CreatePopupMenu` +
+  WM_COMMAND dispatch
+- `deep_link` — registry-based scheme registration + warm-start
+  forwarding still TODO
 - `Clipboard.readImage` / `writeImage` — needs PNG ↔ CF_DIB conversion
-- `Menu.setupDefault` / `setFromOptions` — app menu bar is macOS-only
-  by design (matches Linux)
-- DragOut — macOS-only by design
+- `Menu.setupDefault` / `setFromOptions` — window menu bar not yet
+  ported; needs `SetMenu` + `CreatePopupMenu` + `AppendMenuW` +
+  WM_COMMAND dispatch (and `TranslateAccelerator` for shortcuts)
+
+## Dialogs — verified
+
+- [x] `Dialogs.openFile()` shows the Windows file picker; cancel
+      returns `""`
+- [x] `Dialogs.openDir()` shows the Browse-Folder picker
+- [x] `Dialogs.openFiles()` allows multi-select
+- [x] `Dialogs.saveFile()` warns on overwrite, returns chosen path
+- [x] `Dialogs.message_info` / `message_warning` / `message_error` /
+      `message_question` now use the correct icon + buttons. (The
+      Win32 native code previously had a type-code mismatch — warning
+      showed Yes/No, error showed OK/Cancel, question showed only OK.
+      Fixed in v0.11.0; verify after rebuild.)
 
 ## Reporting
 
-If anything in the "smoke" or "window basics" sections fails, that's
-a blocker. Open an issue with:
+If anything in this checklist's **Verified working** section regresses
+or any new failure mode appears, open an issue with:
 
 - Windows version (`winver`)
 - The exact JS call you made
-- The error or unexpected behaviour
-- The Crystal version (`crystal -v`)
-- The first ~50 lines of the Lune debug log (`%TEMP%\lune*.log` if
-  it exists, or stdout/stderr if running from a terminal)
+- Output of `lune dev --debug` covering the failure
+- Crystal version (`crystal -v`)

@@ -52,8 +52,12 @@ module Lune
           # the script. The AUMID ("Lune") is unregistered, which means
           # toasts may not persist in the Action Center on first run — but
           # the transient banner still shows.
+          # Two separate WinRT projections need explicit loading: loading the
+          # Windows.UI.Notifications type alone doesn't make Windows.Data.Xml.Dom
+          # available, and New-Object on XmlDocument fails with TypeNotFound.
           script = <<-PS
             [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType=WindowsRuntime] | Out-Null
+            [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom, ContentType=WindowsRuntime] | Out-Null
             $t = [System.Security.SecurityElement]::Escape($env:LUNE_TOAST_TITLE)
             $b = [System.Security.SecurityElement]::Escape($env:LUNE_TOAST_BODY)
             $xml = New-Object Windows.Data.Xml.Dom.XmlDocument

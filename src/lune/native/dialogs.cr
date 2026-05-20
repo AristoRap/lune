@@ -297,8 +297,12 @@ module Lune
         {% end %}
       end
 
-      # type code maps the dialog kind; matches the macOS/Linux native shim:
-      # 0 = info, 1 = question (yes/no), 2 = warning (ok/cancel), 3 = error.
+      # type code maps the dialog kind; matches the macOS/Linux native shim and
+      # the capability layer (see src/lune/capabilities/dialogs.cr):
+      #   0 = info, 1 = warning, 2 = error, 3 = question (yes/no).
+      # info/warning/error are notification-style dialogs (single OK button,
+      # icon distinguishes severity); question is the only variant that
+      # returns a meaningful Yes/No.
       def self.message(type : Int32, title : String, message : String) : String
         {% if flag?(:lune_native_test_mock) %}
           DialogsMock.record_message(type, title)
@@ -308,9 +312,9 @@ module Lune
           String.new(buf.to_unsafe)
         {% elsif flag?(:win32) %}
           flags = case type
-                  when 1 then LibUser32Dialog::MB_YESNO | LibUser32Dialog::MB_ICONQUESTION
-                  when 2 then LibUser32Dialog::MB_OKCANCEL | LibUser32Dialog::MB_ICONWARNING
-                  when 3 then LibUser32Dialog::MB_OK | LibUser32Dialog::MB_ICONERROR
+                  when 1 then LibUser32Dialog::MB_OK | LibUser32Dialog::MB_ICONWARNING
+                  when 2 then LibUser32Dialog::MB_OK | LibUser32Dialog::MB_ICONERROR
+                  when 3 then LibUser32Dialog::MB_YESNO | LibUser32Dialog::MB_ICONQUESTION
                   else        LibUser32Dialog::MB_OK | LibUser32Dialog::MB_ICONINFORMATION
                   end
           result = LibUser32Dialog.message_box_w(Pointer(Void).null, to_wstr(message), to_wstr(title), flags)
