@@ -14,7 +14,13 @@ module Lune
           Native::DeepLink.install do |url|
             ctx.app.events.emit("deep_link", {"url" => url})
           end
-        {% elsif flag?(:linux) %}
+        {% elsif flag?(:linux) || flag?(:win32) %}
+          # Cold-start delivery: when the OS launches the app with a
+          # scheme URL (e.g. `myapp.exe myapp://foo` on Windows after the
+          # user has registered the scheme via Native::DeepLink.register),
+          # the URL arrives as ARGV[0]. Same pattern Linux uses today.
+          # Warm-start (single-instance forwarding) is not yet implemented
+          # on either platform.
           if url = ARGV.find { |arg| arg.includes?("://") }
             ctx.app.events.emit("deep_link", {"url" => url})
           end
