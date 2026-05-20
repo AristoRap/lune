@@ -10,36 +10,43 @@ module Lune
       end
 
       DEFAULT_READ = -> {
-        output = IO::Memory.new
-        begin
-          status = {% if flag?(:darwin) %}
-                     Process.run("pbpaste", output: output)
-                   {% elsif flag?(:win32) %}
-                     Process.run("powershell.exe", ["-NoProfile", "-Command", "Get-Clipboard"], output: output)
-                   {% else %}
-                     Process.run("xclip", ["-o", "-selection", "clipboard"], output: output)
-                   {% end %}
-          Lune.logger.warn { "Clipboard: read command failed (exit #{status.exit_code})" } unless status.success?
-        rescue ex : File::Error | IO::Error
-          Lune.logger.warn { "Clipboard: read command unavailable — #{ex.message}" }
-        end
-        output.to_s.chomp
+        {% if flag?(:win32) %}
+          # Win32 CF_UNICODETEXT via Lune::Native::Clipboard — instant + safe
+          # to call from the webview Isolated thread. The previous PowerShell
+          # shellout was ~200-500ms and tripped concurrency-disabled errors.
+          Lune::Native::Clipboard.read
+        {% else %}
+          output = IO::Memory.new
+          begin
+            status = {% if flag?(:darwin) %}
+                       Process.run("pbpaste", output: output)
+                     {% else %}
+                       Process.run("xclip", ["-o", "-selection", "clipboard"], output: output)
+                     {% end %}
+            Lune.logger.warn { "Clipboard: read command failed (exit #{status.exit_code})" } unless status.success?
+          rescue ex : File::Error | IO::Error
+            Lune.logger.warn { "Clipboard: read command unavailable — #{ex.message}" }
+          end
+          output.to_s.chomp
+        {% end %}
       }
 
       DEFAULT_WRITE = ->(text : String) {
-        begin
-          status = {% if flag?(:darwin) %}
-                     Process.run("pbcopy", input: IO::Memory.new(text))
-                   {% elsif flag?(:win32) %}
-                     Process.run("clip.exe", input: IO::Memory.new(text))
-                   {% else %}
-                     Process.run("xclip", ["-i", "-selection", "clipboard"], input: IO::Memory.new(text))
-                   {% end %}
-          Lune.logger.warn { "Clipboard: write command failed (exit #{status.exit_code})" } unless status.success?
-        rescue ex : File::Error | IO::Error
-          Lune.logger.warn { "Clipboard: write command unavailable — #{ex.message}" }
-        end
-        nil
+        {% if flag?(:win32) %}
+          Lune::Native::Clipboard.write(text)
+        {% else %}
+          begin
+            status = {% if flag?(:darwin) %}
+                       Process.run("pbcopy", input: IO::Memory.new(text))
+                     {% else %}
+                       Process.run("xclip", ["-i", "-selection", "clipboard"], input: IO::Memory.new(text))
+                     {% end %}
+            Lune.logger.warn { "Clipboard: write command failed (exit #{status.exit_code})" } unless status.success?
+          rescue ex : File::Error | IO::Error
+            Lune.logger.warn { "Clipboard: write command unavailable — #{ex.message}" }
+          end
+          nil
+        {% end %}
       }
 
       DEFAULT_READ_HTML   = -> { Lune::Native::Clipboard.read_html }
