@@ -66,21 +66,37 @@ module Lune
         ] of HTTP::Handler
         server = HTTP::Server.new(handlers)
 
-        # Bind AND listen from inside the same spawned fiber on the default
-        # execution context. On Windows, the listening socket gets associated
-        # with whichever context's IOCP first does I/O on it. If we bind here
-        # (on the webview Isolated context) and listen elsewhere, accept/read
-        # completions get routed to the wrong IOCP and the per-connection
-        # fibers park forever. Signal the bound port back via a Channel.
-        port_ready = ::Channel(Int32).new(1)
-        ::spawn(name: "lune-stream-listen") do
+        {% if flag?(:win32) %}
+          # Windows: IOCP affinity. The listening socket gets bound to whichever
+          # context's IOCP first does I/O on it. If bind happens here (webview
+          # Isolated) and listen on a separate pool, accept/read completions get
+          # routed to the wrong IOCP and per-connection fibers park forever. So
+          # bind AND listen from the same spawned fiber on the default context,
+          # and signal the bound port back via a Channel.
+          port_ready = ::Channel(Int32).new(1)
+          ::spawn(name: "lune-stream-listen") do
+            addr = server.bind_tcp("127.0.0.1", 0)
+            port_ready.send(addr.port)
+            Lune.logger.debug { "Stream: server.listen starting on default ctx, port=#{addr.port}" }
+            server.listen
+            Lune.logger.debug { "Stream: server.listen returned" }
+          end
+          @port = port_ready.receive
+        {% else %}
+          # macOS/Linux: the webview isn't Isolated here but `wv.run` is a
+          # blocking C call that never yields, so fibers spawned on the default
+          # context would starve. Use a dedicated Parallel pool with its own OS
+          # threads so the accept loop runs independently. No IOCP affinity to
+          # worry about (kqueue/epoll), so binding before the spawn is fine.
           addr = server.bind_tcp("127.0.0.1", 0)
-          port_ready.send(addr.port)
-          Lune.logger.debug { "Stream: server.listen starting on default ctx, port=#{addr.port}" }
-          server.listen
-          Lune.logger.debug { "Stream: server.listen returned" }
-        end
-        @port = port_ready.receive
+          @port = addr.port
+          pool = Fiber::ExecutionContext::Parallel.new("lune-stream", 2)
+          pool.spawn(name: "lune-stream-listen") do
+            Lune.logger.debug { "Stream: server.listen starting on Parallel pool, port=#{@port}" }
+            server.listen
+            Lune.logger.debug { "Stream: server.listen returned" }
+          end
+        {% end %}
         Lune.logger.debug { "Stream: WS server bound on 127.0.0.1:#{@port}" }
 
         app.stream.sender = ->(n : String, json : String) {
