@@ -60,6 +60,16 @@ jobs:
         if: ${{ !matrix.compile_check_only }}
         run: crystal spec -D lune_native_test_mock ${{ matrix.spec_flags }}
 
-      - name: Type-check (Windows — webview linking not supported in CI)
+      # Mocked compile — exercises the test surface on Windows (mock branch wins
+      # every macro, so platform code is not actually verified).
+      - name: Type-check mocked build (Windows)
         if: ${{ matrix.compile_check_only }}
         run: crystal build src/lune_cli.cr -D lune_native_test_mock ${{ matrix.spec_flags }} --no-codegen
+
+      # Real compile — drops the mock flag so `flag?(:win32)` branches actually
+      # expand. This is the build that proves a Windows port is compile-clean;
+      # webview linking is still skipped via --no-codegen because the upstream
+      # webview shard pulls WebView2 only during link.
+      - name: Type-check real Windows build
+        if: ${{ matrix.compile_check_only }}
+        run: crystal build src/lune_cli.cr ${{ matrix.spec_flags }} --no-codegen

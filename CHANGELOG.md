@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased] - 0.10.0
+
+### Internal
+
+- **Windows compile check in CI** — `specs.yml` now type-checks `src/lune_cli.cr` on `windows-latest` without `-D lune_native_test_mock`, so the real `flag?(:win32)` code paths are verified on every push. The previous mocked compile-check is kept so the test surface is still exercised on Windows too.
+
 ## [0.9.0] - 2026-05-19
 
 ### Added
