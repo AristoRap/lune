@@ -4,19 +4,24 @@ module Lune
   module Native
     {% if flag?(:lune_native_test_mock) %}
       module ClipboardMock
+        @@text : String = ""
         @@html : String = ""
         @@image : String = ""
 
-        class_getter html, image
+        class_getter text, html, image
 
         def self.reset
+          @@text = ""
           @@html = ""
           @@image = ""
         end
 
+        def self.stub_text(text : String);   @@text = text;   end
         def self.stub_html(html : String);   @@html = html;   end
         def self.stub_image(image : String); @@image = image; end
 
+        def self.record_read : String;                         @@text;  end
+        def self.record_write(text : String);                  @@text = text;      end
         def self.record_read_html : String;                    @@html;  end
         def self.record_write_html(html : String);             @@html = html;      end
         def self.record_read_image : String;                   @@image; end
@@ -36,6 +41,7 @@ module Lune
     {% elsif flag?(:win32) %}
       @[Link("user32")]
       lib LibUser32Clip
+        CF_UNICODETEXT = 13_u32
         fun open_clipboard = OpenClipboard(hwnd : Void*) : LibC::Int
         fun close_clipboard = CloseClipboard : LibC::Int
         fun empty_clipboard = EmptyClipboard : LibC::Int
@@ -105,6 +111,68 @@ module Lune
           raw[(si + start_marker.bytesize)...ei]
         end
       {% end %}
+
+      # Plaintext read. On Windows we go straight to Win32 CF_UNICODETEXT — the
+      # previous PowerShell shellout took ~200-500ms cold-start and (worse)
+      # blew up with "Concurrency is disabled in isolated contexts" because
+      # Process.run spawns a wait fiber that can't be scheduled on the webview
+      # Isolated thread. Other platforms keep their pbpaste/xclip path in the
+      # capability layer where Process.run is safe.
+      def self.read : String
+        {% if flag?(:lune_native_test_mock) %}
+          ClipboardMock.record_read
+        {% elsif flag?(:win32) %}
+          return "" if LibUser32Clip.open_clipboard(Pointer(Void).null) == 0
+          begin
+            mem = LibUser32Clip.get_clipboard_data(LibUser32Clip::CF_UNICODETEXT)
+            return "" if mem.null?
+            ptr = LibKernel32Clip.global_lock(mem)
+            return "" if ptr.null?
+            begin
+              # `String.from_utf16(Pointer)` returns `{String, Pointer}` —
+              # second element is the pointer past the null terminator.
+              str, _ = String.from_utf16(ptr.as(UInt16*))
+              str
+            ensure
+              LibKernel32Clip.global_unlock(mem)
+            end
+          ensure
+            LibUser32Clip.close_clipboard
+          end
+        {% else %}
+          raise NotImplementedError.new("Lune::Native::Clipboard.read — use the capability's DEFAULT_READ on non-Windows platforms")
+        {% end %}
+      end
+
+      def self.write(text : String) : Nil
+        {% if flag?(:lune_native_test_mock) %}
+          ClipboardMock.record_write(text)
+        {% elsif flag?(:win32) %}
+          # CF_UNICODETEXT is UTF-16LE, null-terminated. Allocate (chars+1)*2
+          # bytes of moveable global memory, copy the UTF-16 code units, then
+          # hand it off via SetClipboardData (which takes ownership on success).
+          utf16 = text.to_utf16
+          byte_size = LibC::SizeT.new((utf16.size + 1) * 2)
+          return if LibUser32Clip.open_clipboard(Pointer(Void).null) == 0
+          begin
+            LibUser32Clip.empty_clipboard
+            mem = LibKernel32Clip.global_alloc(LibKernel32Clip::GMEM_MOVEABLE, byte_size)
+            return if mem.null?
+            ptr = LibKernel32Clip.global_lock(mem)
+            return if ptr.null?
+            dst = ptr.as(UInt16*)
+            utf16.size.times { |i| dst[i] = utf16[i] }
+            dst[utf16.size] = 0_u16
+            LibKernel32Clip.global_unlock(mem)
+            LibUser32Clip.set_clipboard_data(LibUser32Clip::CF_UNICODETEXT, mem)
+          ensure
+            LibUser32Clip.close_clipboard
+          end
+          nil
+        {% else %}
+          raise NotImplementedError.new("Lune::Native::Clipboard.write — use the capability's DEFAULT_WRITE on non-Windows platforms")
+        {% end %}
+      end
 
       def self.read_html : String
         {% if flag?(:lune_native_test_mock) %}

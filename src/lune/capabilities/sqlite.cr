@@ -7,7 +7,7 @@ module Lune
       include Capability::Bindable
       include Capability::Lifecycle
 
-      DESCRIPTOR = Descriptor.new(id: :sqlite, label: "SQLite")
+      DESCRIPTOR = Descriptor.new(id: :sqlite, label: "Sqlite")
 
       def descriptor : Descriptor
         DESCRIPTOR

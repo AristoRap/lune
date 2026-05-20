@@ -41,22 +41,17 @@ The `demo/` directory in this repo is a full showcase of the Lune API — bindin
 
 ## Platform support
 
-| Platform | Dev                      | Build       |
-| -------- | ------------------------ | ----------- |
-| macOS    | ✅                       | ✅          |
-| Linux    | ✅                       | ✅          |
-| Windows  | ⚠️ requires manual setup | ⚠️ untested |
+| Platform | Dev | Build | Notes                                                                                                                                                                  |
+| -------- | --- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| macOS    | ✅  | ✅    | Native AppKit                                                                                                                                                          |
+| Linux    | ✅  | ✅    | GTK + WebKit2GTK                                                                                                                                                       |
+| Windows  | 🟡  | 🟡    | Win32 + WebView2; runnable with a one-line Crystal stdlib patch until Crystal 1.21 ships. Several capabilities still gapped — see [WINDOWS_SETUP.md](WINDOWS_SETUP.md) |
 
 ### Windows
 
-The `naqvis/webview` postinstall script is Unix-only. Before running `shards install`, manually set up WebView2:
+Lune runs on Windows today **with a one-line manual patch to Crystal's stdlib** (documented in [WINDOWS_SETUP.md](WINDOWS_SETUP.md)). The patch becomes unnecessary once Crystal 1.21.0 ships — [crystal#16933](https://github.com/crystal-lang/crystal/pull/16933) is merged on master and targets 1.21.
 
-1. Download the [WebView2 NuGet package](https://www.nuget.org/packages/Microsoft.Web.WebView2) and extract `build/native/include/WebView2.h` into `lib/webview/ext/`.
-2. Build `webview.dll` and `webview.lib` with MSVC `cl.exe` against that header.
-3. Copy `webview.dll`, `webview.lib`, and `WebView2Loader.dll` into a directory on `CRYSTAL_LIBRARY_PATH`.
-4. Run `shards install --skip-postinstall`.
-
-The webview event loop must own a dedicated OS thread on Windows. Lune uses `Fiber::ExecutionContext::Isolated` for this. **Untested on real hardware** — feedback welcome.
+With the patch applied, the demo runs end-to-end via `lune dev --debug`. For the live per-capability status (verified working, partial, not yet implemented), see the [Windows verification checklist](website/guide/windows-checklist.md) — that's the single source of truth and it's kept current as gaps land. [ROADMAP.md](ROADMAP.md) tracks the path to full parity.
 
 ## Development
 

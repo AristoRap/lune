@@ -5,7 +5,7 @@ describe Lune::Capabilities::Kv do
     it "has correct id and label" do
       d = Lune::Capabilities::Kv::DESCRIPTOR
       d.id.should eq(:kv)
-      d.label.should eq("KV")
+      d.label.should eq("Kv")
     end
 
     it "has no hard deps" do

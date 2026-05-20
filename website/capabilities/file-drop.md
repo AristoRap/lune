@@ -8,12 +8,12 @@
 | **JS namespace** | `FileDrop`                       |
 | **Core**         | No                               |
 | **Phases**       | WebviewInject                    |
-| **Hard deps**    | `event_bus`                      |
+| **Hard deps**    | `events`                         |
 | **Platforms**    | macOS · Linux (Windows: planned) |
 
 FileDrop intercepts native OS file-drop events and delivers them to JavaScript as `{ x, y, paths }` events on the event bus.
 
-Disabling `event_bus` automatically disables this capability.
+Disabling `events` automatically disables this capability.
 
 ---
 
@@ -23,7 +23,7 @@ Disabling `event_bus` automatically disables this capability.
 capabilities:
   include:
     - file_drop
-    - event_bus # required
+    - events # required
 ```
 
 Or omit `capabilities:` entirely.
@@ -52,9 +52,9 @@ Mark elements as drop targets with a custom CSS property:
 
 ```crystal
 Lune.run(app) do |opts|
-  opts.drop do |d|
-    d.zone  = "--lune-drop-target"   # CSS custom property name
-    d.value = "true"                  # expected value
+  opts.file_drop do |fd|
+    fd.zone  = "--lune-drop-target"   # CSS custom property name
+    fd.value = "true"                  # expected value
   end
 end
 ```
@@ -75,12 +75,12 @@ Configure in `Lune.run`:
 
 ```crystal
 Lune.run(app) do |opts|
-  opts.drop do |d|
-    d.zone  = "--lune-drop-target"
-    d.value = "true"
+  opts.file_drop do |fd|
+    fd.zone  = "--lune-drop-target"
+    fd.value = "true"
 
     # Optional Crystal-side callback (runs before JS receives the event)
-    d.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
+    fd.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
       puts "Dropped: #{paths}"
     }
   end

@@ -7,9 +7,8 @@ module Lune
   #   o.width = 1280
   #   o.height = 720
   #
-  #   o.drop do |d|
-  #     d.enabled = true
-  #     d.zone = "--lune-drop-target"
+  #   o.file_drop do |fd|
+  #     fd.zone = "--lune-drop-target"
   #   end
   #
   #   o.mac do |m|
@@ -51,6 +50,13 @@ module Lune
     # When true, suppresses the browser's default right-click context menu.
     property disable_context_menu : Bool = false
 
+    # When true, the window's last position and size are written to a JSON file
+    # on close and restored on the next launch. Default `false` (opt-in) so
+    # apps don't restore to off-screen coordinates if the user's monitor setup
+    # changed between sessions. Suppressed in macOS menubar mode regardless,
+    # since the window position there is derived from the tray icon.
+    property remember_frame : Bool = false
+
     # Called on every client-side navigation with the new URL as argument.
     # Fires on `popstate` and `hashchange` events.
     property on_navigate : (String -> Nil)? = nil
@@ -66,15 +72,15 @@ module Lune
     # handle (NSWindow* on macOS, GtkWindow* on Linux, HWND on Windows).
     property on_window_ready : (Void* -> Nil)? = nil
 
-    getter drop : Drop = Drop.new
+    getter file_drop : FileDrop = FileDrop.new
     getter drag : Drag = Drag.new
     getter tray : Tray = Tray.new
     getter mac : Mac = Mac.new
     getter menu : Menu = Menu.new
     getter file_watch : FileWatch = FileWatch.new
 
-    def drop(& : Drop ->)
-      yield @drop
+    def file_drop(& : FileDrop ->)
+      yield @file_drop
     end
 
     def drag(& : Drag ->)
@@ -130,6 +136,9 @@ module Lune
       end
       unless (d = window.devtools).nil?
         @devtools = d
+      end
+      unless (r = window.remember_frame).nil?
+        @remember_frame = r
       end
     end
   end

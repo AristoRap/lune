@@ -16,8 +16,15 @@ url_schemes:
   - lune-demo
 
 capabilities:
-  # include:
-  # - system
-
+  # Capabilities listed below are not yet implemented on Windows. Uncomment them
+  # in the `exclude` block when running the demo on Windows; on macOS/Linux all
+  # capabilities work so the default config leaves them enabled.
+  # As each Win32 implementation lands, remove the corresponding entry here.
+  # See ROADMAP.md ("Production-ready/Windows support") and
+  # website/guide/windows-checklist.md for the current state.
   # exclude:
-  #   - system
+  #   - file_watch    # Windows: needs ReadDirectoryChangesW
+  #   - file_drop     # Windows: needs IDropTarget + disable_webview_drop port
+  #   - tray          # Windows: needs Shell_NotifyIconW
+  #   - drag_out      # macOS-only by design
+  #   - context_menu  # Windows: WebView2's default browser context menu shows over our native one; needs AreDefaultContextMenusEnabled = false on the WV2 controller

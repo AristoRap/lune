@@ -2,14 +2,14 @@
 
 > Persistent key-value store for preferences and app config.
 
-|                  |                     |
-| ---------------- | ------------------- |
-| **Config key**   | `kv`                |
-| **JS namespace** | `Kv`                |
-| **Core**         | No                  |
+|                  |                      |
+| ---------------- | -------------------- |
+| **Config key**   | `kv`                 |
+| **JS namespace** | `Kv`                 |
+| **Core**         | No                   |
 | **Phases**       | Bindable · Lifecycle |
-| **Hard deps**    | —                   |
-| **Platforms**    | all                 |
+| **Hard deps**    | —                    |
+| **Platforms**    | all                  |
 
 KV gives you a simple JSON-backed key-value store scoped to your app. Values persist across app restarts and are stored in the platform-standard app data directory. Use it for user preferences, last-used state, and lightweight config — anything that doesn't need the full query power of SQLite.
 
@@ -52,7 +52,7 @@ console.log(missing); // null
 ```js
 const exists = await Kv.has("theme"); // true
 await Kv.delete("theme");
-const gone = await Kv.has("theme");   // false
+const gone = await Kv.has("theme"); // false
 ```
 
 ---
@@ -70,24 +70,24 @@ await Kv.clear(); // removes all entries
 
 ## JavaScript API
 
-| Method   | Signature                                   | Description                               |
-| -------- | ------------------------------------------- | ----------------------------------------- |
-| `get`    | `(key) → Promise<unknown>`                  | Return the value or `null` if not set     |
-| `set`    | `(key, value) → Promise<void>`              | Store any JSON-serialisable value         |
-| `delete` | `(key) → Promise<void>`                     | Remove a key; no-op if absent             |
-| `has`    | `(key) → Promise<boolean>`                  | Check whether a key exists                |
-| `keys`   | `() → Promise<string[]>`                    | List all stored keys                      |
-| `clear`  | `() → Promise<void>`                        | Remove all entries                        |
+| Method   | Signature                      | Description                           |
+| -------- | ------------------------------ | ------------------------------------- |
+| `get`    | `(key) → Promise<unknown>`     | Return the value or `null` if not set |
+| `set`    | `(key, value) → Promise<void>` | Store any JSON-serialisable value     |
+| `delete` | `(key) → Promise<void>`        | Remove a key; no-op if absent         |
+| `has`    | `(key) → Promise<boolean>`     | Check whether a key exists            |
+| `keys`   | `() → Promise<string[]>`       | List all stored keys                  |
+| `clear`  | `() → Promise<void>`           | Remove all entries                    |
 
 ---
 
 ## Storage location
 
-| Platform | Path                                                    |
-| -------- | ------------------------------------------------------- |
-| macOS    | `~/Library/Application Support/<app-name>/kv.json`      |
+| Platform | Path                                                                |
+| -------- | ------------------------------------------------------------------- |
+| macOS    | `~/Library/Application Support/<app-name>/kv.json`                  |
 | Linux    | `$XDG_DATA_HOME/<app-name>/kv.json` (default: `~/.local/share/...`) |
-| Windows  | `%APPDATA%\<app-name>\kv.json`                          |
+| Windows  | `%APPDATA%\<app-name>\kv.json`                                      |
 
 `<app-name>` is derived from the app `title` in `lune.yml` (lowercased, spaces replaced with `-`).
 

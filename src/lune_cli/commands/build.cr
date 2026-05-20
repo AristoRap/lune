@@ -86,6 +86,15 @@ module LuneCLI
         crystal_args = ["build", app_entry, "-Dpreview_mt", "-Dexecution_context", "-o", compiled_output_path]
         crystal_args << "--release" if release
 
+        {% if flag?(:win32) %}
+          # Embed the app icon in the .exe via a tiny .rc → .res compile.
+          # Falls through silently if no icon is configured, the file is
+          # missing, or rc.exe isn't on PATH (no MSVC SDK).
+          if res_path = compile_win_icon_resource(config.icon)
+            crystal_args.concat(["--link-flags", res_path])
+          end
+        {% end %}
+
         app_status = Process.run(
           "crystal",
           crystal_args,
@@ -128,6 +137,49 @@ module LuneCLI
           FileUtils.mkdir_p(File.dirname(compiled_output_path))
         {% end %}
       end
+
+      {% if flag?(:win32) %}
+        # Generate a Win32 .res file containing the configured icon, ready
+        # to be passed to the MSVC linker via crystal build's --link-flags.
+        # Returns nil (silently) if: no icon configured, file missing, or
+        # rc.exe not on PATH. The build still succeeds — just without the
+        # embedded icon.
+        private def compile_win_icon_resource(icon : String?) : String?
+          return nil unless src = icon
+          unless File.exists?(src)
+            Lune.logger.warn { "Icon file not found: #{src}" }
+            return nil
+          end
+          # .ico is what Windows expects. We don't auto-convert from .png
+          # because Crystal lacks a PNG library in stdlib; require the
+          # user to supply a .ico directly. Could shell out to ImageMagick
+          # later if needed.
+          unless File.extname(src).downcase == ".ico"
+            Lune.logger.warn { "Win32 icon must be .ico (got #{File.extname(src)}); skipping embed" }
+            return nil
+          end
+
+          rc_path  = File.join(Dir.tempdir, "lune-icon-#{Random.new.hex(6)}.rc")
+          res_path = File.join(Dir.tempdir, "lune-icon-#{Random.new.hex(6)}.res")
+          # `1 ICON "..."` — resource ID 1 is the convention Windows
+          # Explorer reads for the .exe's display icon.
+          File.write(rc_path, "1 ICON \"#{File.expand_path(src).gsub('\\', "\\\\")}\"\n")
+          status = Process.run("rc", ["/nologo", "/fo", res_path, rc_path],
+            input: Process::Redirect::Close,
+            output: Process::Redirect::Inherit,
+            error: Process::Redirect::Inherit)
+          File.delete?(rc_path)
+          unless status.success?
+            Lune.logger.warn { "rc.exe failed or missing — skipping icon embed (install MSVC Build Tools to fix)" }
+            File.delete?(res_path)
+            return nil
+          end
+          res_path
+        rescue ex : File::Error | IO::Error
+          Lune.logger.warn { "Icon embed failed: #{ex.message}" }
+          nil
+        end
+      {% end %}
 
       private def finalize_output(output_path : String, config : LuneCLI::Config = LuneCLI::Config.new) : Nil
         {% if flag?(:darwin) %}

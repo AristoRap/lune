@@ -22,6 +22,11 @@ module Lune
           args: ["String", "Array"],
           return_type: "String",
           arg_names: ["command", "args"],
+          # spawn_proc calls app.async three times to start the stdout/stderr/
+          # wait pumps. On Windows those run through Channel#receive in the
+          # Parallel scheduler — illegal from the webview Isolated thread. async
+          # routes the callback through @async_pool so the spawn is safe.
+          async: true,
           callback: ->(raw : Array(JSON::Any)) {
             cmd = raw[0].as_s
             argv = raw[1].as_a.map(&.as_s)

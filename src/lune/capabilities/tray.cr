@@ -3,7 +3,7 @@ module Lune
     class Tray < Lune::Capability
       include Capability::Bindable
 
-      DESCRIPTOR = Descriptor.new(id: :tray, label: "Tray", soft_deps: [:event_bus])
+      DESCRIPTOR = Descriptor.new(id: :tray, label: "Tray", soft_deps: [:events])
 
       def descriptor : Descriptor
         DESCRIPTOR

@@ -61,10 +61,10 @@ await runtime.System.quit();
 | `DragOut`       | `start`           | `start(paths)`                    | `Promise<void>`                 | [DragOut](../capabilities/drag-out)            |
 | `DeepLink`      | `on`              | `on(cb)`                          | `void`                          | [DeepLink](../capabilities/deep-link)          |
 | `DeepLink`      | `off`             | `off()`                           | `void`                          | [DeepLink](../capabilities/deep-link)          |
-| `Events`        | `on`              | `on(name, cb)`                    | `void`                          | [EventBus](../capabilities/event-bus)          |
-| `Events`        | `once`            | `once(name, cb)`                  | `void`                          | [EventBus](../capabilities/event-bus)          |
-| `Events`        | `off`             | `off(name, cb?)`                  | `void`                          | [EventBus](../capabilities/event-bus)          |
-| `Events`        | `emit`            | `emit(name, data?)`               | `Promise<void>`                 | [EventBus](../capabilities/event-bus)          |
+| `Events`        | `on`              | `on(name, cb)`                    | `void`                          | [Events](../capabilities/events)               |
+| `Events`        | `once`            | `once(name, cb)`                  | `void`                          | [Events](../capabilities/events)               |
+| `Events`        | `off`             | `off(name, cb?)`                  | `void`                          | [Events](../capabilities/events)               |
+| `Events`        | `emit`            | `emit(name, data?)`               | `Promise<void>`                 | [Events](../capabilities/events)               |
 | `FileDrop`      | `on`              | `on(cb)`                          | `void`                          | [FileDrop](../capabilities/file-drop)          |
 | `FileDrop`      | `off`             | `off()`                           | `void`                          | [FileDrop](../capabilities/file-drop)          |
 | `FileWatch`     | `watch`           | `watch(path)`                     | `Promise<void>`                 | [FileWatch](../capabilities/file-watch)        |

@@ -11,7 +11,7 @@
 | **Hard deps**    | —                                       |
 | **Platforms**    | macOS · Linux · Windows                 |
 
-Stream uses a local WebSocket server for ordered, low-latency data delivery. Use it for sustained flows — price ticks, log lines, LLM tokens, sensor data — where firing a new `evaluateJavaScript` call per message would saturate the event loop. For discrete, low-frequency signals see [EventBus](./event-bus).
+Stream uses a local WebSocket server for ordered, low-latency data delivery. Use it for sustained flows — price ticks, log lines, LLM tokens, sensor data — where firing a new `evaluateJavaScript` call per message would saturate the event loop. For discrete, low-frequency signals see [Events](./events).
 
 ---
 

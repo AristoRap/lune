@@ -2,6 +2,22 @@ require "http/web_socket"
 
 module Lune
   module Capabilities
+    # Logs every HTTP request that enters the stream server's handler chain.
+    # Sits before the WebSocketHandler so we can tell whether the request was
+    # ever parsed (vs. stuck at TCP accept) and whether the Upgrade header was
+    # what we expected. Debug-only.
+    private class StreamRequestLogHandler
+      include HTTP::Handler
+
+      def call(context)
+        Lune.logger.debug do
+          headers = context.request.headers
+          "Stream: HTTP req method=#{context.request.method} path=#{context.request.path} upgrade=#{headers["Upgrade"]?.inspect} connection=#{headers["Connection"]?.inspect}"
+        end
+        call_next(context)
+      end
+    end
+
     class Stream < Lune::Capability
       include Capability::WebviewInject
 
@@ -32,8 +48,10 @@ module Lune
         sockets = [] of HTTP::WebSocket
         mu = Mutex.new
 
-        server = HTTP::Server.new([
+        handlers = [
+          StreamRequestLogHandler.new,
           HTTP::WebSocketHandler.new do |ws, _ctx|
+            Lune.logger.debug { "Stream: WS client connected" }
             mu.synchronize { sockets << ws }
             ws.on_message do |raw|
               begin
@@ -43,20 +61,43 @@ module Lune
                 Lune.logger.debug { "Stream: malformed message — #{ex.message}" }
               end
             end
-            ws.on_close { mu.synchronize { sockets.delete(ws) } }
+            ws.on_close { Lune.logger.debug { "Stream: WS client disconnected" }; mu.synchronize { sockets.delete(ws) } }
           end,
-        ])
+        ] of HTTP::Handler
+        server = HTTP::Server.new(handlers)
 
-        addr = server.bind_tcp("127.0.0.1", 0)
-        @port = addr.port
-
-        pool = Fiber::ExecutionContext::Parallel.new("lune-stream-pool", 2)
-        ready = ::Channel(Nil).new
-        Fiber::ExecutionContext::Isolated.new("lune-stream", spawn_context: pool) do
-          ready.send(nil)
-          server.listen
-        end
-        ready.receive
+        {% if flag?(:win32) %}
+          # Windows: IOCP affinity. The listening socket gets bound to whichever
+          # context's IOCP first does I/O on it. If bind happens here (webview
+          # Isolated) and listen on a separate pool, accept/read completions get
+          # routed to the wrong IOCP and per-connection fibers park forever. So
+          # bind AND listen from the same spawned fiber on the default context,
+          # and signal the bound port back via a Channel.
+          port_ready = ::Channel(Int32).new(1)
+          ::spawn(name: "lune-stream-listen") do
+            addr = server.bind_tcp("127.0.0.1", 0)
+            port_ready.send(addr.port)
+            Lune.logger.debug { "Stream: server.listen starting on default ctx, port=#{addr.port}" }
+            server.listen
+            Lune.logger.debug { "Stream: server.listen returned" }
+          end
+          @port = port_ready.receive
+        {% else %}
+          # macOS/Linux: the webview isn't Isolated here but `wv.run` is a
+          # blocking C call that never yields, so fibers spawned on the default
+          # context would starve. Use a dedicated Parallel pool with its own OS
+          # threads so the accept loop runs independently. No IOCP affinity to
+          # worry about (kqueue/epoll), so binding before the spawn is fine.
+          addr = server.bind_tcp("127.0.0.1", 0)
+          @port = addr.port
+          pool = Fiber::ExecutionContext::Parallel.new("lune-stream", 2)
+          pool.spawn(name: "lune-stream-listen") do
+            Lune.logger.debug { "Stream: server.listen starting on Parallel pool, port=#{@port}" }
+            server.listen
+            Lune.logger.debug { "Stream: server.listen returned" }
+          end
+        {% end %}
+        Lune.logger.debug { "Stream: WS server bound on 127.0.0.1:#{@port}" }
 
         app.stream.sender = ->(n : String, json : String) {
           copies = mu.synchronize { sockets.dup }

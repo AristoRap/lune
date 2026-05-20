@@ -34,8 +34,8 @@ Lune.run(app) do |opts|
   opts.width  = 1280
   opts.height = 720
 
-  opts.drop do |d|
-    d.zone = "--lune-drop-target"
+  opts.file_drop do |fd|
+    fd.zone = "--lune-drop-target"
   end
 
   opts.mac do |m|
@@ -203,9 +203,28 @@ opts.on_close = -> {
 
 ## Window state persistence
 
-Lune automatically saves and restores the window's position and size. No configuration required — it just works.
+Lune can save and restore the window's position and size between launches. Opt-in via `opts.remember_frame = true` — the default is `false` so apps don't end up restoring to off-screen coordinates if the user's monitor setup changed between sessions.
 
-When the window closes, the current frame is written to a JSON file. On the next launch, that file is read and the window is restored to the same position and size before the page loads.
+When the window closes (or, on Windows, on a 500 ms tracker while it's alive), the current frame is written to a JSON file. On the next launch, that file is read and the window is restored to the same position and size before the page loads.
+
+### `opts.remember_frame`
+
+**Type:** `Bool` — **Default:** `false`
+
+```crystal
+Lune.run(app) do |opts|
+  opts.remember_frame = true
+end
+```
+
+Or in `lune.yml`:
+
+```yaml
+window:
+  remember_frame: true
+```
+
+When `false` (the default), Lune ignores any previously saved state and opens the window at `opts.width` / `opts.height` every launch. On macOS in menubar mode (`mac.menubar_mode = true`), persistence is always disabled regardless of this flag — the window position there is derived from the tray icon on each toggle.
 
 ### Storage location
 
@@ -226,9 +245,10 @@ On the first launch no file exists yet, so the window opens at the size and posi
 
 ```crystal
 Lune.run(app) do |opts|
-  opts.title  = "My App"   # → stored at .../my-app/window.json
-  opts.width  = 1280
-  opts.height = 800
+  opts.title           = "My App"   # → stored at .../my-app/window.json
+  opts.width           = 1280
+  opts.height          = 800
+  opts.remember_frame  = true
 end
 ```
 
@@ -240,18 +260,18 @@ After the user resizes and moves the window, the next launch will reopen it at e
 
 Lune provides a complete drag-and-drop file API: CSS-based drop zones for per-element highlighting, a Crystal callback, and JS helpers for subscribing to drops.
 
-Enable the `file_drop` capability in `lune.yml` to activate native drop handling. Options in `opts.drop` configure its behaviour.
+Enable the `file_drop` capability in `lune.yml` to activate native drop handling. Options in `opts.file_drop` configure its behaviour.
 
 ```crystal
-opts.drop do |d|
-  d.zone    = "--lune-drop-target"
-  d.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
+opts.file_drop do |fd|
+  fd.zone    = "--lune-drop-target"
+  fd.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
     puts "Dropped #{paths.size} file(s)"
   }
 end
 ```
 
-### `drop.disable_webview_drop`
+### `file_drop.disable_webview_drop`
 
 **Type:** `Bool` — **Default:** `false`
 
@@ -259,7 +279,7 @@ Disables the WebView's built-in drag handling globally, without enabling the `fi
 
 ---
 
-### `drop.zone` / `drop.value`
+### `file_drop.zone` / `file_drop.value`
 
 **Type:** `String` — **Defaults:** `""` / `"drop"`
 
@@ -268,9 +288,9 @@ Mark specific elements as drop targets using a CSS custom property. Set `zone` t
 > **Inline style required.** The property must be set as an inline style (`style="--lune-drop-target: drop"`), not via a CSS class. Zone detection reads `el.style` directly to avoid matching child elements that would otherwise inherit the value.
 
 ```crystal
-opts.drop do |d|
-  d.zone  = "--lune-drop-target"
-  d.value = "drop"   # default — can be omitted
+opts.file_drop do |fd|
+  fd.zone  = "--lune-drop-target"
+  fd.value = "drop"   # default — can be omitted
 end
 ```
 
@@ -289,15 +309,15 @@ Requires the `file_drop` capability to be active. The `lune-drop-target-active` 
 
 ---
 
-### `drop.on_drop`
+### `file_drop.on_drop`
 
 **Type:** `((Int32, Int32, Array(String)) -> Nil)?` — **Default:** `nil`
 
 Crystal-side callback fired when the user drops files. Receives the drop position in logical pixels and an array of absolute file paths. Requires the `file_drop` capability to be active in `lune.yml`.
 
 ```crystal
-opts.drop do |d|
-  d.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
+opts.file_drop do |fd|
+  fd.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
     puts "Dropped #{paths.size} file(s) at (#{x}, #{y})"
     app.events.emit("fileDrop", {"x" => x, "y" => y, "paths" => paths})
   }
@@ -334,9 +354,9 @@ FileDrop.off(): void;
 
 ```crystal
 Lune.run(app, assets: "frontend/dist") do |opts|
-  opts.drop do |d|
-    d.zone    = "--lune-drop-target"
-    d.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
+  opts.file_drop do |fd|
+    fd.zone    = "--lune-drop-target"
+    fd.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
       puts "Dropped: #{paths.inspect}"
     }
   end
@@ -782,9 +802,9 @@ Lune.run(app) do |opts|
   opts.disable_context_menu = true
   opts.devtools               = {{ flag?(:lune_dev) }}
 
-  opts.drop do |d|
-    d.zone    = "--lune-drop-target"
-    d.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
+  opts.file_drop do |fd|
+    fd.zone    = "--lune-drop-target"
+    fd.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
       app.events.emit("file_drop", {"x" => x, "y" => y, "paths" => paths})
     }
   end

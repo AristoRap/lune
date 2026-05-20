@@ -2,18 +2,18 @@
 
 > Receive custom URL scheme events (`myapp://...`) from the OS.
 
-|                  |             |
-| ---------------- | ----------- |
-| **Config key**   | `deep_link` |
-| **JS namespace** | `DeepLink`  |
-| **Core**         | No          |
-| **Phases**       | Bindable    |
-| **Hard deps**    | `event_bus` |
-| **Platforms**    | macOS       |
+|                  |                                                                           |
+| ---------------- | ------------------------------------------------------------------------- |
+| **Config key**   | `deep_link`                                                               |
+| **JS namespace** | `DeepLink`                                                                |
+| **Core**         | No                                                                        |
+| **Phases**       | Bindable                                                                  |
+| **Hard deps**    | `events`                                                                  |
+| **Platforms**    | macOS · Linux · Windows (Windows: cold-start ARGV only — see Limitations) |
 
 Register a custom URL scheme so the OS routes URLs into your running app — for OAuth redirects, shell integrations, or any external trigger that needs to pass data to your app.
 
-Disabling `event_bus` automatically disables this capability.
+Disabling `events` automatically disables this capability.
 
 ---
 
@@ -43,7 +43,12 @@ Scheme names must be lowercase alphanumeric.
 
 **macOS** — `lune build` injects `CFBundleURLTypes` into `Info.plist`. After the app is installed (or run once from Finder), macOS registers the scheme automatically. URLs are routed to the running instance via Apple Events.
 
-**Linux** — `lune dist` injects `MimeType=x-scheme-handler/myapp;` into the generated `.desktop` file, so the OS will associate the scheme with your app at install time. However, there is **no runtime handler yet** — the launched process receives the URL as `ARGV[1]` but Lune does not currently parse it or fire `DeepLink.on`. See [Roadmap](#roadmap) below.
+**Linux** — `lune dist` injects `MimeType=x-scheme-handler/myapp;` into the generated `.desktop` file, so the OS associates the scheme with your binary at install time. At runtime, Lune handles two cases:
+
+1. **Cold start** — the OS launches a fresh app with the URL on the command line. Lune scans `ARGV` for an arg containing `://` and fires `DeepLink.on` with that URL.
+2. **Warm start** — the OS launches a second process while the primary is already running. The second process tries to connect to a Unix-domain socket at `$XDG_RUNTIME_DIR/lune-<slug>.sock` (or `/tmp/…` if XDG isn't set); on success it forwards the URL and exits, and the primary instance fires `DeepLink.on` instead. If no primary is listening, the second instance continues as the new primary.
+
+**Windows** — `myapp://` schemes need to be registered in the registry (`HKCU\Software\Classes\myapp\shell\open\command` → `"C:\path\to\app.exe" "%1"`) — Lune doesn't auto-register today. Once registered, the OS launches a fresh app with the URL on the command line and Lune scans `ARGV` like on Linux. Warm-start forwarding is not yet implemented on Windows (will use a named pipe in a follow-up).
 
 ---
 
@@ -97,16 +102,20 @@ Scheme registration is build-time only — `Info.plist` must contain `CFBundleUR
 
 ### Linux
 
-Linux runtime support is not implemented in this release. `lune dist` writes the scheme into the `.desktop` file so the OS will route URLs to your binary, but the Crystal runtime does not yet inspect `ARGV` or forward URLs to `event_bus`, so `DeepLink.on` will not fire. Treat this capability as macOS-only until the work below lands.
+Cold-start and warm-start are both wired up — see [How it works](#how-it-works). URL scheme registration still requires the `.desktop` file from `lune dist`; `lune dev` runs don't get OS-level scheme routing.
+
+### Windows
+
+Cold-start works once the URL scheme is registered in the registry; warm-start (forwarding a URL from a second launch to a primary instance) isn't implemented yet. Track v0.12.0 for named-pipe IPC and auto-registration via `lune build`.
 
 ---
 
 ## Roadmap
 
-Planned for a follow-up release:
+Planned for follow-up releases:
 
-- Parse `ARGV` on startup for a registered scheme and emit the initial URL through `event_bus`.
-- Socket-based forwarding to the running instance when the OS spawns a second process (warm-start case).
+- **Windows warm-start** — named-pipe IPC equivalent to Linux's Unix-socket forwarding.
+- **Windows scheme auto-registration** — `lune build` writes `HKCU\Software\Classes\<scheme>\shell\open\command` for each entry in `url_schemes`.
 
 ---
 

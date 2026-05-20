@@ -1,28 +1,28 @@
-# EventBus
+# Events
 
 > Bidirectional event bus between Crystal and JavaScript.
 
 |                  |                                                                                        |
 | ---------------- | -------------------------------------------------------------------------------------- |
-| **Config key**   | `event_bus`                                                                            |
+| **Config key**   | `events`                                                                               |
 | **JS namespace** | `Events`                                                                               |
 | **Core**         | **Yes** — disabling cascades to `context_menu`, `deep_link`, `file_drop`, `file_watch` |
 | **Phases**       | WebviewInject                                                                          |
 | **Hard deps**    | —                                                                                      |
 | **Platforms**    | macOS · Linux · Windows                                                                |
 
-EventBus is the primary channel for discrete signals between your Crystal backend and the JS frontend. For sustained high-frequency data flows see [Stream](./stream).
+Events is the primary channel for discrete signals between your Crystal backend and the JS frontend. For sustained high-frequency data flows see [Stream](./stream).
 
 ---
 
 ## Disabling
 
-EventBus is active by default. You can disable it, but any capability that hard-depends on it (`context_menu`, `deep_link`, `file_drop`, `file_watch`) will be automatically disabled with a warning.
+Events is active by default. You can disable it, but any capability that hard-depends on it (`context_menu`, `deep_link`, `file_drop`, `file_watch`) will be automatically disabled with a warning.
 
 ```yaml
 capabilities:
   exclude:
-    - event_bus
+    - events
 ```
 
 ---

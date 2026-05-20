@@ -89,10 +89,17 @@ module Lune
         {% end %}
 
         window_app_name = WindowState.app_name(@options.title)
-        unless {% if flag?(:darwin) %}@options.mac.menubar_mode{% else %}false{% end %}
+        menubar_mode = {% if flag?(:darwin) %}@options.mac.menubar_mode{% else %}false{% end %}
+        if @options.remember_frame && !menubar_mode
           if saved = WindowState.load(window_app_name)
             Native::Window.set_frame(handle, saved[:x], saved[:y], saved[:width], saved[:height])
           end
+          {% if flag?(:win32) %}
+            # See WindowState.start_tracker — on Windows the HWND is gone by
+            # the time wv.run returns, so we have to capture the frame while
+            # it's still alive.
+            WindowState.start_tracker(window_app_name, handle)
+          {% end %}
         end
 
         callback_window_loaded_if_set(wv)
@@ -115,10 +122,14 @@ module Lune
           cap.shutdown if cap.is_a?(Lune::Capability::Lifecycle)
         end
 
-        unless {% if flag?(:darwin) %}@options.mac.menubar_mode{% else %}false{% end %}
-          x, y, width, height = Native::Window.get_frame(handle)
-          WindowState.save(window_app_name, x, y, width, height)
-        end
+        {% unless flag?(:win32) %}
+          # Windows persists the frame live via WindowState.start_tracker;
+          # the HWND is already destroyed at this point.
+          if @options.remember_frame && !menubar_mode
+            x, y, width, height = Native::Window.get_frame(handle)
+            WindowState.save(window_app_name, x, y, width, height)
+          end
+        {% end %}
 
         asset_server.try(&.stop)
         bridge.close!
@@ -258,7 +269,12 @@ module Lune
         all_bind_ctx = Lune::Capability::BindCtx.new(all_stubs)
         registry.all.each do |cap|
           next if resolved.active_ids.includes?(cap.descriptor.id)
-          cap.install(all_bind_ctx) if cap.is_a?(Lune::Capability::Bindable)
+          next unless cap.is_a?(Lune::Capability::Bindable)
+          begin
+            cap.install(all_bind_ctx)
+          rescue ex : NotImplementedError
+            Lune.logger.debug { "Skipping stub install for #{cap.descriptor.label}: #{ex.message}" }
+          end
         end
         Lune::Runtime::Generator.write_js(
           @app.bindings + all_stubs.bindings.select(&.internal?),

@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitepress'
 
-const version = '0.10.0'
+const version = '0.11.0'
 
 export default defineConfig({
   title: 'Lune',
@@ -30,6 +30,7 @@ export default defineConfig({
           { text: 'Window', link: '/guide/window' },
           { text: 'Menubar Apps', link: '/guide/menubar' },
           { text: 'Distribution', link: '/guide/distribution' },
+          { text: 'Windows Verification Checklist', link: '/guide/windows-checklist' },
         ],
       },
       {
@@ -39,7 +40,7 @@ export default defineConfig({
           {
             text: 'Core',
             items: [
-              { text: 'EventBus', link: '/capabilities/event-bus' },
+              { text: 'Events', link: '/capabilities/events' },
               { text: 'Stream', link: '/capabilities/stream' },
             ],
           },

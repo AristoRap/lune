@@ -6,7 +6,7 @@ module Lune
       include Capability::Bindable
       include Capability::Lifecycle
 
-      DESCRIPTOR = Descriptor.new(id: :kv, label: "KV")
+      DESCRIPTOR = Descriptor.new(id: :kv, label: "Kv")
 
       def descriptor : Descriptor
         DESCRIPTOR

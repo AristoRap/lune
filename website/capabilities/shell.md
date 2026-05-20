@@ -9,7 +9,7 @@
 | **Core**         | No                               |
 | **Phases**       | Bindable · Lifecycle             |
 | **Hard deps**    | `stream`                         |
-| **Platforms**    | macOS · Linux (Windows: planned) |
+| **Platforms**    | macOS · Linux · Windows¹         |
 
 Shell lets you run commands and pipe their `stdout`/`stderr` to the browser over the WebSocket stream. Use it for build pipelines, log tailing, long-running tools, or anything that writes to standard output.
 
@@ -133,16 +133,16 @@ Shell.unlisten(pid);
 
 ## JavaScript API
 
-| Method       | Signature                                            | Description                                    |
-| ------------ | ---------------------------------------------------- | ---------------------------------------------- |
-| `spawn`      | `(command, args) → Promise<string>`                  | Start a process; returns pid                   |
-| `run`        | `(command, args?) → Promise<{stdout, stderr, code}>` | Spawn and collect all output                   |
-| `kill`       | `(pid) → Promise<void>`                              | Send SIGTERM to a running process               |
-| `list`       | `() → Promise<string[]>`                             | List pids of all currently live processes      |
-| `write`      | `(pid, text) → Promise<void>`                        | Write text to a process's stdin                |
-| `closeStdin` | `(pid) → Promise<void>`                              | Close stdin, sending EOF to the process         |
-| `listen`     | `(pid, opts) → void`                                 | Subscribe to output channels                   |
-| `unlisten`   | `(pid) → void`                                       | Remove all listeners for a pid                 |
+| Method       | Signature                                            | Description                               |
+| ------------ | ---------------------------------------------------- | ----------------------------------------- |
+| `spawn`      | `(command, args) → Promise<string>`                  | Start a process; returns pid              |
+| `run`        | `(command, args?) → Promise<{stdout, stderr, code}>` | Spawn and collect all output              |
+| `kill`       | `(pid) → Promise<void>`                              | Send SIGTERM to a running process         |
+| `list`       | `() → Promise<string[]>`                             | List pids of all currently live processes |
+| `write`      | `(pid, text) → Promise<void>`                        | Write text to a process's stdin           |
+| `closeStdin` | `(pid) → Promise<void>`                              | Close stdin, sending EOF to the process   |
+| `listen`     | `(pid, opts) → void`                                 | Subscribe to output channels              |
+| `unlisten`   | `(pid) → void`                                       | Remove all listeners for a pid            |
 
 `listen` options:
 
@@ -171,6 +171,8 @@ Crystal reads `stdout` and `stderr` in parallel async fibers, then waits for bot
 - **Output is line-buffered.** Each `{ line }` payload is one line. Processes that don't flush until exit produce no output until they exit or flush.
 - **Shell metacharacters are not expanded.** Pass the binary as the first argument and flags as separate array elements. For pipes or globs: `spawn("/bin/sh", ["-c", "ls | grep foo"])`.
 - **Auto-cleanup on window close.** The `Lifecycle` shutdown hook sends SIGTERM to all running processes when the app quits.
+
+¹ **Windows note** — `Shell.spawn`/`Shell.run` resolve binaries via `CreateProcess`, which only finds real `.exe`s (and `.bat`/`.cmd` files Crystal explicitly wraps). cmd builtins (`echo`, `dir`, `type`, `cd`, etc.) fail with `File::NotFoundError`. Use `cmd /c <builtin> …` if you need them. Real executables (`git`, `curl`, `node`, project binaries, etc.) work normally.
 
 ---
 

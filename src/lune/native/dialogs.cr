@@ -1,7 +1,7 @@
 module Lune
   module Native
     {% if flag?(:lune_native_test_mock) %}
-      module DialogMock
+      module DialogsMock
         record Call, method : Symbol, title : String, default_name : String = ""
 
         @@calls = [] of Call
@@ -54,11 +54,11 @@ module Lune
         end
       end
     {% elsif flag?(:darwin) %}
-      {% system("cd '#{__DIR__}/../../../ext/native/macos' && clang -c dialog.m -o dialog.o -fobjc-arc 2>/dev/null") %}
+      {% system("cd '#{__DIR__}/../../../ext/native/macos' && clang -c dialogs.m -o dialogs.o -fobjc-arc 2>/dev/null") %}
 
       @[Link(framework: "AppKit")]
-      @[Link(ldflags: "#{__DIR__}/../../../ext/native/macos/dialog.o")]
-      lib LibNativeDialog
+      @[Link(ldflags: "#{__DIR__}/../../../ext/native/macos/dialogs.o")]
+      lib LibNativeDialogs
         fun open_file_dialog(title : LibC::Char*, out : LibC::Char*, out_size : LibC::Int) : LibC::Int
         fun open_dir_dialog(title : LibC::Char*, out : LibC::Char*, out_size : LibC::Int) : LibC::Int
         fun open_files_dialog(title : LibC::Char*, out : LibC::Char*, out_size : LibC::Int) : LibC::Int
@@ -66,11 +66,11 @@ module Lune
         fun message_dialog(type : LibC::Int, title : LibC::Char*, message : LibC::Char*, out : LibC::Char*, out_size : LibC::Int) : LibC::Int
       end
     {% elsif flag?(:linux) %}
-      {% system("cd '#{__DIR__}/../../../ext/native/linux' && gcc -c dialog.c -o dialog.o `pkg-config --cflags gtk+-3.0` 2>/dev/null") %}
+      {% system("cd '#{__DIR__}/../../../ext/native/linux' && gcc -c dialogs.c -o dialogs.o `pkg-config --cflags gtk+-3.0` 2>/dev/null") %}
 
-      @[Link(ldflags: "#{__DIR__}/../../../ext/native/linux/dialog.o")]
+      @[Link(ldflags: "#{__DIR__}/../../../ext/native/linux/dialogs.o")]
       @[Link(ldflags: "`pkg-config --libs gtk+-3.0`")]
-      lib LibNativeDialog
+      lib LibNativeDialogs
         fun open_file_dialog(title : LibC::Char*, out : LibC::Char*, out_size : LibC::Int) : LibC::Int
         fun open_dir_dialog(title : LibC::Char*, out : LibC::Char*, out_size : LibC::Int) : LibC::Int
         fun open_files_dialog(title : LibC::Char*, out : LibC::Char*, out_size : LibC::Int) : LibC::Int
@@ -160,7 +160,7 @@ module Lune
       end
     {% end %}
 
-    module Dialog
+    module Dialogs
       PATH_BUF_SIZE  =  4096
       PATHS_BUF_SIZE = 65536
 
@@ -210,10 +210,10 @@ module Lune
 
       def self.open_file(title : String) : String?
         {% if flag?(:lune_native_test_mock) %}
-          DialogMock.record_open(title)
+          DialogsMock.record_open(title)
         {% elsif flag?(:darwin) || flag?(:linux) %}
           buf = Bytes.new(PATH_BUF_SIZE)
-          if LibNativeDialog.open_file_dialog(title, buf.to_unsafe.as(LibC::Char*), PATH_BUF_SIZE) == 1
+          if LibNativeDialogs.open_file_dialog(title, buf.to_unsafe.as(LibC::Char*), PATH_BUF_SIZE) == 1
             String.new(buf.to_unsafe)
           end
         {% elsif flag?(:win32) %}
@@ -225,10 +225,10 @@ module Lune
 
       def self.open_dir(title : String) : String?
         {% if flag?(:lune_native_test_mock) %}
-          DialogMock.record_open_dir(title)
+          DialogsMock.record_open_dir(title)
         {% elsif flag?(:darwin) || flag?(:linux) %}
           buf = Bytes.new(PATH_BUF_SIZE)
-          if LibNativeDialog.open_dir_dialog(title, buf.to_unsafe.as(LibC::Char*), PATH_BUF_SIZE) == 1
+          if LibNativeDialogs.open_dir_dialog(title, buf.to_unsafe.as(LibC::Char*), PATH_BUF_SIZE) == 1
             String.new(buf.to_unsafe)
           end
         {% elsif flag?(:win32) %}
@@ -246,10 +246,10 @@ module Lune
 
       def self.open_files(title : String) : Array(String)
         {% if flag?(:lune_native_test_mock) %}
-          DialogMock.record_open_files(title)
+          DialogsMock.record_open_files(title)
         {% elsif flag?(:darwin) || flag?(:linux) %}
           buf = Bytes.new(PATHS_BUF_SIZE)
-          if LibNativeDialog.open_files_dialog(title, buf.to_unsafe.as(LibC::Char*), PATHS_BUF_SIZE) == 1
+          if LibNativeDialogs.open_files_dialog(title, buf.to_unsafe.as(LibC::Char*), PATHS_BUF_SIZE) == 1
             String.new(buf.to_unsafe).split('\n').reject(&.empty?)
           else
             [] of String
@@ -266,7 +266,9 @@ module Lune
           i = 0
           loop do
             j = i
-            j += 1 while buf[j] != 0_u16
+            while buf[j] != 0_u16
+              j += 1
+            end
             break if j == i
             segments << String.from_utf16(Slice.new(buf + i, j - i))
             i = j + 1
@@ -282,10 +284,10 @@ module Lune
 
       def self.save_file(title : String, default_name : String = "") : String?
         {% if flag?(:lune_native_test_mock) %}
-          DialogMock.record_save(title, default_name)
+          DialogsMock.record_save(title, default_name)
         {% elsif flag?(:darwin) || flag?(:linux) %}
           buf = Bytes.new(PATH_BUF_SIZE)
-          if LibNativeDialog.save_file_dialog(title, default_name, buf.to_unsafe.as(LibC::Char*), PATH_BUF_SIZE) == 1
+          if LibNativeDialogs.save_file_dialog(title, default_name, buf.to_unsafe.as(LibC::Char*), PATH_BUF_SIZE) == 1
             String.new(buf.to_unsafe)
           end
         {% elsif flag?(:win32) %}
@@ -295,20 +297,24 @@ module Lune
         {% end %}
       end
 
-      # type code maps the dialog kind; matches the macOS/Linux native shim:
-      # 0 = info, 1 = question (yes/no), 2 = warning (ok/cancel), 3 = error.
+      # type code maps the dialog kind; matches the macOS/Linux native shim and
+      # the capability layer (see src/lune/capabilities/dialogs.cr):
+      #   0 = info, 1 = warning, 2 = error, 3 = question (yes/no).
+      # info/warning/error are notification-style dialogs (single OK button,
+      # icon distinguishes severity); question is the only variant that
+      # returns a meaningful Yes/No.
       def self.message(type : Int32, title : String, message : String) : String
         {% if flag?(:lune_native_test_mock) %}
-          DialogMock.record_message(type, title)
+          DialogsMock.record_message(type, title)
         {% elsif flag?(:darwin) || flag?(:linux) %}
           buf = Bytes.new(16)
-          LibNativeDialog.message_dialog(type, title, message, buf.to_unsafe.as(LibC::Char*), 16)
+          LibNativeDialogs.message_dialog(type, title, message, buf.to_unsafe.as(LibC::Char*), 16)
           String.new(buf.to_unsafe)
         {% elsif flag?(:win32) %}
           flags = case type
-                  when 1 then LibUser32Dialog::MB_YESNO | LibUser32Dialog::MB_ICONQUESTION
-                  when 2 then LibUser32Dialog::MB_OKCANCEL | LibUser32Dialog::MB_ICONWARNING
-                  when 3 then LibUser32Dialog::MB_OK | LibUser32Dialog::MB_ICONERROR
+                  when 1 then LibUser32Dialog::MB_OK | LibUser32Dialog::MB_ICONWARNING
+                  when 2 then LibUser32Dialog::MB_OK | LibUser32Dialog::MB_ICONERROR
+                  when 3 then LibUser32Dialog::MB_YESNO | LibUser32Dialog::MB_ICONQUESTION
                   else        LibUser32Dialog::MB_OK | LibUser32Dialog::MB_ICONINFORMATION
                   end
           result = LibUser32Dialog.message_box_w(Pointer(Void).null, to_wstr(message), to_wstr(title), flags)

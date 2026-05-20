@@ -4,7 +4,7 @@ module Lune
       include Capability::Bindable
       include Capability::Lifecycle
 
-      DESCRIPTOR = Descriptor.new(id: :file_watch, label: "FileWatch", deps: [:event_bus])
+      DESCRIPTOR = Descriptor.new(id: :file_watch, label: "FileWatch", deps: [:events])
 
       def descriptor : Descriptor
         DESCRIPTOR
