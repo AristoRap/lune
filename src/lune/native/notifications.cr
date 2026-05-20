@@ -65,12 +65,34 @@ module Lune
             "LUNE_TOAST_TITLE" => title,
             "LUNE_TOAST_BODY"  => body,
           }
-          Process.run("powershell",
+          stderr_buf = IO::Memory.new
+          stdout_buf = IO::Memory.new
+          status = Process.run("powershell",
             ["-NoProfile", "-WindowStyle", "Hidden", "-Command", script],
             env: env,
             input: Process::Redirect::Close,
-            output: Process::Redirect::Close,
-            error: Process::Redirect::Close)
+            output: stdout_buf,
+            error: stderr_buf)
+          unless status.success?
+            Lune.logger.warn { "Notifications: powershell exited with code=#{status.exit_code? || -1}" }
+            err = stderr_buf.to_s.strip
+            out = stdout_buf.to_s.strip
+            Lune.logger.warn { "Notifications: powershell stderr: #{err}" } unless err.empty?
+            Lune.logger.warn { "Notifications: powershell stdout: #{out}" } unless out.empty?
+          else
+            # PowerShell can still print warnings on success (e.g. AUMID not
+            # registered → CreateToastNotifier may emit a warning to stderr but
+            # exit 0). Surface those at debug so we can see them with
+            # LUNE_LOG=debug without spamming standard runs.
+            Lune.logger.debug do
+              err = stderr_buf.to_s.strip
+              out = stdout_buf.to_s.strip
+              parts = [] of String
+              parts << "stderr=#{err}" unless err.empty?
+              parts << "stdout=#{out}" unless out.empty?
+              parts.empty? ? "Notifications: powershell succeeded (no output)" : "Notifications: powershell succeeded — #{parts.join(", ")}"
+            end
+          end
           nil
         {% end %}
       end
