@@ -46,10 +46,14 @@ module Lune
           buf = Bytes.new(HTML_BUF_SIZE)
           return "" if LibNativeClipboard.clipboard_read_html(buf.to_unsafe.as(LibC::Char*), HTML_BUF_SIZE) == 0
           String.new(buf.to_unsafe)
-        {% else %}
+        {% elsif flag?(:linux) %}
           output = IO::Memory.new
           Process.run("xclip", ["-o", "-selection", "clipboard", "-t", "text/html"], output: output)
           output.to_s
+        {% elsif flag?(:win32) %}
+          raise NotImplementedError.new("Lune::Native::Clipboard.read_html is not implemented on Windows yet (v0.10.0 backlog)")
+        {% else %}
+          ""
         {% end %}
       end
 
@@ -58,9 +62,11 @@ module Lune
           ClipboardMock.record_write_html(html)
         {% elsif flag?(:darwin) %}
           LibNativeClipboard.clipboard_write_html(html)
-        {% else %}
+        {% elsif flag?(:linux) %}
           input = IO::Memory.new(html)
           Process.run("xclip", ["-i", "-selection", "clipboard", "-t", "text/html"], input: input)
+        {% elsif flag?(:win32) %}
+          raise NotImplementedError.new("Lune::Native::Clipboard.write_html is not implemented on Windows yet (v0.10.0 backlog)")
         {% end %}
       end
 
@@ -72,12 +78,16 @@ module Lune
           return "" if LibNativeClipboard.clipboard_read_image(buf.to_unsafe.as(LibC::Char*), IMAGE_BUF_SIZE) == 0
           b64 = String.new(buf.to_unsafe)
           b64.empty? ? "" : "data:image/png;base64,#{b64}"
-        {% else %}
+        {% elsif flag?(:linux) %}
           output = IO::Memory.new
           status = Process.run("xclip", ["-o", "-selection", "clipboard", "-t", "image/png"], output: output)
           return "" unless status.success?
           raw = output.to_slice
           raw.empty? ? "" : "data:image/png;base64,#{Base64.strict_encode(raw)}"
+        {% elsif flag?(:win32) %}
+          raise NotImplementedError.new("Lune::Native::Clipboard.read_image is not implemented on Windows yet (v0.10.0 backlog)")
+        {% else %}
+          ""
         {% end %}
       end
 
@@ -86,11 +96,13 @@ module Lune
           ClipboardMock.record_write_image(data_url)
         {% elsif flag?(:darwin) %}
           LibNativeClipboard.clipboard_write_image(data_url)
-        {% else %}
+        {% elsif flag?(:linux) %}
           b64 = data_url.includes?(",") ? data_url.split(",", 2).last : data_url
           raw = Base64.decode(b64)
           input = IO::Memory.new(raw)
           Process.run("xclip", ["-i", "-selection", "clipboard", "-t", "image/png"], input: input)
+        {% elsif flag?(:win32) %}
+          raise NotImplementedError.new("Lune::Native::Clipboard.write_image is not implemented on Windows yet (v0.10.0 backlog)")
         {% end %}
       end
     end

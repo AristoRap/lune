@@ -222,6 +222,8 @@ module Lune
           WindowMock.record_disable_webview_drop
         {% elsif flag?(:darwin) || flag?(:linux) %}
           LibNativeWindow.disable_webview_drop(handle)
+        {% elsif flag?(:win32) %}
+          raise NotImplementedError.new("Lune::Native::Window.disable_webview_drop is not implemented on Windows yet (v0.10.0 backlog)")
         {% end %}
       end
 
@@ -279,6 +281,8 @@ module Lune
             },
             @@drop_pos_boxes[handle]
           )
+        {% elsif flag?(:win32) %}
+          raise NotImplementedError.new("Lune::Native::Window.setup_file_drop is not implemented on Windows yet (v0.10.0 backlog)")
         {% end %}
       end
 

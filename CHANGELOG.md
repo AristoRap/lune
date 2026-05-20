@@ -2,9 +2,15 @@
 
 ## [Unreleased] - 0.10.0
 
+### Added
+
+- **Explicit `:win32` stubs across native modules** — every Lune::Native method that has both a darwin and a linux implementation now also has an explicit `{% elsif flag?(:win32) %}` branch that raises `NotImplementedError` with a clear "(v0.10.0 backlog)" message. Affects `Dialog.*`, `Clipboard.read_html/write_html/read_image/write_image`, `Notify.show`, `Screen.info`, `Tray.show/hide/set_icon/set_menu`, `FileWatch` (start/add_watch/remove_watch), `Hotkeys.init/register/unregister`, `Window.disable_webview_drop`/`setup_file_drop`, and `DeepLink.install`. Methods that have always been macOS-only (window chrome customisation, drag-out, `Menu.*`, `Tray.popup_menu`/`set_right_click_cb`/`button_screen_rect`) remain implicit no-ops on Win32, matching the current Linux behaviour. Lets users running on Windows get a precise "not implemented yet" error per capability instead of silent breakage; lifecycle-tied callsites in the runner (`Window.set_frame`/`get_frame`/etc.) keep no-op behaviour so apps still launch.
+- **`Clipboard` Linux branches split out** — previously `read_html`/`write_html`/`read_image`/`write_image` used `{% else %}` as the Linux/xclip path, which silently fell through on Win32 too. Linux paths are now under `{% elsif flag?(:linux) %}` so Win32 doesn't accidentally try to spawn `xclip`.
+
 ### Internal
 
 - **Windows compile check in CI** — `specs.yml` now type-checks `src/lune_cli.cr` on `windows-latest` without `-D lune_native_test_mock`, so the real `flag?(:win32)` code paths are verified on every push. The previous mocked compile-check is kept so the test surface is still exercised on Windows too.
+- **`DeepLink` Linux gap flagged** — `website/capabilities/deep-link.md` claims macOS · Linux support, but the native code has no `:linux` branch (silent no-op). Tracked separately from the Windows port; for now the new `:win32` raise keeps Windows on par with the docs' documented behaviour.
 
 ## [0.9.0] - 2026-05-19
 

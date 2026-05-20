@@ -57,6 +57,8 @@ module Lune
           s = uninitialized LibC::Double
           LibNativeScreen.screen_info(pointerof(w), pointerof(h), pointerof(s))
           ScreenInfo.new(w.to_i32, h.to_i32, s.to_f64)
+        {% elsif flag?(:win32) %}
+          raise NotImplementedError.new("Lune::Native::Screen.info is not implemented on Windows yet (v0.10.0 backlog)")
         {% else %}
           ScreenInfo.new(0, 0, 1.0)
         {% end %}

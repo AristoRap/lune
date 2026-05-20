@@ -45,6 +45,8 @@ module Lune
           NotifyMock.record_show(title, body)
         {% elsif flag?(:darwin) || flag?(:linux) %}
           LibNativeNotify.show_notification(title, body)
+        {% elsif flag?(:win32) %}
+          raise NotImplementedError.new("Lune::Native::Notify.show is not implemented on Windows yet (v0.10.0 backlog)")
         {% end %}
       end
     end

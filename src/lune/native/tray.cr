@@ -121,6 +121,8 @@ module Lune
           else
             LibNativeTray.tray_show(icon_path, ->(data : Void*) { }, Pointer(Void).null)
           end
+        {% elsif flag?(:win32) %}
+          raise NotImplementedError.new("Lune::Native::Tray.show is not implemented on Windows yet (v0.10.0 backlog — will use Shell_NotifyIconW). Exclude the `tray` capability in lune.yml to silence this.")
         {% end %}
       end
 
@@ -129,6 +131,8 @@ module Lune
           TrayMock.record_hide
         {% elsif flag?(:darwin) || flag?(:linux) %}
           LibNativeTray.tray_hide
+        {% elsif flag?(:win32) %}
+          raise NotImplementedError.new("Lune::Native::Tray.hide is not implemented on Windows yet (v0.10.0 backlog)")
         {% end %}
       end
 
@@ -137,6 +141,8 @@ module Lune
           TrayMock.record_set_icon(icon_path)
         {% elsif flag?(:darwin) || flag?(:linux) %}
           LibNativeTray.tray_set_icon(icon_path)
+        {% elsif flag?(:win32) %}
+          raise NotImplementedError.new("Lune::Native::Tray.set_icon is not implemented on Windows yet (v0.10.0 backlog)")
         {% end %}
       end
 
@@ -200,6 +206,8 @@ module Lune
               Pointer(Void).null
             )
           end
+        {% elsif flag?(:win32) %}
+          raise NotImplementedError.new("Lune::Native::Tray.set_menu is not implemented on Windows yet (v0.10.0 backlog)")
         {% end %}
       end
     end

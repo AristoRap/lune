@@ -91,6 +91,8 @@ module Lune
           if LibNativeDialog.open_file_dialog(title, buf.to_unsafe.as(LibC::Char*), PATH_BUF_SIZE) == 1
             String.new(buf.to_unsafe)
           end
+        {% elsif flag?(:win32) %}
+          raise NotImplementedError.new("Lune::Native::Dialog.open_file is not implemented on Windows yet (v0.10.0 backlog)")
         {% end %}
       end
 
@@ -102,6 +104,8 @@ module Lune
           if LibNativeDialog.open_dir_dialog(title, buf.to_unsafe.as(LibC::Char*), PATH_BUF_SIZE) == 1
             String.new(buf.to_unsafe)
           end
+        {% elsif flag?(:win32) %}
+          raise NotImplementedError.new("Lune::Native::Dialog.open_dir is not implemented on Windows yet (v0.10.0 backlog)")
         {% end %}
       end
 
@@ -115,6 +119,8 @@ module Lune
           else
             [] of String
           end
+        {% elsif flag?(:win32) %}
+          raise NotImplementedError.new("Lune::Native::Dialog.open_files is not implemented on Windows yet (v0.10.0 backlog)")
         {% else %}
           [] of String
         {% end %}
@@ -128,6 +134,8 @@ module Lune
           if LibNativeDialog.save_file_dialog(title, default_name, buf.to_unsafe.as(LibC::Char*), PATH_BUF_SIZE) == 1
             String.new(buf.to_unsafe)
           end
+        {% elsif flag?(:win32) %}
+          raise NotImplementedError.new("Lune::Native::Dialog.save_file is not implemented on Windows yet (v0.10.0 backlog)")
         {% end %}
       end
 
@@ -138,6 +146,8 @@ module Lune
           buf = Bytes.new(16)
           LibNativeDialog.message_dialog(type, title, message, buf.to_unsafe.as(LibC::Char*), 16)
           String.new(buf.to_unsafe)
+        {% elsif flag?(:win32) %}
+          raise NotImplementedError.new("Lune::Native::Dialog.message is not implemented on Windows yet (v0.10.0 backlog)")
         {% else %}
           "Ok"
         {% end %}

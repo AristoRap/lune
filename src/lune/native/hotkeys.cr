@@ -256,6 +256,21 @@ module Lune
           @@started = false
         end
 
+      {% elsif flag?(:win32) %}
+        def self.init(&handler : String -> Nil)
+          raise NotImplementedError.new("Lune::Native::Hotkeys is not implemented on Windows yet (v0.10.0 backlog — will use RegisterHotKey + WM_HOTKEY). Exclude the `hotkeys` capability in lune.yml to silence this.")
+        end
+
+        def self.register(accelerator : String) : Bool
+          raise NotImplementedError.new("Lune::Native::Hotkeys.register is not implemented on Windows yet (v0.10.0 backlog)")
+        end
+
+        def self.unregister(accelerator : String) : Bool
+          raise NotImplementedError.new("Lune::Native::Hotkeys.unregister is not implemented on Windows yet (v0.10.0 backlog)")
+        end
+
+        def self.unregister_all : Nil
+        end
       {% else %}
         def self.init(&handler : String -> Nil); end
         def self.register(accelerator : String) : Bool; false; end
