@@ -1,5 +1,27 @@
 # Changelog
 
+## [Unreleased] - 0.10.0
+
+### Added
+
+- **Explicit `:win32` stubs across native modules** — every Lune::Native method that has both a darwin and a linux implementation now also has an explicit `{% elsif flag?(:win32) %}` branch that raises `NotImplementedError` with a clear "(v0.10.0 backlog)" message. Affects `Dialog.*`, `Clipboard.read_html/write_html/read_image/write_image`, `Notify.show`, `Screen.info`, `Tray.show/hide/set_icon/set_menu`, `FileWatch` (start/add_watch/remove_watch), `Hotkeys.init/register/unregister`, `Window.disable_webview_drop`/`setup_file_drop`, and `DeepLink.install`. Methods that have always been macOS-only (window chrome customisation, drag-out, `Menu.*`, `Tray.popup_menu`/`set_right_click_cb`/`button_screen_rect`) remain implicit no-ops on Win32, matching the current Linux behaviour. Lets users running on Windows get a precise "not implemented yet" error per capability instead of silent breakage; lifecycle-tied callsites in the runner (`Window.set_frame`/`get_frame`/etc.) keep no-op behaviour so apps still launch.
+- **`Clipboard` Linux branches split out** — previously `read_html`/`write_html`/`read_image`/`write_image` used `{% else %}` as the Linux/xclip path, which silently fell through on Win32 too. Linux paths are now under `{% elsif flag?(:linux) %}` so Win32 doesn't accidentally try to spawn `xclip`.
+
+### Fixed
+
+- **`System.openUrl` on Windows** — the default open-URL handler used to fall through to `xdg-open` on every non-darwin OS, which silently broke on Windows. Now an explicit `:win32` branch runs `cmd /c start "" <url>`, so `System.openUrl("https://example.com")` actually opens the user's default browser on Windows.
+- **`System.environment` os string under `:win32`** — the previous `{% else %}` branch lied "windows" on any non-darwin/non-linux target (including hypothetical BSDs). Now `:win32` is matched explicitly and the fallthrough returns `"unknown"`.
+- **`lune build` output path on Windows** — `Commands::Build#output_path_for` now appends `.exe` on `:win32`, matching what Crystal actually produces. Without it, `lune run`'s validation step would refuse to launch the freshly built binary because it looked for `build/bin/myapp` while Crystal had emitted `build/bin/myapp.exe`.
+- **`Lune::Native::Window` basics on Windows** — `minimize`, `maximize`, `center`, `set_title`, `set_size`, `get_frame`, and `set_frame` now drive the HWND directly via `user32.dll` (`ShowWindow`, `MoveWindow`, `SetWindowTextW`, `GetWindowRect`, `SetWindowPos`, `GetSystemMetrics`). Previously these silently no-op'd on Win32, so the runner's `WindowState` restore/save cycle and any `Window.setSize`/`Window.setTitle` JS calls did nothing. The HWND comes from the webview shard's `wv.native_handle(UI_WINDOW)`.
+- **`Lune::Native::Screen.info` on Windows** — implemented via `GetSystemMetrics(SM_CX/CYSCREEN)` for size and `GetDpiForSystem` for the DPI scale factor (`dpi / 96.0`). Requires Windows 10 1607+ for the DPI API; older Windows will report scale `1.0`.
+- **`Lune::Native::Dialog` on Windows** — `open_file`, `open_dir`, `open_files`, `save_file`, and `message` all routed to native Windows dialogs: `GetOpenFileNameW` / `GetSaveFileNameW` (comdlg32), `SHBrowseForFolderW` + `SHGetPathFromIDListW` (shell32), and `MessageBoxW` (user32). Multi-select uses the standard null-separated `[dir, file1, file2, …]` layout and reassembles full paths. Replaces the previous `NotImplementedError` stubs.
+- **`Lune::Native::Clipboard.read_html` / `write_html` on Windows** — implemented via `OpenClipboard` + `GetClipboardData`/`SetClipboardData` with the registered `CF_HTML` format. Writes wrap the fragment in the standard "Version:0.9 / StartHTML / EndHTML / StartFragment / EndFragment" header envelope; reads parse `<!--StartFragment-->...<!--EndFragment-->` markers to extract just the user-visible fragment. `read_image`/`write_image` remain as explicit `NotImplementedError` raises pending PNG-to-DIB conversion.
+
+### Internal
+
+- **Windows compile check in CI** — `specs.yml` now type-checks `src/lune_cli.cr` on `windows-latest` without `-D lune_native_test_mock`, so the real `flag?(:win32)` code paths are verified on every push. The previous mocked compile-check is kept so the test surface is still exercised on Windows too.
+- **`DeepLink` Linux gap flagged** — `website/capabilities/deep-link.md` claims macOS · Linux support, but the native code has no `:linux` branch (silent no-op). Tracked separately from the Windows port; for now the new `:win32` raise keeps Windows on par with the docs' documented behaviour.
+
 ## [0.9.0] - 2026-05-19
 
 ### Added

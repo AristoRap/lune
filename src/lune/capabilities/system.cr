@@ -12,6 +12,10 @@ module Lune
       DEFAULT_OPEN_URL = ->(url : String) {
         {% if flag?(:darwin) %}
           Process.run("open", [url])
+        {% elsif flag?(:win32) %}
+          # `start` is a cmd builtin; the empty "" is the window-title placeholder
+          # that `start` consumes if the first arg looks like a path.
+          Process.run("cmd", ["/c", "start", "", url])
         {% else %}
           Process.run("xdg-open", [url])
         {% end %}
@@ -60,8 +64,10 @@ module Lune
                 "darwin"
               {% elsif flag?(:linux) %}
                 "linux"
-              {% else %}
+              {% elsif flag?(:win32) %}
                 "windows"
+              {% else %}
+                "unknown"
               {% end %}
             arch =
               {% if flag?(:aarch64) %}

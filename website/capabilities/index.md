@@ -59,7 +59,7 @@ Two capabilities are marked **core**: `event_bus` and `stream`. They are enabled
 | [Stream](./stream)               | `stream`        | `Stream`        | **Yes** | WebviewInject            | —           | —           | all            |
 | [Clipboard](./clipboard)         | `clipboard`     | `Clipboard`     | No      | Bindable                 | —           | —           | all            |
 | [ContextMenu](./context-menu)    | `context_menu`  | `ContextMenu`   | No      | Bindable · WebviewInject | `event_bus` | —           | macOS          |
-| [DeepLink](./deep-link)          | `deep_link`     | `DeepLink`      | No      | Bindable                 | `event_bus` | —           | macOS · Linux  |
+| [DeepLink](./deep-link)          | `deep_link`     | `DeepLink`      | No      | Bindable                 | `event_bus` | —           | macOS          |
 | [Dialogs](./dialogs)             | `dialogs`       | `Dialogs`       | No      | Bindable                 | —           | —           | macOS · Linux  |
 | [DragOut](./drag-out)            | `drag_out`      | `DragOut`       | No      | Bindable                 | —           | —           | macOS          |
 | [FileDrop](./file-drop)          | `file_drop`     | `FileDrop`      | No      | WebviewInject            | `event_bus` | —           | macOS · Linux  |

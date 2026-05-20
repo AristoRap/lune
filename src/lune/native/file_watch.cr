@@ -246,6 +246,20 @@ module Lune
             @mu.synchronize { @watches.clear }
           end
         end
+      {% elsif flag?(:win32) %}
+        def start(app : Lune::App, debounce : Time::Span = 50.milliseconds) : Nil
+          raise NotImplementedError.new("Lune::Native::FileWatch is not implemented on Windows yet (v0.10.0 backlog — will use ReadDirectoryChangesW). Exclude the `file_watch` capability in lune.yml to silence this.")
+        end
+
+        def add_watch(path : String) : Nil
+          raise NotImplementedError.new("Lune::Native::FileWatch is not implemented on Windows yet (v0.10.0 backlog)")
+        end
+
+        def remove_watch(path : String) : Nil
+          raise NotImplementedError.new("Lune::Native::FileWatch is not implemented on Windows yet (v0.10.0 backlog)")
+        end
+
+        def stop : Nil; end
       {% else %}
         def start(app : Lune::App, debounce : Time::Span = 50.milliseconds) : Nil; end
 

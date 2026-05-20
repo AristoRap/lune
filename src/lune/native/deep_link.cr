@@ -45,7 +45,12 @@ module Lune
             },
             @@box.not_nil!
           )
+        {% elsif flag?(:win32) %}
+          raise NotImplementedError.new("Lune::Native::DeepLink.install is not implemented on Windows yet (v0.10.0 backlog)")
         {% end %}
+        # NOTE: Linux currently has no runtime URL-scheme handler either — the
+        # capability silently no-ops there despite the docs claiming Linux
+        # support. Tracked separately from the Windows port.
       end
     end
   end

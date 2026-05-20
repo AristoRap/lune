@@ -45,6 +45,16 @@ module Lune
       lib LibNativeScreen
         fun screen_info(width : LibC::Int*, height : LibC::Int*, scale : LibC::Double*) : Void
       end
+    {% elsif flag?(:win32) %}
+      @[Link("user32")]
+      lib LibUser32Screen
+        SM_CXSCREEN = 0
+        SM_CYSCREEN = 1
+        fun get_system_metrics = GetSystemMetrics(index : LibC::Int) : LibC::Int
+        # GetDpiForSystem ships in user32.dll on Windows 10+ (1607). For older
+        # Windows the symbol won't resolve; we fall back to GetDeviceCaps.
+        fun get_dpi_for_system = GetDpiForSystem : LibC::UInt
+      end
     {% end %}
 
     module Screen
@@ -57,6 +67,12 @@ module Lune
           s = uninitialized LibC::Double
           LibNativeScreen.screen_info(pointerof(w), pointerof(h), pointerof(s))
           ScreenInfo.new(w.to_i32, h.to_i32, s.to_f64)
+        {% elsif flag?(:win32) %}
+          w = LibUser32Screen.get_system_metrics(LibUser32Screen::SM_CXSCREEN).to_i32
+          h = LibUser32Screen.get_system_metrics(LibUser32Screen::SM_CYSCREEN).to_i32
+          dpi = LibUser32Screen.get_dpi_for_system
+          scale = dpi > 0 ? dpi.to_f64 / 96.0 : 1.0
+          ScreenInfo.new(w, h, scale)
         {% else %}
           ScreenInfo.new(0, 0, 1.0)
         {% end %}
