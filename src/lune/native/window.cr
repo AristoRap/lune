@@ -115,6 +115,27 @@ module Lune
         def self.record_set_always_on_top
           @@calls << :set_always_on_top
         end
+
+        @@last_visible : Bool = true
+        class_getter last_visible
+
+        def self.record_set_activation_policy_accessory
+          @@calls << :set_activation_policy_accessory
+        end
+
+        def self.record_hide
+          @@calls << :hide
+          @@last_visible = false
+        end
+
+        def self.record_show
+          @@calls << :show
+          @@last_visible = true
+        end
+
+        def self.mock_visible=(v : Bool)
+          @@last_visible = v
+        end
       end
     {% elsif flag?(:darwin) %}
       {% system("cd '#{__DIR__}/../../../ext/native/macos' && clang -c window.m -o window.o -fobjc-arc 2>/dev/null") %}
@@ -154,6 +175,11 @@ module Lune
         fun lune_window_close(window : Void*) : Void
         alias CloseCallback = Void* ->
         fun lune_window_observe_close(window : Void*, cb : CloseCallback, arg : Void*) : Void
+        fun lune_set_activation_policy_accessory : Void
+        fun lune_hide_window(window : Void*) : Void
+        fun lune_show_window(window : Void*) : Void
+        fun lune_is_window_visible(window : Void*) : LibC::Int
+        fun lune_window_auto_hide_on_resign_key(window : Void*) : Void
       end
     {% elsif flag?(:linux) %}
       {% system("cd '#{__DIR__}/../../../ext/native/linux' && gcc -c window.c -o window.o `pkg-config --cflags gtk+-3.0` 2>/dev/null") %}
@@ -218,9 +244,9 @@ module Lune
               return if data.null?
               begin
                 parsed = JSON.parse(String.new(json_ptr))
-                x     = parsed["x"].as_i? || 0
-                y     = parsed["y"].as_i? || 0
-                raw   = parsed["paths"].as_a?
+                x = parsed["x"].as_i? || 0
+                y = parsed["y"].as_i? || 0
+                raw = parsed["paths"].as_a?
                 paths = raw ? raw.compact_map(&.as_s?) : Array(String).new
                 Box(Proc(Int32, Int32, Array(String), Nil)).unbox(data).call(x, y, paths)
               rescue JSON::ParseException | TypeCastError | KeyError
@@ -238,9 +264,9 @@ module Lune
               return if data.null?
               begin
                 parsed = JSON.parse(String.new(json_ptr))
-                x     = parsed["x"].as_i? || 0
-                y     = parsed["y"].as_i? || 0
-                raw   = parsed["paths"].as_a?
+                x = parsed["x"].as_i? || 0
+                y = parsed["y"].as_i? || 0
+                raw = parsed["paths"].as_a?
                 paths = raw ? raw.compact_map(&.as_s?) : Array(String).new
                 Box(Proc(Int32, Int32, Array(String), Nil)).unbox(data).call(x, y, paths)
               rescue JSON::ParseException | TypeCastError | KeyError
@@ -398,6 +424,48 @@ module Lune
       def self.close(handle : Void*)
         {% if !flag?(:lune_native_test_mock) && flag?(:darwin) %}
           LibNativeWindow.lune_window_close(handle)
+        {% end %}
+      end
+
+      def self.set_activation_policy_accessory
+        {% if flag?(:lune_native_test_mock) %}
+          WindowMock.record_set_activation_policy_accessory
+        {% elsif flag?(:darwin) %}
+          LibNativeWindow.lune_set_activation_policy_accessory
+        {% end %}
+      end
+
+      def self.hide(handle : Void*)
+        {% if flag?(:lune_native_test_mock) %}
+          WindowMock.record_hide
+        {% elsif flag?(:darwin) %}
+          LibNativeWindow.lune_hide_window(handle)
+        {% end %}
+      end
+
+      def self.show(handle : Void*)
+        {% if flag?(:lune_native_test_mock) %}
+          WindowMock.record_show
+        {% elsif flag?(:darwin) %}
+          LibNativeWindow.lune_show_window(handle)
+        {% end %}
+      end
+
+      def self.visible?(handle : Void*) : Bool
+        {% if flag?(:lune_native_test_mock) %}
+          WindowMock.last_visible
+        {% elsif flag?(:darwin) %}
+          LibNativeWindow.lune_is_window_visible(handle) != 0
+        {% else %}
+          true
+        {% end %}
+      end
+
+      def self.auto_hide_on_resign_key(handle : Void*)
+        {% if flag?(:lune_native_test_mock) %}
+          # no-op in tests
+        {% elsif flag?(:darwin) %}
+          LibNativeWindow.lune_window_auto_hide_on_resign_key(handle)
         {% end %}
       end
 

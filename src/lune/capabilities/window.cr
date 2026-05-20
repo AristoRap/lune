@@ -22,6 +22,8 @@ module Lune
           {"minimize", -> { Lune::Native::Window.minimize(h) }},
           {"maximize", -> { Lune::Native::Window.maximize(h) }},
           {"center", -> { Lune::Native::Window.center(h) }},
+          {"hide", -> { Lune::Native::Window.hide(h) }},
+          {"show", -> { Lune::Native::Window.show(h) }},
         ].each do |(method, action)|
           ctx.register(Definition.new(
             name: "#{name}.#{method}",

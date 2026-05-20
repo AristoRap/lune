@@ -317,6 +317,105 @@ describe "Lune::Capabilities" do
     end
   end
 
+  describe Lune::Capabilities::Tray do
+    before_each do
+      Lune::Native::TrayMock.reset
+      Lune::Native::Tray.set_menu([] of {id: String, label: String})
+    end
+
+    it "tray.show registers a non-nil left-click callback" do
+      fake, bridge = make_bridge
+      app = Lune::App.new
+      app.install(Lune::Capabilities::Tray.new)
+      bridge.register_bindings(app.bindings)
+
+      fake.invoke("__lune.tray.show", "seq-tray-1", [JSON::Any.new("")])
+
+      Lune::Native::TrayMock.calls.should contain(:show)
+      Lune::Native::TrayMock.last_click_cb.should_not be_nil
+    end
+
+    it "default left-click emits trayEvent with left_click payload" do
+      fake, bridge = make_bridge
+      app = Lune::App.new
+      app.bridge = bridge
+      app.install(Lune::Capabilities::Tray.new)
+      bridge.register_bindings(app.bindings)
+
+      fake.invoke("__lune.tray.show", "seq-tray-2", [JSON::Any.new("")])
+      Lune::Native::TrayMock.simulate_click
+
+      fake.eval_calls.any?(&.includes?("left_click")).should be_true
+    end
+
+    it "tray.popup_menu invokes the native popup" do
+      fake, bridge = make_bridge
+      app = Lune::App.new
+      app.install(Lune::Capabilities::Tray.new)
+      bridge.register_bindings(app.bindings)
+
+      fake.invoke("__lune.tray.popup_menu", "seq-tray-3", [] of JSON::Any)
+
+      deadline = Time.instant + 2.seconds
+      while Time.instant < deadline
+        break unless fake.resolve_calls.empty?
+        Fiber.yield
+      end
+
+      _, status, _ = fake.resolve_calls[0]
+      status.should eq(0)
+      Lune::Native::TrayMock.calls.should contain(:popup_menu)
+    end
+
+    it "Native::Tray.has_menu? reflects the last set_menu call" do
+      Lune::Native::Tray.set_menu([{id: "a", label: "A"}, {id: "b", label: "B"}])
+      Lune::Native::Tray.has_menu?.should be_true
+
+      Lune::Native::Tray.set_menu([] of {id: String, label: String})
+      Lune::Native::Tray.has_menu?.should be_false
+    end
+
+    it "user-provided on_click override skips default emission" do
+      fake, bridge = make_bridge
+      app = Lune::App.new
+      app.bridge = bridge
+      clicked = 0
+      app.install(Lune::Capabilities::Tray.new(on_tray_click: -> { clicked += 1; nil }))
+      bridge.register_bindings(app.bindings)
+
+      fake.invoke("__lune.tray.show", "seq-tray-5", [JSON::Any.new("")])
+      Lune::Native::TrayMock.simulate_click
+
+      clicked.should eq(1)
+      fake.eval_calls.any?(&.includes?("trayEvent")).should be_false
+    end
+
+    it "auto_show triggers native show on install when set" do
+      fake, bridge = make_bridge
+      app = Lune::App.new
+      app.bridge = bridge
+
+      cap = Lune::Capabilities::Tray.new
+      opts = Lune::Options.new
+      opts.tray.auto_show = true
+      cap.setup(Lune::Capability::SetupCtx.new(opts, Pointer(Void).null))
+      app.install(cap)
+
+      Lune::Native::TrayMock.calls.should contain(:show)
+    end
+
+    it "auto_show is false by default — no native show happens on install" do
+      fake, bridge = make_bridge
+      app = Lune::App.new
+
+      cap = Lune::Capabilities::Tray.new
+      cap.setup(Lune::Capability::SetupCtx.new(Lune::Options.new, Pointer(Void).null))
+      app.install(cap)
+
+      Lune::Native::TrayMock.calls.should_not contain(:show)
+    end
+  end
+
   describe Lune::Capabilities::DragOut do
     before_each { Lune::Native::WindowMock.reset }
 
@@ -359,6 +458,7 @@ describe "Lune::Capabilities" do
       methods.should contain("dialogs.open_file")
       methods.should contain("tray.show")
       methods.should contain("tray.set_menu")
+      methods.should contain("tray.popup_menu")
       methods.should contain("notifications.notify")
       methods.should contain("screen.info")
     end
@@ -374,7 +474,7 @@ describe "Lune::Capabilities" do
       app = Lune::App.new
       Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |cap| app.install(cap) }
 
-      app.bindings.size.should eq(57)
+      app.bindings.size.should eq(60)
     end
   end
 

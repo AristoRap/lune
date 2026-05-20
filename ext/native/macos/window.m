@@ -318,6 +318,45 @@ void lune_start_drag_out(void *nswindow_ptr, const char *paths_json) {
     });
 }
 
+// ── Menubar / activation policy ───────────────────────────────────────────────
+
+void lune_set_activation_policy_accessory(void) {
+    run_on_main(^{
+        [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
+    });
+}
+
+void lune_window_auto_hide_on_resign_key(void *window) {
+    NSWindow *w = (__bridge NSWindow *)window;
+    [[NSNotificationCenter defaultCenter]
+        addObserverForName:NSWindowDidResignKeyNotification
+                    object:w
+                     queue:[NSOperationQueue mainQueue]
+                usingBlock:^(NSNotification *note) {
+        [w orderOut:nil];
+    }];
+}
+
+void lune_hide_window(void *window) {
+    NSWindow *w = (__bridge NSWindow *)window;
+    run_on_main(^{ [w orderOut:nil]; });
+}
+
+void lune_show_window(void *window) {
+    NSWindow *w = (__bridge NSWindow *)window;
+    run_on_main(^{
+        [w makeKeyAndOrderFront:nil];
+        [NSApp activateIgnoringOtherApps:YES];
+    });
+}
+
+BOOL lune_is_window_visible(void *window) {
+    NSWindow *w = (__bridge NSWindow *)window;
+    __block BOOL visible = NO;
+    run_on_main(^{ visible = w.isVisible; });
+    return visible;
+}
+
 // ── Window controls ────────────────────────────────────────────────────────────
 
 void minimize(void *window) {

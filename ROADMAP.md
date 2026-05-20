@@ -40,7 +40,7 @@ Structural improvements that unlock whole categories of apps.
 - [ ] Plugin system — a Crystal shard interface (`Lune::Plugin`) with lifecycle hooks and runtime binding registration so community authors can publish Lune plugins
 - [ ] Per-window capabilities — scope `include`/`exclude` lists to individual windows rather than globally (depends on multiple windows)
 - [ ] Multiple webviews in one window — stack or embed multiple WebView panels within a single native window
-- [ ] Menubar-only mode — `mode: menubar` in `lune.yml` hides the dock icon and positions the window anchored below the tray icon; first-class pattern for utility apps
+- [x] Menubar-only mode — `opts.mac { |m| m.menubar_mode = true }` hides the dock icon, auto-shows the tray icon, and auto-hides on focus loss; per-click window toggle opted in via `opts.tray.toggle_window_on = [:left_click]`; macOS
 
 ## Backlog — DX & Templates
 

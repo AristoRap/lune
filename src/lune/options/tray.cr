@@ -27,13 +27,28 @@ module Lune
       # `on_menu_click` are set explicitly.
       property event : String = "trayEvent"
 
-      # Optional override: called when the tray icon is clicked (no menu attached).
-      # When set, takes precedence over the default event emission.
+      # Optional override: called on left-click of the tray icon.
+      # When set, takes precedence over every default behavior (toggle, menu, emit).
       property on_click : (-> Nil)? = nil
+
+      # Optional override: called on right-click (or Ctrl-click) of the tray icon.
+      # When set, takes precedence over every default behavior.
+      property on_right_click : (-> Nil)? = nil
 
       # Optional override: called when a tray context menu item is selected.
       # Receives the item id. When set, takes precedence over the default event emission.
       property on_menu_click : (String -> Nil)? = nil
+
+      # Click directions that toggle the app window (positioned below the tray icon
+      # on macOS). Listed clicks override the menu/emit default; user `on_click` /
+      # `on_right_click` overrides still win.
+      #
+      # Valid values: `:left_click`, `:right_click`.
+      property toggle_window_on : Array(Symbol) = [] of Symbol
+
+      # When true, the tray icon is shown automatically at app start without
+      # requiring a JS `Tray.show("")` call. Auto-enabled by `mac.menubar_mode`.
+      property auto_show : Bool = false
 
       def initialize; end
     end

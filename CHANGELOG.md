@@ -4,6 +4,19 @@
 
 ### Added
 
+- **Menubar-only mode** — `opts.mac { |m| m.menubar_mode = true }` turns the app into a macOS status-bar utility. Hides the dock icon (`NSApplicationActivationPolicyAccessory`), starts the window hidden, auto-hides on focus loss (`NSWindowDidResignKeyNotification`), and shows the tray icon at boot via `opts.tray.auto_show`. Click-to-window behavior is opt-in via `opts.tray.toggle_window_on` — keep it empty for Docker-style menu-driven apps, set `[:left_click]` for Bartender/MeetingBar-style popovers. Window frame is never saved/restored in menubar mode; position is recalculated from the tray icon on each toggle. macOS only.
+- **`opts.tray.toggle_window_on : Array(Symbol)`** — lists which tray clicks toggle the app window. Valid values: `:left_click`, `:right_click`. Default `[]`. When listed, the click positions the window centered below the tray icon (macOS) and toggles visibility.
+- **`opts.tray.auto_show : Bool`** — shows the tray icon at boot without needing a JS `Tray.show("")` call. Default `false`; auto-enabled by `mac.menubar_mode`.
+- **`opts.tray.on_right_click : (-> Nil)?`** — Crystal callback for right-click (or Ctrl-click), symmetric to `on_click`. Setting it takes full takeover of right-click behavior.
+- **`Tray.popupMenu()`** (JS) / `Lune::Native::Tray.popup_menu` (Crystal) — programmatically opens the last-set menu. Use it from custom click handlers, keyboard shortcuts, or any other trigger; no-op if no menu is set.
+- **Unified tray click model** — per click direction, the first matching rule wins: (1) user override, (2) `toggle_window_on` listed → toggle, (3) menu set → popup, (4) emit `trayEvent`. Replaces the previous asymmetric model where right-click was silent without a menu and assigning a menu killed the click callback.
+- **`Window.show` / `Window.hide`** — exposed to JS via the `window` capability. Useful for custom menubar toggle logic and any scenario where the Crystal side shouldn't own visibility.
+
+### Breaking (tray)
+
+- **`trayEvent` payload changed** — left-click default payload was `"click"`, now `"left_click"`. Right-click without a menu used to be silent; now emits `"right_click"`. Update JS listeners: `if (id === "click")` → `if (id === "left_click")`.
+- **`menubar_mode` no longer auto-toggles the window on left-click** — the previous version pre-filled `opts.tray.on_click` with a window-toggle. The new version separates window state (menubar_mode) from click behavior (toggle_window_on). To get the old behavior, add `opts.tray.toggle_window_on = [:left_click]`.
+
 - **`windows` capability** — open additional native windows from JavaScript. `Windows.open({ title, url, width, height })` creates a new window sharing all active capability bindings, and resolves with an opaque handle. `Windows.close(id)` closes it; `Windows.list()` returns all open handles. A `window_closed` event fires on OS × or programmatic close. Every capability works identically in secondary windows — `stream` connects as a client to the main window's WebSocket server, `file_drop`, `context_menu`, `hotkeys`, and all others are fully active.
 - **`sqlite` capability** — embedded SQLite via `crystal-lang/crystal-sqlite3`. `Sqlite.open(path)` returns a handle (`":memory:"` for in-process, absolute path for persistent). `Sqlite.exec(db, sql, params)` runs writes and returns `{ changes, lastInsertId }`; `Sqlite.query(db, sql, params)` runs reads and returns rows as objects. `Sqlite.close(db)` releases the handle. All open databases are closed on quit.
 - **`hotkeys` capability** — system-wide keyboard shortcuts that fire even when the app is not focused. `Hotkeys.register("Cmd+Shift+K")` registers a shortcut; listen via `Events.on("hotkey", cb)`. `Hotkeys.unregister(accelerator)` removes it; all are released on quit. macOS uses Carbon `RegisterEventHotKey`; Linux uses `XGrabKey`.

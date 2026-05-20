@@ -59,7 +59,18 @@ Lune.run(app, assets: "frontend/dist") do |opts|
 
   opts.mac do |m|
     m.full_size_content = true
+    # m.hide_traffic_lights = true
+    # Menubar-only mode: hides the dock icon, starts the window hidden, and
+    # auto-hides on focus loss. The tray icon shows at boot automatically.
+    # Click behavior is configured separately via `opts.tray.toggle_window_on`
+    # (e.g. `[:left_click]` for popover-style apps) — leave it empty for
+    # Docker-style apps where the menu is the only interaction.
+    # m.menubar_mode = true
   end
+
+  # opts.tray do |t|
+  #   t.toggle_window_on = [:left_click] # popover-style: left-click drops the window
+  # end
 
   opts.drag do |d|
     d.zone = "--lune-draggable"

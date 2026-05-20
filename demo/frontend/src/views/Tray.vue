@@ -8,10 +8,14 @@ const log = ref([]);
 const activeMenu = ref(null);
 const visible = ref(false);
 
-useLuneEvent("trayEvent", (id) => {
-  log.value.unshift(`trayEvent: ${JSON.stringify(id)}`);
-  if (id === "quit") System.quit();
+useLuneEvent("trayEvent", (payload) => {
+  log.value.unshift(`trayEvent: ${JSON.stringify(payload)}`);
+  if (payload === "quit") System.quit();
 });
+
+async function popupMenu() {
+  await Tray.popupMenu();
+}
 
 async function toggle() {
   if (visible.value) {
@@ -73,6 +77,7 @@ function clearMenu() {
           Menu B (Pause · Resume · Quit)
         </button>
         <button @click="clearMenu">Clear menu</button>
+        <button @click="popupMenu" :disabled="!activeMenu">Pop up menu</button>
       </div>
     </div>
 

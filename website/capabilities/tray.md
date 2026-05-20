@@ -18,6 +18,19 @@ Tray has a soft dependency on `event_bus`. When event_bus is active, tray icon c
 
 ---
 
+## Click model
+
+Per click direction (left or right), the first rule that matches wins:
+
+1. **User override set** (`on_click` / `on_right_click`) — fires the callback. Full takeover.
+2. **Click listed in `toggle_window_on`** — toggles the window (positioned under the tray icon on macOS).
+3. **A menu is set** — pops it up.
+4. **Otherwise** — emits `trayEvent` with payload `"left_click"` or `"right_click"`.
+
+Left and right are independently configurable. Setting a menu wires it to both clicks (rule 3) unless that click is captured by an earlier rule.
+
+---
+
 ## Crystal options
 
 Configure the tray in the `Lune.run` block:
@@ -25,21 +38,32 @@ Configure the tray in the `Lune.run` block:
 ```crystal
 Lune.run(app) do |opts|
   opts.tray do |t|
-    # Optional: custom Crystal callbacks (override the default event emit)
-    t.on_click = -> { puts "Tray icon clicked" }
-    t.on_menu_click = ->(id : String) { puts "Menu item: #{id}" }
+    # Optional: which clicks toggle the window under the tray icon (macOS).
+    t.toggle_window_on = [:left_click]
 
-    # Optional: override the event name used when emitting via event_bus
+    # Optional: custom Crystal callbacks (override every default for that click).
+    t.on_click       = -> { puts "left clicked" }
+    t.on_right_click = -> { puts "right clicked" }
+    t.on_menu_click  = ->(id : String) { puts "menu: #{id}" }
+
+    # Optional: override the event name used when emitting via event_bus.
     t.event = "myTrayEvent"  # default: "trayEvent"
+
+    # Optional: show the tray icon at boot without a JS `Tray.show("")` call.
+    # Auto-enabled by `mac.menubar_mode`.
+    t.auto_show = true
   end
 end
 ```
 
-| Option          | Type            | Default           | Description                                          |
-| --------------- | --------------- | ----------------- | ---------------------------------------------------- |
-| `event`         | `String`        | `"trayEvent"`     | Event name emitted via EventBus on click/menu-select |
-| `on_click`      | `-> Nil`        | emit `trayEvent`  | Crystal callback for tray icon click                 |
-| `on_menu_click` | `String -> Nil` | emit menu item id | Crystal callback for menu item selection             |
+| Option             | Type            | Default           | Description                                                  |
+| ------------------ | --------------- | ----------------- | ------------------------------------------------------------ |
+| `event`            | `String`        | `"trayEvent"`     | Event name emitted via EventBus on click / menu select       |
+| `on_click`         | `-> Nil`        | —                 | Crystal callback for left-click (full takeover)              |
+| `on_right_click`   | `-> Nil`        | —                 | Crystal callback for right-click (full takeover)             |
+| `on_menu_click`    | `String -> Nil` | emit menu item id | Crystal callback for menu item selection                     |
+| `toggle_window_on` | `Array(Symbol)` | `[]`              | Clicks that toggle the window. `:left_click`, `:right_click` |
+| `auto_show`        | `Bool`          | `false`           | Show the tray icon at boot (set by `mac.menubar_mode`)       |
 
 ---
 
@@ -48,7 +72,7 @@ end
 Show the tray icon, set a menu, and handle events:
 
 ```js
-import { Tray, Events } from "../lunejs/runtime/runtime.js";
+import { Tray, Events, System } from "../lunejs/runtime/runtime.js";
 
 // Show the tray icon
 await Tray.show("/assets/icon.png");
@@ -56,14 +80,20 @@ await Tray.show("/assets/icon.png");
 // Set a dropdown menu
 await Tray.setMenu([
   { id: "show", label: "Show window" },
+  { id: "---", label: "" }, // separator
   { id: "quit", label: "Quit" },
 ]);
 
 // Listen for tray events (requires event_bus)
-Events.on("trayEvent", (id) => {
-  if (id === "click" || id === "show") showWindow();
-  if (id === "quit") System.quit();
+Events.on("trayEvent", (payload) => {
+  if (payload === "left_click") console.log("plain left click");
+  if (payload === "right_click") console.log("plain right click");
+  if (payload === "show") Window.show();
+  if (payload === "quit") System.quit();
 });
+
+// Open the menu programmatically (no-op if no menu set)
+await Tray.popupMenu();
 
 // Update the icon dynamically
 await Tray.setIcon("/assets/icon-active.png");
@@ -72,18 +102,19 @@ await Tray.setIcon("/assets/icon-active.png");
 await Tray.hide();
 ```
 
-| Method    | Signature        | Returns         | Description                 |
-| --------- | ---------------- | --------------- | --------------------------- |
-| `show`    | `show(iconPath)` | `Promise<void>` | Show tray icon from path    |
-| `hide`    | `hide()`         | `Promise<void>` | Hide the tray icon          |
-| `setIcon` | `setIcon(path)`  | `Promise<void>` | Swap the icon image         |
-| `setMenu` | `setMenu(items)` | `Promise<void>` | Set the dropdown menu items |
+| Method      | Signature        | Returns         | Description                      |
+| ----------- | ---------------- | --------------- | -------------------------------- |
+| `show`      | `show(iconPath)` | `Promise<void>` | Show tray icon from path         |
+| `hide`      | `hide()`         | `Promise<void>` | Hide the tray icon               |
+| `setIcon`   | `setIcon(path)`  | `Promise<void>` | Swap the icon image              |
+| `setMenu`   | `setMenu(items)` | `Promise<void>` | Set the dropdown menu items      |
+| `popupMenu` | `popupMenu()`    | `Promise<void>` | Open the menu (no-op if not set) |
 
 ### `TrayMenuItem`
 
 ```ts
 interface TrayMenuItem {
-  id: string;
+  id: string; // unique id, use "---" for a separator
   label: string;
 }
 ```
@@ -92,19 +123,47 @@ interface TrayMenuItem {
 
 ## Events
 
-When `event_bus` is active (the default), the tray icon emits on the bus:
+When `event_bus` is active (the default), tray interactions emit on the bus:
 
-| Trigger         | Event name                           | Payload                             |
-| --------------- | ------------------------------------ | ----------------------------------- |
-| Icon click      | `"trayEvent"` (or `opts.tray.event`) | `"click"`                           |
-| Menu item click | same event name                      | The `id` string of the clicked item |
+| Trigger                              | Payload                             |
+| ------------------------------------ | ----------------------------------- |
+| Left-click (no override/toggle/menu) | `"left_click"`                      |
+| Right-click (same conditions)        | `"right_click"`                     |
+| Menu item selected                   | The `id` string of the clicked item |
 
-Override the event name:
+Event name defaults to `"trayEvent"`. Override with `opts.tray.event`:
 
 ```crystal
 opts.tray do |t|
   t.event = "app-tray"  # Events.on("app-tray", ...) in JS
 end
+```
+
+---
+
+## Recipes
+
+**Both clicks show the menu (Docker style):**
+
+```crystal
+# Nothing to set in Crystal — just call Tray.setMenu from JS.
+```
+
+```js
+Tray.setMenu([{ id: "quit", label: "Quit" }]);
+```
+
+**Left toggles window, right shows menu (popover style):**
+
+```crystal
+opts.tray.toggle_window_on = [:left_click]
+```
+
+**Both clicks open the menu, regardless of overrides:**
+
+```crystal
+opts.tray.on_click       = -> { Lune::Native::Tray.popup_menu; nil }
+opts.tray.on_right_click = -> { Lune::Native::Tray.popup_menu; nil }
 ```
 
 ---

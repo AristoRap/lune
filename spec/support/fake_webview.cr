@@ -3,10 +3,12 @@ class FakeWebview
 
   getter dispatch_count : Int32
   getter resolve_calls : Array(Tuple(String, Int32, String))
+  getter eval_calls : Array(String)
 
   def initialize
     @dispatch_count = 0
     @resolve_calls = [] of Tuple(String, Int32, String)
+    @eval_calls = [] of String
     @bindings = {} of String => Proc(String, Array(JSON::Any), Nil)
     @lock = Mutex.new
   end
@@ -31,5 +33,6 @@ class FakeWebview
   end
 
   def eval(js : String)
+    @lock.synchronize { @eval_calls << js }
   end
 end

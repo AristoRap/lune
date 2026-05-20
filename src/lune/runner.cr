@@ -56,6 +56,9 @@ module Lune
         handle = wv.native_handle(Webview::NativeHandleKind::UI_WINDOW)
         {% if flag?(:darwin) %}
           setup_mac_window_options(handle)
+          # menubar_mode implies the tray icon must come up at boot — surface it
+          # via the generic `tray.auto_show` flag so the capability owns wiring.
+          @options.tray.auto_show = true if @options.mac.menubar_mode
         {% end %}
 
         registry = Capabilities::Registry.new(handle, @options, on_quit: -> { wv.dispatch { wv.terminate } })
@@ -79,9 +82,17 @@ module Lune
 
         callback_window_ready_if_set(handle)
 
+        {% if flag?(:darwin) %}
+          if @options.mac.menubar_mode
+            setup_menubar_mode(handle)
+          end
+        {% end %}
+
         window_app_name = WindowState.app_name(@options.title)
-        if saved = WindowState.load(window_app_name)
-          Native::Window.set_frame(handle, saved[:x], saved[:y], saved[:width], saved[:height])
+        unless {% if flag?(:darwin) %}@options.mac.menubar_mode{% else %}false{% end %}
+          if saved = WindowState.load(window_app_name)
+            Native::Window.set_frame(handle, saved[:x], saved[:y], saved[:width], saved[:height])
+          end
         end
 
         callback_window_loaded_if_set(wv)
@@ -104,8 +115,10 @@ module Lune
           cap.shutdown if cap.is_a?(Lune::Capability::Lifecycle)
         end
 
-        x, y, width, height = Native::Window.get_frame(handle)
-        WindowState.save(window_app_name, x, y, width, height)
+        unless {% if flag?(:darwin) %}@options.mac.menubar_mode{% else %}false{% end %}
+          x, y, width, height = Native::Window.get_frame(handle)
+          WindowState.save(window_app_name, x, y, width, height)
+        end
 
         asset_server.try(&.stop)
         bridge.close!
@@ -132,6 +145,18 @@ module Lune
       Native::Window.set_content_protection(handle, true) if mac.content_protection
       Native::Window.set_always_on_top(handle, true) if mac.always_on_top
     end
+
+    {% if flag?(:darwin) %}
+      # Menubar mode is purely a window-state preset: hide the dock icon, start
+      # the window hidden, and auto-hide whenever it loses focus. Tray icon
+      # appearance and click behavior are handled by the Tray capability — see
+      # `opts.tray.auto_show` and `opts.tray.toggle_window_on`.
+      private def setup_menubar_mode(handle : Pointer(Void)) : Nil
+        Native::Window.set_activation_policy_accessory
+        Native::Window.hide(handle)
+        Native::Window.auto_hide_on_resign_key(handle)
+      end
+    {% end %}
 
     private def callback_window_ready_if_set(handle : Pointer(Void)) : Nil
       if window_ready_cb = @options.on_window_ready

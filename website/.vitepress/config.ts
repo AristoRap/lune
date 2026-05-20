@@ -28,6 +28,7 @@ export default defineConfig({
           { text: 'Stream', link: '/guide/stream' },
           { text: 'TypeScript', link: '/guide/typescript' },
           { text: 'Window', link: '/guide/window' },
+          { text: 'Menubar Apps', link: '/guide/menubar' },
           { text: 'Distribution', link: '/guide/distribution' },
         ],
       },

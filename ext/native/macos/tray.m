@@ -11,18 +11,32 @@ static void run_on_main(void (^block)(void)) {
 }
 
 static NSStatusItem    *_status_item    = nil;
-static LuneTrayCallback _click_cb       = NULL;
-static void            *_click_userdata  = NULL;
-static LuneMenuCallback _menu_cb        = NULL;
+static LuneTrayCallback _click_cb            = NULL;
+static void            *_click_userdata      = NULL;
+static BOOL             _has_click_cb        = NO;
+static LuneTrayCallback _right_click_cb      = NULL;
+static void            *_right_click_userdata = NULL;
+static BOOL             _has_right_click_cb  = NO;
+static LuneMenuCallback _menu_cb             = NULL;
 static void            *_menu_userdata   = NULL;
+static NSMenu          *_menu           = nil;
 
 // ── Tray icon click delegate ──────────────────────────────────────────────────
 
 @interface LuneTrayDelegate : NSObject
 @end
 @implementation LuneTrayDelegate
+// Pure dispatcher — Crystal owns all policy (menu vs callback vs event emit).
 - (void)trayClicked:(id)sender {
-    if (_click_cb) _click_cb(_click_userdata);
+    NSEvent *event = [NSApp currentEvent];
+    BOOL isRight = (event.type == NSEventTypeRightMouseDown) ||
+                   (event.modifierFlags & NSEventModifierFlagControl);
+
+    if (isRight) {
+        if (_has_right_click_cb) _right_click_cb(_right_click_userdata);
+    } else {
+        if (_has_click_cb) _click_cb(_click_userdata);
+    }
 }
 @end
 static LuneTrayDelegate *_delegate = nil;
@@ -48,6 +62,7 @@ static void ensure_status_item(void) {
         _delegate    = [[LuneTrayDelegate alloc] init];
         _status_item.button.target = _delegate;
         _status_item.button.action = @selector(trayClicked:);
+        [_status_item.button sendActionOn:NSEventMaskLeftMouseDown | NSEventMaskRightMouseDown];
     }
 }
 
@@ -64,11 +79,32 @@ static void apply_icon(const char *icon_path) {
     _status_item.button.title = @"●";
 }
 
+// ── Menubar support ───────────────────────────────────────────────────────────
+
+typedef struct { int x; int y; int width; int height; } TrayRect;
+
+TrayRect lune_tray_button_screen_rect(void) {
+    __block TrayRect r = {0, 0, 0, 0};
+    if (!_status_item) return r;
+    run_on_main(^{
+        NSButton *btn = _status_item.button;
+        if (btn && btn.window) {
+            NSRect rect = [btn.window convertRectToScreen:btn.frame];
+            r.x      = (int)rect.origin.x;
+            r.y      = (int)rect.origin.y;
+            r.width  = (int)rect.size.width;
+            r.height = (int)rect.size.height;
+        }
+    });
+    return r;
+}
+
 // ── Public API ────────────────────────────────────────────────────────────────
 
 void tray_show(const char *icon_path, LuneTrayCallback callback, void *userdata) {
     _click_cb       = callback;
     _click_userdata = userdata;
+    _has_click_cb   = (userdata != NULL);
     run_on_main(^{
         ensure_status_item();
         apply_icon(icon_path);
@@ -110,16 +146,31 @@ void tray_set_menu(const char **ids, const char **labels, int count,
         }
     }
 
-    // Attach to the status item on the main thread.
+    // Store the menu but never assign it to _status_item.menu — doing so
+    // hijacks the left-click and prevents the click callback from firing.
+    // We dispatch the menu manually from trayClicked: instead.
     run_on_main(^{
         ensure_status_item();
-        if (count == 0) {
-            _status_item.menu          = nil;
-            _status_item.button.target = _delegate;
-            _status_item.button.action = @selector(trayClicked:);
-        } else {
-            _status_item.button.action = nil;
-            _status_item.menu          = menu;
+        _menu                      = (count == 0) ? nil : menu;
+        _status_item.menu          = nil;
+        _status_item.button.target = _delegate;
+        _status_item.button.action = @selector(trayClicked:);
+    });
+}
+
+void lune_tray_set_right_click_cb(LuneTrayCallback callback, void *userdata) {
+    _right_click_cb       = callback;
+    _right_click_userdata = userdata;
+    _has_right_click_cb   = (userdata != NULL);
+}
+
+void tray_popup_menu(void) {
+    run_on_main(^{
+        if (_status_item && _menu) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+            [_status_item popUpStatusItemMenu:_menu];
+#pragma clang diagnostic pop
         }
     });
 }

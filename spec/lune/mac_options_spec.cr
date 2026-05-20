@@ -29,6 +29,10 @@ describe Lune::Options::Mac do
     it "hide_traffic_lights is false" do
       Lune::Options::Mac.new.hide_traffic_lights.should be_false
     end
+
+    it "menubar_mode is false" do
+      Lune::Options::Mac.new.menubar_mode.should be_false
+    end
   end
 
   describe "via opts.mac block" do
@@ -40,10 +44,10 @@ describe Lune::Options::Mac do
       opts = Lune::Options.new
       opts.mac do |m|
         m.full_size_content = true
-        m.hide_title        = true
-        m.appearance        = Lune::Options::Mac::Appearance::Dark
+        m.hide_title = true
+        m.appearance = Lune::Options::Mac::Appearance::Dark
         m.content_protection = true
-        m.always_on_top     = true
+        m.always_on_top = true
       end
 
       opts.mac.full_size_content.should be_true
@@ -57,6 +61,12 @@ describe Lune::Options::Mac do
       opts = Lune::Options.new
       opts.mac { |m| m.hide_traffic_lights = true }
       opts.mac.hide_traffic_lights.should be_true
+    end
+
+    it "menubar_mode is settable" do
+      opts = Lune::Options.new
+      opts.mac { |m| m.menubar_mode = true }
+      opts.mac.menubar_mode.should be_true
     end
   end
 end
