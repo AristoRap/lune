@@ -47,6 +47,8 @@ Windows hardware and what's known to be broken. Items marked
 
 ## Broken / partial
 
+- **Multi-window OS close propagation** (`Windows.open(...)`) — closing a child window via the title-bar X doesn't notify the Crystal side. The `@windows` registry still thinks the window is open and any code waiting for a close event hangs. macOS solved this via `NSWindowDelegate#windowWillClose:`; Win32 needs a WindowProc subclass on the child HWND that intercepts `WM_CLOSE`/`WM_DESTROY`. Tracked in `ROADMAP.md`.
+- **DeepLink on Windows** — `install` doesn't crash and cold-start ARGV scanning works, but only if the user has manually registered the URL scheme in the Windows registry. Lune doesn't auto-register schemes during `lune build` yet. Warm-start forwarding (sending a URL to an already-running instance) also isn't implemented on Windows — each launch with a deep-link URL opens a new instance. Tracked in `ROADMAP.md`.
 - **Notifications** (`Notifications.notify`) — the PowerShell + WinRT
   script now exits cleanly (both `Windows.UI.Notifications` and
   `Windows.Data.Xml.Dom` projections are explicitly loaded) but
@@ -79,10 +81,7 @@ All are tracked under v0.12.0 in `ROADMAP.md`:
 - `file_watch` — needs `ReadDirectoryChangesW`
 - `file_drop` — needs `IDropTarget`/`OleInitialize` + drop callback
 - `drag_out` — macOS-only by design
-- `context_menu` — needs `TrackPopupMenuEx` + `CreatePopupMenu` +
-  WM_COMMAND dispatch
-- `deep_link` — registry-based scheme registration + warm-start
-  forwarding still TODO
+- `context_menu` — the Win32 `TrackPopupMenu` shim is in tree and the capability layer calls into it, but WebView2's built-in browser context menu shows on top and JS `preventDefault()` doesn't suppress it. Needs `ICoreWebView2_*` access to set `AreDefaultContextMenusEnabled = false` (or handle `ContextMenuRequested`). Exclude `context_menu` on Windows until that's wired up.
 - `Clipboard.readImage` / `writeImage` — needs PNG ↔ CF_DIB conversion
 - `Menu.setupDefault` / `setFromOptions` — window menu bar not yet
   ported; needs `SetMenu` + `CreatePopupMenu` + `AppendMenuW` +

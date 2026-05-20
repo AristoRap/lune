@@ -27,5 +27,4 @@ capabilities:
   #   - file_drop     # Windows: needs IDropTarget + disable_webview_drop port
   #   - tray          # Windows: needs Shell_NotifyIconW
   #   - drag_out      # macOS-only by design
-  #   - context_menu  # Windows: needs TrackPopupMenuEx + WM_COMMAND dispatch
-  #   - deep_link     # Windows: needs registry scheme registration + warm-start forwarding
+  #   - context_menu  # Windows: WebView2's default browser context menu shows over our native one; needs AreDefaultContextMenusEnabled = false on the WV2 controller

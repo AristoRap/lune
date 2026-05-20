@@ -51,7 +51,7 @@ The `demo/` directory in this repo is a full showcase of the Lune API — bindin
 
 Lune runs on Windows today **with a one-line manual patch to Crystal's stdlib** (documented in [WINDOWS_SETUP.md](WINDOWS_SETUP.md)). The patch becomes unnecessary once Crystal 1.21.0 ships — [crystal#16933](https://github.com/crystal-lang/crystal/pull/16933) is merged on master and targets 1.21.
 
-With the patch applied, the demo runs end-to-end via `lune dev --debug`. Verified on real Windows hardware: window basics, system (`environment` / `openUrl` / `quit`), screen, dialogs (file pickers + message variants), clipboard text & HTML, hotkeys, window-state persistence (via `opts.remember_frame`), shell (real executables, not cmd builtins), stream, events, sqlite, kv. Gapped or not yet implemented: `tray`, `file_watch`, `file_drop`, `drag_out`, `context_menu`, `deep_link`, `Clipboard.readImage`/`writeImage`, window menu bar, toast notifications (AUMID registration). See the [Windows verification checklist](website/guide/windows-checklist.md) for the live status board and [ROADMAP.md](ROADMAP.md) for the path to parity.
+With the patch applied, the demo runs end-to-end via `lune dev --debug`. For the live per-capability status (verified working, partial, not yet implemented), see the [Windows verification checklist](website/guide/windows-checklist.md) — that's the single source of truth and it's kept current as gaps land. [ROADMAP.md](ROADMAP.md) tracks the path to full parity.
 
 ## Development
 
