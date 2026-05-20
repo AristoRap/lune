@@ -21,7 +21,7 @@ module Lune
         end
       end
     {% elsif flag?(:darwin) %}
-      {% system("cd '#{__DIR__}/../../../ext/native/macos' && clang -c notify.m -o notify.o -fobjc-arc 2>/dev/null") %}
+      {% system("cd '#{__DIR__}/../../../ext/native/macos' && clang -c notifications.m -o notifications.o -fobjc-arc 2>/dev/null") %}
 
       @[Link(framework: "AppKit")]
       @[Link(framework: "UserNotifications")]
@@ -31,7 +31,7 @@ module Lune
         fun show_notification(title : LibC::Char*, body : LibC::Char*) : Void
       end
     {% elsif flag?(:linux) %}
-      {% system("cd '#{__DIR__}/../../../ext/native/linux' && gcc -c notify.c -o notify.o `pkg-config --cflags libnotify` 2>/dev/null") %}
+      {% system("cd '#{__DIR__}/../../../ext/native/linux' && gcc -c notifications.c -o notifications.o `pkg-config --cflags libnotify` 2>/dev/null") %}
 
       @[Link(ldflags: "#{__DIR__}/../../../ext/native/linux/notifications.o `pkg-config --libs libnotify`")]
       lib LibNativeNotifications

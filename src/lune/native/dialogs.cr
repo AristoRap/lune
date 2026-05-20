@@ -54,7 +54,7 @@ module Lune
         end
       end
     {% elsif flag?(:darwin) %}
-      {% system("cd '#{__DIR__}/../../../ext/native/macos' && clang -c dialog.m -o dialog.o -fobjc-arc 2>/dev/null") %}
+      {% system("cd '#{__DIR__}/../../../ext/native/macos' && clang -c dialogs.m -o dialogs.o -fobjc-arc 2>/dev/null") %}
 
       @[Link(framework: "AppKit")]
       @[Link(ldflags: "#{__DIR__}/../../../ext/native/macos/dialogs.o")]
@@ -66,7 +66,7 @@ module Lune
         fun message_dialog(type : LibC::Int, title : LibC::Char*, message : LibC::Char*, out : LibC::Char*, out_size : LibC::Int) : LibC::Int
       end
     {% elsif flag?(:linux) %}
-      {% system("cd '#{__DIR__}/../../../ext/native/linux' && gcc -c dialog.c -o dialog.o `pkg-config --cflags gtk+-3.0` 2>/dev/null") %}
+      {% system("cd '#{__DIR__}/../../../ext/native/linux' && gcc -c dialogs.c -o dialogs.o `pkg-config --cflags gtk+-3.0` 2>/dev/null") %}
 
       @[Link(ldflags: "#{__DIR__}/../../../ext/native/linux/dialogs.o")]
       @[Link(ldflags: "`pkg-config --libs gtk+-3.0`")]
