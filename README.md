@@ -41,22 +41,20 @@ The `demo/` directory in this repo is a full showcase of the Lune API — bindin
 
 ## Platform support
 
-| Platform | Dev                      | Build       |
-| -------- | ------------------------ | ----------- |
-| macOS    | ✅                       | ✅          |
-| Linux    | ✅                       | ✅          |
-| Windows  | ⚠️ requires manual setup | ⚠️ untested |
+| Platform | Dev | Build | Notes                                                                                                                 |
+| -------- | --- | ----- | --------------------------------------------------------------------------------------------------------------------- |
+| macOS    | ✅  | ✅    | Native AppKit                                                                                                         |
+| Linux    | ✅  | ✅    | GTK + WebKit2GTK                                                                                                      |
+| Windows  | 🛑  | 🛑    | Win32 code is merged, but full `crystal build` is blocked on Crystal 1.21+ — see [WINDOWS_SETUP.md](WINDOWS_SETUP.md) |
 
 ### Windows
 
-The `naqvis/webview` postinstall script is Unix-only. Before running `shards install`, manually set up WebView2:
+The Win32 implementations for window basics, screen, dialog, clipboard HTML, hotkeys, context menu, notifications (PowerShell toast), and deep-link cold-start are all in the tree as of v0.11.0. What's missing is a Crystal compiler that can actually build a runnable binary:
 
-1. Download the [WebView2 NuGet package](https://www.nuget.org/packages/Microsoft.Web.WebView2) and extract `build/native/include/WebView2.h` into `lib/webview/ext/`.
-2. Build `webview.dll` and `webview.lib` with MSVC `cl.exe` against that header.
-3. Copy `webview.dll`, `webview.lib`, and `WebView2Loader.dll` into a directory on `CRYSTAL_LIBRARY_PATH`.
-4. Run `shards install --skip-postinstall`.
+- **Crystal 1.20.2** (current release) hits `undefined constant LibC::PidT` during codegen of `Process.initialize` ([crystal#16929](https://github.com/crystal-lang/crystal/issues/16929)).
+- **PR [crystal#16933](https://github.com/crystal-lang/crystal/pull/16933)** merged on master, **targeted for 1.21.0** — not in any released Crystal yet.
 
-The webview event loop must own a dedicated OS thread on Windows. Lune uses `Fiber::ExecutionContext::Isolated` for this. **Untested on real hardware** — feedback welcome.
+So until Crystal 1.21 ships, Windows is **blocked on upstream**. Type-check via `crystal build --no-codegen` passes (CI exercises this); a real binary doesn't. See [WINDOWS_SETUP.md](WINDOWS_SETUP.md) for the full setup walkthrough you can use once 1.21 lands, plus the per-capability checklist at [website/guide/windows-checklist.md](website/guide/windows-checklist.md).
 
 ## Development
 

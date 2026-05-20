@@ -1,12 +1,16 @@
 # Windows verification checklist
 
-Most of the Lune capabilities have shipped a Win32 implementation but no
-Windows CI run exercises them yet (Crystal 1.20.2 MSVC stdlib has an
-unrelated `LibC::PidT` bug that prevents `crystal spec` on Windows).
-Until that resolves, this is the manual walk-through.
+Most Lune capabilities have shipped a Win32 implementation but **none
+have been exercised on real hardware yet**: Crystal 1.20.x can't
+produce a working binary on Windows MSVC ([crystal#16929](https://github.com/crystal-lang/crystal/issues/16929)),
+and the fix is gated on Crystal 1.21.0 (PR
+[#16933](https://github.com/crystal-lang/crystal/pull/16933) merged
+to master). Until that release ships, every checklist item below
+should be considered **unverified**.
 
-Run the demo (`lune dev` in the `demo/` folder) on a real Windows 10/11
-machine and tick each item.
+Once Crystal 1.21 is out and you can produce `lune.exe`, run the demo
+(`lune dev` in the `demo/` folder) on a real Windows 10/11 machine and
+tick each item.
 
 ## Smoke
 

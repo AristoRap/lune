@@ -2,6 +2,8 @@
 
 ## [0.11.0] - 2026-05-20
 
+> **Windows runtime is blocked on upstream Crystal.** All Win32 code in v0.10.0 and v0.11.0 type-checks cleanly on `windows-latest` CI, but full `crystal build` errors out with `undefined constant LibC::PidT` ([crystal#16929](https://github.com/crystal-lang/crystal/issues/16929)). The fix landed in master ([crystal#16933](https://github.com/crystal-lang/crystal/pull/16933)) and is targeted for **Crystal 1.21.0**. Lune itself can't drop below 1.20.1 because it depends on `Fiber::ExecutionContext`. Until 1.21 ships, the Win32 code is "code merged, behaviour unverified on real hardware." See [WINDOWS_SETUP.md](WINDOWS_SETUP.md).
+
 ### Added — Windows port (continued from v0.10.0)
 
 - **`Lune::Native::Hotkeys` on Windows** — `RegisterHotKey` + `UnregisterHotKey` driven from a dedicated `Fiber::ExecutionContext::Isolated` thread that owns the `WM_HOTKEY` message pump (PeekMessageW @ 10 ms). Producer-side `register`/`unregister` calls from any fiber are marshalled through a Mutex-protected ops queue. Accelerator parser maps `Ctrl+Shift+K` / `Alt+F4` / `Cmd+Space` forms to (modifier flags, virtual-key code), with named-key coverage for space/return/tab/arrows/F1-F24.
@@ -21,8 +23,9 @@
 
 ### Notes
 
-- **Windows CI specs** — `crystal spec` on `windows-latest` still hits a Crystal 1.20.2 MSVC stdlib bug (`undefined constant LibC::PidT` in `Process#initialize`). CI keeps the compile-check-only mode for Windows; will re-enable real specs when Crystal ships a fix.
-- **Still NotImplementedError on Win32**: `Tray` (Shell_NotifyIconW + hidden HWND), `FileWatch` (ReadDirectoryChangesW), `Clipboard.read_image`/`write_image` (PNG↔CF_DIB). Tracked for v0.12.0.
+- **Windows runtime blocked on Crystal 1.21+** — see header above. Once 1.21 lands, the per-capability walkthrough at [`website/guide/windows-checklist.md`](website/guide/windows-checklist.md) is the verification path.
+- **Three Win32 compile-error fixes shipped late in the cycle** (commit `69e7599`) — `menu.cr` had `next.to_s` (treating a keyword as a value) and `Float32#to_long` (no such method); `dialog.cr` had a trailing-`while` modifier in a context Crystal rejects. Caught only when an actual `cl.exe`/Crystal build was run on Windows.
+- **Still NotImplementedError on Win32**: `Tray` (Shell_NotifyIconW + hidden HWND), `FileWatch` (ReadDirectoryChangesW), `Clipboard.read_image`/`write_image` (PNG↔CF_DIB), Windows DeepLink warm-start (named pipe), URL-scheme auto-registration during `lune build`. Tracked for v0.12.0.
 
 ## [0.10.0] - 2026-05-20
 

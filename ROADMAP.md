@@ -5,8 +5,8 @@
 The gaps that prevent Lune apps from shipping as standalone products.
 
 - [ ] Auto-updater — in-app update checks and installs driven by a manifest URL; Sparkle on macOS, equivalent on Linux/Windows
-- [ ] Windows support
-- [ ] App icon support on Windows — `.ico` bundled into `lune build`
+- [ ] Windows runtime — blocked on **Crystal 1.21.0**. v0.10.0 + v0.11.0 added Win32 implementations for window/screen/dialog/clipboard-html/hotkeys/context-menu/notify/deep-link-cold-start, but Crystal 1.20.x can't compile a runnable binary on MSVC (`LibC::PidT` missing in `Process.initialize`; fixed in [crystal#16933](https://github.com/crystal-lang/crystal/pull/16933), shipping in 1.21). Once 1.21 lands, walk through [`website/guide/windows-checklist.md`](website/guide/windows-checklist.md) to verify each capability.
+- [x] App icon support on Windows — `.ico` embedded into `lune build` via generated `.rc` + `rc.exe` (v0.11.0).
 
 ## Native APIs
 

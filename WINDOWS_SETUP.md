@@ -53,29 +53,36 @@ The `--skip-postinstall` flag skips the Unix-only Makefile-based build step (web
 
 ## Step 3: Build Lune CLI
 
-### Mocked Build (Current Workaround)
+> **Blocker:** real `crystal build` on Windows MSVC is currently broken in **every released Crystal**, including 1.20.2. The bug is tracked at [crystal-lang/crystal#16929](https://github.com/crystal-lang/crystal/issues/16929) — `Process.initialize` references `LibC::PidT`, which doesn't exist on the Win32 stdlib. The fix landed in [crystal-lang/crystal#16933](https://github.com/crystal-lang/crystal/pull/16933) on May 13, 2026 and is targeted for **Crystal 1.21.0** (not yet released). Lune cannot go below 1.20.1 because it depends on `Fiber::ExecutionContext` (introduced in 1.20.1).
+>
+> Until 1.21 ships, the steps below are reference material — none of them produce a _functional_ Windows binary.
 
-Crystal 1.20.2 has a stdlib bug on Windows (`undefined constant LibC::PidT`). Until a newer Crystal is released, use the mocked build mode:
+### Real build (once Crystal 1.21+ is available)
 
 ```powershell
-crystal build src/lune_cli.cr -o bin/lune.exe --release -Dpreview_mt -Dexecution_context -D lune_native_test_mock
+crystal build src/lune_cli.cr -o bin/lune.exe -Dpreview_mt -Dexecution_context
 ```
 
-This produces a working CLI for development and testing.
-
-### Real Build (Future)
-
-Once Crystal fixes the stdlib bug on Windows MSVC, real builds should work:
+Or via shards:
 
 ```powershell
 shards build --release -Dpreview_mt -Dexecution_context
 ```
 
+### Mocked build (compile-only sanity check)
+
+Useful only for confirming your toolchain links cleanly. The resulting binary's capabilities are all stubbed and it does not run Lune apps:
+
+```powershell
+crystal build src/lune_cli.cr -o bin/lune.exe -Dpreview_mt -Dexecution_context -D lune_native_test_mock
+```
+
 ## Known Limitations
 
-- **Running Specs**: `crystal spec` fails due to the Crystal stdlib bug. Type-checking with `--no-codegen` works fine.
-- **WebView2 Runtime**: Developers and end-users need the WebView2 runtime installed on Windows 10 and earlier (Windows 11+ includes it).
-- **Real Hardware Testing**: The Windows port (v0.11.0) has not yet been tested on real hardware. Feedback welcome on GitHub issues.
+- **Building a runnable Windows binary is blocked on Crystal 1.21+.** See PR #16933 above.
+- **Running Specs**: `crystal spec` fails for the same reason — Crystal's spec runner uses `Process.new(pid)`. Type-checking with `--no-codegen` is what CI runs today.
+- **WebView2 Runtime**: Once the build works, developers and end-users need the WebView2 runtime installed on Windows 10 and earlier (Windows 11+ includes it).
+- **Real-hardware verification**: the Win32 implementations in v0.11.0 have only been compile-checked. Behaviour can't be confirmed until 1.21 lands and the per-capability walkthrough in [`website/guide/windows-checklist.md`](website/guide/windows-checklist.md) can be executed.
 
 ## Troubleshooting
 
@@ -93,11 +100,7 @@ $env:CPATH = "C:\temp\webview2\Microsoft.Web.WebView2.1.0.3967.48\build\native\i
 
 ### Build Fails with `undefined constant LibC::PidT`
 
-This is the known Crystal 1.20.2 bug on Windows MSVC. Use the mocked build mode (add `-D lune_native_test_mock`).
-
-### Build Succeeds But Binary Doesn't Run
-
-The mocked build produces a working CLI for development. For distribution, wait for Crystal to fix the stdlib bug.
+Expected on Crystal 1.20.x. Wait for 1.21.0. If you need to test the toolchain plumbing in the meantime, the mocked build above will link cleanly but produces a non-functional binary.
 
 ## References
 

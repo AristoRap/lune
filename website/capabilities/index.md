@@ -79,6 +79,8 @@ Two capabilities are marked **core**: `event_bus` and `stream`. They are enabled
 ¹ Requires XWayland on Wayland compositors.
 ² Linux/Windows: cold-start (ARGV) only — no warm-start forwarding yet.
 
+> **Windows runtime caveat.** Every "Windows" entry above means _the code is in tree and type-checks under CI's `--no-codegen` pass_. Full `crystal build` on Windows MSVC is currently blocked by Crystal 1.20.x ([crystal#16929](https://github.com/crystal-lang/crystal/issues/16929)) and will start working once Crystal 1.21 ships. See [WINDOWS_SETUP.md](https://github.com/AristoRap/lune/blob/main/WINDOWS_SETUP.md) and the [Windows verification checklist](../guide/windows-checklist) for full status.
+
 ---
 
 ## Dependency graph
