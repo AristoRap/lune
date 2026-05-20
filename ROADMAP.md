@@ -1,53 +1,33 @@
 # Lune Roadmap
 
-## Now
+## Production-ready/Windows support
 
-- [x] High-throughput IPC stream — WebSocket-backed ordered delivery for streaming and high-frequency events
-- [x] Shell / process execution — spawn child processes and stream stdout/stderr to the frontend via Stream
-- [x] Global keyboard shortcuts — system-wide hotkeys that fire even when the window is not focused
-- [x] File watching — monitor filesystem paths for changes and emit events to the frontend
+The gaps that prevent Lune apps from shipping as standalone products.
 
-## Next — Production-ready
-
-These are the gaps that prevent Lune apps from shipping as standalone products.
-
-- [x] Distribution packaging — `lune dist` outputs a DMG on macOS and an AppImage on Linux; Windows packaging pending
-- [x] Deep links / custom URL scheme — register `myapp://` so the OS routes URLs into the running app; essential for OAuth redirect flows
 - [ ] Auto-updater — in-app update checks and installs driven by a manifest URL; Sparkle on macOS, equivalent on Linux/Windows
 - [ ] Windows support
 - [ ] App icon support on Windows — `.ico` bundled into `lune build`
 
-## Backlog — Native APIs
+## Native APIs
 
 Features the platform exposes that Lune doesn't yet surface.
 
-- [x] Rich clipboard — image and HTML read/write beyond current text-only support
-- [x] Drag-out — native drag of files from the WebView into the system (complement to existing drop-in)
-- [x] SQLite — embedded database access via Crystal's `sqlite3` shard with a typed JS bridge; pairs naturally with the Stream for reactive data flows
-- [x] Multiple windows
-- [x] KV store — persistent JSON key-value store scoped per app; simpler than SQLite for preferences and config
-- [x] Shell.write / Shell.close_stdin — write to stdin of a running process; enables interactive CLIs and REPLs
-- [x] Frameless windows / custom titlebar — `mac.full_size_content` + `mac.hide_title` + `mac.hide_traffic_lights` for fully chrome-free windows; CSS drag zones via `opts.drag { |d| d.zone = "..." }`; `mac.transparent` for blur/vibrancy
 - [ ] `autostart` capability — register the app to launch at login (LaunchAgent on macOS, `.desktop` on Linux)
 - [ ] Reactive SQLite — `Sqlite.watch(db, sql, params, cb)` re-runs a query and pushes updated rows whenever the database is written; pairs with Stream for live Vue reactivity
 
-## Backlog — Architecture
+## Architecture
 
 Structural improvements that unlock whole categories of apps.
 
-- [x] Main-thread safety for native UI — all AppKit (macOS) and GTK (Linux) calls dispatch synchronously to the main thread when invoked from a background fiber
-- [x] Typed error propagation — Crystal exceptions arrive in JS as structured `LuneError` subclasses with type, message, and optional metadata
 - [ ] Plugin system — a Crystal shard interface (`Lune::Plugin`) with lifecycle hooks and runtime binding registration so community authors can publish Lune plugins
-- [ ] Per-window capabilities — scope `include`/`exclude` lists to individual windows rather than globally (depends on multiple windows)
+- [ ] Per-window capabilities — scope `include`/`exclude` lists to individual windows rather than globally
 - [ ] Multiple webviews in one window — stack or embed multiple WebView panels within a single native window
-- [x] Menubar-only mode — `opts.mac { |m| m.menubar_mode = true }` hides the dock icon, auto-shows the tray icon, and auto-hides on focus loss; per-click window toggle opted in via `opts.tray.toggle_window_on = [:left_click]`; macOS
 
-## Backlog — DX & Templates
+## DX & Templates
 
-- [x] Notifications in production builds — `mac.sign` in `lune.yml` triggers `codesign`; runtime detects Team Identifier and routes to `UNUserNotificationCenter` or osascript accordingly
 - [ ] Splash screen — show a configurable loading view while the Crystal runtime and frontend initialise
 - [ ] Additional templates — Svelte, React + TypeScript
 
 ---
 
-_v0.2 – v0.8.0 shipped: event bus, runtime JS/TS API (namespaced PascalCase objects), codegen bindings, dev error overlay, tray, file dialogs, drag-and-drop, window controls, notifications, screen info, app paths, clipboard (rich: text/HTML/image), window state persistence, capability allowlist (group-level), app icons, default menu bar, demo app (Vue 3 template), real async via OS threads, options API grouped into nested blocks, user-configurable menu bar, context menus, drag-out, deep links, distribution packaging (DMG + AppImage), code signing, notarization, LuneError typed rejections, capability architecture refactoring, WebSocket IPC stream (bidirectional, high-throughput), shell / process execution (Shell.run + Shell.spawn + Shell.kill + Shell.list), file watching, global hotkeys. See [CHANGELOG.md](CHANGELOG.md) for details._
+_Shipped through v0.9.0: event bus, runtime JS/TS API (namespaced PascalCase objects), codegen bindings, dev error overlay, tray, file dialogs, drag-and-drop (in + drag-out), window controls, notifications (incl. production builds via codesign + UNUserNotificationCenter), screen info, app paths, rich clipboard (text/HTML/image), window state persistence, capability allowlist with cascading dep resolution, app icons (macOS/Linux), default and user-configurable menu bar, context menus, deep links / custom URL scheme, demo app (Vue 3 template), real async via OS threads with shared thread pool, options API grouped into nested blocks, distribution packaging (DMG + AppImage), code signing, notarization, typed error propagation (`LuneError`), capability architecture refactor, WebSocket IPC stream (bidirectional, high-throughput), shell / process execution (`Shell.run` + `Shell.spawn` + `Shell.kill` + `Shell.list` + `Shell.write` + `Shell.closeStdin`), file watching (kqueue/inotify with debounce), global hotkeys, SQLite capability, multiple windows (with cross-window capability propagation), KV store, frameless windows (`mac.full_size_content` + `mac.hide_title` + `mac.hide_traffic_lights` + `mac.transparent` + CSS drag zones), main-thread safety for native UI, menubar-only mode + unified tray click model (`toggle_window_on`, `on_right_click`, `Tray.popupMenu`, `auto_show`). See [CHANGELOG.md](CHANGELOG.md) for details._
