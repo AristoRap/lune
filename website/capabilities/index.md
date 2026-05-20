@@ -53,29 +53,31 @@ Two capabilities are marked **core**: `event_bus` and `stream`. They are enabled
 
 ## Capability matrix
 
-| Capability                       | Config key      | JS namespace    | Core    | Phases                   | Hard deps   | Soft deps   | Platforms      |
-| -------------------------------- | --------------- | --------------- | ------- | ------------------------ | ----------- | ----------- | -------------- |
-| [EventBus](./event-bus)          | `event_bus`     | `Events`        | **Yes** | WebviewInject            | —           | —           | all            |
-| [Stream](./stream)               | `stream`        | `Stream`        | **Yes** | WebviewInject            | —           | —           | all            |
-| [Clipboard](./clipboard)         | `clipboard`     | `Clipboard`     | No      | Bindable                 | —           | —           | all            |
-| [ContextMenu](./context-menu)    | `context_menu`  | `ContextMenu`   | No      | Bindable · WebviewInject | `event_bus` | —           | macOS          |
-| [DeepLink](./deep-link)          | `deep_link`     | `DeepLink`      | No      | Bindable                 | `event_bus` | —           | macOS          |
-| [Dialogs](./dialogs)             | `dialogs`       | `Dialogs`       | No      | Bindable                 | —           | —           | macOS · Linux  |
-| [DragOut](./drag-out)            | `drag_out`      | `DragOut`       | No      | Bindable                 | —           | —           | macOS          |
-| [FileDrop](./file-drop)          | `file_drop`     | `FileDrop`      | No      | WebviewInject            | `event_bus` | —           | macOS · Linux  |
-| [FileWatch](./file-watch)        | `file_watch`    | `FileWatch`     | No      | Bindable · Lifecycle     | `event_bus` | —           | macOS · Linux  |
-| [Filesystem](./filesystem)       | `filesystem`    | `Filesystem`    | No      | Bindable                 | —           | —           | all            |
-| [Notifications](./notifications) | `notifications` | `Notifications` | No      | Bindable                 | —           | —           | macOS · Linux  |
-| [Screen](./screen)               | `screen`        | `Screen`        | No      | Bindable                 | —           | —           | macOS · Linux  |
-| [KV](./kv)                       | `kv`            | `Kv`            | No      | Bindable · Lifecycle     | —           | —           | all            |
-| [Shell](./shell)                 | `shell`         | `Shell`         | No      | Bindable · Lifecycle     | `stream`    | —           | macOS · Linux  |
-| [SQLite](./sqlite)               | `sqlite`        | `Sqlite`        | No      | Bindable · Lifecycle     | —           | —           | all            |
-| [System](./system)               | `system`        | `System`        | No      | Bindable                 | —           | —           | all            |
-| [Tray](./tray)                   | `tray`          | `Tray`          | No      | Bindable                 | —           | `event_bus` | macOS · Linux¹ |
-| [Window](./window)               | `window`        | `Window`        | No      | Bindable                 | —           | —           | macOS · Linux  |
-| [Windows](./windows)             | `windows`       | `Windows`       | No      | Bindable · Lifecycle     | —           | —           | all            |
+| Capability                       | Config key      | JS namespace    | Core    | Phases                   | Hard deps   | Soft deps   | Platforms                |
+| -------------------------------- | --------------- | --------------- | ------- | ------------------------ | ----------- | ----------- | ------------------------ |
+| [EventBus](./event-bus)          | `event_bus`     | `Events`        | **Yes** | WebviewInject            | —           | —           | all                      |
+| [Stream](./stream)               | `stream`        | `Stream`        | **Yes** | WebviewInject            | —           | —           | all                      |
+| [Clipboard](./clipboard)         | `clipboard`     | `Clipboard`     | No      | Bindable                 | —           | —           | all (image: no Win32)    |
+| [ContextMenu](./context-menu)    | `context_menu`  | `ContextMenu`   | No      | Bindable · WebviewInject | `event_bus` | —           | macOS · Windows          |
+| [DeepLink](./deep-link)          | `deep_link`     | `DeepLink`      | No      | Bindable                 | `event_bus` | —           | macOS · Linux · Windows² |
+| [Dialogs](./dialogs)             | `dialogs`       | `Dialogs`       | No      | Bindable                 | —           | —           | all                      |
+| [DragOut](./drag-out)            | `drag_out`      | `DragOut`       | No      | Bindable                 | —           | —           | macOS                    |
+| [FileDrop](./file-drop)          | `file_drop`     | `FileDrop`      | No      | WebviewInject            | `event_bus` | —           | macOS · Linux            |
+| [FileWatch](./file-watch)        | `file_watch`    | `FileWatch`     | No      | Bindable · Lifecycle     | `event_bus` | —           | macOS · Linux            |
+| [Filesystem](./filesystem)       | `filesystem`    | `Filesystem`    | No      | Bindable                 | —           | —           | all                      |
+| [Hotkeys](./hotkeys)             | `hotkeys`       | `Hotkeys`       | No      | Bindable                 | —           | `event_bus` | macOS · Linux · Windows  |
+| [Notifications](./notifications) | `notifications` | `Notifications` | No      | Bindable                 | —           | —           | all                      |
+| [Screen](./screen)               | `screen`        | `Screen`        | No      | Bindable                 | —           | —           | all                      |
+| [KV](./kv)                       | `kv`            | `Kv`            | No      | Bindable · Lifecycle     | —           | —           | all                      |
+| [Shell](./shell)                 | `shell`         | `Shell`         | No      | Bindable · Lifecycle     | `stream`    | —           | macOS · Linux            |
+| [SQLite](./sqlite)               | `sqlite`        | `Sqlite`        | No      | Bindable · Lifecycle     | —           | —           | all                      |
+| [System](./system)               | `system`        | `System`        | No      | Bindable                 | —           | —           | all                      |
+| [Tray](./tray)                   | `tray`          | `Tray`          | No      | Bindable                 | —           | `event_bus` | macOS · Linux¹           |
+| [Window](./window)               | `window`        | `Window`        | No      | Bindable                 | —           | —           | all (chrome opts macOS)  |
+| [Windows](./windows)             | `windows`       | `Windows`       | No      | Bindable · Lifecycle     | —           | —           | all                      |
 
 ¹ Requires XWayland on Wayland compositors.
+² Linux/Windows: cold-start (ARGV) only — no warm-start forwarding yet.
 
 ---
 

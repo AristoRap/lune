@@ -2,14 +2,14 @@
 
 > Send native OS desktop notifications.
 
-|                  |                                  |
-| ---------------- | -------------------------------- |
-| **Config key**   | `notifications`                  |
-| **JS namespace** | `Notifications`                  |
-| **Core**         | No                               |
-| **Phases**       | Bindable                         |
-| **Hard deps**    | —                                |
-| **Platforms**    | macOS · Linux (Windows: planned) |
+|                  |                                                             |
+| ---------------- | ----------------------------------------------------------- |
+| **Config key**   | `notifications`                                             |
+| **JS namespace** | `Notifications`                                             |
+| **Core**         | No                                                          |
+| **Phases**       | Bindable                                                    |
+| **Hard deps**    | —                                                           |
+| **Platforms**    | macOS · Linux · Windows (Windows: PowerShell + WinRT toast) |
 
 ---
 

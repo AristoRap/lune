@@ -2,14 +2,14 @@
 
 > Native file pickers and message dialogs.
 
-|                  |                                  |
-| ---------------- | -------------------------------- |
-| **Config key**   | `dialogs`                        |
-| **JS namespace** | `Dialogs`                        |
-| **Core**         | No                               |
-| **Phases**       | Bindable                         |
-| **Hard deps**    | —                                |
-| **Platforms**    | macOS · Linux (Windows: planned) |
+|                  |                         |
+| ---------------- | ----------------------- |
+| **Config key**   | `dialogs`               |
+| **JS namespace** | `Dialogs`               |
+| **Core**         | No                      |
+| **Phases**       | Bindable                |
+| **Hard deps**    | —                       |
+| **Platforms**    | macOS · Linux · Windows |
 
 ---
 

@@ -17,6 +17,7 @@ require "./lune/bindable"
 require "./lune/app"
 require "./lune/window_state"
 require "./lune/single_instance"
+require "./lune/deep_link_ipc"
 require "./lune/runner"
 
 module Lune
