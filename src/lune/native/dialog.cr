@@ -266,7 +266,9 @@ module Lune
           i = 0
           loop do
             j = i
-            j += 1 while buf[j] != 0_u16
+            while buf[j] != 0_u16
+              j += 1
+            end
             break if j == i
             segments << String.from_utf16(Slice.new(buf + i, j - i))
             i = j + 1

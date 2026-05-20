@@ -169,7 +169,7 @@ module Lune
               LibUser32Menu.append_menu_w(menu, LibUser32Menu::MF_SEPARATOR, 0_u64, Pointer(UInt16).null)
               next
             end
-            id    = obj["id"]?.try(&.as_s) || next.to_s
+            id    = obj["id"]?.try(&.as_s) || ""
             label = obj["label"]?.try(&.as_s) || id
             enabled = obj["enabled"]?.try(&.as_bool?) != false
             flags = LibUser32Menu::MF_STRING
@@ -190,8 +190,8 @@ module Lune
           # parent is close enough for picker placement — fine alignment
           # will require WV2's controller HWND.
           pt = LibUser32Menu::Point.new
-          pt.x = x.to_i.to_long
-          pt.y = y.to_i.to_long
+          pt.x = x.to_i64
+          pt.y = y.to_i64
           LibUser32Menu.client_to_screen(handle, pointerof(pt))
 
           # Per MSDN, the owner window must be foreground for TrackPopupMenu
