@@ -57,15 +57,28 @@ module LuneCLI
         end
 
         Lune.logger.info { "Starting frontend dev server in #{frontend_dir} (#{dev_cmd})..." }
-        dev_parts = dev_cmd.split(' ', remove_empty: true)
-        vite = Process.new(
-          dev_parts[0],
-          dev_parts[1..],
-          chdir: frontend_dir,
-          input: Process::Redirect::Close,
-          output: Process::Redirect::Inherit,
-          error: Process::Redirect::Inherit
-        )
+
+        vite = {% if flag?(:win32) %}
+          dev_parts = dev_cmd.split(' ', remove_empty: true)
+          Process.new(
+            "cmd",
+            ["/c"] + dev_parts,
+            chdir: frontend_dir,
+            input: Process::Redirect::Close,
+            output: Process::Redirect::Inherit,
+            error: Process::Redirect::Inherit
+          )
+        {% else %}
+          dev_parts = dev_cmd.split(' ', remove_empty: true)
+          Process.new(
+            dev_parts[0],
+            dev_parts[1..],
+            chdir: frontend_dir,
+            input: Process::Redirect::Close,
+            output: Process::Redirect::Inherit,
+            error: Process::Redirect::Inherit
+          )
+        {% end %}
 
         unless wait_for_url(dev_url)
           Lune.logger.warn { "Timed out waiting for dev server at #{dev_url}" }

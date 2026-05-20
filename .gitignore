@@ -10,6 +10,9 @@
 .lune-dev
 /shard.lock
 /lune.yml
+*.dll
+*.exe
+*.pdd
 
 # demo — commit source, ignore generated/installed dirs
 demo/lib/
@@ -27,3 +30,5 @@ demo/frontend/lunejs/
 /website/.vitepress/dist/
 /website/.vitepress/cache/
 demo/frontend/package-lock.json
+
+

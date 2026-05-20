@@ -51,38 +51,137 @@ shards install --skip-postinstall
 
 The `--skip-postinstall` flag skips the Unix-only Makefile-based build step (webview binaries are header-only on Windows).
 
-## Step 3: Build Lune CLI
+## Step 3: Apply Crystal 1.20.2 Stdlib Fix
 
-> **Blocker:** real `crystal build` on Windows MSVC is currently broken in **every released Crystal**, including 1.20.2. The bug is tracked at [crystal-lang/crystal#16929](https://github.com/crystal-lang/crystal/issues/16929) — `Process.initialize` references `LibC::PidT`, which doesn't exist on the Win32 stdlib. The fix landed in [crystal-lang/crystal#16933](https://github.com/crystal-lang/crystal/pull/16933) on May 13, 2026 and is targeted for **Crystal 1.21.0** (not yet released). Lune cannot go below 1.20.1 because it depends on `Fiber::ExecutionContext` (introduced in 1.20.1).
->
-> Until 1.21 ships, the steps below are reference material — none of them produce a _functional_ Windows binary.
+Crystal 1.20.2 (and all earlier released versions) have a compilation blocker: `Process.initialize` references `LibC::PidT`, which doesn't exist on Windows. The fix is documented in [crystal-lang/crystal#16933](https://github.com/crystal-lang/crystal/pull/16933) and is targeted for Crystal 1.21.0.
 
-### Real build (once Crystal 1.21+ is available)
+To work around this on Crystal 1.20.2, apply the fix manually to your Crystal installation:
 
-```powershell
-crystal build src/lune_cli.cr -o bin/lune.exe -Dpreview_mt -Dexecution_context
+1. Locate your Crystal stdlib `process.cr`:
+   - MSVC build: `C:\Users\<username>\AppData\Local\Programs\Crystal\src\process.cr`
+   - MinGW build: `C:\crystal-mingw\share\crystal\src\process.cr`
+
+2. Open the file and find the section around line 599-604:
+   ```crystal
+   {% unless flag?(:interpreted) %}
+     # :nodoc:
+     def initialize(pid : LibC::PidT)
+       @process_info = Crystal::System::Process.new(pid)
+     end
+   {% end %}
+   ```
+
+3. Remove the type annotation `LibC::PidT` from the parameter:
+   ```crystal
+   {% unless flag?(:interpreted) %}
+     # :nodoc:
+     def initialize(pid)
+       @process_info = Crystal::System::Process.new(pid)
+     end
+   {% end %}
+   ```
+
+This allows the compiler to infer the type, which works correctly on Windows where `LibC::PidT` doesn't exist.
+
+## Step 4: Build Native Libraries
+
+Lune depends on two C libraries for Windows: sqlite3 and webview. Both must be built and placed where the linker can find them.
+
+### sqlite3.lib
+
+1. Download pre-compiled sqlite3 binaries from [sqlite.org](https://www.sqlite.org/download.html):
+   ```powershell
+   $url = "https://www.sqlite.org/2024/sqlite-dll-win-x64-3450000.zip"
+   Invoke-WebRequest -Uri $url -OutFile "C:\temp\sqlite3.zip"
+   Expand-Archive -Path "C:\temp\sqlite3.zip" -DestinationPath "C:\sqlite3"
+   ```
+
+2. Create the import library from the x64 Native Tools Command Prompt:
+   ```cmd
+   cd C:\sqlite3
+   lib /def:sqlite3.def /machine:x64 /out:sqlite3.lib
+   ```
+
+### webview.lib
+
+1. Clone and build the webview repository:
+   ```cmd
+   cd C:\temp
+   git clone https://github.com/webview/webview
+   cd webview
+   ```
+
+2. Configure and build with CMake (requires CMake and Ninja):
+   ```cmd
+   cmake -G Ninja -B build -S . -D CMAKE_BUILD_TYPE=Release
+   cmake --build build
+   ```
+
+3. Copy the built libraries:
+   ```cmd
+   copy C:\temp\webview\build\core\webview.lib "C:\Users\aris\AppData\Local\Programs\Crystal\lib\"
+   copy C:\temp\webview\build\core\webview.dll C:\Users\aris\code\lune\bin\
+   ```
+
+## Step 5: Build Lune CLI
+
+Run from x64 Native Tools Command Prompt with environment variables set:
+
+```cmd
+set LIB=%LIB%;C:\sqlite3;C:\Users\aris\code\lune\lib\webview\ext
+set PATH=%PATH%;C:\sqlite3
+cd C:\Users\aris\code\lune
+"C:\Users\aris\AppData\Local\Programs\Crystal\crystal.exe" build bin/lune.cr -o bin/lune.exe -Dpreview_mt -Dexecution_context
 ```
 
-Or via shards:
+The executable will be at `C:\Users\aris\code\lune\bin\lune.exe`.
 
-```powershell
-shards build --release -Dpreview_mt -Dexecution_context
+## Step 6: Run a Lune App (`lune dev`)
+
+When the CLI spawns `crystal build` for your app, the child process inherits the parent shell's `LIB`. From a vanilla PowerShell or cmd, `LIB` is missing the MSVC base paths (CRT, kernel32, ucrt), so the link step fails with:
+
+```
+Cannot locate the .lib files for the following libraries: sqlite3
 ```
 
-### Mocked build (compile-only sanity check)
+(misleading — it's the missing MSVC base libs that prevent the linker from even getting to sqlite3.)
 
-Useful only for confirming your toolchain links cleanly. The resulting binary's capabilities are all stubbed and it does not run Lune apps:
+The easiest workaround is to run `lune dev` from the **x64 Native Tools Command Prompt**, which has `LIB` already populated. If you must run from regular PowerShell, set `LIB` explicitly first:
 
 ```powershell
-crystal build src/lune_cli.cr -o bin/lune.exe -Dpreview_mt -Dexecution_context -D lune_native_test_mock
+$msvcLib = "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\lib\x64;C:\Program Files (x86)\Windows Kits\10\lib\10.0.26100.0\ucrt\x64;C:\Program Files (x86)\Windows Kits\10\lib\10.0.26100.0\um\x64"
+$env:LIB = "$msvcLib;C:\sqlite3;C:\Users\aris\code\lune\lib\webview\ext"
+$env:PATH = "$env:PATH;C:\sqlite3"
+cd <your-lune-app>
+C:\Users\aris\code\lune\bin\lune.exe dev
+```
+
+Replace the MSVC and Windows Kits version numbers with whatever's installed on your machine (check `C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\` and `C:\Program Files (x86)\Windows Kits\10\lib\`).
+
+### Capability exclusions
+
+Several capabilities are not yet implemented on Windows. Until they land, exclude them in your app's `lune.yml`, otherwise the runtime raises `NotImplementedError`:
+
+```yaml
+capabilities:
+  exclude:
+    - file_watch      # planned: ReadDirectoryChangesW
+    - file_drop
+    - drag_out
+    - context_menu
+    - deep_link
+    - filesystem      # partial
+    - screen          # limited
+    - windows         # multi-window not fully supported
 ```
 
 ## Known Limitations
 
-- **Building a runnable Windows binary is blocked on Crystal 1.21+.** See PR #16933 above.
-- **Running Specs**: `crystal spec` fails for the same reason — Crystal's spec runner uses `Process.new(pid)`. Type-checking with `--no-codegen` is what CI runs today.
-- **WebView2 Runtime**: Once the build works, developers and end-users need the WebView2 runtime installed on Windows 10 and earlier (Windows 11+ includes it).
-- **Real-hardware verification**: the Win32 implementations in v0.11.0 have only been compile-checked. Behaviour can't be confirmed until 1.21 lands and the per-capability walkthrough in [`website/guide/windows-checklist.md`](website/guide/windows-checklist.md) can be executed.
+- **WebView2 Runtime**: Developers and end-users need the WebView2 runtime installed on Windows 10 and earlier (Windows 11+ includes it).
+- **Crystal 1.21.0**: Once released, the stdlib patch in Step 3 becomes unnecessary. Upgrade Crystal and remove the manual fix.
+- **Running Specs**: `crystal spec` fails with the same `LibC::PidT` error. Until Crystal 1.21+, type-checking with `--no-codegen` is the workaround used in CI.
+- **Isolated-context concurrency**: On Windows the webview runs inside `Fiber::ExecutionContext::Isolated` so it can own its thread (Win32 message-loop requirement). Bindings invoked from the webview thread cannot use `Future`, `spawn`, or `Channel#receive` — they raise `Binding execution failed: Concurrency is disabled in isolated contexts`. Known affected calls in the demo: `Clipboard.read`, `System.loadScreen`.
+- **Unimplemented capabilities**: `file_watch`, `file_drop`, `drag_out`, `context_menu`, `deep_link`, and parts of `filesystem`/`screen`/`windows` are not yet wired up on Windows. Exclude them in `lune.yml` (see Step 6) until they're implemented.
 
 ## Troubleshooting
 
@@ -90,17 +189,28 @@ crystal build src/lune_cli.cr -o bin/lune.exe -Dpreview_mt -Dexecution_context -
 
 If you get compilation errors about missing `WebView2.h`:
 
-```powershell
-# Check CPATH
-$env:CPATH
+```cmd
+REM Check CPATH
+echo %CPATH%
 
-# Set it if missing (replace path as needed)
-$env:CPATH = "C:\temp\webview2\Microsoft.Web.WebView2.1.0.3967.48\build\native\include"
+REM Set it if missing (from x64 Native Tools Command Prompt)
+set CPATH=C:\temp\webview2\Microsoft.Web.WebView2.1.0.3967.48\build\native\include
 ```
 
-### Build Fails with `undefined constant LibC::PidT`
+### Build Fails: `Cannot locate the .lib files for the following libraries: sqlite3, webview`
 
-Expected on Crystal 1.20.x. Wait for 1.21.0. If you need to test the toolchain plumbing in the meantime, the mocked build above will link cleanly but produces a non-functional binary.
+Ensure both Step 4a (sqlite3.lib creation) and Step 4b (webview build) are complete, and the `LIB` environment variable includes both paths:
+
+```cmd
+echo %LIB%
+REM Should contain: C:\sqlite3;C:\Users\aris\code\lune\lib\webview\ext
+```
+
+If missing, re-run the `set LIB=...` command in Step 5 before building.
+
+### Build Fails: `Cannot open include file: 'WebView2.h'`
+
+The CPATH environment variable is not set correctly. See the `CPATH is not set` section above, or verify the WebView2 NuGet package was downloaded in Step 1.
 
 ## References
 

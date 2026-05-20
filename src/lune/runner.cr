@@ -258,7 +258,12 @@ module Lune
         all_bind_ctx = Lune::Capability::BindCtx.new(all_stubs)
         registry.all.each do |cap|
           next if resolved.active_ids.includes?(cap.descriptor.id)
-          cap.install(all_bind_ctx) if cap.is_a?(Lune::Capability::Bindable)
+          next unless cap.is_a?(Lune::Capability::Bindable)
+          begin
+            cap.install(all_bind_ctx)
+          rescue ex : NotImplementedError
+            Lune.logger.debug { "Skipping stub install for #{cap.descriptor.label}: #{ex.message}" }
+          end
         end
         Lune::Runtime::Generator.write_js(
           @app.bindings + all_stubs.bindings.select(&.internal?),
