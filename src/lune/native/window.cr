@@ -238,6 +238,7 @@ module Lune
         SM_CXSCREEN  = 0
         SM_CYSCREEN  = 1
 
+        fun is_window = IsWindow(hwnd : Void*) : LibC::Int
         fun get_window_rect = GetWindowRect(hwnd : Void*, rect : Rect*) : LibC::Int
         fun move_window = MoveWindow(hwnd : Void*, x : LibC::Int, y : LibC::Int, w : LibC::Int, h : LibC::Int, repaint : LibC::Int) : LibC::Int
         fun set_window_text_w = SetWindowTextW(hwnd : Void*, text : UInt16*) : LibC::Int
@@ -425,6 +426,19 @@ module Lune
             (rect.right - rect.left).to_i32, (rect.bottom - rect.top).to_i32}
         {% else %}
           {0, 0, 0, 0}
+        {% end %}
+      end
+
+      # True iff the handle still refers to a live OS window. Used by the
+      # Windows WindowState tracker to self-terminate once webview_destroy has
+      # invalidated the HWND.
+      def self.alive?(handle : Void*) : Bool
+        {% if flag?(:lune_native_test_mock) %}
+          true
+        {% elsif flag?(:win32) %}
+          LibUser32.is_window(handle) != 0
+        {% else %}
+          true
         {% end %}
       end
 

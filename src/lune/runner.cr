@@ -93,6 +93,12 @@ module Lune
           if saved = WindowState.load(window_app_name)
             Native::Window.set_frame(handle, saved[:x], saved[:y], saved[:width], saved[:height])
           end
+          {% if flag?(:win32) %}
+            # See WindowState.start_tracker — on Windows the HWND is gone by
+            # the time wv.run returns, so we have to capture the frame while
+            # it's still alive.
+            WindowState.start_tracker(window_app_name, handle)
+          {% end %}
         end
 
         callback_window_loaded_if_set(wv)
@@ -115,10 +121,14 @@ module Lune
           cap.shutdown if cap.is_a?(Lune::Capability::Lifecycle)
         end
 
-        unless {% if flag?(:darwin) %}@options.mac.menubar_mode{% else %}false{% end %}
-          x, y, width, height = Native::Window.get_frame(handle)
-          WindowState.save(window_app_name, x, y, width, height)
-        end
+        {% unless flag?(:win32) %}
+          # Windows persists the frame live via WindowState.start_tracker;
+          # the HWND is already destroyed at this point.
+          unless {% if flag?(:darwin) %}@options.mac.menubar_mode{% else %}false{% end %}
+            x, y, width, height = Native::Window.get_frame(handle)
+            WindowState.save(window_app_name, x, y, width, height)
+          end
+        {% end %}
 
         asset_server.try(&.stop)
         bridge.close!

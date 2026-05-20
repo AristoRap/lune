@@ -40,5 +40,28 @@ module Lune
       n = title.downcase.gsub(/\s+/, "-").gsub(/[^a-z0-9\-]/, "")
       n.empty? ? "lune" : n
     end
+
+    {% if flag?(:win32) %}
+      # On Windows the HWND is destroyed by the time wv.run returns, so the
+      # usual "GetWindowRect on shutdown" path saves all-zeros. Instead, poll
+      # the live window every 500 ms while it's alive and persist on each
+      # tick. IsWindow gives us a clean self-stop signal — once webview_destroy
+      # has fired the handle is no longer a window and the loop exits.
+      def self.start_tracker(app_name : String, handle : Void*) : Nil
+        ::spawn(name: "lune-window-state-tracker") do
+          loop do
+            sleep 500.milliseconds
+            break unless Lune::Native::Window.alive?(handle)
+            x, y, width, height = Lune::Native::Window.get_frame(handle)
+            # During minimize x/y/width/height are bogus (huge negatives), skip
+            # those so we don't persist a minimized frame as the restore target.
+            next if width <= 0 || height <= 0 || x < -10000 || y < -10000
+            save(app_name, x, y, width, height)
+          rescue ex
+            Lune.logger.debug { "WindowState: tracker tick failed — #{ex.message}" }
+          end
+        end
+      end
+    {% end %}
   end
 end

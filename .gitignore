@@ -12,7 +12,7 @@
 /lune.yml
 *.dll
 *.exe
-*.pdd
+*.pdb
 
 # demo — commit source, ignore generated/installed dirs
 demo/lib/
