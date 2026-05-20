@@ -291,6 +291,15 @@ describe "Lune::Capabilities (native)" do
       bridge.register_bindings(app.bindings)
 
       wv.invoke("__lune.notifications.notify", "seq11", [JSON::Any.new("Hello"), JSON::Any.new("World")])
+
+      # notifications.notify is async (its native impl shells out on Win32),
+      # so the callback runs on @async_pool. Wait for the resolve to land.
+      deadline = Time.instant + 2.seconds
+      while Time.instant < deadline
+        break unless wv.resolve_calls.empty?
+        Fiber.yield
+      end
+
       Lune::Native::NotificationsMock.calls.should contain(:show)
       Lune::Native::NotificationsMock.last_title.should eq("Hello")
       Lune::Native::NotificationsMock.last_body.should eq("World")
