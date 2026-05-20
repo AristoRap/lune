@@ -79,7 +79,7 @@ When frontend code calls `api.MyModule.greet("world")`:
 2. The Bridge deserializes them and dispatches to the Crystal method
 3. The return value is serialized as JSON and resolves the `Promise`
 
-All binding calls return a `Promise` on the JavaScript side. Sync Crystal methods resolve immediately on the webview main thread; `async: true` methods run on a dedicated OS thread via `Fiber::ExecutionContext::Isolated`, so `sleep`, channels, and blocking IO all work without freezing the UI.
+All binding calls return a `Promise` on the JavaScript side. Sync Crystal methods resolve inline on the webview thread (see [Threading model](#threading-model)); `async: true` methods run on the `lune-async` `Parallel` pool, so `sleep`, channels, and blocking IO all work without freezing the UI.
 
 ---
 
@@ -114,33 +114,33 @@ Lune balances three constraints: the native UI toolkits (AppKit / GTK / WebView2
 
 The thread that runs the WebView event loop — i.e. that's blocked inside `wv.run`. Sync binding callbacks and `app.events.on` handlers fire on this thread.
 
-| Platform     | Webview thread is…                                                            |
-| ------------ | ----------------------------------------------------------------------------- |
-| macOS, Linux | The **main OS thread** (Cocoa and GTK refuse to run their event loop elsewhere) |
+| Platform     | Webview thread is…                                                                                        |
+| ------------ | --------------------------------------------------------------------------------------------------------- |
+| macOS, Linux | The **main OS thread** (Cocoa and GTK refuse to run their event loop elsewhere)                           |
 | Windows      | A dedicated `Isolated` thread named `webview`. The main thread parks on a channel waiting for it to exit. |
 
 On Unix, this means the main thread is permanently occupied by Cocoa/GTK once `wv.run` is called, and the **default Crystal scheduler is starved** — `spawn` and the signal-loop fiber never get to run. On Windows the main thread stays free; `spawn` works there, but it's still cleaner to use Lune's pools so behaviour is portable.
 
 ### Where each kind of work runs
 
-| Context                                         | Runs on                                                                   | Notes                                                                                                 |
-| ----------------------------------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| Sync binding callbacks (`@[Lune::Bind]`)        | Webview thread                                                            | Keep fast — blocks the UI while running                                                                |
-| `async: true` binding callbacks                 | `lune-async` `Parallel` pool (`System.cpu_count` threads)                  | Full scheduler: `sleep`, channels, blocking IO all work                                                |
-| `app.events.on` handlers                        | Webview thread                                                            | Same as sync bindings; offload heavy work to `app.async`                                              |
-| `app.async { }` tasks                           | `lune-tasks` `Parallel` pool (`System.cpu_count` threads)                  | Use for timers, pollers, anything long-running                                                         |
+| Context                                  | Runs on                                                   | Notes                                                    |
+| ---------------------------------------- | --------------------------------------------------------- | -------------------------------------------------------- |
+| Sync binding callbacks (`@[Lune::Bind]`) | Webview thread                                            | Keep fast — blocks the UI while running                  |
+| `async: true` binding callbacks          | `lune-async` `Parallel` pool (`System.cpu_count` threads) | Full scheduler: `sleep`, channels, blocking IO all work  |
+| `app.events.on` handlers                 | Webview thread                                            | Same as sync bindings; offload heavy work to `app.async` |
+| `app.async { }` tasks                    | `lune-tasks` `Parallel` pool (`System.cpu_count` threads) | Use for timers, pollers, anything long-running           |
 
 ### Dedicated `Isolated` threads (one OS thread each, opt-in by capability)
 
-| Thread name             | When active                              | What it does                                                                          |
-| ----------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------- |
-| `webview`               | Windows always                           | Drives the WebView2 event loop, freeing the main thread for the Crystal scheduler     |
-| `lune-sigchld-pump`     | macOS + Linux always                     | Polls `SignalChildHandler` every 10 ms so `Process.run`/`Shell.spawn` don't hang while the main thread is in Cocoa/GTK |
-| `lune-hotkeys`          | Hotkeys capability active                | macOS Carbon `RegisterEventHotKey`, Linux X11 `XGrabKey`, Windows `RegisterHotKey` + `WM_HOTKEY` pump |
-| `lune-file-watch`       | FileWatch capability active              | macOS kqueue / Linux inotify event loop                                                |
-| `lune-deep-link-ipc`    | DeepLink capability on Linux             | Unix-socket accept loop for warm-start URL forwarding                                  |
-| `lune-stream`           | Stream capability active                 | WebSocket server accept loop (with a 2-thread `lune-stream-pool` for connected clients) |
-| `lune-assets`           | Embedded-asset HTTP server active        | Bound HTTP server (with a 2-thread `lune-assets-pool` for request handling)            |
+| Thread name          | When active                       | What it does                                                                                                           |
+| -------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `webview`            | Windows always                    | Drives the WebView2 event loop, freeing the main thread for the Crystal scheduler                                      |
+| `lune-sigchld-pump`  | macOS + Linux always              | Polls `SignalChildHandler` every 10 ms so `Process.run`/`Shell.spawn` don't hang while the main thread is in Cocoa/GTK |
+| `lune-hotkeys`       | Hotkeys capability active         | macOS Carbon `RegisterEventHotKey`, Linux X11 `XGrabKey`, Windows `RegisterHotKey` + `WM_HOTKEY` pump                  |
+| `lune-file-watch`    | FileWatch capability active       | macOS kqueue / Linux inotify event loop                                                                                |
+| `lune-deep-link-ipc` | DeepLink capability on Linux      | Unix-socket accept loop for warm-start URL forwarding                                                                  |
+| `lune-stream`        | Stream capability active          | WebSocket server accept loop (with a 2-thread `lune-stream-pool` for connected clients)                                |
+| `lune-assets`        | Embedded-asset HTTP server active | Bound HTTP server (with a 2-thread `lune-assets-pool` for request handling)                                            |
 
 ### Rules of thumb
 
