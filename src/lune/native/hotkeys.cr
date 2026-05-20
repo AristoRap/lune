@@ -356,9 +356,12 @@ module Lune
 
         def self.unregister_all : Nil
           return unless @@started
-          op = Op.new(:unregister_all, "", Channel(Bool).new(1))
-          @@ops_mu.synchronize { @@ops << op }
-          op.reply.receive
+          # Fire-and-forget: don't wait on a reply Channel here. This is called
+          # from the runner's shutdown loop on the webview Isolated thread (see
+          # src/lune/runner.cr), where Channel#receive raises Concurrency-
+          # disabled. The pump thread sees @@stopped on its next 10 ms tick and
+          # exits; Windows reclaims any leftover RegisterHotKey registrations
+          # automatically at process exit.
           @@stopped = true
           @@started = false
         end

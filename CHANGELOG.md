@@ -27,6 +27,7 @@
 ### Fixed
 
 - **`Stream` capability on Windows** — the WS server used to run inside a `Fiber::ExecutionContext::Isolated`, which both blocks the `ready.send(nil)` startup handshake on Windows (Isolated disables blocking Channel ops) and prevents `HTTP::Server`'s IOCP-backed accept fibers from being scheduled normally. Dropped the Isolated wrapper and now spawn `server.listen` directly onto a `Parallel` pool. `bind_tcp` is already synchronous so the port is known before the spawn, no handshake needed.
+- **`Hotkeys` cross-Isolated Channel crash on Windows** — `Native::Hotkeys.register`/`unregister`/`unregister_all` all enqueued an op and then blocked on a per-op reply `Channel` to await the pump thread. Called from sync `Hotkeys.register`/`unregister` bindings (which run on the webview Isolated thread) or from the runner's shutdown loop (also webview Isolated), this raised "Concurrency is disabled in isolated contexts" — and on shutdown the cross-Isolated Channel wake also triggered an Invalid memory access. Two-part fix: (1) bindings now declare `async: true` so the callback runs on `@async_pool` (Parallel) where Channel ops are legal; (2) `unregister_all` is fire-and-forget on Win32 (sets `@@stopped` and returns), since the pump thread exits on its next tick and Windows reclaims any leftover `RegisterHotKey` registrations at process exit anyway.
 
 ### Notes
 
