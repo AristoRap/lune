@@ -9,12 +9,12 @@
 | **Core**         | No                                                                        |
 | **Phases**       | Bindable                                                                  |
 | **Hard deps**    | —                                                                         |
-| **Soft deps**    | `event_bus` (menu item clicks emitted as events when event_bus is active) |
+| **Soft deps**    | `events` (menu item clicks emitted as events when events is active) |
 | **Platforms**    | macOS · Linux¹                                                            |
 
 ¹ Requires XWayland on Wayland compositors.
 
-Tray has a soft dependency on `event_bus`. When event_bus is active, tray icon clicks and menu item selections emit events automatically. When event_bus is absent, use the Crystal-side callbacks in the `opts.tray` block instead.
+Tray has a soft dependency on `events`. When events is active, tray icon clicks and menu item selections emit events automatically. When events is absent, use the Crystal-side callbacks in the `opts.tray` block instead.
 
 ---
 
@@ -46,7 +46,7 @@ Lune.run(app) do |opts|
     t.on_right_click = -> { puts "right clicked" }
     t.on_menu_click  = ->(id : String) { puts "menu: #{id}" }
 
-    # Optional: override the event name used when emitting via event_bus.
+    # Optional: override the event name used when emitting via events.
     t.event = "myTrayEvent"  # default: "trayEvent"
 
     # Optional: show the tray icon at boot without a JS `Tray.show("")` call.
@@ -58,7 +58,7 @@ end
 
 | Option             | Type            | Default           | Description                                                  |
 | ------------------ | --------------- | ----------------- | ------------------------------------------------------------ |
-| `event`            | `String`        | `"trayEvent"`     | Event name emitted via EventBus on click / menu select       |
+| `event`            | `String`        | `"trayEvent"`     | Event name emitted via Events on click / menu select       |
 | `on_click`         | `-> Nil`        | —                 | Crystal callback for left-click (full takeover)              |
 | `on_right_click`   | `-> Nil`        | —                 | Crystal callback for right-click (full takeover)             |
 | `on_menu_click`    | `String -> Nil` | emit menu item id | Crystal callback for menu item selection                     |
@@ -84,7 +84,7 @@ await Tray.setMenu([
   { id: "quit", label: "Quit" },
 ]);
 
-// Listen for tray events (requires event_bus)
+// Listen for tray events (requires events)
 Events.on("trayEvent", (payload) => {
   if (payload === "left_click") console.log("plain left click");
   if (payload === "right_click") console.log("plain right click");
@@ -123,7 +123,7 @@ interface TrayMenuItem {
 
 ## Events
 
-When `event_bus` is active (the default), tray interactions emit on the bus:
+When `events` is active (the default), tray interactions emit on the bus:
 
 | Trigger                              | Payload                             |
 | ------------------------------------ | ----------------------------------- |

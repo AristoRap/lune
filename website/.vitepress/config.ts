@@ -40,7 +40,7 @@ export default defineConfig({
           {
             text: 'Core',
             items: [
-              { text: 'EventBus', link: '/capabilities/event-bus' },
+              { text: 'Events', link: '/capabilities/events' },
               { text: 'Stream', link: '/capabilities/stream' },
             ],
           },

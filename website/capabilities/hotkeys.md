@@ -12,7 +12,7 @@ capabilities:
     - hotkeys
 ```
 
-Soft-depends on `event_bus` — hotkey events are delivered via the event bus. If `event_bus` is excluded, hotkey events are silently dropped.
+Soft-depends on `events` — hotkey events are delivered via the event bus. If `events` is excluded, hotkey events are silently dropped.
 
 ## Registering shortcuts
 

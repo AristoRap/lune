@@ -6,13 +6,13 @@ describe Lune::Capability do
       d = Lune::Capability::Descriptor.new(
         id: :my_cap,
         label: "MyCap",
-        deps: [:event_bus],
+        deps: [:events],
         soft_deps: [:stream],
         core: true,
       )
       d.id.should eq(:my_cap)
       d.label.should eq("MyCap")
-      d.deps.should eq([:event_bus])
+      d.deps.should eq([:events])
       d.soft_deps.should eq([:stream])
       d.core.should be_true
     end
@@ -28,7 +28,7 @@ describe Lune::Capability do
   describe "name derives from descriptor.id" do
     it "converts symbol to string" do
       Lune::Capabilities::Clipboard.new.name.should eq("clipboard")
-      Lune::Capabilities::EventBus.new.name.should eq("event_bus")
+      Lune::Capabilities::Events.new.name.should eq("events")
       Lune::Capabilities::ContextMenu.new.name.should eq("context_menu")
       Lune::Capabilities::DragOut.new.name.should eq("drag_out")
       Lune::Capabilities::DeepLink.new.name.should eq("deep_link")
@@ -45,12 +45,12 @@ describe Lune::Capability do
       Lune::Capabilities::Filesystem.new.is_a?(Lune::Capability::Bindable).should be_true
     end
 
-    it "EventBus includes WebviewInject" do
-      Lune::Capabilities::EventBus.new.is_a?(Lune::Capability::WebviewInject).should be_true
+    it "Events includes WebviewInject" do
+      Lune::Capabilities::Events.new.is_a?(Lune::Capability::WebviewInject).should be_true
     end
 
-    it "EventBus does not include Bindable" do
-      Lune::Capabilities::EventBus.new.is_a?(Lune::Capability::Bindable).should be_false
+    it "Events does not include Bindable" do
+      Lune::Capabilities::Events.new.is_a?(Lune::Capability::Bindable).should be_false
     end
 
     it "Channel includes WebviewInject" do
@@ -73,8 +73,8 @@ describe Lune::Capability do
   end
 
   describe "descriptor fields per capability" do
-    it "EventBus is core with no deps" do
-      d = Lune::Capabilities::EventBus::DESCRIPTOR
+    it "Events is core with no deps" do
+      d = Lune::Capabilities::Events::DESCRIPTOR
       d.core.should be_true
       d.deps.should be_empty
     end
@@ -85,20 +85,20 @@ describe Lune::Capability do
       d.deps.should be_empty
     end
 
-    it "ContextMenu declares event_bus as a hard dep" do
-      Lune::Capabilities::ContextMenu::DESCRIPTOR.deps.should contain(:event_bus)
+    it "ContextMenu declares events as a hard dep" do
+      Lune::Capabilities::ContextMenu::DESCRIPTOR.deps.should contain(:events)
     end
 
-    it "FileDrop declares event_bus as a hard dep" do
-      Lune::Capabilities::FileDrop::DESCRIPTOR.deps.should contain(:event_bus)
+    it "FileDrop declares events as a hard dep" do
+      Lune::Capabilities::FileDrop::DESCRIPTOR.deps.should contain(:events)
     end
 
-    it "DeepLink declares event_bus as a hard dep" do
-      Lune::Capabilities::DeepLink::DESCRIPTOR.deps.should contain(:event_bus)
+    it "DeepLink declares events as a hard dep" do
+      Lune::Capabilities::DeepLink::DESCRIPTOR.deps.should contain(:events)
     end
 
-    it "Tray declares event_bus as a soft dep" do
-      Lune::Capabilities::Tray::DESCRIPTOR.soft_deps.should contain(:event_bus)
+    it "Tray declares events as a soft dep" do
+      Lune::Capabilities::Tray::DESCRIPTOR.soft_deps.should contain(:events)
       Lune::Capabilities::Tray::DESCRIPTOR.deps.should be_empty
     end
   end
@@ -175,7 +175,7 @@ describe Lune::Capabilities::Registry do
     end
 
     it "cascade-disables a capability when its hard dep is excluded" do
-      resolved = make_registry.resolve(config_exclude("event_bus"))
+      resolved = make_registry.resolve(config_exclude("events"))
       names = resolved.capabilities.map(&.name)
       names.should_not contain("context_menu")
       names.should_not contain("file_drop")
@@ -183,27 +183,27 @@ describe Lune::Capabilities::Registry do
     end
 
     it "emits a warning for each cascade-disabled capability" do
-      resolved = make_registry.resolve(config_exclude("event_bus"))
+      resolved = make_registry.resolve(config_exclude("events"))
       resolved.warnings.any? { |w| w.includes?("ContextMenu") }.should be_true
       resolved.warnings.any? { |w| w.includes?("FileDrop") }.should be_true
     end
 
     it "keeps a soft-dep capability active when its soft dep is excluded" do
-      resolved = make_registry.resolve(config_exclude("event_bus"))
+      resolved = make_registry.resolve(config_exclude("events"))
       resolved.capabilities.map(&.name).should contain("tray")
     end
 
     it "emits a soft-dep warning when soft dep is absent" do
-      resolved = make_registry.resolve(config_exclude("event_bus"))
-      resolved.warnings.any? { |w| w.includes?("Tray") && w.includes?("event_bus") }.should be_true
+      resolved = make_registry.resolve(config_exclude("events"))
+      resolved.warnings.any? { |w| w.includes?("Tray") && w.includes?("events") }.should be_true
     end
 
     it "places deps before dependents in the sorted result" do
       resolved = make_registry.resolve(empty_config)
       names = resolved.capabilities.map(&.name)
-      event_bus_pos = names.index("event_bus").not_nil!
+      events_pos = names.index("events").not_nil!
       context_menu_pos = names.index("context_menu").not_nil!
-      event_bus_pos.should be < context_menu_pos
+      events_pos.should be < context_menu_pos
     end
 
     it "active_ids returns a set of symbols for the resolved capabilities" do

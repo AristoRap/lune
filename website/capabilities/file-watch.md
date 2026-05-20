@@ -8,12 +8,12 @@
 | **JS namespace** | `FileWatch`                      |
 | **Core**         | No                               |
 | **Phases**       | Bindable · Lifecycle             |
-| **Hard deps**    | `event_bus`                      |
+| **Hard deps**    | `events`                      |
 | **Platforms**    | macOS (kqueue) · Linux (inotify) |
 
 Backed by **kqueue** (`EVFILT_VNODE`) on macOS and **inotify** on Linux — no polling, no extra dependencies. The watcher runs on a dedicated OS thread and never stalls the UI. All watches are released automatically on window close.
 
-Disabling `event_bus` automatically disables this capability.
+Disabling `events` automatically disables this capability.
 
 ---
 
@@ -23,7 +23,7 @@ Disabling `event_bus` automatically disables this capability.
 capabilities:
   include:
     - file_watch
-    - event_bus # required
+    - events # required
 ```
 
 Or omit `capabilities:` entirely.

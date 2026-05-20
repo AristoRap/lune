@@ -20,6 +20,9 @@
 ### Breaking
 
 - **`opts.drop` → `opts.file_drop`** — the options block and its backing class now match the `file_drop` capability key (in `lune.yml`) and the `FileDrop` JS namespace. `Lune::Options::Drop` is renamed to `Lune::Options::FileDrop`. Migration is mechanical: replace `opts.drop do |d| … d.zone = … end` with `opts.file_drop do |fd| … fd.zone = … end`. Property names inside the block (`zone`, `value`, `on_drop`, `disable_webview_drop`) are unchanged.
+- **`event_bus` capability renamed to `events`** — so the config key, capability class, JS namespace, and `app.events.emit` runtime accessor all share the same word. Migration: in `lune.yml`, replace `event_bus` with `events` in any `include`/`exclude` list; in Crystal user code, `Lune::Capabilities::EventBus` is now `Lune::Capabilities::Events`. The JS API (`Events.on/off/emit/once`) is unchanged.
+- **`Lune::Native::Dialog` → `Lune::Native::Dialogs`** and **`Lune::Native::Notify` → `Lune::Native::Notifications`** — the internal native modules now match their capability and JS namespace names (`Dialogs`, `Notifications`). Only impacts code that reached past the capability layer directly into `Lune::Native::*`; user-facing JS APIs (`Dialogs.openFile`, `Notifications.show`) are unchanged. Underlying files renamed: `src/lune/native/dialog.cr` → `dialogs.cr`, `src/lune/native/notify.cr` → `notifications.cr`, plus the platform shims (`ext/native/{macos,linux}/{dialog,notify}.{m,c}` → `{dialogs,notifications}.{m,c}`).
+- **DESCRIPTOR labels `"SQLite"` / `"KV"` → `"Sqlite"` / `"Kv"`** — descriptor labels now match the class casing and the JS namespace. The capability matrix and any other tooling that consumes `descriptor.label` (e.g. logging) will show the new casing.
 
 ### Notes
 

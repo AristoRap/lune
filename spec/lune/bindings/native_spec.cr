@@ -17,9 +17,9 @@ handle = Pointer(Void).null
 describe "Lune::Capabilities (native)" do
   before_each do
     Lune::Native::WindowMock.reset
-    Lune::Native::DialogMock.reset
+    Lune::Native::DialogsMock.reset
     Lune::Native::TrayMock.reset
-    Lune::Native::NotifyMock.reset
+    Lune::Native::NotificationsMock.reset
     Lune::Native::ScreenMock.reset
   end
 
@@ -125,7 +125,7 @@ describe "Lune::Capabilities (native)" do
 
   describe Lune::Capabilities::Dialogs do
     it "open_file binding returns the selected path" do
-      Lune::Native::DialogMock.stub_open("/home/user/file.txt")
+      Lune::Native::DialogsMock.stub_open("/home/user/file.txt")
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
@@ -133,12 +133,12 @@ describe "Lune::Capabilities (native)" do
       bridge.register_bindings(app.bindings)
 
       wv.invoke("__lune.dialogs.open_file", "seq6", [JSON::Any.new("Pick")])
-      Lune::Native::DialogMock.calls.map(&.method).should contain(:open_file)
+      Lune::Native::DialogsMock.calls.map(&.method).should contain(:open_file)
       wv.resolve_calls.find { |r| r[0] == "seq6" }.not_nil![2].should contain("/home/user/file.txt")
     end
 
     it "save_file binding returns the chosen save path" do
-      Lune::Native::DialogMock.stub_save("/home/user/out.csv")
+      Lune::Native::DialogsMock.stub_save("/home/user/out.csv")
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
@@ -146,12 +146,12 @@ describe "Lune::Capabilities (native)" do
       bridge.register_bindings(app.bindings)
 
       wv.invoke("__lune.dialogs.save_file", "seq7", [JSON::Any.new("Save"), JSON::Any.new("data.csv")])
-      Lune::Native::DialogMock.calls.map(&.method).should contain(:save_file)
+      Lune::Native::DialogsMock.calls.map(&.method).should contain(:save_file)
       wv.resolve_calls.find { |r| r[0] == "seq7" }.not_nil![2].should contain("/home/user/out.csv")
     end
 
     it "open_dir binding returns the selected directory" do
-      Lune::Native::DialogMock.stub_open_dir("/home/user/docs")
+      Lune::Native::DialogsMock.stub_open_dir("/home/user/docs")
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
@@ -159,12 +159,12 @@ describe "Lune::Capabilities (native)" do
       bridge.register_bindings(app.bindings)
 
       wv.invoke("__lune.dialogs.open_dir", "seq8a", [JSON::Any.new("Pick folder")])
-      Lune::Native::DialogMock.calls.map(&.method).should contain(:open_dir)
+      Lune::Native::DialogsMock.calls.map(&.method).should contain(:open_dir)
       wv.resolve_calls.find { |r| r[0] == "seq8a" }.not_nil![2].should contain("/home/user/docs")
     end
 
     it "open_files binding returns a JSON array of paths" do
-      Lune::Native::DialogMock.stub_open_files(["/a/one.txt", "/b/two.txt"])
+      Lune::Native::DialogsMock.stub_open_files(["/a/one.txt", "/b/two.txt"])
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
@@ -172,7 +172,7 @@ describe "Lune::Capabilities (native)" do
       bridge.register_bindings(app.bindings)
 
       wv.invoke("__lune.dialogs.open_files", "seq8b", [JSON::Any.new("Pick files")])
-      Lune::Native::DialogMock.calls.map(&.method).should contain(:open_files)
+      Lune::Native::DialogsMock.calls.map(&.method).should contain(:open_files)
       result = JSON.parse(wv.resolve_calls.find { |r| r[0] == "seq8b" }.not_nil![2])
       result.as_a.map(&.as_s).should eq(["/a/one.txt", "/b/two.txt"])
     end
@@ -185,13 +185,13 @@ describe "Lune::Capabilities (native)" do
       bridge.register_bindings(app.bindings)
 
       wv.invoke("__lune.dialogs.message_info", "seq8c", [JSON::Any.new("Title"), JSON::Any.new("Hello")])
-      Lune::Native::DialogMock.calls.map(&.method).should contain(:message)
+      Lune::Native::DialogsMock.calls.map(&.method).should contain(:message)
       _, status, _ = wv.resolve_calls.find { |r| r[0] == "seq8c" }.not_nil!
       status.should eq(0)
     end
 
     it "message_question binding returns Yes or No" do
-      Lune::Native::DialogMock.stub_message("Yes")
+      Lune::Native::DialogsMock.stub_message("Yes")
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
@@ -291,9 +291,9 @@ describe "Lune::Capabilities (native)" do
       bridge.register_bindings(app.bindings)
 
       wv.invoke("__lune.notifications.notify", "seq11", [JSON::Any.new("Hello"), JSON::Any.new("World")])
-      Lune::Native::NotifyMock.calls.should contain(:show)
-      Lune::Native::NotifyMock.last_title.should eq("Hello")
-      Lune::Native::NotifyMock.last_body.should eq("World")
+      Lune::Native::NotificationsMock.calls.should contain(:show)
+      Lune::Native::NotificationsMock.last_title.should eq("Hello")
+      Lune::Native::NotificationsMock.last_body.should eq("World")
     end
   end
 

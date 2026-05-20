@@ -1,7 +1,7 @@
 module Lune
   module Native
     {% if flag?(:lune_native_test_mock) %}
-      module NotifyMock
+      module NotificationsMock
         @@calls = [] of Symbol
         @@last_title : String? = nil
         @@last_body : String? = nil
@@ -26,25 +26,25 @@ module Lune
       @[Link(framework: "AppKit")]
       @[Link(framework: "UserNotifications")]
       @[Link(framework: "Security")]
-      @[Link(ldflags: "#{__DIR__}/../../../ext/native/macos/notify.o")]
-      lib LibNativeNotify
+      @[Link(ldflags: "#{__DIR__}/../../../ext/native/macos/notifications.o")]
+      lib LibNativeNotifications
         fun show_notification(title : LibC::Char*, body : LibC::Char*) : Void
       end
     {% elsif flag?(:linux) %}
       {% system("cd '#{__DIR__}/../../../ext/native/linux' && gcc -c notify.c -o notify.o `pkg-config --cflags libnotify` 2>/dev/null") %}
 
-      @[Link(ldflags: "#{__DIR__}/../../../ext/native/linux/notify.o `pkg-config --libs libnotify`")]
-      lib LibNativeNotify
+      @[Link(ldflags: "#{__DIR__}/../../../ext/native/linux/notifications.o `pkg-config --libs libnotify`")]
+      lib LibNativeNotifications
         fun show_notification(title : LibC::Char*, body : LibC::Char*) : Void
       end
     {% end %}
 
-    module Notify
+    module Notifications
       def self.show(title : String, body : String)
         {% if flag?(:lune_native_test_mock) %}
-          NotifyMock.record_show(title, body)
+          NotificationsMock.record_show(title, body)
         {% elsif flag?(:darwin) || flag?(:linux) %}
-          LibNativeNotify.show_notification(title, body)
+          LibNativeNotifications.show_notification(title, body)
         {% elsif flag?(:win32) %}
           # Shell out to PowerShell + WinRT toast. Title/body travel via
           # env vars so we don't have to escape them into the command line;

@@ -15,7 +15,7 @@ module Lune
           args: ["String"],
           return_type: "String",
           arg_names: ["prompt"],
-          callback: ->(args : Array(JSON::Any)) { JSON::Any.new(Lune::Native::Dialog.open_file(args[0].as_s) || "") },
+          callback: ->(args : Array(JSON::Any)) { JSON::Any.new(Lune::Native::Dialogs.open_file(args[0].as_s) || "") },
         ).binding(binding_namespace))
 
         ctx.register(Definition.new(
@@ -23,7 +23,7 @@ module Lune
           args: ["String"],
           return_type: "String",
           arg_names: ["prompt"],
-          callback: ->(args : Array(JSON::Any)) { JSON::Any.new(Lune::Native::Dialog.open_dir(args[0].as_s) || "") },
+          callback: ->(args : Array(JSON::Any)) { JSON::Any.new(Lune::Native::Dialogs.open_dir(args[0].as_s) || "") },
         ).binding(binding_namespace))
 
         ctx.register(Definition.new(
@@ -32,7 +32,7 @@ module Lune
           return_type: "Array",
           arg_names: ["prompt"],
           ts_return_type: "Promise<string[]>",
-          callback: ->(args : Array(JSON::Any)) { JSON.parse(Lune::Native::Dialog.open_files(args[0].as_s).to_json) },
+          callback: ->(args : Array(JSON::Any)) { JSON.parse(Lune::Native::Dialogs.open_files(args[0].as_s).to_json) },
         ).binding(binding_namespace))
 
         ctx.register(Definition.new(
@@ -40,7 +40,7 @@ module Lune
           args: ["String", "String"],
           return_type: "String",
           arg_names: ["prompt", "filename"],
-          callback: ->(args : Array(JSON::Any)) { JSON::Any.new(Lune::Native::Dialog.save_file(args[0].as_s, args[1].as_s) || "") },
+          callback: ->(args : Array(JSON::Any)) { JSON::Any.new(Lune::Native::Dialogs.save_file(args[0].as_s, args[1].as_s) || "") },
         ).binding(binding_namespace))
 
         [
@@ -56,7 +56,7 @@ module Lune
             return_type: return_type,
             arg_names: ["title", "message"],
             callback: ->(args : Array(JSON::Any)) {
-              result = Lune::Native::Dialog.message(code, args[0].as_s, args[1].as_s)
+              result = Lune::Native::Dialogs.message(code, args[0].as_s, args[1].as_s)
               returns_value ? JSON::Any.new(result) : JSON::Any.new(nil)
             },
           ).binding(binding_namespace))

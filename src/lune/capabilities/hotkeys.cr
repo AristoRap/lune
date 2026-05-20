@@ -4,7 +4,7 @@ module Lune
       include Capability::Bindable
       include Capability::Lifecycle
 
-      DESCRIPTOR = Descriptor.new(id: :hotkeys, label: "Hotkeys", soft_deps: [:event_bus])
+      DESCRIPTOR = Descriptor.new(id: :hotkeys, label: "Hotkeys", soft_deps: [:events])
 
       def descriptor : Descriptor
         DESCRIPTOR

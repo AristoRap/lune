@@ -556,9 +556,9 @@ describe "Lune::Capabilities" do
 
     it "includes core capabilities by name even when they have no bindings" do
       registry = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigCapabilities.new(only: ["event_bus"])
+      caps = Lune::ConfigCapabilities.new(only: ["events"])
       active = registry.active(caps)
-      active.map(&.name).should contain("event_bus")
+      active.map(&.name).should contain("events")
     end
   end
 end

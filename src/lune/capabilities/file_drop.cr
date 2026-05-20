@@ -3,7 +3,7 @@ module Lune
     class FileDrop < Lune::Capability
       include Capability::WebviewInject
 
-      DESCRIPTOR = Descriptor.new(id: :file_drop, label: "FileDrop", deps: [:event_bus])
+      DESCRIPTOR = Descriptor.new(id: :file_drop, label: "FileDrop", deps: [:events])
 
       def descriptor : Descriptor
         DESCRIPTOR

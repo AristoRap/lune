@@ -7,8 +7,8 @@ private def runtime_bindings
   app.bindings.select(&.internal?)
 end
 
-private def event_bus_caps
-  [Lune::Capabilities::EventBus.new] of Lune::Capability
+private def events_caps
+  [Lune::Capabilities::Events.new] of Lune::Capability
 end
 
 private def drag_out_caps
@@ -46,7 +46,7 @@ describe Lune::Runtime do
   end
 
   it "exports Events namespace with on, once, off helpers" do
-    js = Lune::Runtime::Generator.generate_runtime_js([] of Lune::Binding, event_bus_caps)
+    js = Lune::Runtime::Generator.generate_runtime_js([] of Lune::Binding, events_caps)
 
     js.includes?("export const Events").should be_true
     js.includes?("on(name, cb)").should be_true
@@ -57,14 +57,14 @@ describe Lune::Runtime do
   end
 
   it "exports emit for JS-to-Crystal events" do
-    js = Lune::Runtime::Generator.generate_runtime_js([] of Lune::Binding, event_bus_caps)
+    js = Lune::Runtime::Generator.generate_runtime_js([] of Lune::Binding, events_caps)
 
     js.includes?("emit(name, data)").should be_true
     js.includes?("__lune.jsEmit").should be_true
   end
 
   it "declares emit in runtime.d.ts" do
-    dts = Lune::Runtime::Generator.generate_runtime_dts([] of Lune::Binding, event_bus_caps)
+    dts = Lune::Runtime::Generator.generate_runtime_dts([] of Lune::Binding, events_caps)
 
     dts.includes?("emit(name: string").should be_true
   end
@@ -82,7 +82,7 @@ describe Lune::Runtime do
   end
 
   it "generates runtime.d.ts with typed namespace interfaces" do
-    dts = Lune::Runtime::Generator.generate_runtime_dts(runtime_bindings, event_bus_caps)
+    dts = Lune::Runtime::Generator.generate_runtime_dts(runtime_bindings, events_caps)
 
     dts.includes?("LuneEnvironment").should be_true
     dts.includes?("export interface System").should be_true

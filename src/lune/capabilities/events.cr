@@ -1,9 +1,9 @@
 module Lune
   module Capabilities
-    class EventBus < Lune::Capability
+    class Events < Lune::Capability
       include Capability::WebviewInject
 
-      DESCRIPTOR = Descriptor.new(id: :event_bus, label: "EventBus", core: true)
+      DESCRIPTOR = Descriptor.new(id: :events, label: "Events", core: true)
 
       def descriptor : Descriptor
         DESCRIPTOR

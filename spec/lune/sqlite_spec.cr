@@ -5,7 +5,7 @@ describe Lune::Capabilities::Sqlite do
     it "has correct id and label" do
       d = Lune::Capabilities::Sqlite::DESCRIPTOR
       d.id.should eq(:sqlite)
-      d.label.should eq("SQLite")
+      d.label.should eq("Sqlite")
     end
 
     it "has no hard deps" do

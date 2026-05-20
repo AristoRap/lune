@@ -15,7 +15,7 @@ capabilities:
   include:
     - system
     - clipboard
-    - event_bus
+    - events
     - stream
 ```
 
@@ -23,7 +23,7 @@ capabilities:
 
 ## Core vs standard
 
-Two capabilities are marked **core**: `event_bus` and `stream`. They are enabled by default like every other capability — but disabling them has a cascade effect: any capability that hard-depends on them is automatically disabled too, with a warning logged at startup.
+Two capabilities are marked **core**: `events` and `stream`. They are enabled by default like every other capability — but disabling them has a cascade effect: any capability that hard-depends on them is automatically disabled too, with a warning logged at startup.
 
 | Type     | Can be disabled? | Cascade effect                        |
 | -------- | ---------------- | ------------------------------------- |
@@ -55,24 +55,24 @@ Two capabilities are marked **core**: `event_bus` and `stream`. They are enabled
 
 | Capability                       | Config key      | JS namespace    | Core    | Phases                   | Hard deps   | Soft deps   | Platforms                |
 | -------------------------------- | --------------- | --------------- | ------- | ------------------------ | ----------- | ----------- | ------------------------ |
-| [EventBus](./event-bus)          | `event_bus`     | `Events`        | **Yes** | WebviewInject            | —           | —           | all                      |
+| [Events](./events)          | `events`     | `Events`        | **Yes** | WebviewInject            | —           | —           | all                      |
 | [Stream](./stream)               | `stream`        | `Stream`        | **Yes** | WebviewInject            | —           | —           | all                      |
 | [Clipboard](./clipboard)         | `clipboard`     | `Clipboard`     | No      | Bindable                 | —           | —           | all (image: no Win32)    |
-| [ContextMenu](./context-menu)    | `context_menu`  | `ContextMenu`   | No      | Bindable · WebviewInject | `event_bus` | —           | macOS · Windows          |
-| [DeepLink](./deep-link)          | `deep_link`     | `DeepLink`      | No      | Bindable                 | `event_bus` | —           | macOS · Linux · Windows² |
+| [ContextMenu](./context-menu)    | `context_menu`  | `ContextMenu`   | No      | Bindable · WebviewInject | `events` | —           | macOS · Windows          |
+| [DeepLink](./deep-link)          | `deep_link`     | `DeepLink`      | No      | Bindable                 | `events` | —           | macOS · Linux · Windows² |
 | [Dialogs](./dialogs)             | `dialogs`       | `Dialogs`       | No      | Bindable                 | —           | —           | all                      |
 | [DragOut](./drag-out)            | `drag_out`      | `DragOut`       | No      | Bindable                 | —           | —           | macOS                    |
-| [FileDrop](./file-drop)          | `file_drop`     | `FileDrop`      | No      | WebviewInject            | `event_bus` | —           | macOS · Linux            |
-| [FileWatch](./file-watch)        | `file_watch`    | `FileWatch`     | No      | Bindable · Lifecycle     | `event_bus` | —           | macOS · Linux            |
+| [FileDrop](./file-drop)          | `file_drop`     | `FileDrop`      | No      | WebviewInject            | `events` | —           | macOS · Linux            |
+| [FileWatch](./file-watch)        | `file_watch`    | `FileWatch`     | No      | Bindable · Lifecycle     | `events` | —           | macOS · Linux            |
 | [Filesystem](./filesystem)       | `filesystem`    | `Filesystem`    | No      | Bindable                 | —           | —           | all                      |
-| [Hotkeys](./hotkeys)             | `hotkeys`       | `Hotkeys`       | No      | Bindable                 | —           | `event_bus` | macOS · Linux · Windows  |
+| [Hotkeys](./hotkeys)             | `hotkeys`       | `Hotkeys`       | No      | Bindable                 | —           | `events` | macOS · Linux · Windows  |
 | [Notifications](./notifications) | `notifications` | `Notifications` | No      | Bindable                 | —           | —           | all                      |
 | [Screen](./screen)               | `screen`        | `Screen`        | No      | Bindable                 | —           | —           | all                      |
-| [KV](./kv)                       | `kv`            | `Kv`            | No      | Bindable · Lifecycle     | —           | —           | all                      |
+| [Kv](./kv)                       | `kv`            | `Kv`            | No      | Bindable · Lifecycle     | —           | —           | all                      |
 | [Shell](./shell)                 | `shell`         | `Shell`         | No      | Bindable · Lifecycle     | `stream`    | —           | macOS · Linux            |
-| [SQLite](./sqlite)               | `sqlite`        | `Sqlite`        | No      | Bindable · Lifecycle     | —           | —           | all                      |
+| [Sqlite](./sqlite)               | `sqlite`        | `Sqlite`        | No      | Bindable · Lifecycle     | —           | —           | all                      |
 | [System](./system)               | `system`        | `System`        | No      | Bindable                 | —           | —           | all                      |
-| [Tray](./tray)                   | `tray`          | `Tray`          | No      | Bindable                 | —           | `event_bus` | macOS · Linux¹           |
+| [Tray](./tray)                   | `tray`          | `Tray`          | No      | Bindable                 | —           | `events` | macOS · Linux¹           |
 | [Window](./window)               | `window`        | `Window`        | No      | Bindable                 | —           | —           | all (chrome opts macOS)  |
 | [Windows](./windows)             | `windows`       | `Windows`       | No      | Bindable · Lifecycle     | —           | —           | all                      |
 
@@ -86,7 +86,7 @@ Two capabilities are marked **core**: `event_bus` and `stream`. They are enabled
 ## Dependency graph
 
 ```
-EventBus ──► ContextMenu
+Events ──► ContextMenu
          └─► DeepLink
          └─► FileDrop
          └─► FileWatch
@@ -95,5 +95,5 @@ EventBus ──► ContextMenu
 Stream   ──► Shell
 ```
 
-Disabling `event_bus` automatically disables `ContextMenu`, `DeepLink`, `FileDrop`, and `FileWatch`.
+Disabling `events` automatically disables `ContextMenu`, `DeepLink`, `FileDrop`, and `FileWatch`.
 Disabling `stream` automatically disables `Shell`.

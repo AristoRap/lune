@@ -15,7 +15,7 @@ module Lune
           args: ["String", "String"],
           return_type: "Nil",
           arg_names: ["title", "body"],
-          callback: ->(args : Array(JSON::Any)) { Lune::Native::Notify.show(args[0].as_s, args[1].as_s); JSON::Any.new(nil) },
+          callback: ->(args : Array(JSON::Any)) { Lune::Native::Notifications.show(args[0].as_s, args[1].as_s); JSON::Any.new(nil) },
         ).binding(binding_namespace))
       end
     end

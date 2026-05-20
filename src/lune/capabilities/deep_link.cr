@@ -3,7 +3,7 @@ module Lune
     class DeepLink < Lune::Capability
       include Capability::Bindable
 
-      DESCRIPTOR = Descriptor.new(id: :deep_link, label: "DeepLink", deps: [:event_bus])
+      DESCRIPTOR = Descriptor.new(id: :deep_link, label: "DeepLink", deps: [:events])
 
       def descriptor : Descriptor
         DESCRIPTOR

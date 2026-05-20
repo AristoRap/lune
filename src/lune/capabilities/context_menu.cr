@@ -4,7 +4,7 @@ module Lune
       include Capability::Bindable
       include Capability::WebviewInject
 
-      DESCRIPTOR = Descriptor.new(id: :context_menu, label: "ContextMenu", deps: [:event_bus])
+      DESCRIPTOR = Descriptor.new(id: :context_menu, label: "ContextMenu", deps: [:events])
 
       def descriptor : Descriptor
         DESCRIPTOR

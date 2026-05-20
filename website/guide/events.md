@@ -2,7 +2,7 @@
 
 Lune has a unified, bidirectional event bus. Crystal can push events to the frontend, and the frontend can push events back to Crystal — using the same event names on both sides.
 
-For the full API reference see [EventBus capability](../capabilities/event-bus).
+For the full API reference see [Events capability](../capabilities/events).
 
 ---
 
@@ -86,4 +86,4 @@ For high-frequency or ordered data flows, use [Stream](./stream) instead of Even
 
 ---
 
-See [EventBus capability](../capabilities/event-bus) for the full API reference including common patterns, TypeScript types, and listener management.
+See [Events capability](../capabilities/events) for the full API reference including common patterns, TypeScript types, and listener management.

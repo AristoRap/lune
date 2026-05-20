@@ -25,7 +25,7 @@ module Lune
           cap.init_webview(ctx) if cap.is_a?(Lune::Capability::WebviewInject)
         end
 
-        unless ids.includes?(:event_bus)
+        unless ids.includes?(:events)
           js_emit_key = "#{bm}.jsEmit"
           wv.init("(function(){window.#{bm}=window.#{bm}||{};var n=function(){};window.#{bm}.crystalEmit=n;window.#{bm}.on=n;window.#{bm}.off=n;window[#{js_emit_key.inspect}]=function(){return Promise.resolve();};})();")
         end
@@ -44,7 +44,7 @@ module Lune
         on_quit : -> Nil = -> { },
       )
         @all = [
-          Capabilities::EventBus.new,
+          Capabilities::Events.new,
           Capabilities::Stream.new,
           Capabilities::FileDrop.new,
           Capabilities::System.new(on_quit),

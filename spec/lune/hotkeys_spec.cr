@@ -16,8 +16,8 @@ describe Lune::Capabilities::Hotkeys do
       d.label.should eq("Hotkeys")
     end
 
-    it "lists event_bus as a soft dep" do
-      Lune::Capabilities::Hotkeys::DESCRIPTOR.soft_deps.should contain(:event_bus)
+    it "lists events as a soft dep" do
+      Lune::Capabilities::Hotkeys::DESCRIPTOR.soft_deps.should contain(:events)
     end
 
     it "has no hard deps" do
