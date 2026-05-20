@@ -42,6 +42,8 @@ module LuneCLI
         bundle = bundle_name_for(app_entry, name)
         {% if flag?(:darwin) %}
           File.join(BUILD_DIR, "#{bundle}.app")
+        {% elsif flag?(:win32) %}
+          File.join(BUILD_DIR, "#{bundle}.exe")
         {% else %}
           File.join(BUILD_DIR, bundle)
         {% end %}

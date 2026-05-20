@@ -11,6 +11,8 @@
 
 - **`System.openUrl` on Windows** — the default open-URL handler used to fall through to `xdg-open` on every non-darwin OS, which silently broke on Windows. Now an explicit `:win32` branch runs `cmd /c start "" <url>`, so `System.openUrl("https://example.com")` actually opens the user's default browser on Windows.
 - **`System.environment` os string under `:win32`** — the previous `{% else %}` branch lied "windows" on any non-darwin/non-linux target (including hypothetical BSDs). Now `:win32` is matched explicitly and the fallthrough returns `"unknown"`.
+- **`lune build` output path on Windows** — `Commands::Build#output_path_for` now appends `.exe` on `:win32`, matching what Crystal actually produces. Without it, `lune run`'s validation step would refuse to launch the freshly built binary because it looked for `build/bin/myapp` while Crystal had emitted `build/bin/myapp.exe`.
+- **`Lune::Native::Window` basics on Windows** — `minimize`, `maximize`, `center`, `set_title`, `set_size`, `get_frame`, and `set_frame` now drive the HWND directly via `user32.dll` (`ShowWindow`, `MoveWindow`, `SetWindowTextW`, `GetWindowRect`, `SetWindowPos`, `GetSystemMetrics`). Previously these silently no-op'd on Win32, so the runner's `WindowState` restore/save cycle and any `Window.setSize`/`Window.setTitle` JS calls did nothing. The HWND comes from the webview shard's `wv.native_handle(UI_WINDOW)`.
 
 ### Internal
 

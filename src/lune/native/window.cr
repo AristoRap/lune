@@ -207,6 +207,38 @@ module Lune
                             drop_cb : DropCallback, drop_ud : Void*,
                             pos_cb : DragPosCallback, pos_ud : Void*) : Void
       end
+    {% elsif flag?(:win32) %}
+      # Win32 window basics use user32.dll directly — no .o shim needed. The
+      # `handle : Void*` arg is the HWND returned by the webview shard via
+      # `wv.native_handle(Webview::NativeHandleKind::UI_WINDOW)`.
+      @[Link("user32")]
+      lib LibUser32
+        struct Rect
+          left   : LibC::Long
+          top    : LibC::Long
+          right  : LibC::Long
+          bottom : LibC::Long
+        end
+
+        SW_HIDE      =  0
+        SW_SHOWNORMAL =  1
+        SW_MAXIMIZE  =  3
+        SW_MINIMIZE  =  6
+        SW_RESTORE   =  9
+
+        SWP_NOSIZE   = 0x0001_u32
+        SWP_NOZORDER = 0x0004_u32
+
+        SM_CXSCREEN  = 0
+        SM_CYSCREEN  = 1
+
+        fun get_window_rect = GetWindowRect(hwnd : Void*, rect : Rect*) : LibC::Int
+        fun move_window = MoveWindow(hwnd : Void*, x : LibC::Int, y : LibC::Int, w : LibC::Int, h : LibC::Int, repaint : LibC::Int) : LibC::Int
+        fun set_window_text_w = SetWindowTextW(hwnd : Void*, text : UInt16*) : LibC::Int
+        fun show_window = ShowWindow(hwnd : Void*, cmd : LibC::Int) : LibC::Int
+        fun set_window_pos = SetWindowPos(hwnd : Void*, after : Void*, x : LibC::Int, y : LibC::Int, w : LibC::Int, h : LibC::Int, flags : UInt32) : LibC::Int
+        fun get_system_metrics = GetSystemMetrics(index : LibC::Int) : LibC::Int
+      end
     {% end %}
 
     module Window
@@ -216,6 +248,18 @@ module Lune
       @@drop_pos_boxes = {} of Void* => Pointer(Void)
       # Keyed by window handle; holds close procs until they fire (prevents GC).
       @@close_procs = {} of Void* => Proc(Nil)
+
+      {% if flag?(:win32) %}
+        # Pack a Crystal String into a heap-allocated null-terminated UTF-16
+        # buffer for Win32 W-suffix APIs.
+        private def self.to_wstr(s : String) : UInt16*
+          arr = s.to_utf16
+          buf = Pointer(UInt16).malloc(arr.size + 1)
+          arr.size.times { |i| buf[i] = arr[i] }
+          buf[arr.size] = 0_u16
+          buf
+        end
+      {% end %}
 
       def self.disable_webview_drop(handle : Void*)
         {% if flag?(:lune_native_test_mock) %}
@@ -299,6 +343,8 @@ module Lune
           WindowMock.record_minimize
         {% elsif flag?(:darwin) || flag?(:linux) %}
           LibNativeWindow.minimize(handle)
+        {% elsif flag?(:win32) %}
+          LibUser32.show_window(handle, LibUser32::SW_MINIMIZE)
         {% end %}
       end
 
@@ -307,6 +353,8 @@ module Lune
           WindowMock.record_maximize
         {% elsif flag?(:darwin) || flag?(:linux) %}
           LibNativeWindow.maximize(handle)
+        {% elsif flag?(:win32) %}
+          LibUser32.show_window(handle, LibUser32::SW_MAXIMIZE)
         {% end %}
       end
 
@@ -315,6 +363,17 @@ module Lune
           WindowMock.record_center
         {% elsif flag?(:darwin) || flag?(:linux) %}
           LibNativeWindow.center(handle)
+        {% elsif flag?(:win32) %}
+          rect = LibUser32::Rect.new
+          LibUser32.get_window_rect(handle, pointerof(rect))
+          w = (rect.right - rect.left).to_i32
+          h = (rect.bottom - rect.top).to_i32
+          sw = LibUser32.get_system_metrics(LibUser32::SM_CXSCREEN)
+          sh = LibUser32.get_system_metrics(LibUser32::SM_CYSCREEN)
+          x = ((sw - w) // 2).to_i32
+          y = ((sh - h) // 2).to_i32
+          LibUser32.set_window_pos(handle, Pointer(Void).null, x, y, 0, 0,
+            LibUser32::SWP_NOSIZE | LibUser32::SWP_NOZORDER)
         {% end %}
       end
 
@@ -323,6 +382,8 @@ module Lune
           WindowMock.record_set_title(title)
         {% elsif flag?(:darwin) || flag?(:linux) %}
           LibNativeWindow.set_title(handle, title)
+        {% elsif flag?(:win32) %}
+          LibUser32.set_window_text_w(handle, to_wstr(title))
         {% end %}
       end
 
@@ -331,6 +392,11 @@ module Lune
           WindowMock.record_set_size(width, height)
         {% elsif flag?(:darwin) || flag?(:linux) %}
           LibNativeWindow.set_size(handle, width, height)
+        {% elsif flag?(:win32) %}
+          # Preserve current position; only resize.
+          rect = LibUser32::Rect.new
+          LibUser32.get_window_rect(handle, pointerof(rect))
+          LibUser32.move_window(handle, rect.left.to_i32, rect.top.to_i32, width, height, 1)
         {% end %}
       end
 
@@ -340,6 +406,11 @@ module Lune
         {% elsif flag?(:darwin) || flag?(:linux) %}
           f = LibNativeWindow.get_frame(handle)
           {f.x.to_i32, f.y.to_i32, f.width.to_i32, f.height.to_i32}
+        {% elsif flag?(:win32) %}
+          rect = LibUser32::Rect.new
+          LibUser32.get_window_rect(handle, pointerof(rect))
+          {rect.left.to_i32, rect.top.to_i32,
+            (rect.right - rect.left).to_i32, (rect.bottom - rect.top).to_i32}
         {% else %}
           {0, 0, 0, 0}
         {% end %}
@@ -350,6 +421,8 @@ module Lune
           WindowMock.record_set_frame(x, y, width, height)
         {% elsif flag?(:darwin) || flag?(:linux) %}
           LibNativeWindow.set_frame(handle, x, y, width, height)
+        {% elsif flag?(:win32) %}
+          LibUser32.move_window(handle, x, y, width, height, 1)
         {% end %}
       end
 
