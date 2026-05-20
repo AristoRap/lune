@@ -7,6 +7,11 @@
 - **Explicit `:win32` stubs across native modules** — every Lune::Native method that has both a darwin and a linux implementation now also has an explicit `{% elsif flag?(:win32) %}` branch that raises `NotImplementedError` with a clear "(v0.10.0 backlog)" message. Affects `Dialog.*`, `Clipboard.read_html/write_html/read_image/write_image`, `Notify.show`, `Screen.info`, `Tray.show/hide/set_icon/set_menu`, `FileWatch` (start/add_watch/remove_watch), `Hotkeys.init/register/unregister`, `Window.disable_webview_drop`/`setup_file_drop`, and `DeepLink.install`. Methods that have always been macOS-only (window chrome customisation, drag-out, `Menu.*`, `Tray.popup_menu`/`set_right_click_cb`/`button_screen_rect`) remain implicit no-ops on Win32, matching the current Linux behaviour. Lets users running on Windows get a precise "not implemented yet" error per capability instead of silent breakage; lifecycle-tied callsites in the runner (`Window.set_frame`/`get_frame`/etc.) keep no-op behaviour so apps still launch.
 - **`Clipboard` Linux branches split out** — previously `read_html`/`write_html`/`read_image`/`write_image` used `{% else %}` as the Linux/xclip path, which silently fell through on Win32 too. Linux paths are now under `{% elsif flag?(:linux) %}` so Win32 doesn't accidentally try to spawn `xclip`.
 
+### Fixed
+
+- **`System.openUrl` on Windows** — the default open-URL handler used to fall through to `xdg-open` on every non-darwin OS, which silently broke on Windows. Now an explicit `:win32` branch runs `cmd /c start "" <url>`, so `System.openUrl("https://example.com")` actually opens the user's default browser on Windows.
+- **`System.environment` os string under `:win32`** — the previous `{% else %}` branch lied "windows" on any non-darwin/non-linux target (including hypothetical BSDs). Now `:win32` is matched explicitly and the fallthrough returns `"unknown"`.
+
 ### Internal
 
 - **Windows compile check in CI** — `specs.yml` now type-checks `src/lune_cli.cr` on `windows-latest` without `-D lune_native_test_mock`, so the real `flag?(:win32)` code paths are verified on every push. The previous mocked compile-check is kept so the test surface is still exercised on Windows too.
