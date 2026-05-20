@@ -9,6 +9,12 @@ module Lune
         DESCRIPTOR
       end
 
+      @app_title : String = "lune"
+
+      def setup(ctx : SetupCtx) : Nil
+        @app_title = ctx.options.title
+      end
+
       def install(ctx : BindCtx) : Nil
         url_from_argv = ARGV.find { |arg| arg.includes?("://") }
 
@@ -17,13 +23,13 @@ module Lune
         # window. macOS doesn't need this (NSApp is single-instance by
         # default); Windows would want named pipes — deferred to v0.12.0.
         {% if flag?(:linux) %}
-          if url_from_argv && Lune::DeepLinkIPC.forward(url_from_argv, ctx.options.title)
+          if url_from_argv && Lune::DeepLinkIPC.forward(url_from_argv, @app_title)
             Lune.logger.info { "DeepLink: forwarded #{url_from_argv} to running instance" }
             Process.exit(0)
           end
 
           # We're the primary — listen for forwards from future invocations.
-          Lune::DeepLinkIPC.listen(ctx.options.title) do |incoming|
+          Lune::DeepLinkIPC.listen(@app_title) do |incoming|
             ctx.app.events.emit("deep_link", {"url" => incoming})
           end
         {% end %}
