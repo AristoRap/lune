@@ -137,7 +137,7 @@ On Unix, this means the main thread is permanently occupied by Cocoa/GTK once `w
 | `webview`            | Windows always                    | Drives the WebView2 event loop, freeing the main thread for the Crystal scheduler                                      |
 | `lune-sigchld-pump`  | macOS + Linux always              | Polls `SignalChildHandler` every 10 ms so `Process.run`/`Shell.spawn` don't hang while the main thread is in Cocoa/GTK |
 | `lune-hotkeys`       | Hotkeys capability active         | macOS Carbon `RegisterEventHotKey`, Linux X11 `XGrabKey`, Windows `RegisterHotKey` + `WM_HOTKEY` pump                  |
-| `lune-file-watch`    | FileWatch capability active       | macOS kqueue / Linux inotify event loop                                                                                |
+| `lune-file-watch`    | FileWatch on macOS + Linux        | macOS kqueue / Linux inotify event loop (not spawned on Windows — no implementation yet)                               |
 | `lune-deep-link-ipc` | DeepLink capability on Linux      | Unix-socket accept loop for warm-start URL forwarding                                                                  |
 | `lune-stream`        | Stream capability active          | WebSocket server accept loop (with a 2-thread `lune-stream-pool` for connected clients)                                |
 | `lune-assets`        | Embedded-asset HTTP server active | Bound HTTP server (with a 2-thread `lune-assets-pool` for request handling)                                            |

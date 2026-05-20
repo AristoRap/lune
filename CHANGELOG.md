@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.11.1] - 2026-05-21
+
+### Fixed
+
+- **Win32 global hotkeys not firing** — `Msg.w_param` was declared as `LibC::ULong` (4 bytes on Windows LLP64) but `WPARAM` is `UINT_PTR` — 8 bytes on 64-bit. Crystal placed `w_param` at offset 12, reading from the 4-byte padding gap (always 0) instead of the real `wParam` at offset 16. `WM_HOTKEY` was arriving; only the ID lookup always returned nil. Fixed by changing to `UInt64`, which forces the correct 8-byte alignment and places `w_param` at offset 16.
+
+### Docs
+
+- Fixed `lune-file-watch` thread table row in `how-it-works.md` — "When active" column now reads "FileWatch on macOS + Linux" so Windows readers don't assume the watcher thread spawns on their platform.
+- Fixed DeepLink footnote `²` in `capabilities/index.md` — "Linux/Windows: cold-start (ARGV) only" was wrong; Linux has Unix-socket warm-start forwarding. Corrected to "Windows: cold-start (ARGV) only".
+- Added `(macOS · Linux only)` qualifier to the FileWatch entry in the getting-started demo table.
+
 ## [0.11.0] - 2026-05-20
 
 > **Windows runtime is blocked on upstream Crystal — but with a manual patch, real-hardware testing is now in progress.** All Win32 code type-checks cleanly on `windows-latest` CI, but full `crystal build` errors out with `undefined constant LibC::PidT` ([crystal#16929](https://github.com/crystal-lang/crystal/issues/16929)). The fix landed in master ([crystal#16933](https://github.com/crystal-lang/crystal/pull/16933)) and is targeted for **Crystal 1.21.0**. Lune itself can't drop below 1.20.1 because it depends on `Fiber::ExecutionContext`. With the one-line stdlib patch from `WINDOWS_SETUP.md` applied, the toolchain compiles and the demo runs end-to-end via `lune dev --debug`. Many capabilities are now verified working on real Windows hardware; gaps and partials are tracked in [`website/guide/windows-checklist.md`](website/guide/windows-checklist.md). See [WINDOWS_SETUP.md](WINDOWS_SETUP.md) for the toolchain bring-up.

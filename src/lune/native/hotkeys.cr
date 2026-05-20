@@ -41,29 +41,29 @@ module Lune
       @[Link("X11")]
       lib LibX11Hotkeys
         alias XDisplay = Void*
-        alias XWindow  = LibC::ULong
+        alias XWindow = LibC::ULong
 
         struct XEvent
           type : LibC::Int
-          pad  : StaticArray(LibC::Long, 23)
+          pad : StaticArray(LibC::Long, 23)
         end
 
         struct XKeyEvent
-          type       : LibC::Int
-          serial     : LibC::ULong
+          type : LibC::Int
+          serial : LibC::ULong
           send_event : LibC::Int
-          display    : XDisplay
-          window     : XWindow
-          root       : XWindow
-          subwindow  : XWindow
-          time       : LibC::ULong
-          x          : LibC::Int
-          y          : LibC::Int
-          x_root     : LibC::Int
-          y_root     : LibC::Int
-          state      : LibC::UInt
-          keycode    : LibC::UInt
-          same_screen: LibC::Int
+          display : XDisplay
+          window : XWindow
+          root : XWindow
+          subwindow : XWindow
+          time : LibC::ULong
+          x : LibC::Int
+          y : LibC::Int
+          x_root : LibC::Int
+          y_root : LibC::Int
+          state : LibC::UInt
+          keycode : LibC::UInt
+          same_screen : LibC::Int
         end
 
         KeyPress      =  2_i32
@@ -103,12 +103,16 @@ module Lune
         end
 
         struct Msg
-          hwnd     : Void*
-          message  : UInt32
-          w_param  : LibC::ULong
-          l_param  : LibC::Long
-          time     : UInt32
-          pt       : Point
+          hwnd : Void*
+          message : UInt32
+          # WPARAM/LPARAM are UINT_PTR/LONG_PTR — 8 bytes on 64-bit Windows.
+          # LibC::ULong is only 4 bytes (LLP64), so we use explicit 64-bit types.
+          # UInt64 forces 8-byte alignment, which inserts the 4-byte padding at
+          # offset 12 that the real MSG struct has, placing w_param at offset 16.
+          w_param : UInt64
+          l_param : Int64
+          time : UInt32
+          pt : Point
           # On modern Windows the struct includes a private DWORD too, but
           # PeekMessage doesn't read past `pt` so we keep the struct minimal.
         end
@@ -120,8 +124,8 @@ module Lune
     {% end %}
 
     module Hotkeys
-      @@box     : Void*? = nil
-      @@started : Bool   = false
+      @@box : Void*? = nil
+      @@started : Bool = false
 
       {% if flag?(:lune_native_test_mock) %}
         def self.init(&handler : String -> Nil)
@@ -142,7 +146,6 @@ module Lune
         def self.unregister_all : Nil
           HotkeysMock.registered.clear
         end
-
       {% elsif flag?(:darwin) %}
         def self.init(&handler : String -> Nil)
           cb = handler
@@ -171,32 +174,31 @@ module Lune
           LibNativeHotkeys.lune_hotkeys_unregister_all if @@started
           @@started = false
         end
-
       {% elsif flag?(:linux) %}
-        @@dpy     : LibX11Hotkeys::XDisplay = Pointer(Void).null
-        @@mu      = Mutex.new
+        @@dpy : LibX11Hotkeys::XDisplay = Pointer(Void).null
+        @@mu = Mutex.new
         @@hotkeys = {} of String => {LibC::Int, LibC::UInt}
         @@handler : (String -> Nil)? = nil
 
         private def self.normalize_key(name : String) : String
           case name.downcase
-          when "space"              then "space"
-          when "return", "enter"    then "Return"
-          when "tab"                then "Tab"
-          when "backspace", "back"  then "BackSpace"
-          when "delete", "del"      then "Delete"
-          when "escape", "esc"      then "Escape"
-          when "left"               then "Left"
-          when "right"              then "Right"
-          when "up"                 then "Up"
-          when "down"               then "Down"
-          when "home"               then "Home"
-          when "end"                then "End"
-          when "pageup", "pgup"     then "Page_Up"
-          when "pagedown", "pgdn"   then "Page_Down"
-          when "insert"             then "Insert"
-          when /^f(\d+)$/           then "F#{$~[1]}"
-          else                           name.downcase
+          when "space"             then "space"
+          when "return", "enter"   then "Return"
+          when "tab"               then "Tab"
+          when "backspace", "back" then "BackSpace"
+          when "delete", "del"     then "Delete"
+          when "escape", "esc"     then "Escape"
+          when "left"              then "Left"
+          when "right"             then "Right"
+          when "up"                then "Up"
+          when "down"              then "Down"
+          when "home"              then "Home"
+          when "end"               then "End"
+          when "pageup", "pgup"    then "Page_Up"
+          when "pagedown", "pgdn"  then "Page_Down"
+          when "insert"            then "Insert"
+          when /^f(\d+)$/          then "F#{$~[1]}"
+          else                          name.downcase
           end
         end
 
@@ -205,17 +207,17 @@ module Lune
           key_name = ""
           accelerator.split("+").each do |part|
             case part.downcase
-            when "ctrl", "control"          then mods |= LibX11Hotkeys::ControlMask
-            when "shift"                    then mods |= LibX11Hotkeys::ShiftMask
-            when "alt"                      then mods |= LibX11Hotkeys::Mod1Mask
-            when "super", "cmd", "command"  then mods |= LibX11Hotkeys::Mod4Mask
-            else key_name = part
+            when "ctrl", "control"         then mods |= LibX11Hotkeys::ControlMask
+            when "shift"                   then mods |= LibX11Hotkeys::ShiftMask
+            when "alt"                     then mods |= LibX11Hotkeys::Mod1Mask
+            when "super", "cmd", "command" then mods |= LibX11Hotkeys::Mod4Mask
+            else                                key_name = part
             end
           end
           return nil if key_name.empty?
           norm = normalize_key(key_name)
-          sym  = LibX11Hotkeys.XStringToKeysym(norm)
-          sym  = LibX11Hotkeys.XStringToKeysym(key_name) if sym == 0
+          sym = LibX11Hotkeys.XStringToKeysym(norm)
+          sym = LibX11Hotkeys.XStringToKeysym(key_name) if sym == 0
           return nil if sym == 0
           code = LibX11Hotkeys.XKeysymToKeycode(dpy, sym.to_u64)
           return nil if code == 0
@@ -225,7 +227,7 @@ module Lune
         def self.init(&handler : String -> Nil)
           dpy = LibX11Hotkeys.XOpenDisplay(Pointer(LibC::Char).null)
           return if dpy.null?
-          @@dpy     = dpy
+          @@dpy = dpy
           @@handler = handler
           @@started = true
 
@@ -239,9 +241,9 @@ module Lune
               end
               LibX11Hotkeys.XNextEvent(dpy, pointerof(event))
               next unless event.type == LibX11Hotkeys::KeyPress
-              ke    = pointerof(event).as(LibX11Hotkeys::XKeyEvent*).value
-              state = ke.state & ~0x2000_u32  # strip Mod2 (NumLock)
-              cb    = @@handler
+              ke = pointerof(event).as(LibX11Hotkeys::XKeyEvent*).value
+              state = ke.state & ~0x2000_u32 # strip Mod2 (NumLock)
+              cb = @@handler
               @@mu.synchronize do
                 @@hotkeys.each do |acc, (code, mods)|
                   cb.try(&.call(acc)) if ke.keycode == code.to_u32 && state == mods
@@ -280,13 +282,12 @@ module Lune
 
         def self.unregister_all : Nil
           return unless @@started && !@@dpy.null?
-          root    = LibX11Hotkeys.XDefaultRootWindow(@@dpy)
+          root = LibX11Hotkeys.XDefaultRootWindow(@@dpy)
           entries = @@mu.synchronize { h = @@hotkeys.dup; @@hotkeys.clear; h }
           entries.each { |_, (code, mods)| LibX11Hotkeys.XUngrabKey(@@dpy, code, mods, root) }
           LibX11Hotkeys.XFlush(@@dpy)
           @@started = false
         end
-
       {% elsif flag?(:win32) %}
         # Win32 RegisterHotKey is per-thread when hwnd=NULL: WM_HOTKEY arrives
         # in the message queue of the calling thread. We pin all hotkey state
@@ -297,13 +298,13 @@ module Lune
 
         record Op, action : Symbol, accelerator : String, reply : Channel(Bool)
 
-        @@handler  : (String -> Nil)? = nil
-        @@ops_mu   = Mutex.new
-        @@ops      = [] of Op
+        @@handler : (String -> Nil)? = nil
+        @@ops_mu = Mutex.new
+        @@ops = [] of Op
         @@id_to_acc = {} of LibC::Int => String
         @@acc_to_id = {} of String => LibC::Int
-        @@next_id  : LibC::Int = 1
-        @@stopped  : Bool = false
+        @@next_id : LibC::Int = 1
+        @@stopped : Bool = false
 
         def self.init(&handler : String -> Nil)
           return if @@started
@@ -408,15 +409,15 @@ module Lune
         # Returns nil if the key portion can't be mapped to a VK code.
         private def self.parse_accelerator(accelerator : String) : {UInt32, UInt32}?
           mods = 0_u32
-          key  = ""
+          key = ""
           accelerator.split("+").each do |raw|
             part = raw.strip
             case part.downcase
-            when "ctrl", "control"        then mods |= LibUser32Hotkeys::MOD_CONTROL
-            when "shift"                  then mods |= LibUser32Hotkeys::MOD_SHIFT
-            when "alt", "option"          then mods |= LibUser32Hotkeys::MOD_ALT
+            when "ctrl", "control"                then mods |= LibUser32Hotkeys::MOD_CONTROL
+            when "shift"                          then mods |= LibUser32Hotkeys::MOD_SHIFT
+            when "alt", "option"                  then mods |= LibUser32Hotkeys::MOD_ALT
             when "win", "super", "cmd", "command" then mods |= LibUser32Hotkeys::MOD_WIN
-            else key = part
+            else                                       key = part
             end
           end
           return nil if key.empty?
@@ -447,14 +448,21 @@ module Lune
           when /^f(\d+)$/
             n = $~[1].to_i
             n.in?(1..24) ? (0x70_u32 + (n - 1).to_u32) : nil
-          when /^[a-z0-9]$/        then name.upcase[0].ord.to_u32
-          else                          nil
+          when /^[a-z0-9]$/ then name.upcase[0].ord.to_u32
+          else                   nil
           end
         end
       {% else %}
         def self.init(&handler : String -> Nil); end
-        def self.register(accelerator : String) : Bool; false; end
-        def self.unregister(accelerator : String) : Bool; false; end
+
+        def self.register(accelerator : String) : Bool
+          false
+        end
+
+        def self.unregister(accelerator : String) : Bool
+          false
+        end
+
         def self.unregister_all : Nil; end
       {% end %}
     end

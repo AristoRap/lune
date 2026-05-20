@@ -68,7 +68,7 @@ Add it to your `shard.yml`:
 dependencies:
   lune:
     github: AristoRap/lune
-    version: ~> 0.11.0
+    version: ~> 0.11.1
 ```
 
 Then install:
@@ -174,21 +174,21 @@ This builds the frontend with Vite, then compiles the Crystal binary with the fr
 
 The repository ships with a full showcase in `demo/` — a Vue 3 app that exercises every part of the Lune API in one window:
 
-| Section      | What it shows                                                                              |
-| ------------ | ------------------------------------------------------------------------------------------ |
-| Bindings     | `@[Lune::Bind]` — calling Crystal methods from JS as async functions                       |
-| Events       | Live clock (Crystal → JS), ping/pong roundtrip with latency, async file-progress           |
-| Stream       | Live ticker and ping/pong over `Stream` — high-throughput WebSocket IPC                    |
-| System       | `System.environment()`, `Screen.info()`, native notifications                              |
-| Clipboard    | `Clipboard.read/write`, `Clipboard.readHtml/writeHtml`, `Clipboard.readImage/writeImage`   |
-| Window       | `Window.minimize`, `Window.maximize`, `Window.center`, `Window.setTitle`, `Window.setSize` |
-| Dialogs      | File pickers (`Dialogs.openFile`, `openFiles`, `openDir`, `saveFile`) and message dialogs  |
-| Tray         | Status-bar icon with click and menu-item event log                                         |
-| Context Menu | `ContextMenu.set` / `clear` / `onSelect` — native right-click menu with item selection     |
-| Drag Out     | `DragOut.start(paths)` — drag local files out of the window into Finder or other apps      |
-| Deep Links   | `url_schemes` config, `DeepLink.on(cb)` — receive OS-routed custom URL scheme links        |
-| File Watch   | `FileWatch.watch(path)` / `on(cb)` — live filesystem change events, no polling             |
-| Capabilities | Runtime capability filtering (`include` / `exclude`) with live binding list                |
+| Section      | What it shows                                                                                       |
+| ------------ | --------------------------------------------------------------------------------------------------- |
+| Bindings     | `@[Lune::Bind]` — calling Crystal methods from JS as async functions                                |
+| Events       | Live clock (Crystal → JS), ping/pong roundtrip with latency, async file-progress                    |
+| Stream       | Live ticker and ping/pong over `Stream` — high-throughput WebSocket IPC                             |
+| System       | `System.environment()`, `Screen.info()`, native notifications                                       |
+| Clipboard    | `Clipboard.read/write`, `Clipboard.readHtml/writeHtml`, `Clipboard.readImage/writeImage`            |
+| Window       | `Window.minimize`, `Window.maximize`, `Window.center`, `Window.setTitle`, `Window.setSize`          |
+| Dialogs      | File pickers (`Dialogs.openFile`, `openFiles`, `openDir`, `saveFile`) and message dialogs           |
+| Tray         | Status-bar icon with click and menu-item event log                                                  |
+| Context Menu | `ContextMenu.set` / `clear` / `onSelect` — native right-click menu with item selection              |
+| Drag Out     | `DragOut.start(paths)` — drag local files out of the window into Finder or other apps               |
+| Deep Links   | `url_schemes` config, `DeepLink.on(cb)` — receive OS-routed custom URL scheme links                 |
+| File Watch   | `FileWatch.watch(path)` / `on(cb)` — live filesystem change events, no polling (macOS · Linux only) |
+| Capabilities | Runtime capability filtering (`include` / `exclude`) with live binding list                         |
 
 Run it from the repo root:
 
