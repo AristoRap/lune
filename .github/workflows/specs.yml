@@ -30,7 +30,6 @@ jobs:
             spec_flags: "-Dpreview_mt -Dexecution_context"
           - os: windows-latest
             spec_flags: "-Dpreview_mt -Dexecution_context"
-            compile_check_only: true
 
     steps:
       - name: Checkout
@@ -45,31 +44,37 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libnotify-dev
 
+      - name: Setup MSVC dev environment (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
       - name: Install WebView2 SDK headers (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           nuget install Microsoft.Web.WebView2 -OutputDirectory "$env:RUNNER_TEMP\webview2"
           $includeDir = (Get-ChildItem "$env:RUNNER_TEMP\webview2" -Filter "Microsoft.Web.WebView2.*" | Select-Object -First 1).FullName
-          echo "CPATH=$includeDir\build\native\include" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "WEBVIEW2_INCLUDE=$includeDir\build\native\include" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Install shards
         run: shards install
 
+      # Crystal/MSVC links against webview.lib by name (the webview shard uses
+      # `@[Link("webview")]` on Windows). The upstream shard ships only the C++
+      # source — we build it with cl.exe and place webview.lib next to the
+      # .cc file, then append that directory to %LIB% so the Crystal linker
+      # finds it during `crystal spec`.
+      - name: Build webview.lib (Windows)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          cl.exe /nologo /c /EHsc /std:c++17 /I "%WEBVIEW2_INCLUDE%" lib\webview\ext\webview.cc /Fo:lib\webview\ext\webview.obj
+          if errorlevel 1 exit /b 1
+          lib.exe /nologo /OUT:lib\webview\ext\webview.lib lib\webview\ext\webview.obj
+          if errorlevel 1 exit /b 1
+          echo LIB=%LIB%;%CD%\lib\webview\ext>> %GITHUB_ENV%
+
       - name: Run all specs
-        if: ${{ !matrix.compile_check_only }}
         run: crystal spec -D lune_native_test_mock ${{ matrix.spec_flags }}
-
-      # Mocked compile — exercises the test surface on Windows (mock branch wins
-      # every macro, so platform code is not actually verified).
-      - name: Type-check mocked build (Windows)
-        if: ${{ matrix.compile_check_only }}
-        run: crystal build src/lune_cli.cr -D lune_native_test_mock ${{ matrix.spec_flags }} --no-codegen
-
-      # Real compile — drops the mock flag so `flag?(:win32)` branches actually
-      # expand. This is the build that proves a Windows port is compile-clean;
-      # webview linking is still skipped via --no-codegen because the upstream
-      # webview shard pulls WebView2 only during link.
-      - name: Type-check real Windows build
-        if: ${{ matrix.compile_check_only }}
-        run: crystal build src/lune_cli.cr ${{ matrix.spec_flags }} --no-codegen
