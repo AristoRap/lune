@@ -68,7 +68,7 @@ The runtime declarations include:
 export interface LuneEnvironment {
   os: "darwin" | "linux" | "windows";
   arch: string;
-  debug: boolean;
+  devtools: boolean;
 }
 
 export interface LuneError {

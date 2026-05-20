@@ -39,7 +39,7 @@ describe Lune::Options do
     end
 
     it "is not in debug mode" do
-      Lune::Options.new.debug.should be_false
+      Lune::Options.new.devtools.should be_false
     end
 
     it "has no on_navigate callback" do
@@ -100,8 +100,8 @@ describe Lune::Options do
 
     it "accepts debug true" do
       opts = Lune::Options.new
-      opts.debug = true
-      opts.debug.should be_true
+      opts.devtools = true
+      opts.devtools.should be_true
     end
 
     it "accepts an on_navigate callback and calls it with a url" do

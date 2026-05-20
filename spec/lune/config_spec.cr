@@ -18,7 +18,7 @@ describe Lune::Config do
         config.window.width.should be_nil
         config.window.height.should be_nil
         config.window.resizable.should be_nil
-        config.window.debug.should be_nil
+        config.window.devtools.should be_nil
       end
     end
 
@@ -58,9 +58,9 @@ describe Lune::Config do
       end
     end
 
-    it "parses window.debug true" do
-      with_lune_yml("window:\n  debug: true") do
-        Lune::Config.load.window.debug.should be_true
+    it "parses window.devtools true" do
+      with_lune_yml("window:\n  devtools: true") do
+        Lune::Config.load.window.devtools.should be_true
       end
     end
 
@@ -114,7 +114,7 @@ describe Lune::Options do
       opts.width.should eq(1200)
       opts.height.should eq(800)
       opts.resizable.should be_true
-      opts.debug.should be_false
+      opts.devtools.should be_false
       opts.min_width.should be_nil
       opts.min_height.should be_nil
       opts.max_width.should be_nil
@@ -161,12 +161,12 @@ describe Lune::Options do
       opts.resizable.should be_false
     end
 
-    it "applies debug true" do
+    it "applies devtools true" do
       opts = Lune::Options.new
       win = Lune::Config::Window.new
-      win.debug = true
+      win.devtools = true
       opts.apply(win)
-      opts.debug.should be_true
+      opts.devtools.should be_true
     end
 
     it "does not apply nil fields — existing value is preserved" do

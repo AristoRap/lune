@@ -38,7 +38,7 @@ module Lune
       property max_width : Int32? = nil
       property max_height : Int32? = nil
       property resizable : Bool? = nil
-      property debug : Bool? = nil
+      property devtools : Bool? = nil
 
       def initialize; end
     end

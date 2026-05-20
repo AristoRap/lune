@@ -16,7 +16,7 @@ window:
 ```crystal
 # src/main.cr — opts block overrides lune.yml values
 Lune.run(app, assets: "frontend/dist") do |opts|
-  opts.debug = true   # override just this one
+  opts.devtools = true   # override just this one
 end
 ```
 
@@ -109,21 +109,19 @@ opts.max_height = 1080
 
 ---
 
-### `debug`
+### `devtools`
 
 **Type:** `Bool` — **Default:** `false`
 
-When `true`, enables the WebView developer tools (right-click → Inspect on macOS/Linux). Useful during development.
+Enables the WebView developer tools panel (right-click → Inspect on macOS/Linux). This is the **WebView inspector** — it is unrelated to the CLI `--debug` flag, which controls verbose runtime logging.
+
+Use the built-in `:lune_dev` compile flag so it's on during `lune dev` and automatically off in production — no manual wiring needed:
 
 ```crystal
-opts.debug = true
+opts.devtools = {{ flag?(:lune_dev) }}
 ```
 
-You can wire this to a compile-time flag so it's only active in dev builds:
-
-```crystal
-opts.debug = {{ flag?(:debug) }}
-```
+`lune dev` passes `-Dlune_dev` to the compiler automatically. `lune build` does not, so the expression evaluates to `false` in production builds.
 
 ---
 
@@ -782,7 +780,7 @@ Lune.run(app) do |opts|
   opts.min_height          = 600
   opts.resizable           = true
   opts.disable_context_menu = true
-  opts.debug               = {{ flag?(:debug) }}
+  opts.devtools               = {{ flag?(:lune_dev) }}
 
   opts.drop do |d|
     d.zone    = "--lune-drop-target"

@@ -297,10 +297,10 @@ window:
   max_width: 1920 # Int      — maximum resizable width
   max_height: 1080 # Int      — maximum resizable height
   resizable: true # Bool     — whether the window can be resized
-  debug: false # Bool     — enable WebView devtools
+  devtools: false # Bool     — enable WebView devtools (right-click → Inspect)
 ```
 
-All keys are optional. Omitted keys fall back to the `Lune::Options` defaults (`title: "Lune"`, `width: 1200`, `height: 800`, `resizable: true`, `debug: false`).
+All keys are optional. Omitted keys fall back to the `Lune::Options` defaults (`title: "Lune"`, `width: 1200`, `height: 800`, `resizable: true`, `devtools: false`).
 
 ---
 

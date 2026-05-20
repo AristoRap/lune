@@ -55,7 +55,7 @@ Lune.run(app, assets: "frontend/dist") do |opts|
   #   puts "Window open, about to navigate"
   # }
   # opts.disable_context_menu = true
-  opts.debug = {{ flag?(:lune_dev) }}
+  opts.devtools = {{ flag?(:lune_dev) }}
 
   opts.mac do |m|
     m.full_size_content = true

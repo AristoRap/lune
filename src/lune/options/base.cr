@@ -45,8 +45,8 @@ module Lune
     # Maximum window height in logical pixels.
     property max_height : Int32? = nil
 
-    # Enable webview debug/inspector tools.
-    property debug : Bool = false
+    # Enable WebView devtools (right-click → Inspect). Use `{{ flag?(:lune_dev) }}` to auto-enable in dev.
+    property devtools : Bool = false
 
     # When true, suppresses the browser's default right-click context menu.
     property disable_context_menu : Bool = false
@@ -128,8 +128,8 @@ module Lune
       unless (r = window.resizable).nil?
         @resizable = r
       end
-      unless (d = window.debug).nil?
-        @debug = d
+      unless (d = window.devtools).nil?
+        @devtools = d
       end
     end
   end

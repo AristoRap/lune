@@ -104,10 +104,10 @@ describe Lune::Capability do
   end
 
   describe "setup wires options into state" do
-    it "System picks up debug flag from options" do
+    it "System picks up devtools flag from options" do
       sys = Lune::Capabilities::System.new(-> { })
       sys.setup(Lune::Capability::SetupCtx.new(
-        Lune::Options.new.tap { |o| o.debug = true },
+        Lune::Options.new.tap { |o| o.devtools = true },
         Pointer(Void).null,
       ))
 
@@ -117,7 +117,7 @@ describe Lune::Capability do
       binding = app.bindings.find { |b| b.id.ends_with?("system.environment") }
       binding.should_not be_nil
       result = binding.not_nil!.callback.call([] of JSON::Any)
-      result["debug"].as_bool.should be_true
+      result["devtools"].as_bool.should be_true
     end
 
     it "Window picks up handle from setup" do

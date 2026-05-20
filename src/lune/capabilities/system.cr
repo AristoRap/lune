@@ -21,12 +21,12 @@ module Lune
       def initialize(
         @on_quit : -> Nil,
         @on_open_url : String -> Nil = DEFAULT_OPEN_URL,
-        @debug : Bool = false,
+        @devtools : Bool = false,
       )
       end
 
       def setup(ctx : SetupCtx) : Nil
-        @debug = ctx.options.debug
+        @devtools = ctx.options.devtools
       end
 
       def install(ctx : BindCtx) : Nil
@@ -48,7 +48,7 @@ module Lune
           callback: ->(args : Array(JSON::Any)) { on_open_url.call(args[0].as_s); JSON::Any.new(nil) },
         ).binding(binding_namespace))
 
-        debug = @debug
+        devtools = @devtools
         ctx.register(Definition.new(
           name: "#{name}.environment",
           args: [] of String,
@@ -69,7 +69,7 @@ module Lune
               {% else %}
                 "x86_64"
               {% end %}
-            JSON.parse({os: os, arch: arch, debug: debug}.to_json)
+            JSON.parse({os: os, arch: arch, devtools: devtools}.to_json)
           },
         ).binding(binding_namespace))
       end

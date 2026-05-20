@@ -47,7 +47,7 @@ module Lune
     {% end %}
 
     private def webview(html : String? = nil, url : String? = nil) : Nil
-      Webview.with_window(@options.width, @options.height, @options.hint, @options.title, @options.debug) do |wv|
+      Webview.with_window(@options.width, @options.height, @options.hint, @options.title, @options.devtools) do |wv|
         wv.size(@options.min_width || 0, @options.min_height || 0, Webview::SizeHints::MIN) if @options.min_width || @options.min_height
         wv.size(@options.max_width || 0, @options.max_height || 0, Webview::SizeHints::MAX) if @options.max_width || @options.max_height
 

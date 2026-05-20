@@ -26,7 +26,7 @@ await System.openUrl("https://example.com");
 
 // Query the runtime environment
 const env = await System.environment();
-console.log(env.os, env.arch, env.debug);
+console.log(env.os, env.arch, env.devtools);
 // "darwin", "arm64", false
 ```
 
@@ -42,7 +42,7 @@ console.log(env.os, env.arch, env.debug);
 interface LuneEnvironment {
   os: "darwin" | "linux" | "windows";
   arch: "arm64" | "x86_64";
-  debug: boolean;
+  devtools: boolean;
 }
 ```
 

@@ -55,10 +55,10 @@ describe "Lune::Capabilities" do
       opened_url.should eq("https://example.com")
     end
 
-    it "returns environment with os, arch, and debug fields" do
+    it "returns environment with os, arch, and devtools fields" do
       fake, bridge = make_bridge
       app = Lune::App.new
-      app.install(Lune::Capabilities::System.new(on_quit: -> { }, debug: true))
+      app.install(Lune::Capabilities::System.new(on_quit: -> { }, devtools: true))
       bridge.register_bindings(app.bindings)
 
       fake.invoke("__lune.system.environment", "seq-3", [] of JSON::Any)
@@ -67,18 +67,18 @@ describe "Lune::Capabilities" do
       env = JSON.parse(result)
       env["os"].as_s.should be_a(String)
       env["arch"].as_s.should be_a(String)
-      env["debug"].as_bool.should be_true
+      env["devtools"].as_bool.should be_true
     end
 
-    it "reflects the debug flag in environment" do
+    it "reflects the devtools flag in environment" do
       fake, bridge = make_bridge
       app = Lune::App.new
-      app.install(Lune::Capabilities::System.new(on_quit: -> { }, debug: false))
+      app.install(Lune::Capabilities::System.new(on_quit: -> { }, devtools: false))
       bridge.register_bindings(app.bindings)
 
       fake.invoke("__lune.system.environment", "seq-4", [] of JSON::Any)
       env = JSON.parse(fake.resolve_calls[0][2])
-      env["debug"].as_bool.should be_false
+      env["devtools"].as_bool.should be_false
     end
 
     it "returns a known os value" do
