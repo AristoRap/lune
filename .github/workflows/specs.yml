@@ -62,27 +62,23 @@ jobs:
           "CPATH=$includeDir\build\native\include"            | Out-File -FilePath $env:GITHUB_ENV -Append
           "WEBVIEW2_INCLUDE=$includeDir\build\native\include" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      # Build the upstream webview project per its documented Windows
-      # instructions (webview/webview → script/build.bat). This downloads
-      # its own WebView2 NuGet, produces dll/x64/webview.lib (MSVC import
-      # lib) + webview.dll (runtime). We run this BEFORE shards install so
-      # the shard's postinstall `make` step on Windows — which would
-      # otherwise compile a MinGW .a we can't link against — can be
-      # bypassed safely later.
-      - name: Build upstream webview (Windows)
+      - name: Install shards
+        run: shards install
+
+      # Crystal/MSVC resolves the webview shard's `@[Link("webview")]` to
+      # webview.lib at link time. The shard ships only the C++ source —
+      # build it with cl.exe (the bundled webview.h is single-header so
+      # one TU is enough) and emit a static lib via lib.exe. Then append
+      # the output dir to %LIB% so `crystal spec` finds it.
+      - name: Build webview.lib (Windows)
         if: runner.os == 'Windows'
         shell: cmd
         run: |
-          git clone --depth 1 https://github.com/webview/webview %RUNNER_TEMP%\webview-upstream
+          cl.exe /nologo /c /EHsc /std:c++17 /I "%WEBVIEW2_INCLUDE%" lib\webview\ext\webview.cc /Fo:lib\webview\ext\webview.obj
           if errorlevel 1 exit /b 1
-          call %RUNNER_TEMP%\webview-upstream\script\build.bat
+          lib.exe /nologo /OUT:lib\webview\ext\webview.lib lib\webview\ext\webview.obj
           if errorlevel 1 exit /b 1
-          dir %RUNNER_TEMP%\webview-upstream\dll\x64
-          echo LIB=%LIB%;%RUNNER_TEMP%\webview-upstream\dll\x64>> %GITHUB_ENV%
-          echo PATH=%PATH%;%RUNNER_TEMP%\webview-upstream\dll\x64>> %GITHUB_ENV%
-
-      - name: Install shards
-        run: shards install
+          echo LIB=%LIB%;%CD%\lib\webview\ext>> %GITHUB_ENV%
 
       - name: Run all specs
         run: crystal spec -D lune_native_test_mock ${{ matrix.spec_flags }}
