@@ -8,7 +8,7 @@
 | **JS namespace** | `FileWatch`                      |
 | **Core**         | No                               |
 | **Phases**       | Bindable · Lifecycle             |
-| **Hard deps**    | `events`                      |
+| **Hard deps**    | `events`                         |
 | **Platforms**    | macOS (kqueue) · Linux (inotify) |
 
 Backed by **kqueue** (`EVFILT_VNODE`) on macOS and **inotify** on Linux — no polling, no extra dependencies. The watcher runs on a dedicated OS thread and never stalls the UI. All watches are released automatically on window close.

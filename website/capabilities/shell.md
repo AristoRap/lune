@@ -133,16 +133,16 @@ Shell.unlisten(pid);
 
 ## JavaScript API
 
-| Method       | Signature                                            | Description                                    |
-| ------------ | ---------------------------------------------------- | ---------------------------------------------- |
-| `spawn`      | `(command, args) → Promise<string>`                  | Start a process; returns pid                   |
-| `run`        | `(command, args?) → Promise<{stdout, stderr, code}>` | Spawn and collect all output                   |
-| `kill`       | `(pid) → Promise<void>`                              | Send SIGTERM to a running process               |
-| `list`       | `() → Promise<string[]>`                             | List pids of all currently live processes      |
-| `write`      | `(pid, text) → Promise<void>`                        | Write text to a process's stdin                |
-| `closeStdin` | `(pid) → Promise<void>`                              | Close stdin, sending EOF to the process         |
-| `listen`     | `(pid, opts) → void`                                 | Subscribe to output channels                   |
-| `unlisten`   | `(pid) → void`                                       | Remove all listeners for a pid                 |
+| Method       | Signature                                            | Description                               |
+| ------------ | ---------------------------------------------------- | ----------------------------------------- |
+| `spawn`      | `(command, args) → Promise<string>`                  | Start a process; returns pid              |
+| `run`        | `(command, args?) → Promise<{stdout, stderr, code}>` | Spawn and collect all output              |
+| `kill`       | `(pid) → Promise<void>`                              | Send SIGTERM to a running process         |
+| `list`       | `() → Promise<string[]>`                             | List pids of all currently live processes |
+| `write`      | `(pid, text) → Promise<void>`                        | Write text to a process's stdin           |
+| `closeStdin` | `(pid) → Promise<void>`                              | Close stdin, sending EOF to the process   |
+| `listen`     | `(pid, opts) → void`                                 | Subscribe to output channels              |
+| `unlisten`   | `(pid) → void`                                       | Remove all listeners for a pid            |
 
 `listen` options:
 

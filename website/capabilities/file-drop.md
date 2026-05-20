@@ -8,7 +8,7 @@
 | **JS namespace** | `FileDrop`                       |
 | **Core**         | No                               |
 | **Phases**       | WebviewInject                    |
-| **Hard deps**    | `events`                      |
+| **Hard deps**    | `events`                         |
 | **Platforms**    | macOS · Linux (Windows: planned) |
 
 FileDrop intercepts native OS file-drop events and delivers them to JavaScript as `{ x, y, paths }` events on the event bus.

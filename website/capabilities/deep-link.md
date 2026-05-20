@@ -8,7 +8,7 @@
 | **JS namespace** | `DeepLink`                                                                |
 | **Core**         | No                                                                        |
 | **Phases**       | Bindable                                                                  |
-| **Hard deps**    | `events`                                                               |
+| **Hard deps**    | `events`                                                                  |
 | **Platforms**    | macOS · Linux · Windows (Windows: cold-start ARGV only — see Limitations) |
 
 Register a custom URL scheme so the OS routes URLs into your running app — for OAuth redirects, shell integrations, or any external trigger that needs to pass data to your app.

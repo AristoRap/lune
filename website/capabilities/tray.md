@@ -2,15 +2,15 @@
 
 > System tray icon with an optional dropdown menu.
 
-|                  |                                                                           |
-| ---------------- | ------------------------------------------------------------------------- |
-| **Config key**   | `tray`                                                                    |
-| **JS namespace** | `Tray`                                                                    |
-| **Core**         | No                                                                        |
-| **Phases**       | Bindable                                                                  |
-| **Hard deps**    | —                                                                         |
+|                  |                                                                     |
+| ---------------- | ------------------------------------------------------------------- |
+| **Config key**   | `tray`                                                              |
+| **JS namespace** | `Tray`                                                              |
+| **Core**         | No                                                                  |
+| **Phases**       | Bindable                                                            |
+| **Hard deps**    | —                                                                   |
 | **Soft deps**    | `events` (menu item clicks emitted as events when events is active) |
-| **Platforms**    | macOS · Linux¹                                                            |
+| **Platforms**    | macOS · Linux¹                                                      |
 
 ¹ Requires XWayland on Wayland compositors.
 
@@ -58,7 +58,7 @@ end
 
 | Option             | Type            | Default           | Description                                                  |
 | ------------------ | --------------- | ----------------- | ------------------------------------------------------------ |
-| `event`            | `String`        | `"trayEvent"`     | Event name emitted via Events on click / menu select       |
+| `event`            | `String`        | `"trayEvent"`     | Event name emitted via Events on click / menu select         |
 | `on_click`         | `-> Nil`        | —                 | Crystal callback for left-click (full takeover)              |
 | `on_right_click`   | `-> Nil`        | —                 | Crystal callback for right-click (full takeover)             |
 | `on_menu_click`    | `String -> Nil` | emit menu item id | Crystal callback for menu item selection                     |

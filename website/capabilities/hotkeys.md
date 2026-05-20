@@ -17,7 +17,7 @@ Soft-depends on `events` — hotkey events are delivered via the event bus. If `
 ## Registering shortcuts
 
 ```js
-import { Hotkeys, Events } from './runtime.js';
+import { Hotkeys, Events } from "./runtime.js";
 
 // Register on page load
 await Hotkeys.register("Ctrl+Shift+K");
@@ -36,8 +36,12 @@ Hotkey events arrive via the event bus under the `"hotkey"` event name. `data.ke
 ```js
 Events.on("hotkey", (data) => {
   switch (data.key) {
-    case "Ctrl+Shift+K": openSearch(); break;
-    case "Ctrl+Shift+P": openCommandPalette(); break;
+    case "Ctrl+Shift+K":
+      openSearch();
+      break;
+    case "Ctrl+Shift+P":
+      openCommandPalette();
+      break;
   }
 });
 ```
@@ -54,26 +58,26 @@ Hotkeys.on((data) => {
 
 Accelerators are `+`-separated modifier and key names, case-insensitive:
 
-| Modifier | Aliases |
-|---|---|
-| `Ctrl` | `Control` |
-| `Cmd` | `Command` |
-| `Shift` | — |
-| `Alt` | `Option` |
+| Modifier | Aliases   |
+| -------- | --------- |
+| `Ctrl`   | `Control` |
+| `Cmd`    | `Command` |
+| `Shift`  | —         |
+| `Alt`    | `Option`  |
 
 Key names: `A`–`Z`, `0`–`9`, `F1`–`F12`, `Space`, `Return`, `Enter`, `Tab`, `Backspace`, `Delete`, `Escape`, `Left`, `Right`, `Up`, `Down`, `Home`, `End`, `PageUp`, `PageDown`, `Minus`, `Equal`, and common punctuation (`[`, `]`, `;`, `'`, `` ` ``, `,`, `.`, `/`, `\`).
 
 ```js
-await Hotkeys.register("Ctrl+K");         // single modifier
-await Hotkeys.register("Cmd+Shift+P");    // macOS
+await Hotkeys.register("Ctrl+K"); // single modifier
+await Hotkeys.register("Cmd+Shift+P"); // macOS
 await Hotkeys.register("Ctrl+Shift+F5"); // modifier + function key
-await Hotkeys.register("Alt+Left");       // modifier + arrow
+await Hotkeys.register("Alt+Left"); // modifier + arrow
 ```
 
 ## Full example
 
 ```js
-import { Hotkeys, Events } from './runtime.js';
+import { Hotkeys, Events } from "./runtime.js";
 
 async function setupHotkeys() {
   await Hotkeys.register("Ctrl+Shift+K");

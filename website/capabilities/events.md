@@ -4,7 +4,7 @@
 
 |                  |                                                                                        |
 | ---------------- | -------------------------------------------------------------------------------------- |
-| **Config key**   | `events`                                                                            |
+| **Config key**   | `events`                                                                               |
 | **JS namespace** | `Events`                                                                               |
 | **Core**         | **Yes** — disabling cascades to `context_menu`, `deep_link`, `file_drop`, `file_watch` |
 | **Phases**       | WebviewInject                                                                          |
