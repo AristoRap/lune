@@ -167,10 +167,16 @@ module Lune
         fun set_always_on_top(window : Void*, enabled : LibC::Int) : Void
         alias DropCallback = (LibC::Char*, Void*) -> Void
         fun disable_webview_drop(window : Void*) : Void
-        # drag_pos_fn: JS function name, e.g. "window.__lune.dragPos", or NULL
+        # drag_pos_fn / drop_check_fn: JS function names, e.g.
+        # "window.__lune.dragPos" / "window.__lune.dropCheck", or NULL.
+        # When drop_check_fn is set, performDragOperation evaluates it
+        # directly via evaluateJavaScript: instead of routing through
+        # Crystal's wv.dispatch — keeps the drop event out of the queue
+        # behind pending dragPos updates.
         fun setup_file_drop(window : Void*,
                             drop_cb : DropCallback, drop_ud : Void*,
-                            drag_pos_fn : LibC::Char*) : Void
+                            drag_pos_fn : LibC::Char*,
+                            drop_check_fn : LibC::Char*) : Void
         fun lune_start_drag_out(window : Void*, paths_json : LibC::Char*) : Void
         fun lune_window_close(window : Void*) : Void
         alias CloseCallback = Void* ->
@@ -271,13 +277,18 @@ module Lune
         {% end %}
       end
 
-      # on_drop     receives (x, y, paths) — coordinates in CSS pixels (origin top-left)
-      # on_pos      receives (x, y) on each drag-move (Linux only; macOS uses drag_pos_fn)
-      # drag_pos_fn JS function name called natively on macOS, e.g. "window.__lune.dragPos"
+      # on_drop       receives (x, y, paths) — coordinates in CSS pixels (origin top-left)
+      # on_pos        receives (x, y) on each drag-move (Linux only; macOS uses drag_pos_fn)
+      # drag_pos_fn   JS function name called natively on macOS, e.g. "window.__lune.dragPos"
+      # drop_check_fn JS function name called natively on macOS on drop, e.g.
+      #               "window.__lune.dropCheck" — fires synchronously from
+      #               performDragOperation so it doesn't queue behind dragPos
+      #               evals. Linux ignores this arg (no analogous mechanism today).
       def self.setup_file_drop(handle : Void*,
                                on_drop : (Int32, Int32, Array(String)) -> Nil,
                                on_pos : (Int32, Int32) -> Nil,
-                               drag_pos_fn : String? = nil)
+                               drag_pos_fn : String? = nil,
+                               drop_check_fn : String? = nil)
         {% if flag?(:lune_native_test_mock) %}
           WindowMock.record_setup_file_drop(on_drop)
         {% elsif flag?(:darwin) %}
@@ -299,7 +310,8 @@ module Lune
               end
             },
             @@drop_boxes[handle],
-            drag_pos_fn ? drag_pos_fn.to_unsafe : Pointer(LibC::Char).null
+            drag_pos_fn   ? drag_pos_fn.to_unsafe   : Pointer(LibC::Char).null,
+            drop_check_fn ? drop_check_fn.to_unsafe : Pointer(LibC::Char).null
           )
         {% elsif flag?(:linux) %}
           @@drop_boxes[handle] = Box.box(on_drop)

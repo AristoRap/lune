@@ -36,11 +36,16 @@ module Lune
 
         on_pos = ->(x : Int32, y : Int32) { nil }
         drag_pos_fn : String? = nil
+        drop_check_fn : String? = nil
 
         bm = BRIDGE_MARKER
 
         {% if flag?(:darwin) %}
-          drag_pos_fn = use_drop_zones ? "window.#{bm}.dragPos" : nil
+          # macOS: fire both dragPos and dropCheck directly from the ObjC
+          # overlay via evaluateJavaScript: — bypasses Crystal's wv.dispatch
+          # so the drop event isn't queued behind pending dragPos updates.
+          drag_pos_fn   = use_drop_zones ? "window.#{bm}.dragPos" : nil
+          drop_check_fn = use_drop_zones ? "window.#{bm}.dropCheck" : nil
         {% else %}
           if use_drop_zones
             on_pos = ->(x : Int32, y : Int32) {
@@ -51,7 +56,7 @@ module Lune
 
         on_drop : (Int32, Int32, Array(String)) -> Nil = use_drop_zones ? drop_with_zones(wv, user_callback, bm) : drop_global(wv, app, user_callback, bm)
 
-        Native::Window.setup_file_drop(handle, on_drop, on_pos, drag_pos_fn)
+        Native::Window.setup_file_drop(handle, on_drop, on_pos, drag_pos_fn, drop_check_fn)
 
         drop_prop = use_drop_zones ? drop.zone : nil
         drop_val = use_drop_zones ? drop.value : nil
@@ -76,8 +81,12 @@ module Lune
       private def drop_with_zones(wv : Webview::Webview, user_callback : ((Int32, Int32, Array(String)) -> Nil)?, bm : String) : (Int32, Int32, Array(String)) -> Nil
         ->(x : Int32, y : Int32, paths : Array(String)) {
           user_callback.try(&.call(x, y, paths))
-          paths_json = paths.to_json
-          wv.dispatch { wv.eval("window.#{bm}.dropCheck(#{x},#{y},#{paths_json.inspect})") }
+          {% unless flag?(:darwin) %}
+            # macOS fires dropCheck directly from ObjC via setup_file_drop's
+            # drop_check_fn; this dispatch path is the Linux fallback.
+            paths_json = paths.to_json
+            wv.dispatch { wv.eval("window.#{bm}.dropCheck(#{x},#{y},#{paths_json.inspect})") }
+          {% end %}
         }
       end
 

@@ -104,6 +104,11 @@ typedef void (*LuneDropCallback)(const char *json, void *userdata);
 // JS function to call with drag position, e.g. "window.__lune_drag_pos".
 // nil disables zone highlighting.
 @property (nonatomic, copy) NSString   *dragPosFn;
+// JS function to call with the dropped paths, e.g. "window.__lune.dropCheck".
+// When set, performDragOperation evaluates `dropCheckFn(x, y, paths_json)`
+// directly via evaluateJavaScript: — bypassing Crystal's wv.dispatch round-trip,
+// so the drop event isn't queued behind pending dragPos updates.
+@property (nonatomic, copy) NSString   *dropCheckFn;
 // Coalescing: only one evaluateJavaScript: in-flight at a time.
 // pendingX/Y track the latest position; evalQueued gates re-entry.
 @property (nonatomic) int               pendingX;
@@ -238,6 +243,17 @@ typedef void (*LuneDropCallback)(const char *json, void *userdata);
     NSString *json = [NSString stringWithFormat:@"{\"x\":%d,\"y\":%d,\"paths\":%@}",
                       (int)p.x, (int)p.y, pathsJson];
 
+    // Fire dropCheck directly into the WKWebView before anything else, so it
+    // doesn't queue behind any pending dragPos evals. The string-quoted paths
+    // JSON survives a round-trip through JSON.parse on the JS side.
+    if (self.dropCheckFn) {
+        NSString *escaped = [pathsJson stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"];
+        escaped           = [escaped   stringByReplacingOccurrencesOfString:@"\"" withString:@"\\\""];
+        NSString *js = [NSString stringWithFormat:@"%@(%d,%d,\"%@\")",
+                        self.dropCheckFn, (int)p.x, (int)p.y, escaped];
+        [(WKWebView *)self.window.contentView evaluateJavaScript:js completionHandler:nil];
+    }
+
     if (self.dropCallback)
         self.dropCallback([json UTF8String], self.dropUserdata);
     return YES;
@@ -252,11 +268,15 @@ void disable_webview_drop(void *window) {
     [w.contentView unregisterDraggedTypes];
 }
 
-// drag_pos_fn: JS function name to call with (x, y) on every drag-move, e.g.
-// "window.__lune_drag_pos". Pass NULL to disable zone highlighting.
+// drag_pos_fn:  JS function name to call with (x, y) on every drag-move, e.g.
+//               "window.__lune.dragPos". Pass NULL to disable zone highlighting.
+// drop_check_fn: JS function name to call on drop with (x, y, paths_json), e.g.
+//               "window.__lune.dropCheck". Pass NULL to skip the direct-eval
+//               path (Crystal's wv.dispatch still works as a fallback).
 void setup_file_drop(void *window,
                      LuneDropCallback drop_callback, void *drop_userdata,
-                     const char *drag_pos_fn) {
+                     const char *drag_pos_fn,
+                     const char *drop_check_fn) {
     NSWindow *w = (__bridge NSWindow *)window;
 
     // Add the overlay as a sibling of the WKWebView (in the frame view) so it
@@ -266,7 +286,8 @@ void setup_file_drop(void *window,
     dropView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     dropView.dropCallback = drop_callback;
     dropView.dropUserdata = drop_userdata;
-    dropView.dragPosFn    = drag_pos_fn ? [NSString stringWithUTF8String:drag_pos_fn] : nil;
+    dropView.dragPosFn    = drag_pos_fn   ? [NSString stringWithUTF8String:drag_pos_fn]   : nil;
+    dropView.dropCheckFn  = drop_check_fn ? [NSString stringWithUTF8String:drop_check_fn] : nil;
     [host addSubview:dropView positioned:NSWindowAbove relativeTo:nil];
 }
 
