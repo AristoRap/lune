@@ -108,17 +108,46 @@ frontend/lunejs/
 
 ## Threading model
 
-Lune's native event loop (AppKit on macOS, GTK on Linux) owns the **main OS thread** for the lifetime of the app. This has consequences for how Crystal concurrency works:
+Lune balances three constraints: the native UI toolkits (AppKit / GTK / WebView2) are single-threaded by design, Crystal's scheduler needs a non-blocked OS thread to dispatch fibers, and OS callbacks (SIGCHLD, WM_HOTKEY, kqueue/inotify, accept loops) want their own threads to avoid starving the UI. The runtime spins up several `Fiber::ExecutionContext` instances to satisfy all three.
 
-| Context                         | Runs on                     | Notes                                                      |
-| ------------------------------- | --------------------------- | ---------------------------------------------------------- |
-| Sync binding callbacks          | Main thread                 | Keep fast — blocks the UI while running                    |
-| `async: true` binding callbacks | Dedicated `Isolated` thread | Full Crystal scheduler: sleep, channels, IO                |
-| `app.on` event handlers         | Main thread                 | Keep fast — dispatched synchronously on the webview thread |
-| `app.async { }` tasks           | Dedicated `Isolated` thread | Use for timers, pollers, and anything long-running         |
-| Asset HTTP server               | `Parallel` thread pool      | Serves embedded files in production builds                 |
+### The webview thread
 
-**`spawn` does not work.** Crystal's default cooperative scheduler runs on the main thread, which is permanently blocked by the native event loop. Fibers spawned there are never scheduled. Use `app.async` for background work instead.
+The thread that runs the WebView event loop — i.e. that's blocked inside `wv.run`. Sync binding callbacks and `app.events.on` handlers fire on this thread.
+
+| Platform     | Webview thread is…                                                            |
+| ------------ | ----------------------------------------------------------------------------- |
+| macOS, Linux | The **main OS thread** (Cocoa and GTK refuse to run their event loop elsewhere) |
+| Windows      | A dedicated `Isolated` thread named `webview`. The main thread parks on a channel waiting for it to exit. |
+
+On Unix, this means the main thread is permanently occupied by Cocoa/GTK once `wv.run` is called, and the **default Crystal scheduler is starved** — `spawn` and the signal-loop fiber never get to run. On Windows the main thread stays free; `spawn` works there, but it's still cleaner to use Lune's pools so behaviour is portable.
+
+### Where each kind of work runs
+
+| Context                                         | Runs on                                                                   | Notes                                                                                                 |
+| ----------------------------------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Sync binding callbacks (`@[Lune::Bind]`)        | Webview thread                                                            | Keep fast — blocks the UI while running                                                                |
+| `async: true` binding callbacks                 | `lune-async` `Parallel` pool (`System.cpu_count` threads)                  | Full scheduler: `sleep`, channels, blocking IO all work                                                |
+| `app.events.on` handlers                        | Webview thread                                                            | Same as sync bindings; offload heavy work to `app.async`                                              |
+| `app.async { }` tasks                           | `lune-tasks` `Parallel` pool (`System.cpu_count` threads)                  | Use for timers, pollers, anything long-running                                                         |
+
+### Dedicated `Isolated` threads (one OS thread each, opt-in by capability)
+
+| Thread name             | When active                              | What it does                                                                          |
+| ----------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------- |
+| `webview`               | Windows always                           | Drives the WebView2 event loop, freeing the main thread for the Crystal scheduler     |
+| `lune-sigchld-pump`     | macOS + Linux always                     | Polls `SignalChildHandler` every 10 ms so `Process.run`/`Shell.spawn` don't hang while the main thread is in Cocoa/GTK |
+| `lune-hotkeys`          | Hotkeys capability active                | macOS Carbon `RegisterEventHotKey`, Linux X11 `XGrabKey`, Windows `RegisterHotKey` + `WM_HOTKEY` pump |
+| `lune-file-watch`       | FileWatch capability active              | macOS kqueue / Linux inotify event loop                                                |
+| `lune-deep-link-ipc`    | DeepLink capability on Linux             | Unix-socket accept loop for warm-start URL forwarding                                  |
+| `lune-stream`           | Stream capability active                 | WebSocket server accept loop (with a 2-thread `lune-stream-pool` for connected clients) |
+| `lune-assets`           | Embedded-asset HTTP server active        | Bound HTTP server (with a 2-thread `lune-assets-pool` for request handling)            |
+
+### Rules of thumb
+
+- **Never block in a sync binding or `app.events.on` handler.** It freezes the UI for the duration. Move work to `app.async { … }` or mark the binding `async: true`.
+- **`spawn` is unreliable** across platforms — works on Windows where the main thread isn't busy, doesn't on Unix where it's parked in Cocoa/GTK. Use `app.async` for portability.
+- **`Fiber::ExecutionContext::Isolated` is the right primitive for capabilities** that own an OS resource (a poll loop, an accept loop, a message pump) and need to stay responsive even when the rest of the app is blocked.
+- **Main-thread-only native calls** (NSStatusItem, GTK widget creation, etc.) are handled inside Lune's `Native::*` modules — capabilities don't have to think about marshaling.
 
 ---
 
