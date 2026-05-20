@@ -24,6 +24,10 @@
 - **`Lune::Native::Dialog` → `Lune::Native::Dialogs`** and **`Lune::Native::Notify` → `Lune::Native::Notifications`** — the internal native modules now match their capability and JS namespace names (`Dialogs`, `Notifications`). Only impacts code that reached past the capability layer directly into `Lune::Native::*`; user-facing JS APIs (`Dialogs.openFile`, `Notifications.show`) are unchanged. Underlying files renamed: `src/lune/native/dialog.cr` → `dialogs.cr`, `src/lune/native/notify.cr` → `notifications.cr`, plus the platform shims (`ext/native/{macos,linux}/{dialog,notify}.{m,c}` → `{dialogs,notifications}.{m,c}`).
 - **DESCRIPTOR labels `"SQLite"` / `"KV"` → `"Sqlite"` / `"Kv"`** — descriptor labels now match the class casing and the JS namespace. The capability matrix and any other tooling that consumes `descriptor.label` (e.g. logging) will show the new casing.
 
+### Fixed
+
+- **`Stream` capability on Windows** — the WS server used to run inside a `Fiber::ExecutionContext::Isolated`, which both blocks the `ready.send(nil)` startup handshake on Windows (Isolated disables blocking Channel ops) and prevents `HTTP::Server`'s IOCP-backed accept fibers from being scheduled normally. Dropped the Isolated wrapper and now spawn `server.listen` directly onto a `Parallel` pool. `bind_tcp` is already synchronous so the port is known before the spawn, no handshake needed.
+
 ### Notes
 
 - **Windows runtime blocked on Crystal 1.21+** — see header above. Once 1.21 lands, the per-capability walkthrough at [`website/guide/windows-checklist.md`](website/guide/windows-checklist.md) is the verification path.

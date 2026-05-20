@@ -50,13 +50,12 @@ module Lune
         addr = server.bind_tcp("127.0.0.1", 0)
         @port = addr.port
 
-        pool = Fiber::ExecutionContext::Parallel.new("lune-stream-pool", 2)
-        ready = ::Channel(Nil).new
-        Fiber::ExecutionContext::Isolated.new("lune-stream", spawn_context: pool) do
-          ready.send(nil)
-          server.listen
-        end
-        ready.receive
+        # Run the WS server on a Parallel pool. Previously this was wrapped in an
+        # Isolated context for thread ownership, but Isolated disables blocking
+        # Channel ops and the IOCP-backed HTTP::Server fibers couldn't be
+        # scheduled normally on Windows, leaving the stream dead on arrival.
+        pool = Fiber::ExecutionContext::Parallel.new("lune-stream", 2)
+        pool.spawn(name: "lune-stream-listen") { server.listen }
 
         app.stream.sender = ->(n : String, json : String) {
           copies = mu.synchronize { sockets.dup }
