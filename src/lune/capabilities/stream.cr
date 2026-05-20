@@ -54,7 +54,6 @@ module Lune
             Lune.logger.debug { "Stream: WS client connected" }
             mu.synchronize { sockets << ws }
             ws.on_message do |raw|
-              Lune.logger.debug { "Stream: ws.on_message raw=#{raw}" }
               begin
                 msg = JSON.parse(raw)
                 app.stream.dispatch(msg["n"].as_s, msg["d"])
@@ -67,24 +66,25 @@ module Lune
         ] of HTTP::Handler
         server = HTTP::Server.new(handlers)
 
-        addr = server.bind_tcp("127.0.0.1", 0)
-        @port = addr.port
-        Lune.logger.debug { "Stream: WS server bound on 127.0.0.1:#{@port}" }
-
-        # Run the WS server on a Parallel pool. Previously this was wrapped in an
-        # Isolated context for thread ownership, but Isolated disables blocking
-        # Channel ops and the IOCP-backed HTTP::Server fibers couldn't be
-        # scheduled normally on Windows, leaving the stream dead on arrival.
-        pool = Fiber::ExecutionContext::Parallel.new("lune-stream", 2)
-        pool.spawn(name: "lune-stream-listen") do
-          Lune.logger.debug { "Stream: server.listen starting on Parallel pool" }
+        # Bind AND listen from inside the same spawned fiber on the default
+        # execution context. On Windows, the listening socket gets associated
+        # with whichever context's IOCP first does I/O on it. If we bind here
+        # (on the webview Isolated context) and listen elsewhere, accept/read
+        # completions get routed to the wrong IOCP and the per-connection
+        # fibers park forever. Signal the bound port back via a Channel.
+        port_ready = ::Channel(Int32).new(1)
+        ::spawn(name: "lune-stream-listen") do
+          addr = server.bind_tcp("127.0.0.1", 0)
+          port_ready.send(addr.port)
+          Lune.logger.debug { "Stream: server.listen starting on default ctx, port=#{addr.port}" }
           server.listen
           Lune.logger.debug { "Stream: server.listen returned" }
         end
+        @port = port_ready.receive
+        Lune.logger.debug { "Stream: WS server bound on 127.0.0.1:#{@port}" }
 
         app.stream.sender = ->(n : String, json : String) {
           copies = mu.synchronize { sockets.dup }
-          Lune.logger.debug { "Stream: sender(#{n}) -> #{copies.size} socket(s)" }
           copies.each { |ws| ws.send(%({"n":#{n.to_json},"d":#{json}})) rescue nil }
         }
 
