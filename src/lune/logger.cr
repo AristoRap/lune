@@ -9,10 +9,19 @@ module Lune
   end
 
   def self.default_logger : Log
+    # LUNE_LOG=debug (or trace/warn/error) overrides the default. Lets `lune dev`
+    # propagate --debug into the spawned user binary, and lets standalone Lune
+    # apps crank up logging without code changes.
+    level = case ENV["LUNE_LOG"]?.try(&.downcase)
+            when "debug", "trace" then Log::Severity::Debug
+            when "warn"           then Log::Severity::Warn
+            when "error"          then Log::Severity::Error
+            else                       Log::Severity::Info
+            end
     backend = Log::IOBackend.new(STDERR, dispatcher: :sync)
-    Log.setup("lune", :info, backend)
+    Log.setup("lune", level, backend)
     logger = Log.for("lune")
-    logger.level = Log::Severity::Info
+    logger.level = level
     logger
   end
 

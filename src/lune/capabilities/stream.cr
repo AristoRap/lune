@@ -2,6 +2,22 @@ require "http/web_socket"
 
 module Lune
   module Capabilities
+    # Logs every HTTP request that enters the stream server's handler chain.
+    # Sits before the WebSocketHandler so we can tell whether the request was
+    # ever parsed (vs. stuck at TCP accept) and whether the Upgrade header was
+    # what we expected. Debug-only.
+    private class StreamRequestLogHandler
+      include HTTP::Handler
+
+      def call(context)
+        Lune.logger.debug do
+          headers = context.request.headers
+          "Stream: HTTP req method=#{context.request.method} path=#{context.request.path} upgrade=#{headers["Upgrade"]?.inspect} connection=#{headers["Connection"]?.inspect}"
+        end
+        call_next(context)
+      end
+    end
+
     class Stream < Lune::Capability
       include Capability::WebviewInject
 
@@ -32,7 +48,8 @@ module Lune
         sockets = [] of HTTP::WebSocket
         mu = Mutex.new
 
-        server = HTTP::Server.new([
+        handlers = [
+          StreamRequestLogHandler.new,
           HTTP::WebSocketHandler.new do |ws, _ctx|
             Lune.logger.debug { "Stream: WS client connected" }
             mu.synchronize { sockets << ws }
@@ -47,7 +64,8 @@ module Lune
             end
             ws.on_close { Lune.logger.debug { "Stream: WS client disconnected" }; mu.synchronize { sockets.delete(ws) } }
           end,
-        ])
+        ] of HTTP::Handler
+        server = HTTP::Server.new(handlers)
 
         addr = server.bind_tcp("127.0.0.1", 0)
         @port = addr.port

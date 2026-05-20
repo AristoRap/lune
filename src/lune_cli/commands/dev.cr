@@ -91,6 +91,10 @@ module LuneCLI
         # it entirely. Passing only a single-key Hash to Process.run drops PATH,
         # HOME, CRYSTAL_PATH, and everything else the child process needs.
         env = ENV.to_h.merge({Lune::ENV_DEV_URL => dev_url, Lune::ENV_FRONTEND_DIR => frontend_dir})
+        # Propagate --debug (set on the CLI's root command) into the spawned
+        # user-app binary via LUNE_LOG; the binary's own Lune.default_logger
+        # reads it on startup.
+        env["LUNE_LOG"] = "debug" if Lune.logger.level == Log::Severity::Debug
         src_dir = File.dirname(app_entry)
         lune_bin = Process.executable_path || "lune"
         error_display : Process? = nil
