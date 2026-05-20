@@ -14,7 +14,6 @@ Features the platform exposes that Lune doesn't yet surface.
 
 - [ ] `autostart` capability — register the app to launch at login (LaunchAgent on macOS, `.desktop` on Linux)
 - [ ] Reactive SQLite — `Sqlite.watch(db, sql, params, cb)` re-runs a query and pushes updated rows whenever the database is written; pairs with Stream for live Vue reactivity
-- [ ] Linux deep-link runtime — parse `ARGV` on cold start and add socket-based forwarding to the running instance for warm starts, so `DeepLink.on` fires on Linux as it does on macOS
 
 ## Architecture
 
@@ -23,6 +22,7 @@ Structural improvements that unlock whole categories of apps.
 - [ ] Plugin system — a Crystal shard interface (`Lune::Plugin`) with lifecycle hooks and runtime binding registration so community authors can publish Lune plugins
 - [ ] Per-window capabilities — scope `include`/`exclude` lists to individual windows rather than globally
 - [ ] Multiple webviews in one window — stack or embed multiple WebView panels within a single native window
+- [ ] `ext/native/windows/` shim parity — Win32 currently calls `user32`/`shell32`/`comdlg32`/etc. directly from `src/lune/native/*.cr` via `@[Link("…")]`, while macOS and Linux use `.m`/`.c` shims compiled into `ext/native/<platform>/*.o` linked behind a uniform `LibNativeFoo`. Direct FFI works (Tauri/Rust do the same on Win32) but the inconsistent pattern complicates per-capability branching. Refactor to add `ext/native/windows/*.cpp` shims compiled via `cl.exe` so every platform exposes the same `LibNativeFoo` interface.
 
 ## DX & Templates
 

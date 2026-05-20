@@ -46,7 +46,32 @@ module Lune
         {% elsif flag?(:darwin) || flag?(:linux) %}
           LibNativeNotify.show_notification(title, body)
         {% elsif flag?(:win32) %}
-          raise NotImplementedError.new("Lune::Native::Notify.show is not implemented on Windows yet (v0.10.0 backlog)")
+          # Shell out to PowerShell + WinRT toast. Title/body travel via
+          # env vars so we don't have to escape them into the command line;
+          # PowerShell's SecurityElement.Escape handles XML escaping inside
+          # the script. The AUMID ("Lune") is unregistered, which means
+          # toasts may not persist in the Action Center on first run — but
+          # the transient banner still shows.
+          script = <<-PS
+            [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType=WindowsRuntime] | Out-Null
+            $t = [System.Security.SecurityElement]::Escape($env:LUNE_TOAST_TITLE)
+            $b = [System.Security.SecurityElement]::Escape($env:LUNE_TOAST_BODY)
+            $xml = New-Object Windows.Data.Xml.Dom.XmlDocument
+            $xml.LoadXml("<toast><visual><binding template='ToastGeneric'><text>$t</text><text>$b</text></binding></visual></toast>")
+            $toast = [Windows.UI.Notifications.ToastNotification]::new($xml)
+            [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("Lune").Show($toast)
+          PS
+          env = {
+            "LUNE_TOAST_TITLE" => title,
+            "LUNE_TOAST_BODY"  => body,
+          }
+          Process.run("powershell",
+            ["-NoProfile", "-WindowStyle", "Hidden", "-Command", script],
+            env: env,
+            input: Process::Redirect::Close,
+            output: Process::Redirect::Close,
+            error: Process::Redirect::Close)
+          nil
         {% end %}
       end
     end

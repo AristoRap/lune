@@ -2,14 +2,14 @@
 
 > Query the primary screen's resolution and pixel density.
 
-|                  |                                  |
-| ---------------- | -------------------------------- |
-| **Config key**   | `screen`                         |
-| **JS namespace** | `Screen`                         |
-| **Core**         | No                               |
-| **Phases**       | Bindable                         |
-| **Hard deps**    | —                                |
-| **Platforms**    | macOS · Linux (Windows: planned) |
+|                  |                         |
+| ---------------- | ----------------------- |
+| **Config key**   | `screen`                |
+| **JS namespace** | `Screen`                |
+| **Core**         | No                      |
+| **Phases**       | Bindable                |
+| **Hard deps**    | —                       |
+| **Platforms**    | macOS · Linux · Windows |
 
 ---
 

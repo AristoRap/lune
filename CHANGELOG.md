@@ -1,6 +1,30 @@
 # Changelog
 
-## [Unreleased] - 0.10.0
+## [0.11.0] - 2026-05-20
+
+### Added — Windows port (continued from v0.10.0)
+
+- **`Lune::Native::Hotkeys` on Windows** — `RegisterHotKey` + `UnregisterHotKey` driven from a dedicated `Fiber::ExecutionContext::Isolated` thread that owns the `WM_HOTKEY` message pump (PeekMessageW @ 10 ms). Producer-side `register`/`unregister` calls from any fiber are marshalled through a Mutex-protected ops queue. Accelerator parser maps `Ctrl+Shift+K` / `Alt+F4` / `Cmd+Space` forms to (modifier flags, virtual-key code), with named-key coverage for space/return/tab/arrows/F1-F24.
+- **`Lune::Native::Menu.show_context_menu` on Windows** — `CreatePopupMenu` + `AppendMenuW` + `TrackPopupMenu(TPM_RETURNCMD)`. Synchronous (no callback marshaling), with client-to-screen coord translation via `ClientToScreen`.
+- **`Lune::Native::Notify.show` on Windows** — shells out to PowerShell + WinRT `ToastNotificationManager` with a hidden window. Title/body travel via env vars (`LUNE_TOAST_TITLE`/`LUNE_TOAST_BODY`) so command-line escaping isn't a concern; `SecurityElement.Escape` handles XML escaping. AUMID is unregistered (`Lune`), so toasts may not persist in Action Center but the banner is visible.
+- **`DeepLink` Linux warm-start** — `Lune::DeepLinkIPC` opens a Unix-domain socket at `$XDG_RUNTIME_DIR/lune-<slug>.sock` (or `/tmp/…`). A second launch with a `myapp://…` URL on its command line forwards the URL to the primary instance over the socket and exits, instead of opening a duplicate window. Cold-start ARGV scanning still works as before. Auto-cleanup at process exit. macOS gets the same behaviour natively from NSApplication.
+- **`.ico` embedding in `lune build`** — when `config.icon` is set to a `.ico` file, `lune build` generates a `.rc`, runs `rc.exe`, and passes the resulting `.res` to Crystal's MSVC linker via `--link-flags`. Skips silently with a warning if `rc.exe` isn't on `PATH` or the icon file is missing. PNG → ICO conversion is not done (Crystal stdlib has no PNG decoder); provide a `.ico` directly on Windows.
+
+### Added — docs
+
+- **Windows verification checklist** — new `website/guide/windows-checklist.md` walks through every capability that ships with Win32 support so you can tick off behaviour in a Windows VM.
+- **Capability matrix updated** — `website/capabilities/index.md` now reflects the per-platform status of every capability after the v0.10.0 + v0.11.0 Windows work.
+
+### Breaking
+
+- **`opts.drop` → `opts.file_drop`** — the options block and its backing class now match the `file_drop` capability key (in `lune.yml`) and the `FileDrop` JS namespace. `Lune::Options::Drop` is renamed to `Lune::Options::FileDrop`. Migration is mechanical: replace `opts.drop do |d| … d.zone = … end` with `opts.file_drop do |fd| … fd.zone = … end`. Property names inside the block (`zone`, `value`, `on_drop`, `disable_webview_drop`) are unchanged.
+
+### Notes
+
+- **Windows CI specs** — `crystal spec` on `windows-latest` still hits a Crystal 1.20.2 MSVC stdlib bug (`undefined constant LibC::PidT` in `Process#initialize`). CI keeps the compile-check-only mode for Windows; will re-enable real specs when Crystal ships a fix.
+- **Still NotImplementedError on Win32**: `Tray` (Shell_NotifyIconW + hidden HWND), `FileWatch` (ReadDirectoryChangesW), `Clipboard.read_image`/`write_image` (PNG↔CF_DIB). Tracked for v0.12.0.
+
+## [0.10.0] - 2026-05-20
 
 ### Added
 

@@ -138,49 +138,49 @@ describe Lune::Options do
   end
 end
 
-describe Lune::Options::Drop do
+describe Lune::Options::FileDrop do
   describe "defaults" do
     it "disable_webview_drop is false" do
-      Lune::Options::Drop.new.disable_webview_drop.should be_false
+      Lune::Options::FileDrop.new.disable_webview_drop.should be_false
     end
 
     it "zone defaults to empty string" do
-      Lune::Options::Drop.new.zone.should be_empty
+      Lune::Options::FileDrop.new.zone.should be_empty
     end
 
     it "value defaults to drop" do
-      Lune::Options::Drop.new.value.should eq("drop")
+      Lune::Options::FileDrop.new.value.should eq("drop")
     end
 
     it "has no on_drop callback" do
-      Lune::Options::Drop.new.on_drop.should be_nil
+      Lune::Options::FileDrop.new.on_drop.should be_nil
     end
   end
 
-  describe "via opts.drop block" do
+  describe "via opts.file_drop block" do
     it "is accessible from Options" do
-      Lune::Options.new.drop.should be_a(Lune::Options::Drop)
+      Lune::Options.new.file_drop.should be_a(Lune::Options::FileDrop)
     end
 
     it "mutations via block are retained" do
       opts = Lune::Options.new
-      opts.drop do |d|
-        d.zone = "--lune-drop-target"
-        d.value = "file"
+      opts.file_drop do |fd|
+        fd.zone = "--lune-drop-target"
+        fd.value = "file"
       end
-      opts.drop.zone.should eq("--lune-drop-target")
-      opts.drop.value.should eq("file")
+      opts.file_drop.zone.should eq("--lune-drop-target")
+      opts.file_drop.value.should eq("file")
     end
 
     it "accepts an on_drop callback and calls it with x, y, paths" do
       opts = Lune::Options.new
       received_x = 0; received_y = 0; received_paths = [] of String
-      opts.drop do |d|
-        d.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
+      opts.file_drop do |fd|
+        fd.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
           received_x = x; received_y = y; received_paths = paths; nil
         }
       end
-      opts.drop.on_drop.not_nil!.call(10, 20, ["/tmp/photo.png"])
+      opts.file_drop.on_drop.not_nil!.call(10, 20, ["/tmp/photo.png"])
       received_x.should eq(10)
       received_y.should eq(20)
       received_paths.should eq(["/tmp/photo.png"])

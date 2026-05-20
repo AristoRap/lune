@@ -9,10 +9,10 @@ module Lune
         DESCRIPTOR
       end
 
-      @options : Lune::Options::Drop = Lune::Options::Drop.new
+      @options : Lune::Options::FileDrop = Lune::Options::FileDrop.new
 
       def setup(ctx : SetupCtx) : Nil
-        @options = ctx.options.drop
+        @options = ctx.options.file_drop
       end
 
       def configured? : Bool

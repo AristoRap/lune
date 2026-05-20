@@ -9,7 +9,7 @@
 | **Core**         | No                                                  |
 | **Phases**       | Bindable                                            |
 | **Hard deps**    | —                                                   |
-| **Platforms**    | macOS · Linux · Windows (HTML/image: macOS · Linux) |
+| **Platforms**    | macOS · Linux · Windows (image: macOS · Linux only) |
 
 ---
 

@@ -9,13 +9,41 @@ module Lune
         DESCRIPTOR
       end
 
+      @app_title : String = "lune"
+
+      def setup(ctx : SetupCtx) : Nil
+        @app_title = ctx.options.title
+      end
+
       def install(ctx : BindCtx) : Nil
+        url_from_argv = ARGV.find { |arg| arg.includes?("://") }
+
+        # Linux warm-start: if a primary instance is already running, send
+        # the URL over its Unix-socket and exit instead of opening a new
+        # window. macOS doesn't need this (NSApp is single-instance by
+        # default); Windows would want named pipes — deferred to v0.12.0.
+        {% if flag?(:linux) %}
+          if url_from_argv && Lune::DeepLinkIPC.forward(url_from_argv, @app_title)
+            Lune.logger.info { "DeepLink: forwarded #{url_from_argv} to running instance" }
+            Process.exit(0)
+          end
+
+          # We're the primary — listen for forwards from future invocations.
+          Lune::DeepLinkIPC.listen(@app_title) do |incoming|
+            ctx.app.events.emit("deep_link", {"url" => incoming})
+          end
+        {% end %}
+
         {% if flag?(:lune_native_test_mock) || flag?(:darwin) %}
           Native::DeepLink.install do |url|
             ctx.app.events.emit("deep_link", {"url" => url})
           end
-        {% elsif flag?(:linux) %}
-          if url = ARGV.find { |arg| arg.includes?("://") }
+        {% elsif flag?(:linux) || flag?(:win32) %}
+          # Cold-start delivery: OS launches the app with a URL on the
+          # command line (after `myapp://` is registered with the desktop
+          # or registry); the URL lands in ARGV. Same path on Linux and
+          # Windows.
+          if url = url_from_argv
             ctx.app.events.emit("deep_link", {"url" => url})
           end
         {% end %}

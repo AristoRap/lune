@@ -76,8 +76,8 @@ Lune.run(app, assets: "frontend/dist") do |opts|
     d.zone = "--lune-draggable"
   end
 
-  opts.drop do |d|
-    d.zone = "--lune-drop-target"
+  opts.file_drop do |fd|
+    fd.zone = "--lune-drop-target"
   end
 
   opts.menu do |m|

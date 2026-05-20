@@ -7,9 +7,8 @@ module Lune
   #   o.width = 1280
   #   o.height = 720
   #
-  #   o.drop do |d|
-  #     d.enabled = true
-  #     d.zone = "--lune-drop-target"
+  #   o.file_drop do |fd|
+  #     fd.zone = "--lune-drop-target"
   #   end
   #
   #   o.mac do |m|
@@ -66,15 +65,15 @@ module Lune
     # handle (NSWindow* on macOS, GtkWindow* on Linux, HWND on Windows).
     property on_window_ready : (Void* -> Nil)? = nil
 
-    getter drop : Drop = Drop.new
+    getter file_drop : FileDrop = FileDrop.new
     getter drag : Drag = Drag.new
     getter tray : Tray = Tray.new
     getter mac : Mac = Mac.new
     getter menu : Menu = Menu.new
     getter file_watch : FileWatch = FileWatch.new
 
-    def drop(& : Drop ->)
-      yield @drop
+    def file_drop(& : FileDrop ->)
+      yield @file_drop
     end
 
     def drag(& : Drag ->)

@@ -2,14 +2,14 @@
 
 > Programmatic window controls from JavaScript.
 
-|                  |                                  |
-| ---------------- | -------------------------------- |
-| **Config key**   | `window`                         |
-| **JS namespace** | `Window`                         |
-| **Core**         | No                               |
-| **Phases**       | Bindable                         |
-| **Hard deps**    | —                                |
-| **Platforms**    | macOS · Linux (Windows: planned) |
+|                  |                                                  |
+| ---------------- | ------------------------------------------------ |
+| **Config key**   | `window`                                         |
+| **JS namespace** | `Window`                                         |
+| **Core**         | No                                               |
+| **Phases**       | Bindable                                         |
+| **Hard deps**    | —                                                |
+| **Platforms**    | macOS · Linux · Windows (chrome opts macOS-only) |
 
 The Window capability exposes runtime window controls to JavaScript — minimize, maximize, center, resize, and retitle. For initial window size, title, and macOS-specific options, see [Window Configuration](../guide/window).
 

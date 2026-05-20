@@ -52,9 +52,9 @@ Mark elements as drop targets with a custom CSS property:
 
 ```crystal
 Lune.run(app) do |opts|
-  opts.drop do |d|
-    d.zone  = "--lune-drop-target"   # CSS custom property name
-    d.value = "true"                  # expected value
+  opts.file_drop do |fd|
+    fd.zone  = "--lune-drop-target"   # CSS custom property name
+    fd.value = "true"                  # expected value
   end
 end
 ```
@@ -75,12 +75,12 @@ Configure in `Lune.run`:
 
 ```crystal
 Lune.run(app) do |opts|
-  opts.drop do |d|
-    d.zone  = "--lune-drop-target"
-    d.value = "true"
+  opts.file_drop do |fd|
+    fd.zone  = "--lune-drop-target"
+    fd.value = "true"
 
     # Optional Crystal-side callback (runs before JS receives the event)
-    d.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
+    fd.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
       puts "Dropped: #{paths}"
     }
   end
