@@ -80,6 +80,20 @@ module Lune
       end
     end
 
+    # Snapshot of main-runtime state — wired into capabilities that need to
+    # orchestrate the main webview (e.g. opening secondary windows from the
+    # `Windows` capability). Delivered after the main `Bridge` is wired and
+    # the binding set is final, so `bindings` is a stable snapshot.
+    struct MainCtx
+      getter wv : Webview::Webview
+      getter app : App
+      getter resolved : Capabilities::ResolvedSet
+      getter bindings : Array(Binding)
+
+      def initialize(@wv : Webview::Webview, @app : App, @resolved : Capabilities::ResolvedSet, @bindings : Array(Binding))
+      end
+    end
+
     # -------------------------------------------------------------------------
     # Phase modules — include only the phases a capability participates in.
     # The compiler then enforces the abstract method for that phase.
@@ -98,6 +112,13 @@ module Lune
     # Include if this capability holds resources that must be released on quit.
     module Lifecycle
       abstract def shutdown : Nil
+    end
+
+    # Include if this capability needs a handle to the main webview / app /
+    # final binding set after the bridge has been wired (e.g. to open
+    # secondary windows or eval into the main webview at runtime).
+    module MainContextAware
+      abstract def set_main_context(ctx : MainCtx) : Nil
     end
 
     # -------------------------------------------------------------------------

@@ -75,8 +75,9 @@ module Lune
         bridge.register_bindings(@app.bindings.select(&.internal?))
         @app.bridge = bridge
 
-        if windows_cap = resolved.capabilities.find { |c| c.is_a?(Capabilities::Windows) }.as?(Capabilities::Windows)
-          windows_cap.set_context(wv, @app, resolved, @app.bindings)
+        main_ctx = Lune::Capability::MainCtx.new(wv, @app, resolved, @app.bindings)
+        resolved.capabilities.each do |cap|
+          cap.set_main_context(main_ctx) if cap.is_a?(Lune::Capability::MainContextAware)
         end
 
         callback_window_ready_if_set(handle)

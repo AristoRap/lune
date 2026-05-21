@@ -3,6 +3,7 @@ module Lune
     class Windows < Lune::Capability
       include Capability::BindPhase
       include Capability::Lifecycle
+      include Capability::MainContextAware
 
       DESCRIPTOR = Descriptor.new(id: :windows, label: "Windows")
 
@@ -17,16 +18,11 @@ module Lune
       @resolved : Capabilities::ResolvedSet? = nil
       @bindings_snapshot = [] of Binding
 
-      def set_context(
-        main_wv : Webview::Webview,
-        app : Lune::App,
-        resolved : Capabilities::ResolvedSet,
-        bindings : Array(Binding),
-      ) : Nil
-        @main_wv = main_wv
-        @app = app
-        @resolved = resolved
-        @bindings_snapshot = bindings
+      def set_main_context(ctx : Capability::MainCtx) : Nil
+        @main_wv = ctx.wv
+        @app = ctx.app
+        @resolved = ctx.resolved
+        @bindings_snapshot = ctx.bindings
       end
 
       def install(ctx : BindCtx) : Nil

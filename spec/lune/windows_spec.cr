@@ -39,6 +39,10 @@ describe Lune::Capabilities::Windows do
     it "does not include WebviewInject" do
       Lune::Capabilities::Windows.new.is_a?(Lune::Capability::WebviewInject).should be_false
     end
+
+    it "includes MainContextAware" do
+      Lune::Capabilities::Windows.new.is_a?(Lune::Capability::MainContextAware).should be_true
+    end
   end
 
   describe "install" do
