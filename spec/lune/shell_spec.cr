@@ -1,5 +1,28 @@
 require "../spec_helper"
 
+# Cross-platform spawn helpers: Win32 doesn't have POSIX sleep/echo/cat
+# as standalone binaries, so use the Windows equivalents. Tests assert on
+# binding behaviour, not which command ran.
+{% if flag?(:win32) %}
+  SHELL_SPEC_SLEEP_CMD  = "ping"
+  SHELL_SPEC_SLEEP_ARGS = ["127.0.0.1", "-n", "5"]
+  SHELL_SPEC_ECHO_CMD   = "cmd"
+  SHELL_SPEC_ECHO_ARGS  = ["/c", "echo", "hello"]
+  SHELL_SPEC_STDIN_CMD  = "cmd"
+  SHELL_SPEC_STDIN_ARGS = ["/c", "more"]
+{% else %}
+  SHELL_SPEC_SLEEP_CMD  = "sleep"
+  SHELL_SPEC_SLEEP_ARGS = ["5"]
+  SHELL_SPEC_ECHO_CMD   = "echo"
+  SHELL_SPEC_ECHO_ARGS  = ["hello"]
+  SHELL_SPEC_STDIN_CMD  = "cat"
+  SHELL_SPEC_STDIN_ARGS = [] of String
+{% end %}
+
+private def shell_spec_json_args(args : Array(String)) : Array(JSON::Any)
+  args.map { |a| JSON::Any.new(a) }
+end
+
 describe Lune::Capabilities::Shell do
   describe "descriptor" do
     it "has correct id and label" do
@@ -70,7 +93,7 @@ describe Lune::Capabilities::Shell do
       app.install(cap)
       spawn_b = app.bindings.find { |b| b.id == "__lune.shell.spawn" }.not_nil!
       list_b = app.bindings.find { |b| b.id == "__lune.shell.list" }.not_nil!
-      pid = spawn_b.callback.call([JSON::Any.new("sleep"), JSON::Any.new([JSON::Any.new("5")])]).as_s
+      pid = spawn_b.callback.call([JSON::Any.new(SHELL_SPEC_SLEEP_CMD), JSON::Any.new(shell_spec_json_args(SHELL_SPEC_SLEEP_ARGS))]).as_s
       pids = list_b.callback.call([] of JSON::Any).as_a.map(&.as_s)
       pids.should contain(pid)
       # cleanup
@@ -83,7 +106,7 @@ describe Lune::Capabilities::Shell do
       app = Lune::App.new
       app.install(cap)
       spawn_b = app.bindings.find { |b| b.id == "__lune.shell.spawn" }.not_nil!
-      result = spawn_b.callback.call([JSON::Any.new("echo"), JSON::Any.new([JSON::Any.new("hello")])])
+      result = spawn_b.callback.call([JSON::Any.new(SHELL_SPEC_ECHO_CMD), JSON::Any.new(shell_spec_json_args(SHELL_SPEC_ECHO_ARGS))])
       result.as_s.size.should eq(16) # Random.new.hex(8) → 16 hex chars
     end
 
@@ -102,7 +125,7 @@ describe Lune::Capabilities::Shell do
       app = Lune::App.new
       app.install(cap)
       run_b = app.bindings.find { |b| b.id == "__lune.shell.run" }.not_nil!
-      result = run_b.callback.call([JSON::Any.new("echo"), JSON::Any.new([JSON::Any.new("hello")])])
+      result = run_b.callback.call([JSON::Any.new(SHELL_SPEC_ECHO_CMD), JSON::Any.new(shell_spec_json_args(SHELL_SPEC_ECHO_ARGS))])
       result["stdout"].as_s.strip.should eq("hello")
       result["stderr"].as_s.should eq("")
       result["code"].as_i.should eq(0)
@@ -133,8 +156,9 @@ describe Lune::Capabilities::Shell do
       spawn_b = app.bindings.find { |b| b.id == "__lune.shell.spawn" }.not_nil!
       write_b = app.bindings.find { |b| b.id == "__lune.shell.write" }.not_nil!
       close_b = app.bindings.find { |b| b.id == "__lune.shell.close_stdin" }.not_nil!
-      # cat reads stdin and echoes to stdout — test that write + close_stdin doesn't raise
-      pid = spawn_b.callback.call([JSON::Any.new("cat"), JSON::Any.new([] of JSON::Any)]).as_s
+      # Stdin-consumer process (cat on POSIX, more on Win32) — test that
+      # write + close_stdin doesn't raise. Content isn't asserted here.
+      pid = spawn_b.callback.call([JSON::Any.new(SHELL_SPEC_STDIN_CMD), JSON::Any.new(shell_spec_json_args(SHELL_SPEC_STDIN_ARGS))]).as_s
       write_b.callback.call([JSON::Any.new(pid), JSON::Any.new("hello\n")]).raw.should be_nil
       close_b.callback.call([JSON::Any.new(pid)]).raw.should be_nil
     end
