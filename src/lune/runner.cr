@@ -267,14 +267,14 @@ module Lune
       elsif dev_url = ENV[Lune::ENV_DEV_URL]?
         all_stubs = App.new
         all_bind_ctx = Lune::Capability::BindCtx.new(all_stubs)
+        # `registry.all` is already platform-filtered, so every cap here has a
+        # working install path on the current OS — no NotImplementedError to
+        # swallow. Caps that can't run on this platform are emitted as rejecting
+        # JS stubs separately via `registry.platform_filtered` below.
         registry.all.each do |cap|
           next if resolved.active_ids.includes?(cap.descriptor.id)
           next unless cap.is_a?(Lune::Capability::Bindable)
-          begin
-            cap.install(all_bind_ctx)
-          rescue ex : NotImplementedError
-            Lune.logger.debug { "Skipping stub install for #{cap.descriptor.label}: #{ex.message}" }
-          end
+          cap.install(all_bind_ctx)
         end
         Lune::Runtime::Generator.write_js(
           @app.bindings + all_stubs.bindings.select(&.internal?),

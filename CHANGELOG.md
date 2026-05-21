@@ -12,6 +12,8 @@
 
 - **`Lune::Capabilities::Registry`** — adds `platform_filtered : Array(Lune::Capability)` accessor exposing the caps dropped during construction so the generator can emit unavailable stubs for them. `validate()` now uses a separate `@known_names` set so typo detection survives the platform pre-filter.
 - **`Lune::Runtime::Generator.generate_runtime_js` / `.generate_runtime_dts` / `.write_js`** — accept a new `unavailable_caps : Array(Lune::Capability) = []` parameter and splice each cap's rejecting stub into both the per-namespace blocks and the `runtime` object literal. Dedupes against the live namespace list as a belt-and-braces guard.
+- **`Clipboard.readImage` / `writeImage` on Win32** now raise `Lune::Error.new("UNAVAILABLE_ON_PLATFORM", …)` from the capability's default callback instead of bubbling a generic `NotImplementedError` through the bridge. JS callers get a typed `LuneError` with the same `UNAVAILABLE_ON_PLATFORM` code used by platform-gated capability stubs, so the same `.catch` pattern handles both. Other Clipboard methods (text + HTML) remain native on Win32 and are unaffected.
+- **`runner.cr` dev-mode stub install** no longer wraps `cap.install` in a `rescue NotImplementedError`. The platform filter on `registry.all` guarantees every cap in there has a working install path on the current OS; the rescue was a leftover workaround that was now silently swallowing real bugs.
 
 ## [0.11.2] - 2026-05-21
 

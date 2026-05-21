@@ -247,6 +247,35 @@ describe "Lune::Capabilities" do
       JSON.parse(result).as_s.should eq("data:image/png;base64,abc123")
     end
 
+    it "clipboard.read_image surfaces a Lune::Error from on_read_image with its code" do
+      # Mirrors the Win32 default: callback raises Lune::Error with code
+      # "UNAVAILABLE_ON_PLATFORM", bridge forwards it as a typed JS LuneError
+      # (status 1, body has {code: ..., error: ...}). Catchable with .catch in
+      # user code the same way platform-gated capability rejections are.
+      fake, bridge = make_bridge
+      app = Lune::App.new
+      app.install(Lune::Capabilities::Clipboard.new(
+        on_read_image: -> : String {
+          raise Lune::Error.new("UNAVAILABLE_ON_PLATFORM", "Clipboard.readImage is not available on win32")
+        }
+      ))
+      bridge.register_bindings(app.bindings)
+
+      fake.invoke("__lune.clipboard.read_image", "seq-img-err", [] of JSON::Any)
+
+      deadline = Time.instant + 2.seconds
+      while Time.instant < deadline
+        break unless fake.resolve_calls.empty?
+        Fiber.yield
+      end
+
+      _, status, result = fake.resolve_calls[0]
+      status.should eq(1)
+      payload = JSON.parse(result)
+      payload["code"].as_s.should eq("UNAVAILABLE_ON_PLATFORM")
+      payload["error"].as_s.should contain("Clipboard.readImage")
+    end
+
     it "clipboard.write_image calls on_write_image with the data URL and resolves" do
       fake, bridge = make_bridge
       written = ""
