@@ -123,6 +123,10 @@ jobs:
         if: runner.os == 'Windows' && steps.webview-cache.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
+          # Graphviz `dot` is required by webview's CMake (transitively via
+          # Doxygen for doc generation). Pre-installed Doxygen on the runner
+          # doesn't include Graphviz, so we add it here.
+          choco install -y graphviz | Out-Null
           $src = "$env:RUNNER_TEMP\webview-src"
           git clone --depth 1 --branch "${{ env.WEBVIEW_PIN }}" https://github.com/webview/webview.git $src
           Push-Location $src
