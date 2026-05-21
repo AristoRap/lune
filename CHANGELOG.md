@@ -5,6 +5,7 @@
 ### Fixed
 
 - **Win32 global hotkeys not firing** — `Msg.w_param` was declared as `LibC::ULong` (4 bytes on Windows LLP64) but `WPARAM` is `UINT_PTR` — 8 bytes on 64-bit. Crystal placed `w_param` at offset 12, reading from the 4-byte padding gap (always 0) instead of the real `wParam` at offset 16. `WM_HOTKEY` was arriving; only the ID lookup always returned nil. Fixed by changing to `UInt64`, which forces the correct 8-byte alignment and places `w_param` at offset 16.
+- **`lune dev` orphaned npm/node/webview on Windows** — when `lune dev` exited (Ctrl-C, taskkill, crash, or even a clean shutdown), `Process.terminate` only killed the `cmd /c npm run dev` leader and left `npm.cmd`/`node.exe` holding the vite port. Restarting then iterated through 5173 → 5202+ looking for a free port. The compiled user-app (`.lune-dev`) also survived ungraceful kills, leaving the webview window with no parent. Two-part fix: (1) new `Native::ProcessGroup` puts `lune.exe` itself into a Win32 Job Object with `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`, so every descendant Windows creates is forced into the same job and the kernel atomically kills the whole tree when `lune.exe`'s handles are reaped. (2) On graceful exit, `dev.cr` shells out to `taskkill /F /T /PID <vite>` to walk the cmd/npm/node tree explicitly — `TerminateJobObject` would kill `lune.exe` too since it's a member. Crystal's per-child IOCP job (`SILENT_BREAKAWAY_OK`) coexists with ours via Win8+ nested-job rules. POSIX path is unchanged.
 
 ### Docs
 

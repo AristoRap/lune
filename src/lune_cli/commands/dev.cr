@@ -58,6 +58,16 @@ module LuneCLI
 
         Lune.logger.info { "Starting frontend dev server in #{frontend_dir} (#{dev_cmd})..." }
 
+        # Anchor every descendant lune dev spawns (cmd/npm/vite/node, the
+        # compiled .lune-dev app, the error-overlay window) to a Job Object
+        # by putting lune.exe itself in it. The job has no breakaway flag,
+        # so Windows forces every descendant into the same job. When lune.exe
+        # dies for any reason (Ctrl-C, taskkill, crash), KILL_ON_JOB_CLOSE
+        # atomically kills the whole tree. See Native::ProcessGroup.
+        {% if flag?(:win32) %}
+          dev_job = Lune::Native::ProcessGroup.create_and_attach_self
+        {% end %}
+
         vite = {% if flag?(:win32) %}
           dev_parts = dev_cmd.split(' ', remove_empty: true)
           Process.new(
@@ -82,8 +92,7 @@ module LuneCLI
 
         unless wait_for_url(dev_url)
           Lune.logger.warn { "Timed out waiting for dev server at #{dev_url}" }
-          vite.terminate
-          vite.wait
+          stop_dev_server(vite)
           return false
         end
 
@@ -154,10 +163,29 @@ module LuneCLI
         end
 
         Lune.logger.info { "App exited. Stopping dev server..." }
-        vite.terminate
-        vite.wait
+        stop_dev_server(vite)
 
         true
+      end
+
+      # Kills vite and every descendant it spawned. On Windows, `vite` is a
+      # `cmd /c npm run dev` wrapper, and Process.terminate (TerminateProcess)
+      # only kills the cmd.exe leader -- npm.cmd/node.exe orphan and keep
+      # holding the dev-server port. taskkill /T walks the tree. The job
+      # object that lune.exe is attached to remains as an ungraceful-exit
+      # safety net (KILL_ON_JOB_CLOSE) -- we deliberately don't terminate it
+      # here because that would kill lune.exe too.
+      private def stop_dev_server(vite : Process) : Nil
+        {% if flag?(:win32) %}
+          Process.run("taskkill", ["/F", "/T", "/PID", vite.pid.to_s],
+            input: Process::Redirect::Close,
+            output: Process::Redirect::Close,
+            error: Process::Redirect::Close)
+          vite.wait rescue nil
+        {% else %}
+          vite.terminate
+          vite.wait
+        {% end %}
       end
 
       private def wait_for_url(url : String, timeout : Time::Span = 30.seconds) : Bool
