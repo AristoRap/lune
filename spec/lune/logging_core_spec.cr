@@ -45,7 +45,7 @@ describe "Lune core logging" do
             internal: false,
             async: false
           ),
-        ])
+        ], "frontend/lunejs")
       end
     end
 

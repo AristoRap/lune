@@ -3,8 +3,6 @@ require "file_utils"
 module Lune
   module Runtime
     module Generator
-      LUNEJS_DIR = "#{DEFAULT_FRONTEND_DIR}/#{LUNEJS_SUBDIR}"
-
       # ----------------------------
       # Runtime JS
       # ----------------------------
@@ -303,7 +301,7 @@ module Lune
 
       def self.write_js(
         bindings : Array(Binding),
-        lunejs_dir : String = LUNEJS_DIR,
+        lunejs_dir : String,
         capabilities : Array(Lune::Capability) = [] of Lune::Capability,
         unavailable_caps : Array(Lune::Capability) = [] of Lune::Capability,
       ) : Nil

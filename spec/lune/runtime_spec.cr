@@ -330,7 +330,7 @@ describe Lune::Runtime do
 
     with_tempdir do |tmpdir|
       Dir.cd(tmpdir) do
-        Lune::Runtime::Generator.write_js(bindings)
+        Lune::Runtime::Generator.write_js(bindings, "frontend/lunejs")
 
         app_path = File.join("frontend", "lunejs", "app", "App.js")
         runtime_path = File.join("frontend", "lunejs", "runtime", "runtime.js")
