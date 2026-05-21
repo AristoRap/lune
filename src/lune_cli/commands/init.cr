@@ -174,8 +174,9 @@ module LuneCLI
 
       private def run_npm_install(app_name : String, frontend_dir : String)
         Lune.logger.info { "Running npm install..." }
+        program, args = LuneCLI::ProcessSpawn.wrap(NPM_CMD, ["install"])
         status = Process.run(
-          NPM_CMD, ["install"],
+          program, args,
           chdir: File.join(app_name, frontend_dir),
           input: Process::Redirect::Inherit,
           output: Process::Redirect::Inherit,

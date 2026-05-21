@@ -68,27 +68,15 @@ module LuneCLI
           dev_job = Lune::Native::ProcessGroup.create_and_attach_self
         {% end %}
 
-        vite = {% if flag?(:win32) %}
-          dev_parts = dev_cmd.split(' ', remove_empty: true)
-          Process.new(
-            "cmd",
-            ["/c"] + dev_parts,
-            chdir: frontend_dir,
-            input: Process::Redirect::Close,
-            output: Process::Redirect::Inherit,
-            error: Process::Redirect::Inherit
-          )
-        {% else %}
-          dev_parts = dev_cmd.split(' ', remove_empty: true)
-          Process.new(
-            dev_parts[0],
-            dev_parts[1..],
-            chdir: frontend_dir,
-            input: Process::Redirect::Close,
-            output: Process::Redirect::Inherit,
-            error: Process::Redirect::Inherit
-          )
-        {% end %}
+        dev_parts = dev_cmd.split(' ', remove_empty: true)
+        dev_program, dev_args = LuneCLI::ProcessSpawn.wrap(dev_parts[0], dev_parts[1..])
+        vite = Process.new(
+          dev_program, dev_args,
+          chdir: frontend_dir,
+          input: Process::Redirect::Close,
+          output: Process::Redirect::Inherit,
+          error: Process::Redirect::Inherit
+        )
 
         unless wait_for_url(dev_url)
           Lune.logger.warn { "Timed out waiting for dev server at #{dev_url}" }

@@ -61,7 +61,8 @@ module LuneCLI
 
       private def check_tool(cmd : String, args : Array(String), label : String = cmd) : Check
         output = IO::Memory.new
-        status = Process.run(cmd, args, output: output, error: Process::Redirect::Close)
+        program, run_args = LuneCLI::ProcessSpawn.wrap(cmd, args)
+        status = Process.run(program, run_args, output: output, error: Process::Redirect::Close)
         version = output.to_s.lines.first?.try(&.strip) || "unknown"
         Check.new(label: label, ok: status.success?, detail: version)
       rescue File::NotFoundError

@@ -69,9 +69,9 @@ module LuneCLI
         LuneCLI::Generator.generate_bindings(app_entry, frontend_dir)
 
         build_parts = build_cmd.split(' ', remove_empty: true)
+        program, run_args = LuneCLI::ProcessSpawn.wrap(build_parts[0], build_parts[1..])
         frontend_status = Process.run(
-          build_parts[0],
-          build_parts[1..],
+          program, run_args,
           chdir: frontend_dir,
           input: Process::Redirect::Inherit,
           output: Process::Redirect::Inherit,

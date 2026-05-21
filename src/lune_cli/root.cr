@@ -1,4 +1,5 @@
 require "./constants"
+require "./process_spawn"
 require "./config"
 require "./generator"
 require "./commands/build"
