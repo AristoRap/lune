@@ -1,44 +1,10 @@
 module Lune
   module Native
-    {% if flag?(:lune_native_test_mock) %}
-      module NotificationsMock
-        @@calls = [] of Symbol
-        @@last_title : String? = nil
-        @@last_body : String? = nil
-
-        class_getter calls, last_title, last_body
-
-        def self.reset
-          @@calls.clear
-          @@last_title = nil
-          @@last_body = nil
-        end
-
-        def self.record_show(title : String, body : String)
-          @@calls << :show
-          @@last_title = title
-          @@last_body = body
-        end
-      end
-    {% elsif flag?(:darwin) %}
-      {% system("cd '#{__DIR__}/../../../ext/native/macos' && clang -c notifications.m -o notifications.o -fobjc-arc 2>/dev/null") %}
-
-      @[Link(framework: "AppKit")]
-      @[Link(framework: "UserNotifications")]
-      @[Link(framework: "Security")]
-      @[Link(ldflags: "#{__DIR__}/../../../ext/native/macos/notifications.o")]
-      lib LibNativeNotifications
-        fun show_notification(title : LibC::Char*, body : LibC::Char*) : Void
-      end
-    {% elsif flag?(:linux) %}
-      {% system("cd '#{__DIR__}/../../../ext/native/linux' && gcc -c notifications.c -o notifications.o `pkg-config --cflags libnotify` 2>/dev/null") %}
-
-      @[Link(ldflags: "#{__DIR__}/../../../ext/native/linux/notifications.o `pkg-config --libs libnotify`")]
-      lib LibNativeNotifications
-        fun show_notification(title : LibC::Char*, body : LibC::Char*) : Void
-      end
-    {% end %}
-
+    # Platform implementations live in sibling files:
+    #   - notifications_mock.cr    (under -Dlune_native_test_mock)
+    #   - notifications_darwin.cr  (UserNotifications via .m shim)
+    #   - notifications_linux.cr   (libnotify via .c shim)
+    # Win32 shells out to PowerShell inline below; no separate lib block needed.
     module Notifications
       def self.show(title : String, body : String)
         {% if flag?(:lune_native_test_mock) %}

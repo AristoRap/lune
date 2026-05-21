@@ -1,35 +1,13 @@
 module Lune
   module Native
-    {% if flag?(:darwin) %}
-      EVFILT_VNODE =         -4_i16
-      NOTE_DELETE  = 0x00000001_u32
-      NOTE_WRITE   = 0x00000002_u32
-      NOTE_ATTRIB  = 0x00000008_u32
-      NOTE_RENAME  = 0x00000020_u32
-      O_EVTONLY    =         0x8000
-    {% elsif flag?(:linux) %}
-      lib LibInotify
-        IN_MODIFY      = 0x00000002_u32
-        IN_ATTRIB      = 0x00000004_u32
-        IN_MOVED_FROM  = 0x00000040_u32
-        IN_MOVED_TO    = 0x00000080_u32
-        IN_CREATE      = 0x00000100_u32
-        IN_DELETE      = 0x00000200_u32
-        IN_DELETE_SELF = 0x00000400_u32
-        IN_MOVE_SELF   = 0x00000800_u32
-
-        struct InotifyEvent
-          wd : LibC::Int
-          mask : LibC::UInt
-          cookie : LibC::UInt
-          len : LibC::UInt
-        end
-
-        fun inotify_init : LibC::Int
-        fun inotify_add_watch(fd : LibC::Int, path : LibC::Char*, mask : LibC::UInt) : LibC::Int
-        fun inotify_rm_watch(fd : LibC::Int, wd : LibC::Int) : LibC::Int
-      end
-    {% end %}
+    # Platform constants + lib blocks live in sibling files:
+    #   - file_watch_darwin.cr (kqueue NOTE_* + EVFILT_VNODE)
+    #   - file_watch_linux.cr  (LibInotify)
+    # The FileWatch class below holds the platform-conditional method bodies
+    # that drive them — kqueue on darwin, inotify on linux, NotImplementedError
+    # on win32, no-op elsewhere. There is no `lune_native_test_mock` sibling
+    # because the mock path is a set of empty class methods, also conditional
+    # below.
 
     # Bidirectional watch registry for Linux inotify (wd ↔ path).
     # Encapsulates the two maps so they are always updated as a unit.
@@ -275,7 +253,7 @@ module Lune
         path : String,
         kind : String,
         debounce : Time::Span,
-        last_fired : Hash(String, Time::Instant)
+        last_fired : Hash(String, Time::Instant),
       ) : Nil
         now = Time.instant
         return if (prev = last_fired[path]?) && (now - prev) < debounce

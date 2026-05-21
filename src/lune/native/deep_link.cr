@@ -1,34 +1,10 @@
 module Lune
   module Native
-    {% if flag?(:lune_native_test_mock) %}
-      module DeepLinkMock
-        @@handler : (String -> Nil)? = nil
-
-        def self.reset
-          @@handler = nil
-        end
-
-        def self.set_handler(handler : String -> Nil)
-          @@handler = handler
-        end
-
-        def self.simulate(url : String)
-          @@handler.try(&.call(url))
-        end
-      end
-    {% elsif flag?(:darwin) %}
-      {% system("cd '#{__DIR__}/../../../ext/native/macos' && clang -c deep_link.m -o deep_link.o -fobjc-arc 2>/dev/null") %}
-
-      @[Link(framework: "AppKit")]
-      @[Link(ldflags: "#{__DIR__}/../../../ext/native/macos/deep_link.o")]
-      lib LibNativeDeepLink
-        fun lune_deep_link_install(
-          cb  : (LibC::Char*, Void*) ->,
-          ctx : Void*
-        ) : Void
-      end
-    {% end %}
-
+    # Platform implementations live in sibling files:
+    #   - deep_link_mock.cr   (under -Dlune_native_test_mock)
+    #   - deep_link_darwin.cr (NSAppleEventManager via .m shim)
+    # Linux/Win32 currently no-op (Linux: docs claim support but runtime
+    # handler not yet implemented; Win32: raises NotImplementedError).
     module DeepLink
       @@box : Void*? = nil
 

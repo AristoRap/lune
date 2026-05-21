@@ -2,93 +2,11 @@ require "json"
 
 module Lune
   module Native
-    {% if flag?(:lune_native_test_mock) %}
-      module MenuMock
-        @@calls = [] of Symbol
-        @@last_app_name : String? = nil
-        @@last_menu_json : String? = nil
-        @@last_context_json : String? = nil
-        @@context_stub_id : String = ""
-
-        class_getter calls, last_app_name, last_menu_json, last_context_json, context_stub_id
-
-        def self.reset
-          @@calls.clear
-          @@last_app_name = nil
-          @@last_menu_json = nil
-          @@last_context_json = nil
-          @@context_stub_id = ""
-        end
-
-        def self.stub_context_selection(id : String)
-          @@context_stub_id = id
-        end
-
-        def self.record_setup_default(app_name : String)
-          @@calls << :setup_default
-          @@last_app_name = app_name
-        end
-
-        def self.record_set_menu(app_name : String, json : String)
-          @@calls << :set_menu
-          @@last_app_name = app_name
-          @@last_menu_json = json
-        end
-
-        def self.record_show_context_menu(x : Float32, y : Float32, json : String, &on_select : String -> Nil)
-          @@calls << :show_context_menu
-          @@last_context_json = json
-          on_select.call(@@context_stub_id) unless @@context_stub_id.empty?
-        end
-      end
-    {% elsif flag?(:darwin) %}
-      {% system("cd '#{__DIR__}/../../../ext/native/macos' && clang -c menu.m -o menu.o -fobjc-arc 2>/dev/null") %}
-
-      @[Link(framework: "AppKit")]
-      @[Link(ldflags: "#{__DIR__}/../../../ext/native/macos/menu.o")]
-      lib LibNativeMenu
-        fun setup_default_menu(app_name : LibC::Char*) : Void
-        fun lune_set_menu(
-          app_name : LibC::Char*,
-          json     : LibC::Char*,
-          cb       : (LibC::Char*, Void*) ->,
-          ctx      : Void*
-        ) : Void
-        fun lune_show_context_menu(
-          window : Void*,
-          x      : LibC::Float,
-          y      : LibC::Float,
-          json   : LibC::Char*,
-          cb     : (LibC::Char*, Void*) ->,
-          ctx    : Void*
-        ) : Void
-      end
-    {% elsif flag?(:win32) %}
-      @[Link("user32")]
-      lib LibUser32Menu
-        MF_STRING    = 0x0000_u32
-        MF_SEPARATOR = 0x0800_u32
-        MF_GRAYED    = 0x0001_u32
-        MF_CHECKED   = 0x0008_u32
-
-        TPM_RETURNCMD   = 0x0100_u32
-        TPM_NONOTIFY    = 0x0080_u32
-        TPM_RIGHTBUTTON = 0x0002_u32
-
-        struct Point
-          x : LibC::Long
-          y : LibC::Long
-        end
-
-        fun create_popup_menu = CreatePopupMenu : Void*
-        fun destroy_menu = DestroyMenu(menu : Void*) : LibC::Int
-        fun append_menu_w = AppendMenuW(menu : Void*, flags : UInt32, id : LibC::ULong, item : UInt16*) : LibC::Int
-        fun track_popup_menu = TrackPopupMenu(menu : Void*, flags : UInt32, x : LibC::Int, y : LibC::Int, reserved : LibC::Int, hwnd : Void*, rect : Void*) : LibC::Int
-        fun client_to_screen = ClientToScreen(hwnd : Void*, pt : Point*) : LibC::Int
-        fun set_foreground_window = SetForegroundWindow(hwnd : Void*) : LibC::Int
-      end
-    {% end %}
-
+    # Platform lib blocks + mock live in sibling subdirs:
+    #   - mock/menu.cr     MenuMock module
+    #   - darwin/menu.cr   LibNativeMenu (.m shim — app menu + context menu)
+    #   - win32/menu.cr    LibUser32Menu (TrackPopupMenu for context menu)
+    # No linux/ sibling — Lune::Native::Menu is darwin- and win32-only.
     module Menu
       @@app_name : String = ""
       @@box : Void*? = nil
@@ -169,7 +87,7 @@ module Lune
               LibUser32Menu.append_menu_w(menu, LibUser32Menu::MF_SEPARATOR, 0_u64, Pointer(UInt16).null)
               next
             end
-            id    = obj["id"]?.try(&.as_s) || ""
+            id = obj["id"]?.try(&.as_s) || ""
             label = obj["label"]?.try(&.as_s) || id
             enabled = obj["enabled"]?.try(&.as_bool?) != false
             flags = LibUser32Menu::MF_STRING
@@ -223,7 +141,7 @@ module Lune
           kind_str = case item.kind
                      when Options::Menu::Item::Kind::RoleApp  then "role_app"
                      when Options::Menu::Item::Kind::RoleEdit then "role_edit"
-                     else item.kind.to_s.downcase
+                     else                                          item.kind.to_s.downcase
                      end
           json.field "kind", kind_str
 
@@ -236,16 +154,16 @@ module Lune
               json.array { item.children.each { |c| serialize_item(json, c) } }
             end
           else
-            json.field "id",      item.id
-            json.field "label",   item.label
+            json.field "id", item.id
+            json.field "label", item.label
             json.field "enabled", item.enabled
             json.field "checked", item.checked
             if sc = item.shortcut
               parsed = Options::Menu::Shortcut.parse(sc)
-              json.field "key",       parsed.key
+              json.field "key", parsed.key
               json.field "modifiers", parsed.modifiers
             else
-              json.field "key",       ""
+              json.field "key", ""
               json.field "modifiers", 0
             end
           end
@@ -271,7 +189,7 @@ module Lune
 
       private def self.dispatch(registry : Hash(String, Options::Menu::Item), payload : String)
         data = JSON.parse(payload)
-        id   = data["id"]?.try(&.as_s?) || return
+        id = data["id"]?.try(&.as_s?) || return
         item = registry[id]? || return
 
         if item.kind.checkbox? || item.kind.radio?

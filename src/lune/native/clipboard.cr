@@ -2,67 +2,15 @@ require "base64"
 
 module Lune
   module Native
-    {% if flag?(:lune_native_test_mock) %}
-      module ClipboardMock
-        @@text : String = ""
-        @@html : String = ""
-        @@image : String = ""
-
-        class_getter text, html, image
-
-        def self.reset
-          @@text = ""
-          @@html = ""
-          @@image = ""
-        end
-
-        def self.stub_text(text : String);   @@text = text;   end
-        def self.stub_html(html : String);   @@html = html;   end
-        def self.stub_image(image : String); @@image = image; end
-
-        def self.record_read : String;                         @@text;  end
-        def self.record_write(text : String);                  @@text = text;      end
-        def self.record_read_html : String;                    @@html;  end
-        def self.record_write_html(html : String);             @@html = html;      end
-        def self.record_read_image : String;                   @@image; end
-        def self.record_write_image(data_url : String);        @@image = data_url; end
-      end
-    {% elsif flag?(:darwin) %}
-      {% system("cd '#{__DIR__}/../../../ext/native/macos' && clang -c clipboard.m -o clipboard.o -fobjc-arc 2>/dev/null") %}
-
-      @[Link(framework: "AppKit")]
-      @[Link(ldflags: "#{__DIR__}/../../../ext/native/macos/clipboard.o")]
-      lib LibNativeClipboard
-        fun clipboard_read_html(out : LibC::Char*, out_size : LibC::Int) : LibC::Int
-        fun clipboard_write_html(html : LibC::Char*) : Void
-        fun clipboard_read_image(out : LibC::Char*, out_size : LibC::Int) : LibC::Int
-        fun clipboard_write_image(data_url : LibC::Char*) : Void
-      end
-    {% elsif flag?(:win32) %}
-      @[Link("user32")]
-      lib LibUser32Clip
-        CF_UNICODETEXT = 13_u32
-        fun open_clipboard = OpenClipboard(hwnd : Void*) : LibC::Int
-        fun close_clipboard = CloseClipboard : LibC::Int
-        fun empty_clipboard = EmptyClipboard : LibC::Int
-        fun get_clipboard_data = GetClipboardData(format : UInt32) : Void*
-        fun set_clipboard_data = SetClipboardData(format : UInt32, mem : Void*) : Void*
-        fun register_clipboard_format_w = RegisterClipboardFormatW(name : UInt16*) : UInt32
-      end
-
-      @[Link("kernel32")]
-      lib LibKernel32Clip
-        GMEM_MOVEABLE = 0x0002_u32
-        fun global_alloc = GlobalAlloc(flags : UInt32, bytes : LibC::SizeT) : Void*
-        fun global_lock = GlobalLock(mem : Void*) : Void*
-        fun global_unlock = GlobalUnlock(mem : Void*) : LibC::Int
-        fun global_size = GlobalSize(mem : Void*) : LibC::SizeT
-      end
-    {% end %}
-
+    # Platform lib blocks + mock live in sibling subdirs:
+    #   - mock/clipboard.cr     ClipboardMock module
+    #   - darwin/clipboard.cr   LibNativeClipboard (.m shim for html/image)
+    #   - win32/clipboard.cr    LibUser32Clip + LibKernel32Clip
+    # Linux has no lib block — html/image paths shell out to xclip directly
+    # from the methods below.
     module Clipboard
-      HTML_BUF_SIZE  =  1 * 1024 * 1024  # 1 MB — generous for any HTML payload
-      IMAGE_BUF_SIZE = 10 * 1024 * 1024  # 10 MB — covers base64 of most clipboard images
+      HTML_BUF_SIZE  = 1 * 1024 * 1024  # 1 MB — generous for any HTML payload
+      IMAGE_BUF_SIZE = 10 * 1024 * 1024 # 10 MB — covers base64 of most clipboard images
 
       {% if flag?(:win32) %}
         # The CF_HTML clipboard format ("HTML Format") is registered, not
@@ -93,10 +41,10 @@ module Lune
           prefix = "<html><body><!--StartFragment-->"
           suffix = "<!--EndFragment--></body></html>"
           header_size = (header_template % {0, 0, 0, 0}).bytesize
-          start_html      = header_size
-          start_fragment  = start_html + prefix.bytesize
-          end_fragment    = start_fragment + html.bytesize
-          end_html        = end_fragment + suffix.bytesize
+          start_html = header_size
+          start_fragment = start_html + prefix.bytesize
+          end_fragment = start_fragment + html.bytesize
+          end_html = end_fragment + suffix.bytesize
           header = header_template % {start_html, end_html, start_fragment, end_fragment}
           "#{header}#{prefix}#{html}#{suffix}"
         end
@@ -104,7 +52,7 @@ module Lune
         # Strip the CF_HTML envelope and return just the user-visible fragment.
         private def self.unwrap_cf_html(raw : String) : String
           start_marker = "<!--StartFragment-->"
-          end_marker   = "<!--EndFragment-->"
+          end_marker = "<!--EndFragment-->"
           si = raw.index(start_marker)
           ei = raw.index(end_marker)
           return raw unless si && ei && ei > si
