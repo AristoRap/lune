@@ -128,18 +128,17 @@ jobs:
           # doesn't include Graphviz, so we add it here.
           choco install -y graphviz | Out-Null
 
-          # Hide clang-format from CMake by removing LLVM from PATH. The
-          # runner image ships LLVM, so webview's CMake auto-enables a
-          # clang-format-check target that runs during `cmake --build`. Its
-          # expected formatting disagrees with the runner's clang-format
-          # version, failing the build. MSVC (cl.exe) does the real
-          # compiling, so dropping LLVM from PATH is safe here.
-          $env:Path = ($env:Path -split ';' | Where-Object { $_ -notmatch 'LLVM' }) -join ';'
-
           $src = "$env:RUNNER_TEMP\webview-src"
           git clone --depth 1 --branch "${{ env.WEBVIEW_PIN }}" https://github.com/webview/webview.git $src
           Push-Location $src
-          cmake -G Ninja -B build -S . -D CMAKE_BUILD_TYPE=Release
+          # WEBVIEW_IS_CI=OFF disables the clang-format `ALL` target — when ON
+          # (autodetected from $CI on GitHub runners) the format check runs
+          # during `cmake --build` and fails on any runner-vs-upstream
+          # clang-format version mismatch. We're consuming the library, not
+          # validating its source style, so opt out.
+          cmake -G Ninja -B build -S . `
+            -D CMAKE_BUILD_TYPE=Release `
+            -D WEBVIEW_IS_CI=OFF
           cmake --build build
           Pop-Location
           # Stash only the .lib + .dll we need — cache stays small.
