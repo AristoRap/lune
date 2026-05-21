@@ -77,18 +77,21 @@ Windows hardware and what's known to be broken. Items marked
   admin if you need these, or use a non-privileged equivalent. Not a
   Lune bug.
 
-## Not implemented (raise `NotImplementedError`)
+## Not implemented on Windows
 
-Each of these needs to be added to your app's `lune.yml`
-`capabilities.exclude` list on Windows until the implementation lands.
-All are tracked under v0.12.0 in `ROADMAP.md`:
+**Since v0.12.0, the capability registry filters these out automatically on Windows** — no manual `capabilities.exclude` is needed. Their JS namespace stays exported in `runtime.js` as a rejecting stub (each method returns `Promise.reject(new LuneError("UNAVAILABLE_ON_PLATFORM", …))`) so cross-platform imports keep working; `.catch` the error or branch on `runtime.System.environment().os` to fall back gracefully. The `runtime.d.ts` interface preserves the full signature so TypeScript code type-checks identically across platforms. Items still tracked in `ROADMAP.md`:
 
 - `tray` — needs hidden HWND + `Shell_NotifyIconW`
 - `file_watch` — needs `ReadDirectoryChangesW`
 - `file_drop` — needs `IDropTarget`/`OleInitialize` + drop callback
-- `drag_out` — macOS-only by design
+- `drag_out` — macOS-only by design (also unimplemented on Linux)
+
+These are **not** auto-filtered (the native code works but the UX is degraded or partial) — exclude manually if you need a clean Windows build:
+
 - `context_menu` — the Win32 `TrackPopupMenu` shim is in tree and the capability layer calls into it, but WebView2's built-in browser context menu shows on top and JS `preventDefault()` doesn't suppress it. Needs `ICoreWebView2_*` access to set `AreDefaultContextMenusEnabled = false` (or handle `ContextMenuRequested`). Exclude `context_menu` on Windows until that's wired up.
-- `Clipboard.readImage` / `writeImage` — needs PNG ↔ CF_DIB conversion
+- `notifications` — call succeeds but Windows silently drops the toast because the AUMID `"Lune"` isn't registered with the OS (see ROADMAP).
+- `deep_link` — cold-start (ARGV) works but warm-start forwarding doesn't, so each launch with a `myapp://…` URL opens a new instance.
+- `Clipboard.readImage` / `writeImage` — needs PNG ↔ CF_DIB conversion (text + HTML clipboard work on Windows).
 - `Menu.setupDefault` / `setFromOptions` — window menu bar not yet
   ported; needs `SetMenu` + `CreatePopupMenu` + `AppendMenuW` +
   WM_COMMAND dispatch (and `TranslateAccelerator` for shortcuts)

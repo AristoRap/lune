@@ -3,7 +3,9 @@ module Lune
     class DragOut < Lune::Capability
       include Capability::Bindable
 
-      DESCRIPTOR = Descriptor.new(id: :drag_out, label: "DragOut")
+      # macOS-only. The Win32 / X11 drag-out flows require native window
+      # subclassing and pasteboard plumbing we don't have today — see ROADMAP.
+      DESCRIPTOR = Descriptor.new(id: :drag_out, label: "DragOut", platforms: [:darwin])
 
       def descriptor : Descriptor
         DESCRIPTOR
@@ -29,6 +31,25 @@ module Lune
             JSON::Any.new(nil)
           },
         ).binding(binding_namespace))
+      end
+
+      def unavailable_js_stub(platform : Symbol) : String?
+        ns = binding_namespace
+        msg = "#{ns}.start is not available on #{platform}"
+        <<-JS
+        export const #{ns} = {
+          start(paths) { return Promise.reject(new LuneError("UNAVAILABLE_ON_PLATFORM", #{msg.inspect})); },
+        };
+        JS
+      end
+
+      def unavailable_dts_stub : String?
+        ns = binding_namespace
+        <<-DTS
+        export interface #{ns} {
+          start(paths: string[]): Promise<void>;
+        }
+        DTS
       end
     end
   end

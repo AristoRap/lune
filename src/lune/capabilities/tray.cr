@@ -3,7 +3,8 @@ module Lune
     class Tray < Lune::Capability
       include Capability::Bindable
 
-      DESCRIPTOR = Descriptor.new(id: :tray, label: "Tray", soft_deps: [:events])
+      # macOS + Linux. Win32 needs `Shell_NotifyIconW` plumbing (see ROADMAP).
+      DESCRIPTOR = Descriptor.new(id: :tray, label: "Tray", soft_deps: [:events], platforms: [:darwin, :linux])
 
       def descriptor : Descriptor
         DESCRIPTOR
@@ -165,6 +166,33 @@ module Lune
           Lune::Native::Tray.show("", on_tray_click)
           Lune::Native::Tray.set_right_click_cb(on_right_click)
         end
+      end
+
+      def unavailable_js_stub(platform : Symbol) : String?
+        ns = binding_namespace
+        reject = ->(m : String) { %(return Promise.reject(new LuneError("UNAVAILABLE_ON_PLATFORM", "#{ns}.#{m} is not available on #{platform}"));) }
+        <<-JS
+        export const #{ns} = {
+          show(iconPath) { #{reject.call("show")} },
+          hide() { #{reject.call("hide")} },
+          setIcon(path) { #{reject.call("setIcon")} },
+          popupMenu() { #{reject.call("popupMenu")} },
+          setMenu(items) { #{reject.call("setMenu")} },
+        };
+        JS
+      end
+
+      def unavailable_dts_stub : String?
+        ns = binding_namespace
+        <<-DTS
+        export interface #{ns} {
+          show(iconPath: string): Promise<void>;
+          hide(): Promise<void>;
+          setIcon(path: string): Promise<void>;
+          popupMenu(): Promise<void>;
+          setMenu(items: TrayMenuItem[]): Promise<void>;
+        }
+        DTS
       end
     end
   end

@@ -3,7 +3,9 @@ module Lune
     class FileDrop < Lune::Capability
       include Capability::WebviewInject
 
-      DESCRIPTOR = Descriptor.new(id: :file_drop, label: "FileDrop", deps: [:events])
+      # macOS + Linux. Win32 needs `OleInitialize` + `RegisterDragDrop` plus a
+      # WebView2 drop-suppression hook (see ROADMAP).
+      DESCRIPTOR = Descriptor.new(id: :file_drop, label: "FileDrop", deps: [:events], platforms: [:darwin, :linux])
 
       def descriptor : Descriptor
         DESCRIPTOR
@@ -75,6 +77,33 @@ module Lune
         <<-DTS
           on(cb: (x: number, y: number, paths: string[]) => void): void;
           off(): void;
+        DTS
+      end
+
+      # `on`/`off` are event subscriptions returning void; throwing here would
+      # crash app init since drop-handlers are typically wired up front. Warn
+      # once and no-op instead so the rest of the app keeps running.
+      def unavailable_js_stub(platform : Symbol) : String?
+        ns = binding_namespace
+        msg = "#{ns} is not available on #{platform} — drop events will not fire."
+        <<-JS
+        export const #{ns} = (function(){
+          var _warned = false;
+          return {
+            on(cb) { if (!_warned) { _warned = true; console.warn(#{msg.inspect}); } },
+            off()  { /* noop */ },
+          };
+        })();
+        JS
+      end
+
+      def unavailable_dts_stub : String?
+        ns = binding_namespace
+        <<-DTS
+        export interface #{ns} {
+          on(cb: (x: number, y: number, paths: string[]) => void): void;
+          off(): void;
+        }
         DTS
       end
 

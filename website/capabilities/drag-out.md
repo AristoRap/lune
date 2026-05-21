@@ -41,7 +41,19 @@ await DragOut.start(["/exports/chart.png", "/exports/data.csv"]);
 
 - Paths must be absolute.
 - The drag operation is native and modal — `start` resolves once the drag ends (drop or cancel).
-- Only available on macOS in the current release.
+- **macOS only.** On Linux/Windows the runtime still exports a `DragOut` namespace, but `start(...)` returns a rejected `Promise` carrying a `LuneError` with code `"UNAVAILABLE_ON_PLATFORM"`. Catch it (or branch on `runtime.System.environment().os` ahead of time) to fall back gracefully:
+
+```js
+try {
+  await DragOut.start(["/exports/chart.png"]);
+} catch (err) {
+  if (err.code === "UNAVAILABLE_ON_PLATFORM") {
+    // Show a fallback "Download" button, etc.
+  } else {
+    throw err;
+  }
+}
+```
 
 ---
 

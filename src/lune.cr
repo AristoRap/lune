@@ -21,7 +21,7 @@ require "./lune/deep_link_ipc"
 require "./lune/runner"
 
 module Lune
-  VERSION = "0.11.2"
+  VERSION = "0.12.0"
 
   # Default frontend directory name (matches the lune.yml default).
   DEFAULT_FRONTEND_DIR = "frontend"
@@ -68,6 +68,11 @@ module Lune
     stubs = App.new
     bind_ctx = Capability::BindCtx.new(stubs)
     resolved.capabilities.each { |cap| cap.install(bind_ctx) if cap.is_a?(Capability::Bindable) }
-    Runtime::Generator.write_js(app.bindings + stubs.bindings.select(&.internal?), lunejs_dir, resolved.capabilities)
+    Runtime::Generator.write_js(
+      app.bindings + stubs.bindings.select(&.internal?),
+      lunejs_dir,
+      resolved.capabilities,
+      registry.platform_filtered,
+    )
   end
 end

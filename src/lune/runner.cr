@@ -279,7 +279,8 @@ module Lune
         Lune::Runtime::Generator.write_js(
           @app.bindings + all_stubs.bindings.select(&.internal?),
           @lunejs_dir,
-          registry.all
+          registry.all,
+          registry.platform_filtered,
         )
         wv.navigate(dev_url)
       elsif !Assets.empty?

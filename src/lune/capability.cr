@@ -10,9 +10,10 @@ module Lune
     record Descriptor,
       id : Symbol,
       label : String,
-      deps : Array(Symbol) = [] of Symbol,       # hard: auto-disabled if dep missing
-      soft_deps : Array(Symbol) = [] of Symbol,  # optional: degrades gracefully
-      core : Bool = false                        # true = cannot be excluded via config
+      deps : Array(Symbol) = [] of Symbol,                  # hard: auto-disabled if dep missing
+      soft_deps : Array(Symbol) = [] of Symbol,             # optional: degrades gracefully
+      core : Bool = false,                                  # true = cannot be excluded via config
+      platforms : Array(Symbol) = [:darwin, :linux, :win32] # OSes where the cap can run; filtered out elsewhere
 
     # -------------------------------------------------------------------------
     # Context structs — passed to each lifecycle phase instead of raw args.
@@ -102,6 +103,20 @@ module Lune
 
     def dts_helpers : String
       ""
+    end
+
+    # Emitted into runtime.js for capabilities filtered out by `platforms`.
+    # Each method on the namespace should reject with a LuneError so user code
+    # can `.catch` and fall back gracefully instead of hitting a TypeError from
+    # `undefined` namespace access. Default nil = no stub emitted.
+    def unavailable_js_stub(platform : Symbol) : String?
+      nil
+    end
+
+    # Type-side counterpart. Same signatures as the live capability so user code
+    # type-checks identically across platforms.
+    def unavailable_dts_stub : String?
+      nil
     end
   end
 end

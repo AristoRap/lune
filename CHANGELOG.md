@@ -1,10 +1,23 @@
 # Changelog
 
+## [0.12.0] - 2026-05-21
+
+### Added
+
+- **Per-capability platform gate** — `Descriptor` gained a `platforms : Array(Symbol)` field defaulting to `[:darwin, :linux, :win32]`. Capabilities whose list excludes the current OS are filtered out of the registry at construction time (resolved via compile-time `Lune::Capabilities::CURRENT_PLATFORM`), so they never get `setup`, never appear in the resolved set, and never participate in JS runtime generation. Four capabilities now declare narrower platform lists: `DragOut` (`[:darwin]`), `Tray` (`[:darwin, :linux]`), `FileWatch` (`[:darwin, :linux]`), `FileDrop` (`[:darwin, :linux]`). Previously their bindings either no-op'd silently (DragOut) or raised `NotImplementedError` on the unsupported platform (Tray/FileWatch/FileDrop on Win32) — users had to know to add them to `capabilities.exclude` in `lune.yml` to silence the warnings. Now they're cleanly absent from the registry and emit rejecting JS stubs instead (see below).
+- **Rejecting JS/TS stubs for platform-unavailable capabilities** — when a capability is filtered out, the runtime still exports its namespace with each `Promise`-returning method rejecting with `LuneError("UNAVAILABLE_ON_PLATFORM", "…")`, and `runtime.d.ts` preserves the full signature so cross-platform TypeScript code type-checks identically. For void-returning event-subscription helpers (`FileDrop.on`, `FileWatch.on`/`once`/`off`) the stub is a one-time `console.warn` + no-op rather than a synchronous throw, so app init doesn't crash when handlers are wired up front. Lets user code `.catch` and fall back gracefully instead of hitting a `TypeError` from `undefined` namespace access. Plumbed via two new optional `Capability` methods: `unavailable_js_stub(platform)` and `unavailable_dts_stub`.
+- **Info-level skip log for explicit `only:` entries on unsupported platforms** — when `lune.yml` lists a capability by name and that capability isn't available on the current OS, the registry emits a single `INFO` line ("Capability \"drag_out\" skipped — not available on win32") so the user knows the cap was recognised but couldn't be enabled. Default-included caps (no explicit `only:`) skip silently to avoid noise in cross-platform `lune.yml`. `validate()` no longer false-positives a known-but-platform-unavailable name as "unknown capability".
+
+### Changed
+
+- **`Lune::Capabilities::Registry`** — adds `platform_filtered : Array(Lune::Capability)` accessor exposing the caps dropped during construction so the generator can emit unavailable stubs for them. `validate()` now uses a separate `@known_names` set so typo detection survives the platform pre-filter.
+- **`Lune::Runtime::Generator.generate_runtime_js` / `.generate_runtime_dts` / `.write_js`** — accept a new `unavailable_caps : Array(Lune::Capability) = []` parameter and splice each cap's rejecting stub into both the per-namespace blocks and the `runtime` object literal. Dedupes against the live namespace list as a belt-and-braces guard.
+
 ## [0.11.2] - 2026-05-21
 
 ### Fixed
 
-- **Duplicate method definitions in generated `runtime.js` / `runtime.d.ts`** — `Hotkeys.register` / `Hotkeys.unregister` appeared twice in both files, and `Shell.write` / `Shell.closeStdin` appeared twice in `runtime.d.ts`. Root cause: those capabilities registered the methods as bindings (which `to_js_stub` / `to_dts_sig` emit) and *also* re-declared the same methods in `js_helpers` / `dts_helpers`, so the generator concatenated both into the same namespace block. Removed the redundant helper entries — bindings are the single source of truth now. The user-facing API is unchanged. Added regression specs that scan the generated runtime for exact-count occurrences so any future double-emission fails the suite.
+- **Duplicate method definitions in generated `runtime.js` / `runtime.d.ts`** — `Hotkeys.register` / `Hotkeys.unregister` appeared twice in both files, and `Shell.write` / `Shell.closeStdin` appeared twice in `runtime.d.ts`. Root cause: those capabilities registered the methods as bindings (which `to_js_stub` / `to_dts_sig` emit) and _also_ re-declared the same methods in `js_helpers` / `dts_helpers`, so the generator concatenated both into the same namespace block. Removed the redundant helper entries — bindings are the single source of truth now. The user-facing API is unchanged. Added regression specs that scan the generated runtime for exact-count occurrences so any future double-emission fails the suite.
 
 ### Changed
 

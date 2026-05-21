@@ -23,6 +23,16 @@ describe Lune::Capability do
       d.soft_deps.should be_empty
       d.core.should be_false
     end
+
+    it "defaults platforms to all three" do
+      d = Lune::Capability::Descriptor.new(id: :foo, label: "Foo")
+      d.platforms.should eq([:darwin, :linux, :win32])
+    end
+
+    it "accepts a narrower platforms list" do
+      d = Lune::Capability::Descriptor.new(id: :foo, label: "Foo", platforms: [:darwin])
+      d.platforms.should eq([:darwin])
+    end
   end
 
   describe "name derives from descriptor.id" do
@@ -209,6 +219,52 @@ describe Lune::Capabilities::Registry do
     it "active_ids returns a set of symbols for the resolved capabilities" do
       resolved = make_registry.resolve(config_only("clipboard"))
       resolved.active_ids.should eq(Set{:clipboard})
+    end
+  end
+
+  describe "platform filtering" do
+    it "CURRENT_PLATFORM is one of the known OS symbols" do
+      [:darwin, :linux, :win32, :unknown].should contain(Lune::Capabilities::CURRENT_PLATFORM)
+    end
+
+    it "DragOut declares darwin-only platform support" do
+      Lune::Capabilities::DragOut.new.descriptor.platforms.should eq([:darwin])
+    end
+
+    it "drops platform-unsupported caps from registry.all" do
+      r = make_registry
+      r.all.each do |cap|
+        cap.descriptor.platforms.should contain(Lune::Capabilities::CURRENT_PLATFORM)
+      end
+    end
+
+    it "includes DragOut on darwin but excludes it elsewhere" do
+      names = make_registry.all.map(&.name)
+      if Lune::Capabilities::CURRENT_PLATFORM == :darwin
+        names.should contain("drag_out")
+      else
+        names.should_not contain("drag_out")
+      end
+    end
+
+    it "validate does not emit an unknown-capability warning for a platform-unavailable name" do
+      # drag_out is a real capability — even on win32/linux where it isn't loaded,
+      # the name is known and validate must not flag it as a typo.
+      backend = CaptureBackend.new
+      logger = Log.new("lune.spec.platform", backend, :debug)
+      with_logger(logger) do
+        make_registry.validate(config_only("drag_out"))
+      end
+      backend.entries.any? { |e| e.message.includes?("unknown capability") }.should be_false
+    end
+
+    it "validate still warns on a truly unknown capability name" do
+      backend = CaptureBackend.new
+      logger = Log.new("lune.spec.platform", backend, :debug)
+      with_logger(logger) do
+        make_registry.validate(config_only("not_a_real_cap"))
+      end
+      backend.entries.any? { |e| e.message.includes?("unknown capability") }.should be_true
     end
   end
 end

@@ -328,6 +328,12 @@ See [Capabilities](./capabilities/) for the full list of capability names and th
 - **Dev mode** (`lune dev`) — the bridge is filtered: excluded capability functions throw if called. `runtime.js` still includes all capabilities so the dev Capabilities view can show which are active vs excluded, and imports keep working while you iterate.
 - **Build mode** (`lune build`) — both the bridge and `runtime.js` are filtered. Importing an excluded function is a hard bundler error.
 
+#### Platform filtering
+
+A capability whose `platforms` list excludes the current OS is auto-filtered from the registry — no manual `exclude` needed. Its JS namespace still appears in `runtime.js`, but every method returns `Promise.reject(new LuneError("UNAVAILABLE_ON_PLATFORM", "…"))` so cross-platform imports keep working. Catch the error (or branch on `runtime.System.environment().os`) to fall back gracefully. The `runtime.d.ts` interface preserves the full signature, so the same TypeScript code type-checks on every platform.
+
+If `include` explicitly names a capability that's auto-filtered on the current OS, the registry emits a single `INFO` log line so you know the cap was recognised but couldn't be enabled. Default-included caps skip silently — a shared `lune.yml` won't produce noise across platforms.
+
 Any unknown name in `include` or `exclude` logs a warning at startup and is ignored.
 
 ```yaml
