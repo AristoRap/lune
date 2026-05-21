@@ -53,28 +53,32 @@ Two capabilities are marked **core**: `events` and `stream`. They are enabled by
 
 ## Capability matrix
 
-| Capability                       | Config key      | JS namespace    | Core    | Phases                   | Hard deps | Soft deps | Platforms                      |
-| -------------------------------- | --------------- | --------------- | ------- | ------------------------ | --------- | --------- | ------------------------------ |
-| [Events](./events)               | `events`        | `Events`        | **Yes** | WebviewInject            | —         | —         | all                            |
-| [Stream](./stream)               | `stream`        | `Stream`        | **Yes** | WebviewInject            | —         | —         | all                            |
-| [Clipboard](./clipboard)         | `clipboard`     | `Clipboard`     | No      | Bindable                 | —         | —         | all (image: no Win32)          |
-| [ContextMenu](./context-menu)    | `context_menu`  | `ContextMenu`   | No      | Bindable · WebviewInject | `events`  | —         | macOS (Windows/Linux: planned) |
-| [DeepLink](./deep-link)          | `deep_link`     | `DeepLink`      | No      | Bindable                 | `events`  | —         | macOS · Linux · Windows²       |
-| [Dialogs](./dialogs)             | `dialogs`       | `Dialogs`       | No      | Bindable                 | —         | —         | all                            |
-| [DragOut](./drag-out)            | `drag_out`      | `DragOut`       | No      | Bindable                 | —         | —         | macOS                          |
-| [FileDrop](./file-drop)          | `file_drop`     | `FileDrop`      | No      | WebviewInject            | `events`  | —         | macOS · Linux                  |
-| [FileWatch](./file-watch)        | `file_watch`    | `FileWatch`     | No      | Bindable · Lifecycle     | `events`  | —         | macOS · Linux                  |
-| [Filesystem](./filesystem)       | `filesystem`    | `Filesystem`    | No      | Bindable                 | —         | —         | all                            |
-| [Hotkeys](./hotkeys)             | `hotkeys`       | `Hotkeys`       | No      | Bindable                 | —         | `events`  | macOS · Linux · Windows        |
-| [Notifications](./notifications) | `notifications` | `Notifications` | No      | Bindable                 | —         | —         | all                            |
-| [Screen](./screen)               | `screen`        | `Screen`        | No      | Bindable                 | —         | —         | all                            |
-| [Kv](./kv)                       | `kv`            | `Kv`            | No      | Bindable · Lifecycle     | —         | —         | all                            |
-| [Shell](./shell)                 | `shell`         | `Shell`         | No      | Bindable · Lifecycle     | `stream`  | —         | macOS · Linux · Windows³       |
-| [Sqlite](./sqlite)               | `sqlite`        | `Sqlite`        | No      | Bindable · Lifecycle     | —         | —         | all                            |
-| [System](./system)               | `system`        | `System`        | No      | Bindable                 | —         | —         | all                            |
-| [Tray](./tray)                   | `tray`          | `Tray`          | No      | Bindable                 | —         | `events`  | macOS · Linux¹ · Windows⁴      |
-| [Window](./window)               | `window`        | `Window`        | No      | Bindable                 | —         | —         | all (chrome opts macOS)        |
-| [Windows](./windows)             | `windows`       | `Windows`       | No      | Bindable · Lifecycle     | —         | —         | all                            |
+| Capability                                       | Config key             | JS namespace    | Core    | Phases                            | Hard deps | Soft deps | Platforms                      |
+| ------------------------------------------------ | ---------------------- | --------------- | ------- | --------------------------------- | --------- | --------- | ------------------------------ |
+| [Events](./events)                               | `events`               | `Events`        | **Yes** | WebviewInject                     | —         | —         | all                            |
+| [Stream](./stream)                               | `stream`               | `Stream`        | **Yes** | WebviewInject                     | —         | —         | all                            |
+| [Clipboard](./clipboard)                         | `clipboard`            | `Clipboard`     | No      | Bindable                          | —         | —         | all (image: no Win32)          |
+| [ContextMenu](./context-menu)                    | `context_menu`         | `ContextMenu`   | No      | Bindable · WebviewInject          | `events`  | —         | macOS (Windows/Linux: planned) |
+| [ContextMenuBlocker](./context-menu-blocker)     | `context_menu_blocker` | —               | No      | WebviewInject                     | —         | —         | all                            |
+| [DeepLink](./deep-link)                          | `deep_link`            | `DeepLink`      | No      | Bindable                          | `events`  | —         | macOS · Linux · Windows²       |
+| [Dialogs](./dialogs)                             | `dialogs`              | `Dialogs`       | No      | Bindable                          | —         | —         | all                            |
+| [DragOut](./drag-out)                            | `drag_out`             | `DragOut`       | No      | Bindable                          | —         | —         | macOS                          |
+| [EditShortcuts](./edit-shortcuts)                | `edit_shortcuts`       | —               | No      | WebviewInject                     | —         | —         | all                            |
+| [FileDrop](./file-drop)                          | `file_drop`            | `FileDrop`      | No      | WebviewInject                     | `events`  | —         | macOS · Linux                  |
+| [FileWatch](./file-watch)                        | `file_watch`           | `FileWatch`     | No      | Bindable · Lifecycle              | `events`  | —         | macOS · Linux                  |
+| [Filesystem](./filesystem)                       | `filesystem`           | `Filesystem`    | No      | Bindable                          | —         | —         | all                            |
+| [Hotkeys](./hotkeys)                             | `hotkeys`              | `Hotkeys`       | No      | Bindable                          | —         | `events`  | macOS · Linux · Windows        |
+| [Navigation](./navigation)                       | `navigation`           | —               | No      | WebviewInject                     | —         | —         | all                            |
+| [Notifications](./notifications)                 | `notifications`        | `Notifications` | No      | Bindable                          | —         | —         | all                            |
+| [Screen](./screen)                               | `screen`               | `Screen`        | No      | Bindable                          | —         | —         | all                            |
+| [Kv](./kv)                                       | `kv`                   | `Kv`            | No      | Bindable · Lifecycle              | —         | —         | all                            |
+| [Shell](./shell)                                 | `shell`                | `Shell`         | No      | Bindable · Lifecycle              | `stream`  | —         | macOS · Linux · Windows³       |
+| [Sqlite](./sqlite)                               | `sqlite`               | `Sqlite`        | No      | Bindable · Lifecycle              | —         | —         | all                            |
+| [System](./system)                               | `system`               | `System`        | No      | Bindable                          | —         | —         | all                            |
+| [Tray](./tray)                                   | `tray`                 | `Tray`          | No      | Bindable                          | —         | `events`  | macOS · Linux¹ · Windows⁴      |
+| [Window](./window)                               | `window`               | `Window`        | No      | Bindable                          | —         | —         | all (chrome opts macOS)        |
+| [WindowDrag](./window-drag)                      | `window_drag`          | —               | No      | WebviewInject                     | —         | —         | macOS                          |
+| [Windows](./windows)                             | `windows`              | `Windows`       | No      | Bindable · Lifecycle              | —         | —         | all                            |
 
 ¹ Requires XWayland on Wayland compositors.
 ² Windows: cold-start (ARGV) only — no warm-start forwarding yet (Linux has Unix-socket warm-start).
