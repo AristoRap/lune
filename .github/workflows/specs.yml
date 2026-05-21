@@ -131,7 +131,10 @@ jobs:
           git clone --depth 1 --branch "${{ env.WEBVIEW_PIN }}" https://github.com/webview/webview.git $src
           Push-Location $src
           cmake -G Ninja -B build -S . -D CMAKE_BUILD_TYPE=Release
-          cmake --build build
+          # Build only the core library target — `cmake --build build` with no
+          # target runs upstream's clang-format check too, which fails on
+          # runner LLVM versions that disagree with the pinned format.
+          cmake --build build --target webview_core
           Pop-Location
           # Stash only the .lib + .dll we need — cache stays small.
           $out = "$env:RUNNER_TEMP\webview-build"
