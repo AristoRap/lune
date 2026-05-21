@@ -1,7 +1,7 @@
 module Lune
   module Capabilities
     class Clipboard < Lune::Capability
-      include Capability::Bindable
+      include Capability::BindPhase
 
       DESCRIPTOR = Descriptor.new(id: :clipboard, label: "Clipboard")
 
@@ -87,12 +87,9 @@ module Lune
           {"read_html", @on_read_html},
           {"read_image", @on_read_image},
         ].each do |(method, reader)|
-          ctx.register(Definition.new(
-            name: "#{name}.#{method}",
-            args: [] of String,
-            return_type: "String",
-            callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(reader.call) },
-          ).binding(binding_namespace))
+          ctx.define(method, return_type: "String") do |_args|
+            JSON::Any.new(reader.call)
+          end
         end
 
         [
@@ -100,13 +97,10 @@ module Lune
           {"write_html", "html", @on_write_html},
           {"write_image", "dataUrl", @on_write_image},
         ].each do |(method, arg_name, writer)|
-          ctx.register(Definition.new(
-            name: "#{name}.#{method}",
-            args: ["String"],
-            return_type: "Nil",
-            arg_names: [arg_name],
-            callback: ->(args : Array(JSON::Any)) { writer.call(args[0].as_s); JSON::Any.new(nil) },
-          ).binding(binding_namespace))
+          ctx.define(method, args: ["String"], arg_names: [arg_name]) do |args|
+            writer.call(args[0].as_s)
+            JSON::Any.new(nil)
+          end
         end
       end
     end

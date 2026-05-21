@@ -41,7 +41,7 @@ describe Lune::Capabilities::Hotkeys do
 
   describe "phase membership" do
     it "includes Bindable" do
-      Lune::Capabilities::Hotkeys.new.is_a?(Lune::Capability::Bindable).should be_true
+      Lune::Capabilities::Hotkeys.new.is_a?(Lune::Capability::BindPhase).should be_true
     end
 
     it "includes Lifecycle" do

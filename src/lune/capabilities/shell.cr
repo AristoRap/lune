@@ -1,7 +1,7 @@
 module Lune
   module Capabilities
     class Shell < Lune::Capability
-      include Capability::Bindable
+      include Capability::BindPhase
       include Capability::Lifecycle
 
       DESCRIPTOR = Descriptor.new(id: :shell, label: "Shell", deps: [:stream])
@@ -17,97 +17,80 @@ module Lune
       def install(ctx : BindCtx) : Nil
         app = ctx.app
 
-        ctx.register(Definition.new(
-          name: "#{name}.spawn",
+        # spawn_proc calls app.async three times to start the stdout/stderr/
+        # wait pumps. On Windows those run through Channel#receive in the
+        # Parallel scheduler — illegal from the webview Isolated thread. async
+        # routes the callback through @async_pool so the spawn is safe.
+        ctx.define("spawn",
           args: ["String", "Array"],
           return_type: "String",
           arg_names: ["command", "args"],
-          # spawn_proc calls app.async three times to start the stdout/stderr/
-          # wait pumps. On Windows those run through Channel#receive in the
-          # Parallel scheduler — illegal from the webview Isolated thread. async
-          # routes the callback through @async_pool so the spawn is safe.
           async: true,
-          callback: ->(raw : Array(JSON::Any)) {
-            cmd = raw[0].as_s
-            argv = raw[1].as_a.map(&.as_s)
-            JSON::Any.new(spawn_proc(app, cmd, argv))
-          },
-        ).binding(binding_namespace))
+        ) do |raw|
+          cmd = raw[0].as_s
+          argv = raw[1].as_a.map(&.as_s)
+          JSON::Any.new(spawn_proc(app, cmd, argv))
+        end
 
-        ctx.register(Definition.new(
-          name: "#{name}.kill",
+        ctx.define("kill",
           args: ["String"],
-          return_type: "Nil",
           arg_names: ["pid"],
-          callback: ->(raw : Array(JSON::Any)) {
-            pid = raw[0].as_s
-            @mu.synchronize do
-              @processes[pid]?.try(&.terminate)
-              @stdins.delete(pid).try { |io| io.close rescue nil }
-            end
-            JSON::Any.new(nil)
-          },
-        ).binding(binding_namespace))
+        ) do |raw|
+          pid = raw[0].as_s
+          @mu.synchronize do
+            @processes[pid]?.try(&.terminate)
+            @stdins.delete(pid).try { |io| io.close rescue nil }
+          end
+          JSON::Any.new(nil)
+        end
 
-        ctx.register(Definition.new(
-          name: "#{name}.write",
+        ctx.define("write",
           args: ["String", "String"],
-          return_type: "Nil",
           arg_names: ["pid", "text"],
-          callback: ->(raw : Array(JSON::Any)) {
-            pid = raw[0].as_s
-            text = raw[1].as_s
-            @mu.synchronize { @stdins[pid]? }.try { |io| io.print(text) rescue nil }
-            JSON::Any.new(nil)
-          },
-        ).binding(binding_namespace))
+        ) do |raw|
+          pid = raw[0].as_s
+          text = raw[1].as_s
+          @mu.synchronize { @stdins[pid]? }.try { |io| io.print(text) rescue nil }
+          JSON::Any.new(nil)
+        end
 
-        ctx.register(Definition.new(
-          name: "#{name}.close_stdin",
+        ctx.define("close_stdin",
           args: ["String"],
-          return_type: "Nil",
           arg_names: ["pid"],
-          callback: ->(raw : Array(JSON::Any)) {
-            pid = raw[0].as_s
-            @mu.synchronize { @stdins.delete(pid) }.try { |io| io.close rescue nil }
-            JSON::Any.new(nil)
-          },
-        ).binding(binding_namespace))
+        ) do |raw|
+          pid = raw[0].as_s
+          @mu.synchronize { @stdins.delete(pid) }.try { |io| io.close rescue nil }
+          JSON::Any.new(nil)
+        end
 
-        ctx.register(Definition.new(
-          name: "#{name}.list",
-          args: [] of String,
-          return_type: "Array",
+        ctx.define("list",
+          return_type: "Array(String)",
           async: true,
-          ts_return_type: "Promise<string[]>",
-          callback: ->(raw : Array(JSON::Any)) {
-            pids = @mu.synchronize { @processes.keys.map { |k| JSON::Any.new(k) } }
-            JSON::Any.new(pids)
-          },
-        ).binding(binding_namespace))
+        ) do |_raw|
+          pids = @mu.synchronize { @processes.keys.map { |k| JSON::Any.new(k) } }
+          JSON::Any.new(pids)
+        end
 
         # Blocking async binding — collects all output then resolves.
         # Avoids the Stream listener race that occurs when a process exits
         # before the JS .then() callback can register Stream handlers.
-        ctx.register(Definition.new(
-          name: "#{name}.run",
+        ctx.define("run",
           args: ["String", "Array"],
           return_type: "Hash",
           arg_names: ["command", "args"],
           async: true,
           ts_return_type: "Promise<{ stdout: string; stderr: string; code: number }>",
-          callback: ->(raw : Array(JSON::Any)) {
-            cmd = raw[0].as_s
-            argv = raw[1].as_a.map(&.as_s)
-            out_buf = IO::Memory.new
-            err_buf = IO::Memory.new
-            status = Shell.with_win32_cmd_fallback(cmd, argv) do |c, a|
-              Process.run(c, args: a, output: out_buf, error: err_buf)
-            end
-            code = status.exit_code? || -1
-            JSON.parse({"stdout" => out_buf.to_s, "stderr" => err_buf.to_s, "code" => code}.to_json)
-          },
-        ).binding(binding_namespace))
+        ) do |raw|
+          cmd = raw[0].as_s
+          argv = raw[1].as_a.map(&.as_s)
+          out_buf = IO::Memory.new
+          err_buf = IO::Memory.new
+          status = Shell.with_win32_cmd_fallback(cmd, argv) do |c, a|
+            Process.run(c, args: a, output: out_buf, error: err_buf)
+          end
+          code = status.exit_code? || -1
+          JSON.parse({"stdout" => out_buf.to_s, "stderr" => err_buf.to_s, "code" => code}.to_json)
+        end
       end
 
       # Yields (cmd, argv) to the block as-is. On Win32, if the block raises

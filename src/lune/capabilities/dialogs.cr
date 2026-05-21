@@ -1,7 +1,7 @@
 module Lune
   module Capabilities
     class Dialogs < Lune::Capability
-      include Capability::Bindable
+      include Capability::BindPhase
 
       DESCRIPTOR = Descriptor.new(id: :dialogs, label: "Dialogs")
 
@@ -10,38 +10,38 @@ module Lune
       end
 
       def install(ctx : BindCtx) : Nil
-        ctx.register(Definition.new(
-          name: "#{name}.open_file",
+        ctx.define("open_file",
           args: ["String"],
           return_type: "String",
           arg_names: ["prompt"],
-          callback: ->(args : Array(JSON::Any)) { JSON::Any.new(Lune::Native::Dialogs.open_file(args[0].as_s) || "") },
-        ).binding(binding_namespace))
+        ) do |args|
+          JSON::Any.new(Lune::Native::Dialogs.open_file(args[0].as_s) || "")
+        end
 
-        ctx.register(Definition.new(
-          name: "#{name}.open_dir",
+        ctx.define("open_dir",
           args: ["String"],
           return_type: "String",
           arg_names: ["prompt"],
-          callback: ->(args : Array(JSON::Any)) { JSON::Any.new(Lune::Native::Dialogs.open_dir(args[0].as_s) || "") },
-        ).binding(binding_namespace))
+        ) do |args|
+          JSON::Any.new(Lune::Native::Dialogs.open_dir(args[0].as_s) || "")
+        end
 
-        ctx.register(Definition.new(
-          name: "#{name}.open_files",
+        ctx.define("open_files",
           args: ["String"],
           return_type: "Array",
           arg_names: ["prompt"],
           ts_return_type: "Promise<string[]>",
-          callback: ->(args : Array(JSON::Any)) { JSON.parse(Lune::Native::Dialogs.open_files(args[0].as_s).to_json) },
-        ).binding(binding_namespace))
+        ) do |args|
+          JSON.parse(Lune::Native::Dialogs.open_files(args[0].as_s).to_json)
+        end
 
-        ctx.register(Definition.new(
-          name: "#{name}.save_file",
+        ctx.define("save_file",
           args: ["String", "String"],
           return_type: "String",
           arg_names: ["prompt", "filename"],
-          callback: ->(args : Array(JSON::Any)) { JSON::Any.new(Lune::Native::Dialogs.save_file(args[0].as_s, args[1].as_s) || "") },
-        ).binding(binding_namespace))
+        ) do |args|
+          JSON::Any.new(Lune::Native::Dialogs.save_file(args[0].as_s, args[1].as_s) || "")
+        end
 
         [
           {"info", 0, false},
@@ -50,16 +50,14 @@ module Lune
           {"question", 3, true},
         ].each do |(variant, code, returns_value)|
           return_type = returns_value ? "String" : "Nil"
-          ctx.register(Definition.new(
-            name: "#{name}.message_#{variant}",
+          ctx.define("message_#{variant}",
             args: ["String", "String"],
             return_type: return_type,
             arg_names: ["title", "message"],
-            callback: ->(args : Array(JSON::Any)) {
-              result = Lune::Native::Dialogs.message(code, args[0].as_s, args[1].as_s)
-              returns_value ? JSON::Any.new(result) : JSON::Any.new(nil)
-            },
-          ).binding(binding_namespace))
+          ) do |args|
+            result = Lune::Native::Dialogs.message(code, args[0].as_s, args[1].as_s)
+            returns_value ? JSON::Any.new(result) : JSON::Any.new(nil)
+          end
         end
       end
     end

@@ -66,9 +66,8 @@ module Lune
         resolved = registry.resolve(@config.capabilities)
         resolved.warnings.each { |w| Lune.logger.warn { w } }
 
-        bind_ctx = Lune::Capability::BindCtx.new(@app)
         resolved.capabilities.each do |cap|
-          cap.install(bind_ctx) if cap.is_a?(Lune::Capability::Bindable)
+          cap.install(Lune::Capability::BindCtx.new(@app, cap)) if cap.is_a?(Lune::Capability::BindPhase)
         end
 
         bridge = Bridge.new(wv)
@@ -266,15 +265,14 @@ module Lune
         wv.navigate(u)
       elsif dev_url = ENV[Lune::ENV_DEV_URL]?
         all_stubs = App.new
-        all_bind_ctx = Lune::Capability::BindCtx.new(all_stubs)
         # `registry.all` is already platform-filtered, so every cap here has a
         # working install path on the current OS — no NotImplementedError to
         # swallow. Caps that can't run on this platform are emitted as rejecting
         # JS stubs separately via `registry.platform_filtered` below.
         registry.all.each do |cap|
           next if resolved.active_ids.includes?(cap.descriptor.id)
-          next unless cap.is_a?(Lune::Capability::Bindable)
-          cap.install(all_bind_ctx)
+          next unless cap.is_a?(Lune::Capability::BindPhase)
+          cap.install(Lune::Capability::BindCtx.new(all_stubs, cap))
         end
         Lune::Runtime::Generator.write_js(
           @app.bindings + all_stubs.bindings.select(&.internal?),

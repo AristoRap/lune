@@ -1,7 +1,7 @@
 module Lune
   module Capabilities
     class DeepLink < Lune::Capability
-      include Capability::Bindable
+      include Capability::BindPhase
 
       DESCRIPTOR = Descriptor.new(id: :deep_link, label: "DeepLink", deps: [:events])
 

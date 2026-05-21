@@ -29,7 +29,7 @@ describe Lune::Capabilities::Kv do
 
   describe "phase membership" do
     it "includes Bindable" do
-      Lune::Capabilities::Kv.new.is_a?(Lune::Capability::Bindable).should be_true
+      Lune::Capabilities::Kv.new.is_a?(Lune::Capability::BindPhase).should be_true
     end
 
     it "includes Lifecycle" do
@@ -154,6 +154,24 @@ describe Lune::Capabilities::Kv do
       r = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new, -> { })
       resolved = r.resolve(Lune::ConfigCapabilities.new(enabled: nil, disabled: ["kv"]))
       resolved.capabilities.map(&.name).should_not contain("kv")
+    end
+  end
+
+  describe "runtime.d.ts signatures" do
+    it "emits keys() as Promise<string[]>" do
+      cap = Lune::Capabilities::Kv.new
+      app = Lune::App.new
+      app.install(cap)
+      dts = Lune::Runtime::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Capability)
+      dts.should contain("keys(): Promise<string[]>")
+    end
+
+    it "emits has(key) as Promise<boolean>" do
+      cap = Lune::Capabilities::Kv.new
+      app = Lune::App.new
+      app.install(cap)
+      dts = Lune::Runtime::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Capability)
+      dts.should contain("has(key: string): Promise<boolean>")
     end
   end
 end

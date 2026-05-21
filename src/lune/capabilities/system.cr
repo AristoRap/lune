@@ -1,7 +1,7 @@
 module Lune
   module Capabilities
     class System < Lune::Capability
-      include Capability::Bindable
+      include Capability::BindPhase
 
       DESCRIPTOR = Descriptor.new(id: :system, label: "System")
 
@@ -35,49 +35,44 @@ module Lune
 
       def install(ctx : BindCtx) : Nil
         on_quit = @on_quit
-        ctx.register(Definition.new(
-          name: "#{name}.quit",
-          args: [] of String,
-          return_type: "Nil",
-          callback: ->(_args : Array(JSON::Any)) { on_quit.call; JSON::Any.new(nil) },
-        ).binding(binding_namespace))
+        ctx.define("quit") do |_args|
+          on_quit.call
+          JSON::Any.new(nil)
+        end
 
         on_open_url = @on_open_url
-        ctx.register(Definition.new(
-          name: "#{name}.open_url",
+        ctx.define("open_url",
           args: ["String"],
-          return_type: "Nil",
           async: true,
           arg_names: ["url"],
-          callback: ->(args : Array(JSON::Any)) { on_open_url.call(args[0].as_s); JSON::Any.new(nil) },
-        ).binding(binding_namespace))
+        ) do |args|
+          on_open_url.call(args[0].as_s)
+          JSON::Any.new(nil)
+        end
 
         devtools = @devtools
-        ctx.register(Definition.new(
-          name: "#{name}.environment",
-          args: [] of String,
+        ctx.define("environment",
           return_type: "JSON",
           ts_return_type: "Promise<LuneEnvironment>",
-          callback: ->(_args : Array(JSON::Any)) {
-            os =
-              {% if flag?(:darwin) %}
-                "darwin"
-              {% elsif flag?(:linux) %}
-                "linux"
-              {% elsif flag?(:win32) %}
-                "windows"
-              {% else %}
-                "unknown"
-              {% end %}
-            arch =
-              {% if flag?(:aarch64) %}
-                "arm64"
-              {% else %}
-                "x86_64"
-              {% end %}
-            JSON.parse({os: os, arch: arch, devtools: devtools}.to_json)
-          },
-        ).binding(binding_namespace))
+        ) do |_args|
+          os =
+            {% if flag?(:darwin) %}
+              "darwin"
+            {% elsif flag?(:linux) %}
+              "linux"
+            {% elsif flag?(:win32) %}
+              "windows"
+            {% else %}
+              "unknown"
+            {% end %}
+          arch =
+            {% if flag?(:aarch64) %}
+              "arm64"
+            {% else %}
+              "x86_64"
+            {% end %}
+          JSON.parse({os: os, arch: arch, devtools: devtools}.to_json)
+        end
       end
     end
   end

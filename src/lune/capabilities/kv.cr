@@ -3,7 +3,7 @@ require "json"
 module Lune
   module Capabilities
     class Kv < Lune::Capability
-      include Capability::Bindable
+      include Capability::BindPhase
       include Capability::Lifecycle
 
       DESCRIPTOR = Descriptor.new(id: :kv, label: "Kv")
@@ -31,77 +31,57 @@ module Lune
       end
 
       def install(ctx : BindCtx) : Nil
-        ctx.register(Definition.new(
-          name: "#{name}.get",
+        ctx.define("get",
           args: ["String"],
           return_type: "Any",
           arg_names: ["key"],
           ts_return_type: "Promise<unknown>",
-          callback: ->(raw : Array(JSON::Any)) {
-            key = raw[0].as_s
-            @mu.synchronize { @store[key]? || JSON::Any.new(nil) }
-          },
-        ).binding(binding_namespace))
+        ) do |raw|
+          key = raw[0].as_s
+          @mu.synchronize { @store[key]? || JSON::Any.new(nil) }
+        end
 
-        ctx.register(Definition.new(
-          name: "#{name}.set",
+        ctx.define("set",
           args: ["String", "Any"],
-          return_type: "Nil",
           arg_names: ["key", "value"],
-          callback: ->(raw : Array(JSON::Any)) {
-            key = raw[0].as_s
-            @mu.synchronize { @store[key] = raw[1] }
-            save_store
-            JSON::Any.new(nil)
-          },
-        ).binding(binding_namespace))
+        ) do |raw|
+          key = raw[0].as_s
+          @mu.synchronize { @store[key] = raw[1] }
+          save_store
+          JSON::Any.new(nil)
+        end
 
-        ctx.register(Definition.new(
-          name: "#{name}.delete",
+        ctx.define("delete",
           args: ["String"],
-          return_type: "Nil",
           arg_names: ["key"],
-          callback: ->(raw : Array(JSON::Any)) {
-            key = raw[0].as_s
-            @mu.synchronize { @store.delete(key) }
-            save_store
-            JSON::Any.new(nil)
-          },
-        ).binding(binding_namespace))
+        ) do |raw|
+          key = raw[0].as_s
+          @mu.synchronize { @store.delete(key) }
+          save_store
+          JSON::Any.new(nil)
+        end
 
-        ctx.register(Definition.new(
-          name: "#{name}.has",
+        ctx.define("has",
           args: ["String"],
           return_type: "Bool",
           arg_names: ["key"],
-          ts_return_type: "Promise<boolean>",
-          callback: ->(raw : Array(JSON::Any)) {
-            key = raw[0].as_s
-            JSON::Any.new(@mu.synchronize { @store.has_key?(key) })
-          },
-        ).binding(binding_namespace))
+        ) do |raw|
+          key = raw[0].as_s
+          JSON::Any.new(@mu.synchronize { @store.has_key?(key) })
+        end
 
-        ctx.register(Definition.new(
-          name: "#{name}.keys",
-          args: [] of String,
-          return_type: "Array",
-          ts_return_type: "Promise<string[]>",
-          callback: ->(_raw : Array(JSON::Any)) {
-            keys = @mu.synchronize { @store.keys.map { |k| JSON::Any.new(k) } }
-            JSON::Any.new(keys)
-          },
-        ).binding(binding_namespace))
+        ctx.define("keys",
+          return_type: "Array(String)",
+        ) do |_raw|
+          keys = @mu.synchronize { @store.keys.map { |k| JSON::Any.new(k) } }
+          JSON::Any.new(keys)
+        end
 
-        ctx.register(Definition.new(
-          name: "#{name}.clear",
-          args: [] of String,
-          return_type: "Nil",
-          callback: ->(_raw : Array(JSON::Any)) {
-            @mu.synchronize { @store.clear }
-            save_store
-            JSON::Any.new(nil)
-          },
-        ).binding(binding_namespace))
+        ctx.define("clear") do |_raw|
+          @mu.synchronize { @store.clear }
+          save_store
+          JSON::Any.new(nil)
+        end
       end
 
       def shutdown : Nil

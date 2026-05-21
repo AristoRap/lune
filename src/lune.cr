@@ -1,5 +1,5 @@
-require "./lune/asset_server"
-require "./lune/assets"
+require "./lune/assets/server"
+require "./lune/assets/store"
 require "./lune/config"
 require "./lune/options/registry"
 require "./lune/logger"
@@ -9,15 +9,18 @@ require "./lune/native/*"
 require "./lune/webview"
 require "./lune/error"
 require "./lune/bridge"
-require "./lune/installable"
+require "./lune/mixins/installable"
+require "./lune/mixins/subscribable"
+require "./lune/messaging/events"
+require "./lune/messaging/stream"
 require "./lune/capability"
 require "./lune/capabilities/*"
-require "./lune/runtime/generator"
-require "./lune/bindable"
+require "./lune/runtime"
+require "./lune/mixins/bindable"
 require "./lune/app"
-require "./lune/window_state"
-require "./lune/single_instance"
-require "./lune/deep_link_ipc"
+require "./lune/platform/window_state"
+require "./lune/platform/single_instance"
+require "./lune/platform/deep_link_ipc"
 require "./lune/runner"
 
 module Lune
@@ -66,8 +69,9 @@ module Lune
     resolved = registry.resolve(config.capabilities)
     resolved.warnings.each { |w| logger.warn { w } }
     stubs = App.new
-    bind_ctx = Capability::BindCtx.new(stubs)
-    resolved.capabilities.each { |cap| cap.install(bind_ctx) if cap.is_a?(Capability::Bindable) }
+    resolved.capabilities.each do |cap|
+      cap.install(Capability::BindCtx.new(stubs, cap)) if cap.is_a?(Capability::BindPhase)
+    end
     Runtime::Generator.write_js(
       app.bindings + stubs.bindings.select(&.internal?),
       lunejs_dir,

@@ -29,7 +29,7 @@ describe Lune::Capabilities::Sqlite do
 
   describe "phase membership" do
     it "includes Bindable" do
-      Lune::Capabilities::Sqlite.new.is_a?(Lune::Capability::Bindable).should be_true
+      Lune::Capabilities::Sqlite.new.is_a?(Lune::Capability::BindPhase).should be_true
     end
 
     it "includes Lifecycle" do
@@ -274,6 +274,16 @@ describe Lune::Capabilities::Sqlite do
       r = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new, -> { })
       resolved = r.resolve(Lune::ConfigCapabilities.new(enabled: nil, disabled: ["sqlite"]))
       resolved.capabilities.map(&.name).should_not contain("sqlite")
+    end
+  end
+
+  describe "runtime.d.ts signatures" do
+    it "emits open(path) as Promise<string>" do
+      cap = Lune::Capabilities::Sqlite.new
+      app = Lune::App.new
+      app.install(cap)
+      dts = Lune::Runtime::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Capability)
+      dts.should contain("open(path: string): Promise<string>")
     end
   end
 end
