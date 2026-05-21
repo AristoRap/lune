@@ -8,8 +8,15 @@ module LuneCLI
 
     def collect_mtimes(dir : String) : Hash(String, Time)
       mtimes = {} of String => Time
-      Dir.glob(File.join(dir, "**", "*.cr")) do |path|
-        mtimes[path] = File.info(path).modification_time
+      # Dir.glob requires forward-slash patterns even on Windows; File.join
+      # would produce `\` and the glob would silently match nothing, leaving
+      # `lune dev` unable to detect any .cr change. Normalize the pattern via
+      # Path#to_posix, then convert each result back to the native separator
+      # so callers can compare keys against File.join paths.
+      pattern = Path[dir].join("**", "*.cr").to_posix.to_s
+      Dir.glob(pattern) do |path|
+        native = Path[path].to_native.to_s
+        mtimes[native] = File.info(native).modification_time
       end
       mtimes
     end
