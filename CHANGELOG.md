@@ -6,11 +6,21 @@
 
 - **Capability config keys renamed** `include` / `exclude` → `enabled` / `disabled` to keep one consistent pair across YAML, Crystal field names, and prose. `lune.yml` migration is mechanical: rename `capabilities.include:` → `capabilities.enabled:` and `capabilities.exclude:` → `capabilities.disabled:`. Crystal API: `ConfigCapabilities#only` / `#exclude` → `#enabled` / `#disabled`. The semantics are identical (enabled resolved first, then disabled subtracted; both accept `"*"` / `"all"`).
 
+### Added
+
+- **Four runtime behaviors are now disable-able via `lune.yml`** — `edit_shortcuts` (cmd/ctrl+A/C/V/X/Z/Y → execCommand), `navigation` (drives `opts.on_navigate`), `window_drag` (darwin-only, wires `opts.drag.zone`), `context_menu_blocker` (gates `opts.disable_context_menu`). Previously injected unconditionally from the runner; now first-class capabilities you can opt out of via `capabilities.disabled`.
+
+### Changed
+
+- **Generic-aware Crystal → TypeScript type mapping** — `Array(String)` → `string[]`, `Hash(K, V)` → `Record<K, V>`, `Tuple(...)` → `[A, B]`, recursive. Capabilities can drop ad-hoc `ts_return_type:` overrides in favor of parameterized `return_type:` declarations.
+
 ### Fixed
 
 - **Win32 Shell builtins** — `Shell.spawn` / `Shell.run` fall back to `cmd /c` on `File::NotFoundError`, so `echo`, `dir`, `npm.cmd`, etc. work directly. Helper: `Lune::Capabilities::Shell.with_win32_cmd_fallback`.
 - **Win32 toast notifications** — `Notifications.notify` registers the AUMID at `HKCU\Software\Classes\AppUserModelId\Lune` on first call; toasts actually display instead of being silently dropped.
 - **Win32 `lune build` blank window** — `AssetServer` now binds + listens from the same `::spawn` on the default context (mirroring Stream's Win32 pattern) so IOCP accept completions reach the listen fiber. POSIX path unchanged.
+- **`opts.on_navigate` fires on SPA routing** — `history.pushState` / `replaceState` are shimmed so React Router, Vue Router (HTML5 mode), Next client transitions, etc. trigger the callback. Same-URL fires are deduped so vue-router hash mode (which calls both pushState and mutates `location.hash`) doesn't double-fire.
+- **`Lune::App` / `Lune::Bridge` no longer eagerly allocate thread pools** — the `Fiber::ExecutionContext::Parallel` (kqueue + `cpu_count` workers) is lazy-init on first `#async` call. Avoids `kqueue: Too many open files` in test suites that construct many `App` / `Bridge` instances.
 
 ## [0.12.0] - 2026-05-21
 
