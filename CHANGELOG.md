@@ -8,8 +8,9 @@
 
 ### Fixed
 
-- **`Shell.spawn` / `Shell.run` transparently support cmd builtins on Windows** — calling `Shell.spawn("echo", ["hi"])` (or `dir`, `type`, `cd`, `more`, etc.) no longer raises `File::NotFoundError`. The capability now catches the error and retries via `cmd /c <builtin> <args…>`, which also covers `.cmd` / `.bat` shims like `npm.cmd` that `CreateProcess` can't exec directly. POSIX path unchanged. Helper exposed as `Lune::Capabilities::Shell.with_win32_cmd_fallback` for app code that spawns its own processes.
-- **`Notifications.notify` on Windows actually displays toasts** — previously the WinRT call returned success but Windows silently dropped the toast because the hardcoded AUMID `"Lune"` wasn't registered with the OS. The PowerShell helper now registers the AUMID via `HKCU\Software\Classes\AppUserModelId\Lune` (Microsoft's documented "send local toast from unpackaged app" path) on first call; subsequent calls skip the write. Per-app AUMID derived from `lune.yml`'s `name:` is tracked as a follow-up.
+- **Win32 Shell builtins** — `Shell.spawn` / `Shell.run` fall back to `cmd /c` on `File::NotFoundError`, so `echo`, `dir`, `npm.cmd`, etc. work directly. Helper: `Lune::Capabilities::Shell.with_win32_cmd_fallback`.
+- **Win32 toast notifications** — `Notifications.notify` registers the AUMID at `HKCU\Software\Classes\AppUserModelId\Lune` on first call; toasts actually display instead of being silently dropped.
+- **Win32 `lune build` blank window** — `AssetServer` now binds + listens from the same `::spawn` on the default context (mirroring Stream's Win32 pattern) so IOCP accept completions reach the listen fiber. POSIX path unchanged.
 
 ## [0.12.0] - 2026-05-21
 

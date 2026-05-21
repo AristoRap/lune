@@ -12,14 +12,26 @@ end
 describe Lune::AssetServer do
   it "url returns an http://127.0.0.1 address on a non-zero port" do
     server = Lune::AssetServer.new
-    server.url.should match(/\Ahttp:\/\/127\.0\.0\.1:\d+\z/)
-    server.port.should be > 0
+    server.start
+    begin
+      server.url.should match(/\Ahttp:\/\/127\.0\.0\.1:\d+\z/)
+      server.port.should be > 0
+    ensure
+      server.stop
+    end
   end
 
   it "each instance binds its own port" do
     a = Lune::AssetServer.new
+    a.start
     b = Lune::AssetServer.new
-    a.port.should_not eq(b.port)
+    b.start
+    begin
+      a.port.should_not eq(b.port)
+    ensure
+      a.stop
+      b.stop
+    end
   end
 
   it "serves /index.html from embedded assets" do
