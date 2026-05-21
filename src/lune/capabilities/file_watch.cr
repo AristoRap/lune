@@ -1,7 +1,7 @@
 module Lune
   module Capabilities
     class FileWatch < Lune::Capability
-      include Capability::Bindable
+      include Capability::BindPhase
       include Capability::Lifecycle
 
       # macOS (kqueue) + Linux (inotify). Win32 needs `ReadDirectoryChangesW`
@@ -28,27 +28,21 @@ module Lune
         @watcher.start(app, @debounce)
 
         watcher = @watcher
-        ctx.register(Definition.new(
-          name: "#{name}.watch",
+        ctx.define("watch",
           args: ["String"],
-          return_type: "Nil",
           arg_names: ["path"],
-          callback: ->(args : Array(JSON::Any)) {
-            watcher.add_watch(args[0].as_s)
-            JSON::Any.new(nil)
-          },
-        ).binding(binding_namespace))
+        ) do |args|
+          watcher.add_watch(args[0].as_s)
+          JSON::Any.new(nil)
+        end
 
-        ctx.register(Definition.new(
-          name: "#{name}.unwatch",
+        ctx.define("unwatch",
           args: ["String"],
-          return_type: "Nil",
           arg_names: ["path"],
-          callback: ->(args : Array(JSON::Any)) {
-            watcher.remove_watch(args[0].as_s)
-            JSON::Any.new(nil)
-          },
-        ).binding(binding_namespace))
+        ) do |args|
+          watcher.remove_watch(args[0].as_s)
+          JSON::Any.new(nil)
+        end
       end
 
       def shutdown : Nil

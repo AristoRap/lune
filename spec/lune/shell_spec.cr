@@ -52,7 +52,7 @@ describe Lune::Capabilities::Shell do
 
   describe "phase membership" do
     it "includes Bindable" do
-      Lune::Capabilities::Shell.new.is_a?(Lune::Capability::Bindable).should be_true
+      Lune::Capabilities::Shell.new.is_a?(Lune::Capability::BindPhase).should be_true
     end
 
     it "includes Lifecycle" do
@@ -249,6 +249,16 @@ describe Lune::Capabilities::Shell do
       r = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new, -> { })
       resolved = r.resolve(Lune::ConfigCapabilities.new(enabled: nil, disabled: nil))
       resolved.capabilities.map(&.name).should contain("shell")
+    end
+  end
+
+  describe "runtime.d.ts signatures" do
+    it "emits list() as Promise<string[]>" do
+      cap = Lune::Capabilities::Shell.new
+      app = Lune::App.new
+      app.install(cap)
+      dts = Lune::Runtime::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Capability)
+      dts.should contain("list(): Promise<string[]>")
     end
   end
 end

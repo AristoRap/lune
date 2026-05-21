@@ -4,10 +4,11 @@ module Lune
   class Bridge
     getter all_bindings : Hash(String, Binding)
 
+    @async_pool : Fiber::ExecutionContext::Parallel? = nil
+
     def initialize(@wv : WebviewLike)
       @closed = Atomic(Bool).new(false)
       @all_bindings = {} of String => Binding
-      @async_pool = Fiber::ExecutionContext::Parallel.new("lune-async", System.cpu_count)
     end
 
     def close!
@@ -60,7 +61,8 @@ module Lune
       args : Array(JSON::Any),
     )
       if binding.async
-        @async_pool.spawn do
+        pool = @async_pool ||= Fiber::ExecutionContext::Parallel.new("lune-async", System.cpu_count)
+        pool.spawn do
           dispatch_result(wv, seq, closed: -> { @closed.get }) do
             binding.callback.call(args)
           end

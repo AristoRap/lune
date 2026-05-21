@@ -1,65 +1,5 @@
 module Lune
   class App
-    class Events
-      def initialize(@bridge_fn : -> Bridge?, @extra_bridges : Array(Bridge))
-        @handlers = {} of String => Array(Proc(JSON::Any, Nil))
-        @once_handlers = {} of String => Array(Proc(JSON::Any, Nil))
-      end
-
-      def emit(event : String, data = nil)
-        return unless (b = @bridge_fn.call)
-        json = data.nil? ? "null" : data.to_json
-        bm = Lune::Capability::BRIDGE_MARKER
-        b.dispatch_eval("if(window.#{bm}&&typeof window.#{bm}.crystalEmit==='function')window.#{bm}.crystalEmit(#{event.inspect},#{json})")
-        @extra_bridges.each(&.dispatch_eval("if(window.#{bm}&&typeof window.#{bm}.crystalEmit==='function')window.#{bm}.crystalEmit(#{event.inspect},#{json})"))
-      end
-
-      def on(event : String, &block : JSON::Any -> Nil)
-        (@handlers[event] ||= [] of Proc(JSON::Any, Nil)) << block
-      end
-
-      def once(event : String, &block : JSON::Any -> Nil)
-        (@once_handlers[event] ||= [] of Proc(JSON::Any, Nil)) << block
-      end
-
-      def off(event : String)
-        @handlers.delete(event)
-        @once_handlers.delete(event)
-      end
-
-      def dispatch(event : String, data : JSON::Any)
-        @handlers[event]?.try(&.each(&.call(data)))
-        @once_handlers.delete(event).try(&.each(&.call(data)))
-      end
-    end
-
-    class Stream
-      property sender : Proc(String, String, Nil)?
-
-      def initialize
-        @sender = nil
-        @handlers = {} of String => Array(Proc(JSON::Any, Nil))
-      end
-
-      def send(name : String, data = nil)
-        return unless (s = @sender)
-        json = data.nil? ? "null" : data.to_json
-        s.call(name, json)
-      end
-
-      def on(name : String, &block : JSON::Any -> Nil)
-        (@handlers[name] ||= [] of Proc(JSON::Any, Nil)) << block
-      end
-
-      def off(name : String)
-        @handlers.delete(name)
-      end
-
-      def dispatch(name : String, data : JSON::Any)
-        @handlers[name]?.try(&.each(&.call(data)))
-      end
-    end
-
     getter bindings = [] of Binding
     property bridge : Bridge?
     property title : String = ""
@@ -67,13 +7,14 @@ module Lune
     getter events : Events
     getter stream : Stream
 
+    @async_pool : Fiber::ExecutionContext::Parallel? = nil
+
     def initialize
       @bindings = [] of Binding
       @bridge = nil
       @extra_bridges = [] of Bridge
       @events = Events.new(-> { @bridge }, @extra_bridges)
       @stream = Stream.new
-      @async_pool = Fiber::ExecutionContext::Parallel.new("lune-tasks", System.cpu_count)
     end
 
     def add_bridge(b : Bridge) : Nil
@@ -95,7 +36,7 @@ module Lune
     end
 
     def install(cap : Capability)
-      cap.install(Capability::BindCtx.new(self)) if cap.is_a?(Capability::Bindable)
+      cap.install(Capability::BindCtx.new(self, cap)) if cap.is_a?(Capability::BindPhase)
     end
 
     # ----------------------------
@@ -133,8 +74,13 @@ module Lune
       Native::Menu.set_from_options(@menu_options, @title)
     end
 
+    # The Parallel ExecutionContext owns a kqueue + worker threads. Allocating
+    # one eagerly in `initialize` made `Lune::App.new` expensive enough to
+    # exhaust the per-process fd limit in test suites that instantiate many
+    # apps. Lazy-init so only apps that actually call `#async` pay the cost.
     def async(name : String = "lune-task", &block : ->) : Nil
-      @async_pool.spawn(name: name, &block)
+      pool = @async_pool ||= Fiber::ExecutionContext::Parallel.new("lune-tasks", System.cpu_count)
+      pool.spawn(name: name, &block)
     end
 
     # ----------------------------

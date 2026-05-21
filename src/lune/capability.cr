@@ -29,11 +29,41 @@ module Lune
 
     struct BindCtx
       getter app : App
+      getter cap : Lune::Capability
 
-      def initialize(@app : App)
+      def initialize(@app : App, @cap : Lune::Capability)
       end
 
       delegate register, to: @app
+
+      # Register a bridge binding under this capability's JS namespace.
+      # `method` is the leaf name (no capability prefix); the full bridge ID
+      # becomes `__lune.<cap-name>.<method>` and the JS path becomes
+      # `<Cap.binding_namespace>.<methodCamelCase>(...)`.
+      def define(
+        method : String,
+        args : Array(String) = [] of String,
+        return_type : String = "Nil",
+        arg_names : Array(String) = [] of String,
+        arg_transforms : Array(String?) = [] of String?,
+        ts_args : Array(String?) = [] of String?,
+        ts_return_type : String? = nil,
+        async : Bool = false,
+        &callback : Array(JSON::Any) -> JSON::Any
+      ) : Nil
+        @app.register(Lune::RuntimeBinding.new(
+          js_namespace: @cap.binding_namespace,
+          method: "#{@cap.name}.#{method}",
+          args: args,
+          return_type: return_type,
+          callback: callback,
+          async: async,
+          arg_names: arg_names,
+          arg_transforms: arg_transforms,
+          ts_args: ts_args,
+          ts_return_type: ts_return_type,
+        ))
+      end
     end
 
     struct WebviewCtx
@@ -50,13 +80,27 @@ module Lune
       end
     end
 
+    # Snapshot of main-runtime state — wired into capabilities that need to
+    # orchestrate the main webview (e.g. opening secondary windows from the
+    # `Windows` capability). Delivered after the main `Bridge` is wired and
+    # the binding set is final, so `bindings` is a stable snapshot.
+    struct MainCtx
+      getter wv : Webview::Webview
+      getter app : App
+      getter resolved : Capabilities::ResolvedSet
+      getter bindings : Array(Binding)
+
+      def initialize(@wv : Webview::Webview, @app : App, @resolved : Capabilities::ResolvedSet, @bindings : Array(Binding))
+      end
+    end
+
     # -------------------------------------------------------------------------
     # Phase modules — include only the phases a capability participates in.
     # The compiler then enforces the abstract method for that phase.
     # -------------------------------------------------------------------------
 
     # Include if this capability registers bridge bindings (also runs in build mode).
-    module Bindable
+    module BindPhase
       abstract def install(ctx : BindCtx) : Nil
     end
 
@@ -68,6 +112,13 @@ module Lune
     # Include if this capability holds resources that must be released on quit.
     module Lifecycle
       abstract def shutdown : Nil
+    end
+
+    # Include if this capability needs a handle to the main webview / app /
+    # final binding set after the bridge has been wired (e.g. to open
+    # secondary windows or eval into the main webview at runtime).
+    module MainContextAware
+      abstract def set_main_context(ctx : MainCtx) : Nil
     end
 
     # -------------------------------------------------------------------------

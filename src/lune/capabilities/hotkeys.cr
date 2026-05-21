@@ -1,7 +1,7 @@
 module Lune
   module Capabilities
     class Hotkeys < Lune::Capability
-      include Capability::Bindable
+      include Capability::BindPhase
       include Capability::Lifecycle
 
       DESCRIPTOR = Descriptor.new(id: :hotkeys, label: "Hotkeys", soft_deps: [:events])
@@ -17,34 +17,28 @@ module Lune
           app.events.emit("hotkey", {"key" => accelerator})
         end
 
-        ctx.register(Definition.new(
-          name: "#{name}.register",
+        # async so the callback runs on the @async_pool (Parallel) instead of
+        # the webview Isolated thread — Native::Hotkeys.register blocks on a
+        # reply Channel from the dedicated pump thread, which would raise
+        # "Concurrency is disabled" if called from Isolated.
+        ctx.define("register",
           args: ["String"],
-          return_type: "Nil",
           arg_names: ["accelerator"],
-          # async so the callback runs on the @async_pool (Parallel) instead of
-          # the webview Isolated thread — Native::Hotkeys.register blocks on a
-          # reply Channel from the dedicated pump thread, which would raise
-          # "Concurrency is disabled" if called from Isolated.
           async: true,
-          callback: ->(args : Array(JSON::Any)) {
-            acc = args[0].as_s
-            Lune.logger.warn { "Hotkeys.register: could not register #{acc.inspect}" } unless Native::Hotkeys.register(acc)
-            JSON::Any.new(nil)
-          },
-        ).binding(binding_namespace))
+        ) do |args|
+          acc = args[0].as_s
+          Lune.logger.warn { "Hotkeys.register: could not register #{acc.inspect}" } unless Native::Hotkeys.register(acc)
+          JSON::Any.new(nil)
+        end
 
-        ctx.register(Definition.new(
-          name: "#{name}.unregister",
+        ctx.define("unregister",
           args: ["String"],
-          return_type: "Nil",
           arg_names: ["accelerator"],
           async: true,
-          callback: ->(args : Array(JSON::Any)) {
-            Native::Hotkeys.unregister(args[0].as_s)
-            JSON::Any.new(nil)
-          },
-        ).binding(binding_namespace))
+        ) do |args|
+          Native::Hotkeys.unregister(args[0].as_s)
+          JSON::Any.new(nil)
+        end
       end
 
       def shutdown : Nil

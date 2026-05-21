@@ -329,16 +329,69 @@ module Lune
         end
       end
 
+      # Maps a Crystal-side type literal (as written in `args:` / `return_type:`)
+      # to a TypeScript type. Handles parameterized generics recursively:
+      #
+      #   "Array(String)"             → "string[]"
+      #   "Hash(String, Int32)"       → "Record<string, number>"
+      #   "Tuple(String, Int32)"      → "[string, number]"
+      #   "Array(Hash(String, Bool))" → "Record<string, boolean>[]"
+      #
+      # Bare collection names (no params) fall back to `any[]` / `Record<string, any>`.
+      # Unknown identifiers fall back to `Record<string, any>` for back-compat with
+      # JSON::Serializable struct args.
       def self.crystal_to_ts(type : String) : String
-        case type
-        when "String"                               then "string"
-        when "Bool"                                 then "boolean"
-        when "Nil"                                  then "void"
-        when "Int32", "Int64", "Float32", "Float64" then "number"
-        when "Array"                                then "any[]"
-        when "Hash"                                 then "Record<string, any>"
-        else                                             "Record<string, any>"
+        type = type.strip
+
+        if inner = extract_generic(type, "Array")
+          return "#{crystal_to_ts(inner)}[]"
         end
+        if inner = extract_generic(type, "Hash")
+          parts = split_top_level_args(inner)
+          return parts.size == 2 ? "Record<#{crystal_to_ts(parts[0])}, #{crystal_to_ts(parts[1])}>" : "Record<string, any>"
+        end
+        if inner = extract_generic(type, "Tuple")
+          return "[#{split_top_level_args(inner).map { |p| crystal_to_ts(p) }.join(", ")}]"
+        end
+
+        case type
+        when "String"                                                                                       then "string"
+        when "Bool"                                                                                         then "boolean"
+        when "Nil"                                                                                          then "void"
+        when "Int8", "Int16", "Int32", "Int64", "UInt8", "UInt16", "UInt32", "UInt64", "Float32", "Float64" then "number"
+        when "Array"                                                                                        then "any[]"
+        when "Hash"                                                                                         then "Record<string, any>"
+        else                                                                                                     "Record<string, any>"
+        end
+      end
+
+      # Returns the inner type string between parens for `Name(inner)`, or nil
+      # if `type` is not a parameterized form of `name`.
+      private def self.extract_generic(type : String, name : String) : String?
+        prefix = "#{name}("
+        return nil unless type.starts_with?(prefix) && type.ends_with?(')')
+        type[prefix.size..-2]
+      end
+
+      # Splits a comma-separated argument list at top level, ignoring commas
+      # inside nested parens. `"String, Hash(String, Int32)"` → `["String", "Hash(String, Int32)"]`.
+      private def self.split_top_level_args(s : String) : Array(String)
+        parts = [] of String
+        depth = 0
+        start = 0
+        s.each_char_with_index do |c, i|
+          case c
+          when '(' then depth += 1
+          when ')' then depth -= 1
+          when ','
+            if depth == 0
+              parts << s[start...i].strip
+              start = i + 1
+            end
+          end
+        end
+        parts << s[start..].strip
+        parts
       end
     end
   end

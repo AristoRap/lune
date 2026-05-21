@@ -1,7 +1,7 @@
 module Lune
   module Capabilities
     class DragOut < Lune::Capability
-      include Capability::Bindable
+      include Capability::BindPhase
 
       # macOS-only. The Win32 / X11 drag-out flows require native window
       # subclassing and pasteboard plumbing we don't have today — see ROADMAP.
@@ -19,18 +19,15 @@ module Lune
 
       def install(ctx : BindCtx) : Nil
         h = @handle
-        ctx.register(Definition.new(
-          name: "#{name}.start",
+        ctx.define("start",
           args: ["String"],
           arg_names: ["paths"],
           arg_transforms: ["JSON.stringify(paths || [])"] of String?,
           ts_args: ["string[]"] of String?,
-          return_type: "Nil",
-          callback: ->(args : Array(JSON::Any)) {
-            Lune::Native::Window.start_drag_out(h, JSON.parse(args[0].as_s).as_a.map(&.as_s))
-            JSON::Any.new(nil)
-          },
-        ).binding(binding_namespace))
+        ) do |args|
+          Lune::Native::Window.start_drag_out(h, JSON.parse(args[0].as_s).as_a.map(&.as_s))
+          JSON::Any.new(nil)
+        end
       end
 
       def unavailable_js_stub(platform : Symbol) : String?

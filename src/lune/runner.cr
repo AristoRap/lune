@@ -66,9 +66,8 @@ module Lune
         resolved = registry.resolve(@config.capabilities)
         resolved.warnings.each { |w| Lune.logger.warn { w } }
 
-        bind_ctx = Lune::Capability::BindCtx.new(@app)
         resolved.capabilities.each do |cap|
-          cap.install(bind_ctx) if cap.is_a?(Lune::Capability::Bindable)
+          cap.install(Lune::Capability::BindCtx.new(@app, cap)) if cap.is_a?(Lune::Capability::BindPhase)
         end
 
         bridge = Bridge.new(wv)
@@ -76,8 +75,9 @@ module Lune
         bridge.register_bindings(@app.bindings.select(&.internal?))
         @app.bridge = bridge
 
-        if windows_cap = resolved.capabilities.find { |c| c.is_a?(Capabilities::Windows) }.as?(Capabilities::Windows)
-          windows_cap.set_context(wv, @app, resolved, @app.bindings)
+        main_ctx = Lune::Capability::MainCtx.new(wv, @app, resolved, @app.bindings)
+        resolved.capabilities.each do |cap|
+          cap.set_main_context(main_ctx) if cap.is_a?(Lune::Capability::MainContextAware)
         end
 
         callback_window_ready_if_set(handle)
@@ -103,14 +103,6 @@ module Lune
         end
 
         callback_window_loaded_if_set(wv)
-
-        if @options.disable_context_menu
-          wv.init("document.addEventListener('contextmenu',function(e){e.preventDefault();});")
-        end
-
-        setup_keyboard_shortcuts(wv)
-        setup_navigate_if_set(wv)
-        setup_drag_zone_if_set(wv, handle)
 
         resolved.init_all_webviews(wv, handle, @app)
 
@@ -180,79 +172,6 @@ module Lune
       end
     end
 
-    private def setup_keyboard_shortcuts(wv : Webview::Webview) : Nil
-      wv.init(<<-JS)
-      (function(){
-        document.addEventListener('keydown', function(e) {
-          if (!e.metaKey && !e.ctrlKey) return;
-          var cmd;
-          switch (e.key) {
-            case 'a': cmd = 'selectAll'; break;
-            case 'c': cmd = 'copy'; break;
-            case 'v': cmd = 'paste'; break;
-            case 'x': cmd = 'cut'; break;
-            case 'z': cmd = e.shiftKey ? 'redo' : 'undo'; break;
-            case 'y': cmd = 'redo'; break;
-          }
-          if (cmd) { e.preventDefault(); document.execCommand(cmd); }
-        });
-      })();
-      JS
-    end
-
-    private def setup_drag_zone_if_set(wv : Webview::Webview, handle : Pointer(Void)) : Nil
-      css_var = @options.drag.zone
-      return if css_var.empty?
-
-      {% if flag?(:darwin) %}
-        css_val = @options.drag.value
-        start_drag_key = "#{Lune::Capability::BRIDGE_MARKER}.startDrag"
-
-        Native::Window.setup_drag_monitor
-
-        wv.bind(start_drag_key, Webview::JSProc.new { |_args|
-          Native::Window.start_window_drag(handle)
-          JSON::Any.new(nil)
-        })
-
-        wv.init(<<-JS)
-        (function(){
-          document.addEventListener('mousedown', function(e) {
-            var el = e.target;
-            while (el) {
-              if (el.style && el.style.getPropertyValue(#{css_var.inspect}).trim() === #{css_val.inspect}) {
-                window[#{start_drag_key.inspect}]();
-                return;
-              }
-              el = el.parentElement;
-            }
-          }, true);
-        })();
-        JS
-      {% end %}
-    end
-
-    private def setup_navigate_if_set(wv : Webview::Webview) : Nil
-      return unless (nav_cb = @options.on_navigate)
-      navigate_key = "#{Lune::Capability::BRIDGE_MARKER}.navigate"
-      wv.bind(navigate_key, Webview::JSProc.new { |args|
-        begin
-          nav_cb.call(args[0]?.try(&.as_s) || "")
-        rescue ex
-          Lune.logger.error { "on_navigate callback failed: #{ex.message}" }
-          Lune.logger.debug(exception: ex) { "on_navigate callback failed (stacktrace)" }
-        end
-        JSON::Any.new(nil)
-      })
-      wv.init(<<-JS)
-      (function(){
-        function _nav(){ window[#{navigate_key.inspect}](location.href); }
-        window.addEventListener('popstate', _nav);
-        window.addEventListener('hashchange', _nav);
-      })();
-      JS
-    end
-
     private def setup_navigation(
       wv : Webview::Webview,
       html : String?,
@@ -266,15 +185,14 @@ module Lune
         wv.navigate(u)
       elsif dev_url = ENV[Lune::ENV_DEV_URL]?
         all_stubs = App.new
-        all_bind_ctx = Lune::Capability::BindCtx.new(all_stubs)
         # `registry.all` is already platform-filtered, so every cap here has a
         # working install path on the current OS — no NotImplementedError to
         # swallow. Caps that can't run on this platform are emitted as rejecting
         # JS stubs separately via `registry.platform_filtered` below.
         registry.all.each do |cap|
           next if resolved.active_ids.includes?(cap.descriptor.id)
-          next unless cap.is_a?(Lune::Capability::Bindable)
-          cap.install(all_bind_ctx)
+          next unless cap.is_a?(Lune::Capability::BindPhase)
+          cap.install(Lune::Capability::BindCtx.new(all_stubs, cap))
         end
         Lune::Runtime::Generator.write_js(
           @app.bindings + all_stubs.bindings.select(&.internal?),

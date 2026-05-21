@@ -29,7 +29,7 @@ describe Lune::Capabilities::Windows do
 
   describe "phase membership" do
     it "includes Bindable" do
-      Lune::Capabilities::Windows.new.is_a?(Lune::Capability::Bindable).should be_true
+      Lune::Capabilities::Windows.new.is_a?(Lune::Capability::BindPhase).should be_true
     end
 
     it "includes Lifecycle" do
@@ -38,6 +38,10 @@ describe Lune::Capabilities::Windows do
 
     it "does not include WebviewInject" do
       Lune::Capabilities::Windows.new.is_a?(Lune::Capability::WebviewInject).should be_false
+    end
+
+    it "includes MainContextAware" do
+      Lune::Capabilities::Windows.new.is_a?(Lune::Capability::MainContextAware).should be_true
     end
   end
 
@@ -80,6 +84,24 @@ describe Lune::Capabilities::Windows do
       r = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new, -> { })
       resolved = r.resolve(Lune::ConfigCapabilities.new(enabled: nil, disabled: ["windows"]))
       resolved.capabilities.map(&.name).should_not contain("windows")
+    end
+  end
+
+  describe "runtime.d.ts signatures" do
+    it "emits open(...) returning Promise<string>" do
+      cap = Lune::Capabilities::Windows.new
+      app = Lune::App.new
+      app.install(cap)
+      dts = Lune::Runtime::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Capability)
+      dts.should match(/open\(.+?\):\s*Promise<string>/)
+    end
+
+    it "emits list() as Promise<string[]>" do
+      cap = Lune::Capabilities::Windows.new
+      app = Lune::App.new
+      app.install(cap)
+      dts = Lune::Runtime::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Capability)
+      dts.should contain("list(): Promise<string[]>")
     end
   end
 end

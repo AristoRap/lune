@@ -1,7 +1,7 @@
 module Lune
   module Capabilities
     class Tray < Lune::Capability
-      include Capability::Bindable
+      include Capability::BindPhase
 
       # Tray ships on all three platforms. Win32 implementation: show / hide /
       # clicks via Shell_NotifyIconW, menus via CreatePopupMenu + TrackPopupMenu,
@@ -49,7 +49,7 @@ module Lune
       #   4. else → emit `trayEvent` with the given payload
       def self.build_click_default(
         user_override : (-> Nil)?,
-        events : App::Events,
+        events : Lune::Events,
         event_name : String,
         payload : String,
         toggle_window : (-> Nil)? = nil,
@@ -101,65 +101,55 @@ module Lune
         on_tray_click = Tray.build_click_default(@on_tray_click, ctx.app.events, event_name, "left_click", window_toggle_for(:left_click))
         on_right_click = Tray.build_click_default(@on_right_click, ctx.app.events, event_name, "right_click", window_toggle_for(:right_click))
 
-        ctx.register(Definition.new(
-          name: "#{name}.show",
+        ctx.define("show",
           args: ["String"],
-          return_type: "Nil",
           arg_names: ["iconPath"],
-          callback: ->(args : Array(JSON::Any)) {
-            Lune::Native::Tray.show(args[0].as_s, on_tray_click)
-            Lune::Native::Tray.set_right_click_cb(on_right_click)
-            JSON::Any.new(nil)
-          },
-        ).binding(binding_namespace))
+        ) do |args|
+          Lune::Native::Tray.show(args[0].as_s, on_tray_click)
+          Lune::Native::Tray.set_right_click_cb(on_right_click)
+          JSON::Any.new(nil)
+        end
 
-        ctx.register(Definition.new(
-          name: "#{name}.hide",
-          args: [] of String,
-          return_type: "Nil",
-          callback: ->(_args : Array(JSON::Any)) { Lune::Native::Tray.hide; JSON::Any.new(nil) },
-        ).binding(binding_namespace))
+        ctx.define("hide") do |_args|
+          Lune::Native::Tray.hide
+          JSON::Any.new(nil)
+        end
 
-        ctx.register(Definition.new(
-          name: "#{name}.set_icon",
+        ctx.define("set_icon",
           args: ["String"],
-          return_type: "Nil",
           arg_names: ["path"],
-          callback: ->(args : Array(JSON::Any)) { Lune::Native::Tray.set_icon(args[0].as_s); JSON::Any.new(nil) },
-        ).binding(binding_namespace))
+        ) do |args|
+          Lune::Native::Tray.set_icon(args[0].as_s)
+          JSON::Any.new(nil)
+        end
 
-        ctx.register(Definition.new(
-          name: "#{name}.popup_menu",
-          args: [] of String,
-          return_type: "Nil",
-          callback: ->(_args : Array(JSON::Any)) { Lune::Native::Tray.popup_menu; JSON::Any.new(nil) },
-        ).binding(binding_namespace))
+        ctx.define("popup_menu") do |_args|
+          Lune::Native::Tray.popup_menu
+          JSON::Any.new(nil)
+        end
 
         on_menu_click = @on_menu_click || ->(id : String) { ctx.app.events.emit(event_name, id); nil }
-        ctx.register(Definition.new(
-          name: "#{name}.set_menu",
+        ctx.define("set_menu",
           args: ["String"],
           arg_names: ["items"],
           arg_transforms: ["JSON.stringify(items || [])"] of String?,
           ts_args: ["TrayMenuItem[]"] of String?,
-          return_type: "Nil",
-          callback: ->(args : Array(JSON::Any)) {
-            items = begin
-              raw = Array(Hash(String, JSON::Any)).from_json(args[0].as_s)
-              raw.compact_map do |h|
-                id = h["id"]?.try(&.as_s?)
-                label = h["label"]?.try(&.as_s?)
-                next unless id && label
-                {id: id, label: label}
-              end
-            rescue ex : JSON::ParseException
-              Lune.logger.warn { "Tray.set_menu: invalid menu JSON — #{ex.message}" }
-              [] of {id: String, label: String}
+        ) do |args|
+          items = begin
+            raw = Array(Hash(String, JSON::Any)).from_json(args[0].as_s)
+            raw.compact_map do |h|
+              id = h["id"]?.try(&.as_s?)
+              label = h["label"]?.try(&.as_s?)
+              next unless id && label
+              {id: id, label: label}
             end
-            Lune::Native::Tray.set_menu(items, on_menu_click)
-            JSON::Any.new(nil)
-          },
-        ).binding(binding_namespace))
+          rescue ex : JSON::ParseException
+            Lune.logger.warn { "Tray.set_menu: invalid menu JSON — #{ex.message}" }
+            [] of {id: String, label: String}
+          end
+          Lune::Native::Tray.set_menu(items, on_menu_click)
+          JSON::Any.new(nil)
+        end
 
         # Auto-show the tray icon at boot (driven by `opts.tray.auto_show`,
         # which `mac.menubar_mode` pre-fills). Wires the same click defaults

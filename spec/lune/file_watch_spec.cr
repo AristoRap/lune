@@ -29,7 +29,7 @@ describe Lune::Capabilities::FileWatch do
 
   describe "phase membership" do
     it "includes Bindable" do
-      Lune::Capabilities::FileWatch.new.is_a?(Lune::Capability::Bindable).should be_true
+      Lune::Capabilities::FileWatch.new.is_a?(Lune::Capability::BindPhase).should be_true
     end
 
     it "includes Lifecycle" do

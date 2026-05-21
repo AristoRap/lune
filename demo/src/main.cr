@@ -57,6 +57,11 @@ Lune.run(app, assets: "frontend/dist") do |opts|
   # opts.disable_context_menu = true
   opts.devtools = {{ flag?(:lune_dev) }}
 
+  # opts.on_navigate = ->(url : String) {
+  #   Lune.logger.info { "on_navigate ← #{url}" }
+  #   app.events.emit("nav-received", url)
+  # }
+
   opts.mac do |m|
     m.full_size_content = true
     # m.hide_traffic_lights = true
