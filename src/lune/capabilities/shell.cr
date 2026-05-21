@@ -117,11 +117,11 @@ module Lune
       # directly. POSIX path is unchanged; any error propagates.
       def self.with_win32_cmd_fallback(cmd : String, argv : Array(String), &)
         yield cmd, argv
-      rescue File::NotFoundError
+      rescue ex : File::NotFoundError
         {% if flag?(:win32) %}
           yield "cmd", ["/c", cmd] + argv
         {% else %}
-          raise
+          raise ex
         {% end %}
       end
 
