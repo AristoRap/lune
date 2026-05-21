@@ -37,6 +37,6 @@ const tmp = await Filesystem.tempDir();
 
 ```yaml
 capabilities:
-  exclude:
+  disabled:
     - filesystem
 ```

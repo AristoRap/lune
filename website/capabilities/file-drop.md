@@ -21,7 +21,7 @@ Disabling `events` automatically disables this capability.
 
 ```yaml
 capabilities:
-  include:
+  enabled:
     - file_drop
     - events # required
 ```
@@ -115,8 +115,8 @@ The capability is auto-filtered from the registry on Windows (Win32 needs `OleIn
 
 ```yaml
 capabilities:
-  exclude:
+  disabled:
     - file_drop
 ```
 
-On Windows you don't need to exclude it manually — the platform filter handles it. The `exclude` form is only useful on macOS / Linux.
+On Windows you don't need to disable it manually — the platform filter handles it. The `disabled:` entry is only useful on macOS / Linux.

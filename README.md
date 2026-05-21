@@ -29,15 +29,15 @@ Full docs live at the project `website` folder
 ## Quick start
 
 ```sh
-lune init my_app              # vanilla JS + Vite
-lune init my_app --template vue  # Vue 3 + Vite
+lune init my_app                  # vanilla JS + Vite
+lune init my_app --template vue   # Vue 3 + Vite
 cd my_app
 lune dev
 ```
 
 Pre-built CLI binaries are on the [releases page](https://github.com/AristoRap/lune/releases). Or build from source: `make setup && make deploy`.
 
-The `demo/` directory in this repo is a full showcase of the Lune API — bindings, events, system calls, file dialogs, tray, and more — built with the Vue 3 template. Run it with `cd demo && lune dev`.
+The `demo/` directory in this repo is a Vue 3 showcase that exercises every Lune capability. Run it with `cd demo && lune dev`. See [Capabilities](https://aristorap.github.io/lune/capabilities/) for the full list of what's available.
 
 ## Platform support
 
@@ -61,7 +61,7 @@ make test    # crystal spec
 make deploy  # build release binary → /usr/local/bin/lune
 ```
 
-> **Windows:** Run the underlying commands directly (`shards install`, `shards build --release`, etc.).
+On Windows, use `./make.ps1 <target>` from PowerShell — same targets as the Makefile, plus MSVC env auto-bootstrap (`./make.ps1 help` lists them). See [WINDOWS_SETUP.md](WINDOWS_SETUP.md) for the one-time native-deps setup (sqlite3 + webview + Crystal stdlib patch).
 
 ## Contributing
 

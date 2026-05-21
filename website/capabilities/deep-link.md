@@ -123,6 +123,6 @@ Planned for follow-up releases:
 
 ```yaml
 capabilities:
-  exclude:
+  disabled:
     - deep_link
 ```

@@ -146,13 +146,13 @@ describe Lune::Capabilities::Kv do
   describe "registry integration" do
     it "is included in the default resolved set" do
       r = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new, -> { })
-      resolved = r.resolve(Lune::ConfigCapabilities.new(only: nil, exclude: nil))
+      resolved = r.resolve(Lune::ConfigCapabilities.new(enabled: nil, disabled: nil))
       resolved.capabilities.map(&.name).should contain("kv")
     end
 
     it "can be excluded" do
       r = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new, -> { })
-      resolved = r.resolve(Lune::ConfigCapabilities.new(only: nil, exclude: ["kv"]))
+      resolved = r.resolve(Lune::ConfigCapabilities.new(enabled: nil, disabled: ["kv"]))
       resolved.capabilities.map(&.name).should_not contain("kv")
     end
   end

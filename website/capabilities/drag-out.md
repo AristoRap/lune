@@ -61,6 +61,6 @@ try {
 
 ```yaml
 capabilities:
-  exclude:
+  disabled:
     - drag_out
 ```

@@ -4,12 +4,10 @@ module Lune
   struct ConfigCapabilities
     include YAML::Serializable
 
-    @[YAML::Field(key: "include")]
-    getter only : Array(String)? = nil
+    getter enabled : Array(String)? = nil
+    getter disabled : Array(String)? = nil
 
-    getter exclude : Array(String)? = nil
-
-    def initialize(@only : Array(String)? = nil, @exclude : Array(String)? = nil); end
+    def initialize(@enabled : Array(String)? = nil, @disabled : Array(String)? = nil); end
   end
 
   struct Config

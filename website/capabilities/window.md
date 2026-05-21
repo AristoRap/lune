@@ -49,6 +49,6 @@ await Window.setSize(1440, 900);
 
 ```yaml
 capabilities:
-  exclude:
+  disabled:
     - window
 ```

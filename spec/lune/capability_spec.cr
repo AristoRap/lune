@@ -151,16 +151,16 @@ private def make_registry
   Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new, -> { })
 end
 
-private def config_only(*names : String) : Lune::ConfigCapabilities
-  Lune::ConfigCapabilities.new(only: names.to_a, exclude: nil)
+private def config_enabled(*names : String) : Lune::ConfigCapabilities
+  Lune::ConfigCapabilities.new(enabled: names.to_a, disabled: nil)
 end
 
-private def config_exclude(*names : String) : Lune::ConfigCapabilities
-  Lune::ConfigCapabilities.new(only: nil, exclude: names.to_a)
+private def config_disabled(*names : String) : Lune::ConfigCapabilities
+  Lune::ConfigCapabilities.new(enabled: nil, disabled: names.to_a)
 end
 
 private def empty_config : Lune::ConfigCapabilities
-  Lune::ConfigCapabilities.new(only: nil, exclude: nil)
+  Lune::ConfigCapabilities.new(enabled: nil, disabled: nil)
 end
 
 describe Lune::Capabilities::Registry do
@@ -173,19 +173,19 @@ describe Lune::Capabilities::Registry do
     end
 
     it "respects include list" do
-      resolved = make_registry.resolve(config_only("clipboard", "filesystem"))
+      resolved = make_registry.resolve(config_enabled("clipboard", "filesystem"))
       resolved.capabilities.map(&.name).should contain("clipboard")
       resolved.capabilities.map(&.name).should contain("filesystem")
       resolved.capabilities.size.should eq(2)
     end
 
     it "respects exclude list" do
-      resolved = make_registry.resolve(config_exclude("clipboard"))
+      resolved = make_registry.resolve(config_disabled("clipboard"))
       resolved.capabilities.map(&.name).should_not contain("clipboard")
     end
 
     it "cascade-disables a capability when its hard dep is excluded" do
-      resolved = make_registry.resolve(config_exclude("events"))
+      resolved = make_registry.resolve(config_disabled("events"))
       names = resolved.capabilities.map(&.name)
       names.should_not contain("context_menu")
       names.should_not contain("file_drop")
@@ -193,7 +193,7 @@ describe Lune::Capabilities::Registry do
     end
 
     it "emits a warning for each cascade-disabled capability" do
-      resolved = make_registry.resolve(config_exclude("events"))
+      resolved = make_registry.resolve(config_disabled("events"))
       # Use caps that are present on every platform (default platforms list)
       # so the cascade-disable step actually runs on them. FileDrop / FileWatch
       # are platform-filtered out on Win32 before the cascade step, so they
@@ -203,12 +203,12 @@ describe Lune::Capabilities::Registry do
     end
 
     it "keeps a soft-dep capability active when its soft dep is excluded" do
-      resolved = make_registry.resolve(config_exclude("events"))
+      resolved = make_registry.resolve(config_disabled("events"))
       resolved.capabilities.map(&.name).should contain("tray")
     end
 
     it "emits a soft-dep warning when soft dep is absent" do
-      resolved = make_registry.resolve(config_exclude("events"))
+      resolved = make_registry.resolve(config_disabled("events"))
       resolved.warnings.any? { |w| w.includes?("Tray") && w.includes?("events") }.should be_true
     end
 
@@ -221,7 +221,7 @@ describe Lune::Capabilities::Registry do
     end
 
     it "active_ids returns a set of symbols for the resolved capabilities" do
-      resolved = make_registry.resolve(config_only("clipboard"))
+      resolved = make_registry.resolve(config_enabled("clipboard"))
       resolved.active_ids.should eq(Set{:clipboard})
     end
   end
@@ -266,7 +266,7 @@ describe Lune::Capabilities::Registry do
       backend = CaptureBackend.new
       logger = Log.new("lune.spec.platform", backend, :debug)
       with_logger(logger) do
-        make_registry.validate(config_only("drag_out"))
+        make_registry.validate(config_enabled("drag_out"))
       end
       backend.entries.any? { |e| e.message.includes?("unknown capability") }.should be_false
     end
@@ -275,7 +275,7 @@ describe Lune::Capabilities::Registry do
       backend = CaptureBackend.new
       logger = Log.new("lune.spec.platform", backend, :debug)
       with_logger(logger) do
-        make_registry.validate(config_only("not_a_real_cap"))
+        make_registry.validate(config_enabled("not_a_real_cap"))
       end
       backend.entries.any? { |e| e.message.includes?("unknown capability") }.should be_true
     end

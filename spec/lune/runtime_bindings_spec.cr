@@ -553,7 +553,7 @@ describe "Lune::Capabilities" do
 
     it "includes a capability when its name is in the include list" do
       registry = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigCapabilities.new(only: ["system"])
+      caps = Lune::ConfigCapabilities.new(enabled: ["system"])
       active = registry.active(caps)
       active.map(&.name).should contain("system")
       active.size.should eq(1)
@@ -561,27 +561,27 @@ describe "Lune::Capabilities" do
 
     it "does not match binding names — only capability names are valid" do
       registry = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigCapabilities.new(only: ["quit"])
+      caps = Lune::ConfigCapabilities.new(enabled: ["quit"])
       active = registry.active(caps)
       active.should be_empty
     end
 
     it "returns all capabilities when include list is empty (same as omitted)" do
       registry = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new)
-      active = registry.active(Lune::ConfigCapabilities.new(only: [] of String))
+      active = registry.active(Lune::ConfigCapabilities.new(enabled: [] of String))
       active.size.should eq(registry.all.size)
     end
 
     it "silently ignores nonexistent capability names in include" do
       registry = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigCapabilities.new(only: ["system", "nonexistent"])
+      caps = Lune::ConfigCapabilities.new(enabled: ["system", "nonexistent"])
       active = registry.active(caps)
       active.map(&.name).should eq(["system"])
     end
 
     it "excludes a capability by capability name" do
       registry = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigCapabilities.new(exclude: ["clipboard"])
+      caps = Lune::ConfigCapabilities.new(disabled: ["clipboard"])
       active = registry.active(caps)
       active.map(&.name).should_not contain("clipboard")
       active.map(&.name).should contain("system")
@@ -589,14 +589,14 @@ describe "Lune::Capabilities" do
 
     it "does not match binding names in exclude — only capability names" do
       registry = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigCapabilities.new(exclude: ["clipboardRead"])
+      caps = Lune::ConfigCapabilities.new(disabled: ["clipboardRead"])
       active = registry.active(caps)
       active.map(&.name).should contain("clipboard")
     end
 
     it "applies include before exclude" do
       registry = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigCapabilities.new(only: ["system", "clipboard"], exclude: ["clipboard"])
+      caps = Lune::ConfigCapabilities.new(enabled: ["system", "clipboard"], disabled: ["clipboard"])
       active = registry.active(caps)
       active.map(&.name).should contain("system")
       active.map(&.name).should_not contain("clipboard")
@@ -604,25 +604,25 @@ describe "Lune::Capabilities" do
 
     it "treats include [\"*\"] as all capabilities" do
       registry = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigCapabilities.new(only: ["*"])
+      caps = Lune::ConfigCapabilities.new(enabled: ["*"])
       registry.active(caps).size.should eq(registry.all.size)
     end
 
     it "treats include [\"all\"] as all capabilities" do
       registry = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigCapabilities.new(only: ["all"])
+      caps = Lune::ConfigCapabilities.new(enabled: ["all"])
       registry.active(caps).size.should eq(registry.all.size)
     end
 
     it "treats exclude [\"*\"] as no capabilities" do
       registry = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigCapabilities.new(exclude: ["*"])
+      caps = Lune::ConfigCapabilities.new(disabled: ["*"])
       registry.active(caps).should be_empty
     end
 
     it "includes core capabilities by name even when they have no bindings" do
       registry = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigCapabilities.new(only: ["events"])
+      caps = Lune::ConfigCapabilities.new(enabled: ["events"])
       active = registry.active(caps)
       active.map(&.name).should contain("events")
     end

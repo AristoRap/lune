@@ -42,6 +42,6 @@ interface ScreenInfo {
 
 ```yaml
 capabilities:
-  exclude:
+  disabled:
     - screen
 ```

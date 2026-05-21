@@ -184,6 +184,6 @@ Tray ships fully on Windows via `Shell_NotifyIconW` + `CreatePopupMenu` + `LoadI
 
 ```yaml
 capabilities:
-  exclude:
+  disabled:
     - tray
 ```

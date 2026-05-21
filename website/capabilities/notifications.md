@@ -2,14 +2,14 @@
 
 > Send native OS desktop notifications.
 
-|                  |                                                             |
-| ---------------- | ----------------------------------------------------------- |
-| **Config key**   | `notifications`                                             |
-| **JS namespace** | `Notifications`                                             |
-| **Core**         | No                                                          |
-| **Phases**       | Bindable                                                    |
-| **Hard deps**    | —                                                           |
-| **Platforms**    | macOS · Linux · Windows¹                                     |
+|                  |                          |
+| ---------------- | ------------------------ |
+| **Config key**   | `notifications`          |
+| **JS namespace** | `Notifications`          |
+| **Core**         | No                       |
+| **Phases**       | Bindable                 |
+| **Hard deps**    | —                        |
+| **Platforms**    | macOS · Linux · Windows¹ |
 
 ---
 
@@ -41,6 +41,6 @@ await Notifications.notify("Build complete", "Your app compiled successfully.");
 
 ```yaml
 capabilities:
-  exclude:
+  disabled:
     - notifications
 ```

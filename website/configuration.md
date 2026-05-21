@@ -15,10 +15,10 @@ icon: assets/icon.icns
 
 # Active capabilities (default: all). Omit to expose everything.
 capabilities:
-  include:
+  enabled:
     - system
     - clipboard
-  exclude:
+  disabled:
     - clipboard
 
 # Crystal entry point (default: src/main.cr)
@@ -306,13 +306,13 @@ All keys are optional. Omitted keys fall back to the `Lune::Options` defaults (`
 
 ### `capabilities`
 
-**Default:** all capabilities enabled (both `include` and `exclude` omitted)
+**Default:** all capabilities active (both `enabled` and `disabled` omitted)
 
-Controls which built-in capabilities are active. The unit is a **capability** — a named group of related functions. `include` is resolved first, then `exclude` is subtracted. Both keys accept `"*"` or `"all"` as explicit wildcards.
+Controls which built-in capabilities are active. The unit is a **capability** — a named group of related functions. `enabled` is resolved first, then `disabled` is subtracted. Both keys accept `"*"` or `"all"` as explicit wildcards.
 
 Values must be **capability names** (e.g. `system`, `clipboard`). Individual function names like `quit` are not valid — they will log a warning and be ignored.
 
-| `include`                 | `exclude`            | result               |
+| `enabled`                 | `disabled`           | result               |
 | ------------------------- | -------------------- | -------------------- |
 | omitted or `[]`           | omitted              | all capabilities     |
 | `["system"]`              | omitted              | system only          |
@@ -325,34 +325,34 @@ See [Capabilities](./capabilities/) for the full list of capability names and th
 
 #### Dev vs build behaviour
 
-- **Dev mode** (`lune dev`) — the bridge is filtered: excluded capability functions throw if called. `runtime.js` still includes all capabilities so the dev Capabilities view can show which are active vs excluded, and imports keep working while you iterate.
-- **Build mode** (`lune build`) — both the bridge and `runtime.js` are filtered. Importing an excluded function is a hard bundler error.
+- **Dev mode** (`lune dev`) — the bridge is filtered: disabled capability functions throw if called. `runtime.js` still includes all capabilities so the dev Capabilities view can show which are active vs disabled, and imports keep working while you iterate.
+- **Build mode** (`lune build`) — both the bridge and `runtime.js` are filtered. Importing a disabled function is a hard bundler error.
 
 #### Platform filtering
 
-A capability whose `platforms` list excludes the current OS is auto-filtered from the registry — no manual `exclude` needed. Its JS namespace still appears in `runtime.js`, but every method returns `Promise.reject(new LuneError("UNAVAILABLE_ON_PLATFORM", "…"))` so cross-platform imports keep working. Catch the error (or branch on `runtime.System.environment().os`) to fall back gracefully. The `runtime.d.ts` interface preserves the full signature, so the same TypeScript code type-checks on every platform.
+A capability whose `platforms` list excludes the current OS is auto-filtered from the registry — no manual `disabled` entry needed. Its JS namespace still appears in `runtime.js`, but every method returns `Promise.reject(new LuneError("UNAVAILABLE_ON_PLATFORM", "…"))` so cross-platform imports keep working. Catch the error (or branch on `runtime.System.environment().os`) to fall back gracefully. The `runtime.d.ts` interface preserves the full signature, so the same TypeScript code type-checks on every platform.
 
-If `include` explicitly names a capability that's auto-filtered on the current OS, the registry emits a single `INFO` log line so you know the cap was recognised but couldn't be enabled. Default-included caps skip silently — a shared `lune.yml` won't produce noise across platforms.
+If `enabled:` explicitly names a capability that's auto-filtered on the current OS, the registry emits a single `INFO` log line so you know the cap was recognised but couldn't be activated. Default-active caps skip silently — a shared `lune.yml` won't produce noise across platforms.
 
-Any unknown name in `include` or `exclude` logs a warning at startup and is ignored.
+Any unknown name in `enabled` or `disabled` logs a warning at startup and is ignored.
 
 ```yaml
 # expose only the system capability
 capabilities:
-  include:
+  enabled:
     - system
 
 # expose everything except file dialogs
 capabilities:
-  exclude:
+  disabled:
     - dialogs
 
 # expose system and clipboard, then remove clipboard
 capabilities:
-  include:
+  enabled:
     - system
     - clipboard
-  exclude:
+  disabled:
     - clipboard
 ```
 

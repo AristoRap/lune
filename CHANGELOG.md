@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Breaking
+
+- **Capability config keys renamed** `include` / `exclude` → `enabled` / `disabled` to keep one consistent pair across YAML, Crystal field names, and prose. `lune.yml` migration is mechanical: rename `capabilities.include:` → `capabilities.enabled:` and `capabilities.exclude:` → `capabilities.disabled:`. Crystal API: `ConfigCapabilities#only` / `#exclude` → `#enabled` / `#disabled`. The semantics are identical (enabled resolved first, then disabled subtracted; both accept `"*"` / `"all"`).
+
 ## [0.12.0] - 2026-05-21
 
 ### Added

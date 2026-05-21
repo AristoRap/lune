@@ -21,7 +21,7 @@ Events is active by default. You can disable it, but any capability that hard-de
 
 ```yaml
 capabilities:
-  exclude:
+  disabled:
     - events
 ```
 

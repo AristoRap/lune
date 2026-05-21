@@ -19,7 +19,7 @@ The Windows capability lets you open additional native windows from JavaScript. 
 
 ```yaml
 capabilities:
-  include:
+  enabled:
     - windows
 ```
 
@@ -122,6 +122,6 @@ Secondary windows are fully capable — every capability active in the main wind
 
 ```yaml
 capabilities:
-  exclude:
+  disabled:
     - windows
 ```

@@ -30,7 +30,7 @@ Features the platform exposes that Lune doesn't yet surface.
 Structural improvements that unlock whole categories of apps.
 
 - [ ] Plugin system — a Crystal shard interface (`Lune::Plugin`) with lifecycle hooks and runtime binding registration so community authors can publish Lune plugins
-- [ ] Per-window capabilities — scope `include`/`exclude` lists to individual windows rather than globally
+- [ ] Per-window capabilities — scope `enabled`/`disabled` lists to individual windows rather than globally
 - [ ] Multiple webviews in one window — stack or embed multiple WebView panels within a single native window
 - [ ] `ext/native/windows/` shim parity — Win32 currently calls `user32`/`shell32`/`comdlg32`/etc. directly from `src/lune/native/*.cr` via `@[Link("…")]`, while macOS and Linux use `.m`/`.c` shims compiled into `ext/native/<platform>/*.o` linked behind a uniform `LibNativeFoo`. Direct FFI works (Tauri/Rust do the same on Win32) but the inconsistent pattern complicates per-capability branching. Refactor to add `ext/native/windows/*.cpp` shims compiled via `cl.exe` so every platform exposes the same `LibNativeFoo` interface.
 
@@ -41,4 +41,4 @@ Structural improvements that unlock whole categories of apps.
 
 ---
 
-_Shipped through v0.9.0: event bus, runtime JS/TS API (namespaced PascalCase objects), codegen bindings, dev error overlay, tray, file dialogs, drag-and-drop (in + drag-out), window controls, notifications (incl. production builds via codesign + UNUserNotificationCenter), screen info, app paths, rich clipboard (text/HTML/image), window state persistence, capability allowlist with cascading dep resolution, app icons (macOS/Linux), default and user-configurable menu bar, context menus, deep links / custom URL scheme, demo app (Vue 3 template), real async via OS threads with shared thread pool, options API grouped into nested blocks, distribution packaging (DMG + AppImage), code signing, notarization, typed error propagation (`LuneError`), capability architecture refactor, WebSocket IPC stream (bidirectional, high-throughput), shell / process execution (`Shell.run` + `Shell.spawn` + `Shell.kill` + `Shell.list` + `Shell.write` + `Shell.closeStdin`), file watching (kqueue/inotify with debounce), global hotkeys, SQLite capability, multiple windows (with cross-window capability propagation), KV store, frameless windows (`mac.full_size_content` + `mac.hide_title` + `mac.hide_traffic_lights` + `mac.transparent` + CSS drag zones), main-thread safety for native UI, menubar-only mode + unified tray click model (`toggle_window_on`, `on_right_click`, `Tray.popupMenu`, `auto_show`). See [CHANGELOG.md](CHANGELOG.md) for details._
+_For the full shipped feature list, see [CHANGELOG.md](CHANGELOG.md)._

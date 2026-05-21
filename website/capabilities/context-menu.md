@@ -2,13 +2,13 @@
 
 > Programmatic native context menus triggered on right-click.
 
-|                  |                                  |
-| ---------------- | -------------------------------- |
-| **Config key**   | `context_menu`                   |
-| **JS namespace** | `ContextMenu`                    |
-| **Core**         | No                               |
-| **Phases**       | Bindable · WebviewInject         |
-| **Hard deps**    | `events`                         |
+|                  |                                |
+| ---------------- | ------------------------------ |
+| **Config key**   | `context_menu`                 |
+| **JS namespace** | `ContextMenu`                  |
+| **Core**         | No                             |
+| **Phases**       | Bindable · WebviewInject       |
+| **Hard deps**    | `events`                       |
 | **Platforms**    | macOS (Windows/Linux: planned) |
 
 ContextMenu lets you declare a menu that appears on right-click. Items are identified by string IDs; selection fires a `context_menu` event back through Events.
@@ -21,7 +21,7 @@ Disabling `events` automatically disables this capability.
 
 ```yaml
 capabilities:
-  include:
+  enabled:
     - context_menu
     - events # required
 ```
@@ -81,6 +81,6 @@ interface ContextMenuItem {
 
 ```yaml
 capabilities:
-  exclude:
+  disabled:
     - context_menu
 ```

@@ -67,6 +67,6 @@ Text read/write uses `pbpaste`/`pbcopy` on macOS, `xclip` on Linux, and direct W
 
 ```yaml
 capabilities:
-  exclude:
+  disabled:
     - clipboard
 ```

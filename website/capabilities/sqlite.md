@@ -19,7 +19,7 @@ SQLite gives your app a local, embedded database backed by [crystal-lang/crystal
 
 ```yaml
 capabilities:
-  include:
+  enabled:
     - sqlite
 ```
 
@@ -160,6 +160,6 @@ Accessing a database that was never opened (or already closed) throws `LuneError
 
 ```yaml
 capabilities:
-  exclude:
+  disabled:
     - sqlite
 ```

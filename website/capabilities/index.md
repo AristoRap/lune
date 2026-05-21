@@ -2,17 +2,17 @@
 
 Capabilities are Lune's feature modules. Each one maps to a config key in `lune.yml`, an optional JS namespace in the runtime, and a set of Crystal-side lifecycle phases.
 
-All capabilities are **active by default**. Disable them individually with `exclude`, or whitelist specific ones with `include`:
+All capabilities are **active by default**. Turn them off individually with `disabled:`, or whitelist specific ones with `enabled:`:
 
 ```yaml
 capabilities:
-  exclude:
+  disabled:
     - tray
     - file_watch
 
 # or whitelist
 capabilities:
-  include:
+  enabled:
     - system
     - clipboard
     - events

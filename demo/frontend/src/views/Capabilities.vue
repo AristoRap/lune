@@ -86,14 +86,14 @@ onMounted(() => {
   <div class="config-block card">
     <span class="card-label">lune.yml — restrict to specific capabilities</span>
     <pre class="mono">capabilities:
-  include:
+  enabled:
     - lifecycle
     - clipboard
     - notifications
 
-# or exclude a group while keeping everything else:
+# or disable a group while keeping everything else:
 capabilities:
-  exclude:
+  disabled:
     - dialogs
     - tray</pre>
     <p class="hint">

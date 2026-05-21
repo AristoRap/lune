@@ -2,14 +2,14 @@
 
 > Spawn child processes and stream their output to the frontend in real time.
 
-|                  |                                  |
-| ---------------- | -------------------------------- |
-| **Config key**   | `shell`                          |
-| **JS namespace** | `Shell`                          |
-| **Core**         | No                               |
-| **Phases**       | Bindable · Lifecycle             |
-| **Hard deps**    | `stream`                         |
-| **Platforms**    | macOS · Linux · Windows¹         |
+|                  |                          |
+| ---------------- | ------------------------ |
+| **Config key**   | `shell`                  |
+| **JS namespace** | `Shell`                  |
+| **Core**         | No                       |
+| **Phases**       | Bindable · Lifecycle     |
+| **Hard deps**    | `stream`                 |
+| **Platforms**    | macOS · Linux · Windows¹ |
 
 Shell lets you run commands and pipe their `stdout`/`stderr` to the browser over the WebSocket stream. Use it for build pipelines, log tailing, long-running tools, or anything that writes to standard output.
 
@@ -21,7 +21,7 @@ Disabling `stream` automatically disables this capability.
 
 ```yaml
 capabilities:
-  include:
+  enabled:
     - shell
     - stream # required
 ```
@@ -180,6 +180,6 @@ Crystal reads `stdout` and `stderr` in parallel async fibers, then waits for bot
 
 ```yaml
 capabilities:
-  exclude:
+  disabled:
     - shell
 ```

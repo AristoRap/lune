@@ -77,6 +77,6 @@ if (answer === "OK") deleteAll();
 
 ```yaml
 capabilities:
-  exclude:
+  disabled:
     - dialogs
 ```

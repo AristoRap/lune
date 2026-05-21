@@ -19,7 +19,7 @@ KV gives you a simple JSON-backed key-value store scoped to your app. Values per
 
 ```yaml
 capabilities:
-  include:
+  enabled:
     - kv
 ```
 
@@ -106,6 +106,6 @@ await Kv.clear(); // removes all entries
 
 ```yaml
 capabilities:
-  exclude:
+  disabled:
     - kv
 ```

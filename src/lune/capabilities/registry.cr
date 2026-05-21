@@ -106,38 +106,38 @@ module Lune
         @all
       end
 
-      # Apply include/exclude config, cascade-disable capabilities whose hard deps
+      # Apply enabled/disabled config, cascade-drop capabilities whose hard deps
       # are inactive, and return a topologically sorted ResolvedSet with warnings.
       def resolve(config : ConfigCapabilities) : ResolvedSet
         warnings = [] of String
 
-        # If the user explicitly listed caps via `only:` and any of those are
+        # If the user explicitly listed caps via `enabled:` and any of those are
         # known capabilities that simply don't run on this platform, log it as
         # info — they asked for it, we owe them an ack that it was skipped.
-        # Default-included caps are silently filtered (no noise for lune.yml
+        # Default-enabled caps are silently filtered (no noise for lune.yml
         # files shared across platforms).
-        if (inc = config.only) && !inc.empty? && !inc.any? { |s| WILDCARD.includes?(s) }
+        if (req = config.enabled) && !req.empty? && !req.any? { |s| WILDCARD.includes?(s) }
           available_names = Set(String).new(@all.map(&.name))
-          inc.each do |n|
+          req.each do |n|
             if @known_names.includes?(n) && !available_names.includes?(n)
               Lune.logger.info { "Capability #{n.inspect} skipped — not available on #{CURRENT_PLATFORM}" }
             end
           end
         end
 
-        # Step 1: apply user include/exclude to get the initial enabled set
-        enabled = apply_config(@all, config)
-        enabled_ids = Set.new(enabled.map(&.descriptor.id))
+        # Step 1: apply user enabled/disabled to get the initial active set
+        active = apply_config(@all, config)
+        active_ids = Set.new(active.map(&.descriptor.id))
 
-        # Step 2: cascade — if a hard dep is disabled, disable the dependent too
+        # Step 2: cascade — if a hard dep is inactive, drop the dependent too
         changed = true
         while changed
           changed = false
-          enabled.reject! do |cap|
-            missing = cap.descriptor.deps.find { |dep| !enabled_ids.includes?(dep) }
+          active.reject! do |cap|
+            missing = cap.descriptor.deps.find { |dep| !active_ids.includes?(dep) }
             if missing
               warnings << "#{cap.descriptor.label} disabled — requires #{missing} (not active)"
-              enabled_ids.delete(cap.descriptor.id)
+              active_ids.delete(cap.descriptor.id)
               changed = true
               true
             else
@@ -147,21 +147,21 @@ module Lune
         end
 
         # Step 3: soft dep warnings (capability stays active but dep is absent)
-        enabled.each do |cap|
+        active.each do |cap|
           cap.descriptor.soft_deps.each do |dep|
-            unless enabled_ids.includes?(dep)
+            unless active_ids.includes?(dep)
               warnings << "#{cap.descriptor.label} — soft dependency #{dep} is not active"
             end
           end
         end
 
         # Step 4: topological sort (deps before dependents)
-        sorted = topological_sort(enabled)
+        sorted = topological_sort(active)
 
         ResolvedSet.new(sorted, warnings)
       end
 
-      # Warn about unknown names in the config include/exclude lists.
+      # Warn about unknown names in the config enabled/disabled lists.
       # A name that's known but unavailable on this platform is NOT unknown —
       # it'll get info-logged by resolve() instead.
       def validate(config : ConfigCapabilities) : Nil
@@ -173,8 +173,8 @@ module Lune
           end
         }
 
-        check.call(config.only || [] of String, "include")
-        check.call(config.exclude || [] of String, "exclude")
+        check.call(config.enabled || [] of String, "enabled")
+        check.call(config.disabled || [] of String, "disabled")
       end
 
       # Kept for the runner until it switches to resolve().
@@ -183,20 +183,20 @@ module Lune
       end
 
       private def apply_config(caps : Array(Lune::Capability), config : ConfigCapabilities) : Array(Lune::Capability)
-        inc = config.only
-        exc = config.exclude
+        en = config.enabled
+        di = config.disabled
 
-        result = if inc && !inc.empty? && !inc.any? { |s| WILDCARD.includes?(s) }
-                   caps.select { |cap| inc.includes?(cap.name) }
+        result = if en && !en.empty? && !en.any? { |s| WILDCARD.includes?(s) }
+                   caps.select { |cap| en.includes?(cap.name) }
                  else
                    caps.dup
                  end
 
-        if exc && !exc.empty?
-          if exc.any? { |s| WILDCARD.includes?(s) }
+        if di && !di.empty?
+          if di.any? { |s| WILDCARD.includes?(s) }
             result = [] of Lune::Capability
           else
-            result = result.reject { |cap| exc.includes?(cap.name) }
+            result = result.reject { |cap| di.includes?(cap.name) }
           end
         end
 

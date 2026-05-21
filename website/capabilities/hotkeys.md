@@ -8,7 +8,7 @@ System-wide keyboard shortcuts that fire even when the app window is not focused
 
 ```yaml
 capabilities:
-  include:
+  enabled:
     - hotkeys
 ```
 

@@ -71,7 +71,7 @@ Windows hardware and what's known to be broken. Items marked
     `Channel(Bool)` replies, except `set_menu` / `popup_menu` when re-entered
     from `WindowProc` (which runs on the same pump fiber via `DispatchMessageW`) —
     those inline to avoid self-deadlock via a `Fiber.current ==
-    @@win32_pump_fiber` check.
+@@win32_pump_fiber` check.
   - HICON lifecycle uses delayed-destroy: the previous owned icon stays
     in `@@win32_pending_destroy` until after the next `Shell_NotifyIcon`
     returns, since Windows references the icon until the next `NIM_MODIFY`.
@@ -106,7 +106,7 @@ Windows hardware and what's known to be broken. Items marked
 
 ## Not implemented on Windows
 
-**Since v0.12.0, the capability registry filters these out automatically on Windows** — no manual `capabilities.exclude` is needed. Their JS namespace stays exported in `runtime.js` as a rejecting stub (each method returns `Promise.reject(new LuneError("UNAVAILABLE_ON_PLATFORM", …))`) so cross-platform imports keep working; `.catch` the error or branch on `runtime.System.environment().os` to fall back gracefully. The `runtime.d.ts` interface preserves the full signature so TypeScript code type-checks identically across platforms. Items still tracked in `ROADMAP.md`:
+**Since v0.12.0, the capability registry filters these out automatically on Windows** — no manual `capabilities.disabled` is needed. Their JS namespace stays exported in `runtime.js` as a rejecting stub (each method returns `Promise.reject(new LuneError("UNAVAILABLE_ON_PLATFORM", …))`) so cross-platform imports keep working; `.catch` the error or branch on `runtime.System.environment().os` to fall back gracefully. The `runtime.d.ts` interface preserves the full signature so TypeScript code type-checks identically across platforms. Items still tracked in `ROADMAP.md`:
 
 - `file_watch` — needs `ReadDirectoryChangesW`
 - `file_drop` — needs `IDropTarget`/`OleInitialize` + drop callback

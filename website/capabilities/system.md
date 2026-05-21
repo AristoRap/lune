@@ -65,6 +65,6 @@ end
 
 ```yaml
 capabilities:
-  exclude:
+  disabled:
     - system
 ```

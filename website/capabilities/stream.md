@@ -21,7 +21,7 @@ Stream is active by default. Disabling it automatically disables `shell`.
 
 ```yaml
 capabilities:
-  exclude:
+  disabled:
     - stream
 ```
 
