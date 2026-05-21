@@ -32,11 +32,31 @@ module Lune
           JSON::Any.new(nil)
         })
 
-        ctx.wv.init(<<-JS)
+        ctx.wv.init(Navigation.init_js(navigate_key))
+      end
+
+      # popstate / hashchange are the only events the browser fires on its
+      # own; SPA routers (React Router, Vue Router, Next, …) navigate via
+      # `history.pushState` / `replaceState`, which fire nothing. Monkey-patch
+      # both so on_navigate sees every URL change. Dedupe by last forwarded
+      # URL because vue-router hash mode calls pushState AND mutates
+      # location.hash on every navigation — without the guard, every click
+      # would fire on_navigate twice.
+      def self.init_js(navigate_key : String) : String
+        <<-JS
         (function(){
-          function _nav(){ window[#{navigate_key.inspect}](location.href); }
+          var _last;
+          function _nav(){
+            var u = location.href;
+            if (u === _last) return;
+            _last = u;
+            window[#{navigate_key.inspect}](u);
+          }
           window.addEventListener('popstate', _nav);
           window.addEventListener('hashchange', _nav);
+          var _push = history.pushState, _replace = history.replaceState;
+          history.pushState = function(){ _push.apply(this, arguments); _nav(); };
+          history.replaceState = function(){ _replace.apply(this, arguments); _nav(); };
         })();
         JS
       end

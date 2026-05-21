@@ -11,7 +11,7 @@ module Lune
       @sender = nil
     end
 
-    def send(name : String, data = nil)
+    def send(name : String, data = nil) : Nil
       return unless (s = @sender)
       json = data.nil? ? "null" : data.to_json
       s.call(name, json)

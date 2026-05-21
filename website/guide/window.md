@@ -176,7 +176,7 @@ opts.on_load = -> {
 
 **Type:** `(String -> Nil)?` — **Default:** `nil`
 
-Called on every client-side navigation with the new URL as argument. Fires on `popstate` and `hashchange` events. Useful for tracking routing in a single-page app or for applying access control.
+Called on every client-side navigation with the new URL as argument. Fires on `popstate`, `hashchange`, and (via a `history.pushState` / `replaceState` shim) every SPA-router navigation — React Router, Vue Router, Next client transitions, etc.
 
 ```crystal
 opts.on_navigate = ->(url : String) {
@@ -623,7 +623,7 @@ opts.menu AppMenu.new(app)
 
 ---
 
-### Window drag zones
+### Window drag zones _(macOS only)_
 
 Set `drag.zone` to a CSS custom property name and any element with that property set to `drag.value` becomes a handle for dragging the window. Essential when using a custom title bar without the native one.
 
@@ -643,6 +643,8 @@ Mark any element as a drag handle using an inline style:
 ```
 
 Drag detection walks up the DOM tree, so marking a container makes all its children draggable too.
+
+> **Platform support.** macOS only — `drag.zone` silently no-ops on Linux and Windows. Tracked on the [roadmap](https://github.com/AristoRap/lune/blob/main/ROADMAP.md).
 
 ---
 

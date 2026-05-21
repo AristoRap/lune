@@ -7,13 +7,14 @@ module Lune
     getter events : Events
     getter stream : Stream
 
+    @async_pool : Fiber::ExecutionContext::Parallel? = nil
+
     def initialize
       @bindings = [] of Binding
       @bridge = nil
       @extra_bridges = [] of Bridge
       @events = Events.new(-> { @bridge }, @extra_bridges)
       @stream = Stream.new
-      @async_pool = Fiber::ExecutionContext::Parallel.new("lune-tasks", System.cpu_count)
     end
 
     def add_bridge(b : Bridge) : Nil
@@ -73,8 +74,13 @@ module Lune
       Native::Menu.set_from_options(@menu_options, @title)
     end
 
+    # The Parallel ExecutionContext owns a kqueue + worker threads. Allocating
+    # one eagerly in `initialize` made `Lune::App.new` expensive enough to
+    # exhaust the per-process fd limit in test suites that instantiate many
+    # apps. Lazy-init so only apps that actually call `#async` pay the cost.
     def async(name : String = "lune-task", &block : ->) : Nil
-      @async_pool.spawn(name: name, &block)
+      pool = @async_pool ||= Fiber::ExecutionContext::Parallel.new("lune-tasks", System.cpu_count)
+      pool.spawn(name: name, &block)
     end
 
     # ----------------------------
