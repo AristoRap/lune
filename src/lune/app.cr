@@ -88,7 +88,9 @@ module Lune
     # ----------------------------
 
     def eval(js : String)
-      with_bridge.dispatch_eval(js)
+      bridge = @bridge
+      raise BridgeNotReadyError.new("App#eval called before the runner wired the bridge") if bridge.nil?
+      bridge.dispatch_eval(js)
     end
 
     # ----------------------------
@@ -96,12 +98,7 @@ module Lune
     # ----------------------------
 
     def close!
-      with_bridge.close!
-    end
-
-    # Ensure bridge was injected before use
-    def with_bridge
-      @bridge.not_nil!
+      @bridge.try(&.close!)
     end
 
     private def add_binding(

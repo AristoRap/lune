@@ -16,6 +16,7 @@
 
 ### Fixed
 
+- **`App#eval` raises a typed `Lune::BridgeNotReadyError`** instead of a generic `NilAssertionError` when called before the runner wires the bridge (e.g. from a capability `install` hook or an `App#async` task that races startup). **`App#close!` is now an idempotent no-op** when the bridge has not been wired yet — useful when a SIGINT during init triggers the shutdown path before bridge attach.
 - **Win32 Shell builtins** — `Shell.spawn` / `Shell.run` fall back to `cmd /c` on `File::NotFoundError`, so `echo`, `dir`, `npm.cmd`, etc. work directly. Helper: `Lune::Capabilities::Shell.with_win32_cmd_fallback`.
 - **Win32 toast notifications** — `Notifications.notify` registers the AUMID at `HKCU\Software\Classes\AppUserModelId\Lune` on first call; toasts actually display instead of being silently dropped.
 - **Win32 `lune build` blank window** — `Assets::Server` now binds + listens from the same `::spawn` on the default context (mirroring Stream's Win32 pattern) so IOCP accept completions reach the listen fiber. POSIX path unchanged.
