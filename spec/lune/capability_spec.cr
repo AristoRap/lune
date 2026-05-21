@@ -231,6 +231,12 @@ describe Lune::Capabilities::Registry do
       Lune::Capabilities::DragOut.new.descriptor.platforms.should eq([:darwin])
     end
 
+    it "Tray, FileWatch, and FileDrop declare darwin + linux (no win32)" do
+      Lune::Capabilities::Tray.new.descriptor.platforms.should eq([:darwin, :linux])
+      Lune::Capabilities::FileWatch.new.descriptor.platforms.should eq([:darwin, :linux])
+      Lune::Capabilities::FileDrop.new.descriptor.platforms.should eq([:darwin, :linux])
+    end
+
     it "drops platform-unsupported caps from registry.all" do
       r = make_registry
       r.all.each do |cap|
