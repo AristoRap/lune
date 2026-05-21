@@ -92,6 +92,12 @@ end
 
 ---
 
+## Windows behaviour
+
+The capability is auto-filtered from the registry on Windows (Win32 needs `ReadDirectoryChangesW` plumbing — tracked in [ROADMAP.md](https://github.com/AristoRap/lune/blob/main/ROADMAP.md)). The runtime still exports a `FileWatch` namespace on Windows so cross-platform imports keep working, but the methods don't do real work: `watch(path)` / `unwatch(path)` reject with `LuneError("UNAVAILABLE_ON_PLATFORM", …)`, and `on` / `once` / `off` are a one-time `console.warn` + no-op. Catch the rejection or guard with `runtime.System.environment().os`.
+
+---
+
 ## Disabling
 
 ```yaml
@@ -99,3 +105,5 @@ capabilities:
   exclude:
     - file_watch
 ```
+
+On Windows you don't need to exclude it manually — the platform filter handles it. The `exclude` form is only useful on macOS / Linux.

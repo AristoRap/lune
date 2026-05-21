@@ -247,6 +247,35 @@ describe "Lune::Capabilities" do
       JSON.parse(result).as_s.should eq("data:image/png;base64,abc123")
     end
 
+    it "clipboard.read_image surfaces a Lune::Error from on_read_image with its code" do
+      # Mirrors the Win32 default: callback raises Lune::Error with code
+      # "UNAVAILABLE_ON_PLATFORM", bridge forwards it as a typed JS LuneError
+      # (status 1, body has {code: ..., error: ...}). Catchable with .catch in
+      # user code the same way platform-gated capability rejections are.
+      fake, bridge = make_bridge
+      app = Lune::App.new
+      app.install(Lune::Capabilities::Clipboard.new(
+        on_read_image: -> : String {
+          raise Lune::Error.new("UNAVAILABLE_ON_PLATFORM", "Clipboard.readImage is not available on win32")
+        }
+      ))
+      bridge.register_bindings(app.bindings)
+
+      fake.invoke("__lune.clipboard.read_image", "seq-img-err", [] of JSON::Any)
+
+      deadline = Time.instant + 2.seconds
+      while Time.instant < deadline
+        break unless fake.resolve_calls.empty?
+        Fiber.yield
+      end
+
+      _, status, result = fake.resolve_calls[0]
+      status.should eq(1)
+      payload = JSON.parse(result)
+      payload["code"].as_s.should eq("UNAVAILABLE_ON_PLATFORM")
+      payload["error"].as_s.should contain("Clipboard.readImage")
+    end
+
     it "clipboard.write_image calls on_write_image with the data URL and resolves" do
       fake, bridge = make_bridge
       written = ""
@@ -436,12 +465,14 @@ describe "Lune::Capabilities" do
   end
 
   describe "Registry" do
-    it "registers all capability bindings" do
+    it "registers all cross-platform capability bindings" do
       app = Lune::App.new
       Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |cap| app.install(cap) }
 
       methods = app.bindings.map(&.method)
 
+      # These bindings exist on every platform — regressions here mean a
+      # cross-platform capability's `install` quietly dropped a binding.
       methods.should contain("system.quit")
       methods.should contain("system.environment")
       methods.should contain("system.open_url")
@@ -453,14 +484,37 @@ describe "Lune::Capabilities" do
       methods.should contain("clipboard.read_image")
       methods.should contain("clipboard.write_image")
       methods.should contain("context_menu.show")
-      methods.should contain("drag_out.start")
       methods.should contain("window.minimize")
       methods.should contain("dialogs.open_file")
-      methods.should contain("tray.show")
-      methods.should contain("tray.set_menu")
-      methods.should contain("tray.popup_menu")
       methods.should contain("notifications.notify")
       methods.should contain("screen.info")
+    end
+
+    it "registers platform-gated bindings only on supported platforms" do
+      app = Lune::App.new
+      Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |cap| app.install(cap) }
+      methods = app.bindings.map(&.method)
+
+      case Lune::Capabilities::CURRENT_PLATFORM
+      when :darwin
+        methods.should contain("drag_out.start")
+        methods.should contain("tray.show")
+        methods.should contain("tray.set_menu")
+        methods.should contain("tray.popup_menu")
+        methods.should contain("file_watch.watch")
+      when :linux
+        methods.should_not contain("drag_out.start")
+        methods.should contain("tray.show")
+        methods.should contain("file_watch.watch")
+      when :win32
+        methods.should_not contain("drag_out.start")
+        # Tray ships fully on Win32 — show/hide/clicks via Shell_NotifyIconW,
+        # menus via CreatePopupMenu + TrackPopupMenu, icons via LoadImageW.
+        methods.should contain("tray.show")
+        methods.should contain("tray.hide")
+        methods.should contain("tray.set_menu")
+        methods.should_not contain("file_watch.watch")
+      end
     end
 
     it "marks every capability binding as internal" do
@@ -470,11 +524,23 @@ describe "Lune::Capabilities" do
       app.bindings.all?(&.internal?).should be_true
     end
 
-    it "registers the correct number of bindings" do
+    it "registers the correct number of bindings for the current platform" do
       app = Lune::App.new
       Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |cap| app.install(cap) }
 
-      app.bindings.size.should eq(60)
+      # Per-platform totals — bump these when you add/remove a binding on any
+      # capability. Decreases when a capability is platform-gated out.
+      #   darwin = 60 baseline
+      #   linux  = 60 - DragOut(1)                              = 59
+      #   win32  = 60 - DragOut(1) - FileWatch(2)               = 57
+      expected = case Lune::Capabilities::CURRENT_PLATFORM
+                 when :darwin then 60
+                 when :linux  then 59
+                 when :win32  then 57
+                 else              60
+                 end
+
+      app.bindings.size.should eq(expected)
     end
   end
 

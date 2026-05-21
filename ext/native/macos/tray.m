@@ -73,9 +73,15 @@ static void apply_icon(const char *icon_path) {
         if (img) {
             img.size = NSMakeSize(18.0, 18.0);
             _status_item.button.image = img;
+            _status_item.button.title = @"";
             return;
         }
     }
+    // Empty/missing path → reset to the default "●" mark. Clearing image
+    // matters: without it the previously-set NSImage keeps drawing on top
+    // of the title, so the user sees no visible reset (Win32 reset works
+    // because LoadImageW(IDI_APPLICATION) replaces the HICON outright).
+    _status_item.button.image = nil;
     _status_item.button.title = @"●";
 }
 

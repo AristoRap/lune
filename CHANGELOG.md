@@ -1,10 +1,29 @@
 # Changelog
 
+## [0.12.0] - 2026-05-21
+
+### Added
+
+- **Win32 Tray** — full implementation via `Shell_NotifyIconW` (show/hide/click dispatch), `CreatePopupMenu` + `TrackPopupMenu` for native menus, and `LoadImageW` for `.ico` icons. Runs on a dedicated `lune-tray` Isolated thread with a message-only HWND. PNG / SVG icons fall back to the system default with a warning (`.ico` only on Win32). `Tray.descriptor.platforms` promoted to `[:darwin, :linux, :win32]`. Bundled `assets/lune-logo.ico` for general use.
+- **Per-capability platform gate** — `Descriptor#platforms` (default `[:darwin, :linux, :win32]`) filters caps out of the registry at construction time when the current OS isn't in the list. `DragOut` declares `[:darwin]`; `FileWatch` and `FileDrop` declare `[:darwin, :linux]`. Users no longer need manual `capabilities.exclude` entries for these on Win32.
+- **Rejecting JS / TS stubs for platform-unavailable caps** — filtered caps still appear in `runtime.js`, with `Promise`-returning methods rejecting `LuneError("UNAVAILABLE_ON_PLATFORM", …)` and event subscriptions (`.on`/`.off`) doing a one-time `console.warn` + no-op. `runtime.d.ts` preserves the full signatures so cross-platform TypeScript type-checks identically. Capabilities override `unavailable_js_stub` / `unavailable_dts_stub` to opt in.
+- **Info log on explicit `only:` skips** — `lune.yml` naming a capability that's not available on the current OS now emits a one-line `INFO` ack. Default-included caps skip silently. `validate()` no longer flags a known-but-unavailable name as "unknown capability".
+
+### Changed
+
+- **`Registry`** gains `platform_filtered` (the dropped caps) and tracks `@known_names` separately so `validate` still catches typos after the platform pre-filter. **`Runtime::Generator.{generate_runtime_js,generate_runtime_dts,write_js}`** accept a new `unavailable_caps` parameter and splice rejecting stubs into the output.
+- **`Clipboard.readImage` / `writeImage` on Win32** now raise typed `Lune::Error("UNAVAILABLE_ON_PLATFORM", …)` from the capability's default callback (matching the platform-stub pattern), instead of bubbling a generic `NotImplementedError`. Text + HTML on Win32 unaffected.
+- Removed the dead `rescue NotImplementedError` in `runner.cr`'s dev-mode stub install — platform-filtered caps are now absent from `registry.all`, so the rescue was only ever swallowing real bugs.
+
+### Fixed
+
+- **`Tray.setIcon("")` on macOS** now actually resets to the `●` default — the native fallback set `button.title` but didn't clear `button.image`, so the previously-loaded `NSImage` kept drawing over it. Win32 reset already worked.
+
 ## [0.11.2] - 2026-05-21
 
 ### Fixed
 
-- **Duplicate method definitions in generated `runtime.js` / `runtime.d.ts`** — `Hotkeys.register` / `Hotkeys.unregister` appeared twice in both files, and `Shell.write` / `Shell.closeStdin` appeared twice in `runtime.d.ts`. Root cause: those capabilities registered the methods as bindings (which `to_js_stub` / `to_dts_sig` emit) and *also* re-declared the same methods in `js_helpers` / `dts_helpers`, so the generator concatenated both into the same namespace block. Removed the redundant helper entries — bindings are the single source of truth now. The user-facing API is unchanged. Added regression specs that scan the generated runtime for exact-count occurrences so any future double-emission fails the suite.
+- **Duplicate method definitions in generated `runtime.js` / `runtime.d.ts`** — `Hotkeys.register` / `Hotkeys.unregister` appeared twice in both files, and `Shell.write` / `Shell.closeStdin` appeared twice in `runtime.d.ts`. Root cause: those capabilities registered the methods as bindings (which `to_js_stub` / `to_dts_sig` emit) and _also_ re-declared the same methods in `js_helpers` / `dts_helpers`, so the generator concatenated both into the same namespace block. Removed the redundant helper entries — bindings are the single source of truth now. The user-facing API is unchanged. Added regression specs that scan the generated runtime for exact-count occurrences so any future double-emission fails the suite.
 
 ### Changed
 

@@ -121,6 +121,46 @@ describe Lune::Runtime do
     dts.scan(/start\(paths: string\[\]\)/).size.should eq(1)
   end
 
+  describe "platform-unavailable stubs" do
+    it "emits a rejecting JS stub for a filtered-out capability" do
+      js = Lune::Runtime::Generator.generate_runtime_js(
+        [] of Lune::Binding,
+        [] of Lune::Capability,
+        [Lune::Capabilities::DragOut.new] of Lune::Capability,
+      )
+
+      js.includes?("export const DragOut").should be_true
+      js.includes?("Promise.reject(new LuneError(\"UNAVAILABLE_ON_PLATFORM\"").should be_true
+      js.includes?("DragOut.start is not available on").should be_true
+      # The stub namespace shows up in the runtime object literal too.
+      js.includes?("DragOut").should be_true
+    end
+
+    it "emits a same-shape d.ts interface for a filtered-out capability" do
+      dts = Lune::Runtime::Generator.generate_runtime_dts(
+        [] of Lune::Binding,
+        [] of Lune::Capability,
+        [Lune::Capabilities::DragOut.new] of Lune::Capability,
+      )
+
+      dts.includes?("export interface DragOut").should be_true
+      dts.includes?("start(paths: string[]): Promise<void>").should be_true
+      dts.includes?("DragOut: DragOut").should be_true
+    end
+
+    it "does not duplicate a namespace when both live and unavailable lists name it" do
+      # Belt-and-braces: if someone accidentally passes the same cap in both
+      # buckets, the live block wins and the stub is dropped.
+      bindings, caps = drag_out_setup
+      js = Lune::Runtime::Generator.generate_runtime_js(
+        bindings,
+        caps,
+        [Lune::Capabilities::DragOut.new] of Lune::Capability,
+      )
+      js.scan(/export const DragOut = \{/).size.should eq(1)
+    end
+  end
+
   it "generates App.d.ts with namespace interfaces and camelcased binding names" do
     bindings = [
       Lune::Binding.new(

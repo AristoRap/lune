@@ -10,9 +10,11 @@
 | **Phases**       | Bindable                                                            |
 | **Hard deps**    | —                                                                   |
 | **Soft deps**    | `events` (menu item clicks emitted as events when events is active) |
-| **Platforms**    | macOS · Linux¹                                                      |
+| **Platforms**    | macOS · Linux¹ · Windows²                                           |
 
 ¹ Requires XWayland on Wayland compositors.
+
+² Windows: `Tray.setIcon` requires a `.ico` path (PNG / SVG fall back to the default Windows app icon with a logger warning). See [Windows notes](#windows-notes) below.
 
 Tray has a soft dependency on `events`. When events is active, tray icon clicks and menu item selections emit events automatically. When events is absent, use the Crystal-side callbacks in the `opts.tray` block instead.
 
@@ -165,6 +167,16 @@ opts.tray.toggle_window_on = [:left_click]
 opts.tray.on_click       = -> { Lune::Native::Tray.popup_menu; nil }
 opts.tray.on_right_click = -> { Lune::Native::Tray.popup_menu; nil }
 ```
+
+---
+
+## Windows notes
+
+Tray ships fully on Windows via `Shell_NotifyIconW` + `CreatePopupMenu` + `LoadImageW`. Three behavioural differences from macOS / Linux to be aware of:
+
+- **`Tray.setIcon` requires a `.ico` file.** Pass a path ending in `.ico`; PNG / SVG / JPEG fall back to the default Windows app icon (`IDI_APPLICATION`) and emit a `logger.warn`. Convert your icon at build time — the bundled `assets/lune-logo.ico` is a multi-resolution example (16/32/48/64/128/256 px embedded as PNG entries) generated from `assets/lune-logo.png`.
+- **`opts.tray.toggle_window_on` is currently a no-op on Windows.** The macOS implementation positions the window directly under the tray icon using the icon's screen rect; on Windows that requires `Shell_NotifyIconGetRect` plumbing that isn't wired yet. The click handler still fires — it just doesn't move or show the window. Tracked in [ROADMAP.md](https://github.com/AristoRap/lune/blob/main/ROADMAP.md). Until then, wire `opts.tray.on_click = -> { ... }` manually if you want click-to-toggle behaviour on Windows.
+- **Native context menus render at the cursor position**, not anchored to the tray icon (this matches Win32 convention — `TrackPopupMenu` takes screen coordinates and Lune passes `GetCursorPos`). The Win32 menu also uses the system's classic submenu style, not the rounded "Mica" popovers you see in some Windows 11 apps — those require Acrylic / DirectComposition work that isn't in scope.
 
 ---
 

@@ -49,10 +49,27 @@ module Lune
         {% end %}
       }
 
-      DEFAULT_READ_HTML   = -> { Lune::Native::Clipboard.read_html }
-      DEFAULT_WRITE_HTML  = ->(html : String) { Lune::Native::Clipboard.write_html(html); nil }
-      DEFAULT_READ_IMAGE  = -> { Lune::Native::Clipboard.read_image }
-      DEFAULT_WRITE_IMAGE = ->(data_url : String) { Lune::Native::Clipboard.write_image(data_url); nil }
+      DEFAULT_READ_HTML  = -> { Lune::Native::Clipboard.read_html }
+      DEFAULT_WRITE_HTML = ->(html : String) { Lune::Native::Clipboard.write_html(html); nil }
+
+      # Image clipboard needs PNG ↔ CF_DIB conversion on Win32 (Crystal stdlib has
+      # no PNG decoder). Until that's wired up, surface a typed Lune::Error so JS
+      # callers see LuneError("UNAVAILABLE_ON_PLATFORM") and can `.catch` it the
+      # same way they handle platform-gated capabilities.
+      DEFAULT_READ_IMAGE = -> {
+        {% if flag?(:win32) %}
+          raise Lune::Error.new("UNAVAILABLE_ON_PLATFORM", "Clipboard.readImage is not available on win32 (PNG ↔ CF_DIB conversion not yet implemented)")
+        {% else %}
+          Lune::Native::Clipboard.read_image
+        {% end %}
+      }
+      DEFAULT_WRITE_IMAGE = ->(data_url : String) {
+        {% if flag?(:win32) %}
+          raise Lune::Error.new("UNAVAILABLE_ON_PLATFORM", "Clipboard.writeImage is not available on win32 (PNG ↔ CF_DIB conversion not yet implemented)")
+        {% else %}
+          Lune::Native::Clipboard.write_image(data_url); nil
+        {% end %}
+      }
 
       def initialize(
         @on_read : -> String = DEFAULT_READ,

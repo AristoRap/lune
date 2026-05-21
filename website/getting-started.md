@@ -68,7 +68,7 @@ Add it to your `shard.yml`:
 dependencies:
   lune:
     github: AristoRap/lune
-    version: ~> 0.11.2
+    version: ~> 0.12.0
 ```
 
 Then install:
@@ -185,7 +185,7 @@ The repository ships with a full showcase in `demo/` — a Vue 3 app that exerci
 | Dialogs      | File pickers (`Dialogs.openFile`, `openFiles`, `openDir`, `saveFile`) and message dialogs           |
 | Tray         | Status-bar icon with click and menu-item event log                                                  |
 | Context Menu | `ContextMenu.set` / `clear` / `onSelect` — native right-click menu with item selection              |
-| Drag Out     | `DragOut.start(paths)` — drag local files out of the window into Finder or other apps               |
+| Drag Out     | `DragOut.start(paths)` — drag local files out of the window into Finder or other apps (macOS only)  |
 | Deep Links   | `url_schemes` config, `DeepLink.on(cb)` — receive OS-routed custom URL scheme links                 |
 | File Watch   | `FileWatch.watch(path)` / `on(cb)` — live filesystem change events, no polling (macOS · Linux only) |
 | Capabilities | Runtime capability filtering (`include` / `exclude`) with live binding list                         |

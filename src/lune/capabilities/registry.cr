@@ -35,15 +35,33 @@ module Lune
       end
     end
 
+    # Compile-time resolution of the current platform. Capabilities whose
+    # descriptor's `platforms` list excludes this symbol are dropped at registry
+    # construction time — they don't get setup, don't appear in `all`, and never
+    # reach the JS runtime generator.
+    CURRENT_PLATFORM = {% if flag?(:darwin) %}
+                         :darwin
+                       {% elsif flag?(:linux) %}
+                         :linux
+                       {% elsif flag?(:win32) %}
+                         :win32
+                       {% else %}
+                         :unknown
+                       {% end %}
+
     class Registry
       WILDCARD = {"*", "all"}
+
+      @all : Array(Lune::Capability)
+      @known_names : Set(String)
+      @platform_filtered : Array(Lune::Capability)
 
       def initialize(
         handle : Void*,
         options : Lune::Options,
         on_quit : -> Nil = -> { },
       )
-        @all = [
+        all_caps = [
           Capabilities::Events.new,
           Capabilities::Stream.new,
           Capabilities::FileDrop.new,
@@ -66,8 +84,22 @@ module Lune
           Capabilities::Windows.new,
         ] of Lune::Capability
 
+        # Names of every cap regardless of platform — used by validate() to
+        # distinguish a typo ("unknown") from a platform skip ("known but n/a").
+        @known_names = Set(String).new(all_caps.map(&.name))
+
+        # @all is the platform-available subset. Single source of truth for what
+        # can actually run here. Caps filtered out at this step never get setup
+        # and never participate in resolve / generator output.
+        @all = all_caps.select { |cap| cap.descriptor.platforms.includes?(CURRENT_PLATFORM) }
+        @platform_filtered = all_caps - @all
+
         setup_ctx = Lune::Capability::SetupCtx.new(options, handle)
         @all.each { |cap| cap.setup(setup_ctx) }
+      end
+
+      def platform_filtered : Array(Lune::Capability)
+        @platform_filtered
       end
 
       def all : Array(Lune::Capability)
@@ -78,6 +110,20 @@ module Lune
       # are inactive, and return a topologically sorted ResolvedSet with warnings.
       def resolve(config : ConfigCapabilities) : ResolvedSet
         warnings = [] of String
+
+        # If the user explicitly listed caps via `only:` and any of those are
+        # known capabilities that simply don't run on this platform, log it as
+        # info — they asked for it, we owe them an ack that it was skipped.
+        # Default-included caps are silently filtered (no noise for lune.yml
+        # files shared across platforms).
+        if (inc = config.only) && !inc.empty? && !inc.any? { |s| WILDCARD.includes?(s) }
+          available_names = Set(String).new(@all.map(&.name))
+          inc.each do |n|
+            if @known_names.includes?(n) && !available_names.includes?(n)
+              Lune.logger.info { "Capability #{n.inspect} skipped — not available on #{CURRENT_PLATFORM}" }
+            end
+          end
+        end
 
         # Step 1: apply user include/exclude to get the initial enabled set
         enabled = apply_config(@all, config)
@@ -116,13 +162,12 @@ module Lune
       end
 
       # Warn about unknown names in the config include/exclude lists.
+      # A name that's known but unavailable on this platform is NOT unknown —
+      # it'll get info-logged by resolve() instead.
       def validate(config : ConfigCapabilities) : Nil
-        known = Set(String).new
-        @all.each { |cap| known << cap.name }
-
         check = ->(names : Array(String), field : String) {
           names.each do |n|
-            next if WILDCARD.includes?(n) || known.includes?(n)
+            next if WILDCARD.includes?(n) || @known_names.includes?(n)
             safe = n.gsub(/[[:cntrl:]]/, "")[0, 64]
             Lune.logger.warn { "capabilities.#{field}: unknown capability \"#{safe}\" — ignored" }
           end

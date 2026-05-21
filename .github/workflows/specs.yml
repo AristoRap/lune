@@ -16,6 +16,13 @@ on:
       - "package-lock.json"
       - "**.md"
 
+# Upstream webview commit to build webview.lib against on Windows. Bump when
+# you want to track a newer C library — see WINDOWS_SETUP.md step 4b.
+# Pinned for reproducibility + cache stability.
+env:
+  WEBVIEW_PIN: "0.12.0"
+  SQLITE_DLL_URL: "https://www.sqlite.org/2024/sqlite-dll-win-x64-3450000.zip"
+
 jobs:
   specs:
     name: crystal-spec (${{ matrix.os }})
@@ -30,7 +37,6 @@ jobs:
             spec_flags: "-Dpreview_mt -Dexecution_context"
           - os: windows-latest
             spec_flags: "-Dpreview_mt -Dexecution_context"
-            compile_check_only: true
 
     steps:
       - name: Checkout
@@ -45,6 +51,43 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libnotify-dev
 
+      # ─── Windows: stage native deps + patch Crystal stdlib ──────────────
+      # Three things `crystal spec` needs on Windows that aren't available
+      # out of the box on `windows-latest`:
+      #   1. WebView2 SDK headers (CPATH)
+      #   2. sqlite3.lib + webview.lib (LIB) — for the linker
+      #   3. Crystal stdlib patch for Process.initialize PidT (until 1.21)
+      # All of this lives in WINDOWS_SETUP.md; the steps below automate it.
+
+      - name: Setup MSVC environment (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Patch Crystal stdlib for LibC::PidT (Windows, pre-1.21)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          # Crystal 1.20.x MSVC stdlib references LibC::PidT in
+          # Process.initialize, which doesn't exist on Windows. Fixed upstream
+          # in crystal-lang/crystal#16933 (Crystal 1.21.0). Until that ships,
+          # patch the installed stdlib by dropping the type annotation.
+          # Idempotent — re-running on a patched / future-fixed stdlib is a no-op.
+          $stdlib = (& crystal env CRYSTAL_PATH).Split(';') | Where-Object { $_ -and (Test-Path (Join-Path $_ "process.cr")) } | Select-Object -First 1
+          if (-not $stdlib) {
+            Write-Error "Could not locate Crystal stdlib via 'crystal env CRYSTAL_PATH'"
+            exit 1
+          }
+          $processFile = Join-Path $stdlib "process.cr"
+          Write-Host "Patching $processFile"
+          $content = Get-Content $processFile -Raw
+          $patched = $content -replace 'def initialize\(pid : LibC::PidT\)', 'def initialize(pid)'
+          if ($content -ne $patched) {
+            Set-Content -Path $processFile -Value $patched -NoNewline
+            Write-Host "Applied LibC::PidT workaround"
+          } else {
+            Write-Host "Stdlib already patched (or Crystal >= 1.21) — skipping"
+          }
+
       - name: Install WebView2 SDK headers (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -53,21 +96,87 @@ jobs:
           $includeDir = (Get-ChildItem "$env:RUNNER_TEMP\webview2" -Filter "Microsoft.Web.WebView2.*" | Select-Object -First 1).FullName
           "CPATH=$includeDir\build\native\include" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      - name: Install shards
+      - name: Stage sqlite3.lib (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $sqliteDir = "$env:RUNNER_TEMP\sqlite3"
+          New-Item -ItemType Directory -Path $sqliteDir -Force | Out-Null
+          $zip = "$env:RUNNER_TEMP\sqlite-dll.zip"
+          Invoke-WebRequest -Uri "${{ env.SQLITE_DLL_URL }}" -OutFile $zip
+          Expand-Archive -Path $zip -DestinationPath $sqliteDir -Force
+          Push-Location $sqliteDir
+          & lib /def:sqlite3.def /machine:x64 /out:sqlite3.lib
+          Pop-Location
+          "$sqliteDir" | Out-File -FilePath $env:GITHUB_PATH -Append
+          "SQLITE_LIB_DIR=$sqliteDir" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Cache webview.lib (Windows)
+        if: runner.os == 'Windows'
+        id: webview-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}\webview-build
+          key: webview-windows-${{ env.WEBVIEW_PIN }}
+
+      - name: Build webview C library (Windows)
+        if: runner.os == 'Windows' && steps.webview-cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          # Graphviz `dot` is required by webview's CMake (transitively via
+          # Doxygen for doc generation). Pre-installed Doxygen on the runner
+          # doesn't include Graphviz, so we add it here.
+          choco install -y graphviz | Out-Null
+
+          $src = "$env:RUNNER_TEMP\webview-src"
+          git clone --depth 1 --branch "${{ env.WEBVIEW_PIN }}" https://github.com/webview/webview.git $src
+          Push-Location $src
+          # WEBVIEW_IS_CI=OFF disables the clang-format `ALL` target — when ON
+          # (autodetected from $CI on GitHub runners) the format check runs
+          # during `cmake --build` and fails on any runner-vs-upstream
+          # clang-format version mismatch. We're consuming the library, not
+          # validating its source style, so opt out.
+          cmake -G Ninja -B build -S . `
+            -D CMAKE_BUILD_TYPE=Release `
+            -D WEBVIEW_IS_CI=OFF
+          cmake --build build
+          Pop-Location
+          # Stash only the .lib + .dll we need — cache stays small.
+          $out = "$env:RUNNER_TEMP\webview-build"
+          New-Item -ItemType Directory -Path $out -Force | Out-Null
+          Copy-Item "$src\build\core\webview.lib" -Destination $out
+          Copy-Item "$src\build\core\webview.dll" -Destination $out
+
+      - name: Wire webview into LIB / PATH (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $out = "$env:RUNNER_TEMP\webview-build"
+          "$out" | Out-File -FilePath $env:GITHUB_PATH -Append
+          "WEBVIEW_LIB_DIR=$out" | Out-File -FilePath $env:GITHUB_ENV -Append
+          # `crystal spec` invokes link.exe which reads LIB — extend it so
+          # both sqlite3.lib and webview.lib resolve without changes to shards.
+          "LIB=$env:SQLITE_LIB_DIR;$out;$env:LIB" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Install shards (Unix)
+        if: runner.os != 'Windows'
         run: shards install
 
+      - name: Install shards (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        # --skip-postinstall: vendored webview shard has a Makefile-based
+        # postinstall hook for Unix; on Windows we built webview.lib via
+        # CMake above so the hook would be a no-op at best.
+        run: shards install --skip-postinstall
+
       - name: Run all specs
-        if: ${{ !matrix.compile_check_only }}
         run: crystal spec -D lune_native_test_mock ${{ matrix.spec_flags }}
 
-      # Tried to actually run specs on Windows in v0.11.0 but Crystal 1.20.2
-      # MSVC stdlib errors with "undefined constant LibC::PidT" when
-      # expanding Process#initialize. Out of our hands — see PR #8 history.
-      # Keep the mocked + real compile-checks until Crystal fixes upstream.
-      - name: Type-check mocked build (Windows)
-        if: ${{ matrix.compile_check_only }}
-        run: crystal build src/lune_cli.cr -D lune_native_test_mock ${{ matrix.spec_flags }} --no-codegen
-
+      # The spec run uses `lune_native_test_mock`, which short-circuits the
+      # native Win32 paths in src/lune/native/*. To make sure the real native
+      # code still type-checks (i.e. nobody broke a win32 macro branch by
+      # accident), do a `--no-codegen` build of the CLI without the mock flag.
       - name: Type-check real Windows build
-        if: ${{ matrix.compile_check_only }}
+        if: runner.os == 'Windows'
         run: crystal build src/lune_cli.cr ${{ matrix.spec_flags }} --no-codegen

@@ -1,12 +1,13 @@
 <script setup>
 import { ref } from "vue";
 import SectionHead from "../components/SectionHead.vue";
-import { Tray, System } from "../lune.js";
+import { Tray, System, Dialogs } from "../lune.js";
 import { useLuneEvent } from "../composables/useLuneEvent.js";
 
 const log = ref([]);
 const activeMenu = ref(null);
 const visible = ref(false);
+const iconPath = ref("");
 
 useLuneEvent("trayEvent", (payload) => {
   log.value.unshift(`trayEvent: ${JSON.stringify(payload)}`);
@@ -22,8 +23,27 @@ async function toggle() {
     await Tray.hide();
     visible.value = false;
   } else {
-    await Tray.show("");
+    await Tray.show(iconPath.value);
     visible.value = true;
+  }
+}
+
+async function pickIcon() {
+  // Windows wants .ico; macOS wants .icns / .png; Linux wants .png / .svg.
+  // Lune's Dialogs.openFile doesn't enforce filters — the native side will
+  // warn + fall back to the system default if the format isn't supported.
+  const path = await Dialogs.openFile("Choose a tray icon");
+  if (!path) return;
+  iconPath.value = path;
+  if (visible.value) {
+    await Tray.setIcon(path);
+  }
+}
+
+async function resetIcon() {
+  iconPath.value = "";
+  if (visible.value) {
+    await Tray.setIcon("");
   }
 }
 
@@ -65,6 +85,13 @@ function clearMenu() {
           </span>
         </button>
       </div>
+      <div class="btn-row">
+        <button @click="pickIcon">Choose icon…</button>
+        <button @click="resetIcon" :disabled="!iconPath">Reset to default</button>
+      </div>
+      <p class="icon-path" :class="{ 'icon-path--default': !iconPath }">
+        {{ iconPath || "Using default system icon" }}
+      </p>
     </div>
 
     <div class="card">
@@ -154,5 +181,17 @@ function clearMenu() {
 
 .toggle.on .toggle-label {
   color: var(--text);
+}
+
+.icon-path {
+  margin: 0.5em 0 0;
+  font-size: 0.82em;
+  font-family: ui-monospace, "Cascadia Code", Menlo, monospace;
+  color: var(--text-mid);
+  word-break: break-all;
+}
+
+.icon-path--default {
+  font-style: italic;
 }
 </style>
