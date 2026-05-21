@@ -105,6 +105,12 @@ end
 
 ---
 
+## Windows behaviour
+
+The capability is auto-filtered from the registry on Windows (Win32 needs `OleInitialize` + `RegisterDragDrop` plumbing — tracked in [ROADMAP.md](https://github.com/AristoRap/lune/blob/main/ROADMAP.md)). The runtime still exports a `FileDrop` namespace on Windows so cross-platform imports keep working, but `FileDrop.on(cb)` is a one-time `console.warn` + no-op — the callback never fires. Guard with `runtime.System.environment().os` or simply accept that drops won't trigger on Win32.
+
+---
+
 ## Disabling
 
 ```yaml
@@ -112,3 +118,5 @@ capabilities:
   exclude:
     - file_drop
 ```
+
+On Windows you don't need to exclude it manually — the platform filter handles it. The `exclude` form is only useful on macOS / Linux.
