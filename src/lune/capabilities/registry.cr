@@ -82,6 +82,10 @@ module Lune
           Capabilities::Sqlite.new,
           Capabilities::Kv.new,
           Capabilities::Windows.new,
+          Capabilities::EditShortcuts.new,
+          Capabilities::Navigation.new,
+          Capabilities::WindowDrag.new,
+          Capabilities::ContextMenuBlocker.new,
         ] of Lune::Capability
 
         # Names of every cap regardless of platform — used by validate() to

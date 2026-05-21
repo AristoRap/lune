@@ -104,14 +104,6 @@ module Lune
 
         callback_window_loaded_if_set(wv)
 
-        if @options.disable_context_menu
-          wv.init("document.addEventListener('contextmenu',function(e){e.preventDefault();});")
-        end
-
-        setup_keyboard_shortcuts(wv)
-        setup_navigate_if_set(wv)
-        setup_drag_zone_if_set(wv, handle)
-
         resolved.init_all_webviews(wv, handle, @app)
 
         asset_server = setup_navigation(wv, html, url, registry, resolved)
@@ -178,79 +170,6 @@ module Lune
           Lune.logger.debug(exception: ex) { "on_window_ready callback failed (stacktrace)" }
         end
       end
-    end
-
-    private def setup_keyboard_shortcuts(wv : Webview::Webview) : Nil
-      wv.init(<<-JS)
-      (function(){
-        document.addEventListener('keydown', function(e) {
-          if (!e.metaKey && !e.ctrlKey) return;
-          var cmd;
-          switch (e.key) {
-            case 'a': cmd = 'selectAll'; break;
-            case 'c': cmd = 'copy'; break;
-            case 'v': cmd = 'paste'; break;
-            case 'x': cmd = 'cut'; break;
-            case 'z': cmd = e.shiftKey ? 'redo' : 'undo'; break;
-            case 'y': cmd = 'redo'; break;
-          }
-          if (cmd) { e.preventDefault(); document.execCommand(cmd); }
-        });
-      })();
-      JS
-    end
-
-    private def setup_drag_zone_if_set(wv : Webview::Webview, handle : Pointer(Void)) : Nil
-      css_var = @options.drag.zone
-      return if css_var.empty?
-
-      {% if flag?(:darwin) %}
-        css_val = @options.drag.value
-        start_drag_key = "#{Lune::Capability::BRIDGE_MARKER}.startDrag"
-
-        Native::Window.setup_drag_monitor
-
-        wv.bind(start_drag_key, Webview::JSProc.new { |_args|
-          Native::Window.start_window_drag(handle)
-          JSON::Any.new(nil)
-        })
-
-        wv.init(<<-JS)
-        (function(){
-          document.addEventListener('mousedown', function(e) {
-            var el = e.target;
-            while (el) {
-              if (el.style && el.style.getPropertyValue(#{css_var.inspect}).trim() === #{css_val.inspect}) {
-                window[#{start_drag_key.inspect}]();
-                return;
-              }
-              el = el.parentElement;
-            }
-          }, true);
-        })();
-        JS
-      {% end %}
-    end
-
-    private def setup_navigate_if_set(wv : Webview::Webview) : Nil
-      return unless (nav_cb = @options.on_navigate)
-      navigate_key = "#{Lune::Capability::BRIDGE_MARKER}.navigate"
-      wv.bind(navigate_key, Webview::JSProc.new { |args|
-        begin
-          nav_cb.call(args[0]?.try(&.as_s) || "")
-        rescue ex
-          Lune.logger.error { "on_navigate callback failed: #{ex.message}" }
-          Lune.logger.debug(exception: ex) { "on_navigate callback failed (stacktrace)" }
-        end
-        JSON::Any.new(nil)
-      })
-      wv.init(<<-JS)
-      (function(){
-        function _nav(){ window[#{navigate_key.inspect}](location.href); }
-        window.addEventListener('popstate', _nav);
-        window.addEventListener('hashchange', _nav);
-      })();
-      JS
     end
 
     private def setup_navigation(
