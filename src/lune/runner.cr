@@ -62,13 +62,7 @@ module Lune
         {% end %}
 
         registry = Capabilities::Registry.new(handle, @options, on_quit: -> { wv.dispatch { wv.terminate } })
-        registry.validate(@config.capabilities)
-        resolved = registry.resolve(@config.capabilities)
-        resolved.warnings.each { |w| Lune.logger.warn { w } }
-
-        resolved.capabilities.each do |cap|
-          cap.install(Lune::Capability::BindCtx.new(@app, cap)) if cap.is_a?(Lune::Capability::BindPhase)
-        end
+        resolved = registry.validate_resolve_install(@config.capabilities, @app)
 
         bridge = Bridge.new(wv)
         bridge.register_bindings(@app.bindings.reject(&.internal?))
