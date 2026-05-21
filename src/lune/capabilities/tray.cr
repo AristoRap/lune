@@ -3,8 +3,11 @@ module Lune
     class Tray < Lune::Capability
       include Capability::Bindable
 
-      # macOS + Linux. Win32 needs `Shell_NotifyIconW` plumbing (see ROADMAP).
-      DESCRIPTOR = Descriptor.new(id: :tray, label: "Tray", soft_deps: [:events], platforms: [:darwin, :linux])
+      # Tray ships on all three platforms. Win32 implementation: show / hide /
+      # clicks via Shell_NotifyIconW, menus via CreatePopupMenu + TrackPopupMenu,
+      # icons via LoadImageW (.ico required — PNG falls back to IDI_APPLICATION
+      # with a logger.warn). See website/guide/windows-checklist.md.
+      DESCRIPTOR = Descriptor.new(id: :tray, label: "Tray", soft_deps: [:events], platforms: [:darwin, :linux, :win32])
 
       def descriptor : Descriptor
         DESCRIPTOR

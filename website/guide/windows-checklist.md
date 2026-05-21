@@ -50,6 +50,33 @@ Windows hardware and what's known to be broken. Items marked
   - Async-marked bindings (`Shell.spawn`, `Shell.run`) route through
     the @async_pool so `Process.run`'s internal copy_io / wait fibers
     don't trip the Isolated-context concurrency check.
+- **Tray**: `Tray.show` / `Tray.hide` register and remove the icon via
+  `Shell_NotifyIconW(NIM_ADD/NIM_MODIFY/NIM_DELETE)`. Clicks arrive as
+  `WM_APP+1` on a hidden message-only HWND and route via `lParam` —
+  `WM_LBUTTONUP` / `WM_LBUTTONDBLCLK` fire `on_tray_click`, `WM_RBUTTONUP`
+  fires `on_right_click`. `Tray.set_menu` builds an HMENU via
+  `CreatePopupMenu` + `AppendMenuW` (separator on `"---"`, otherwise
+  `MF_STRING` with a sequential UInt32 command ID). `Tray.popup_menu`
+  calls `TrackPopupMenu(TPM_RETURNCMD | TPM_RIGHTBUTTON)` at the current
+  cursor position; the chosen command ID maps back through an in-memory
+  `Hash(UInt32 => String)` to the user's string ID. `Tray.set_icon`
+  accepts a `.ico` file path and loads via
+  `LoadImageW(IMAGE_ICON, SM_CXSMICON, SM_CYSMICON, LR_LOADFROMFILE)` —
+  DPI-aware. Empty / missing / non-`.ico` paths fall back to
+  `IDI_APPLICATION` with a `logger.warn` (the bundled
+  `assets/lune-logo.ico` is a multi-resolution example).
+  - All HWND-owning calls run on a dedicated `Fiber::ExecutionContext::Isolated`
+    "lune-tray" thread that owns both the message pump and the ops queue.
+    Producer-side calls dispatch through a Mutex-guarded queue with
+    `Channel(Bool)` replies, except `set_menu` / `popup_menu` when re-entered
+    from `WindowProc` (which runs on the same pump fiber via `DispatchMessageW`) —
+    those inline to avoid self-deadlock via a `Fiber.current ==
+    @@win32_pump_fiber` check.
+  - HICON lifecycle uses delayed-destroy: the previous owned icon stays
+    in `@@win32_pending_destroy` until after the next `Shell_NotifyIcon`
+    returns, since Windows references the icon until the next `NIM_MODIFY`.
+    Shared system icons loaded via `LoadIconW(IDI_APPLICATION)` are never
+    `DestroyIcon`'d.
 
 ## Broken / partial
 
@@ -81,7 +108,6 @@ Windows hardware and what's known to be broken. Items marked
 
 **Since v0.12.0, the capability registry filters these out automatically on Windows** — no manual `capabilities.exclude` is needed. Their JS namespace stays exported in `runtime.js` as a rejecting stub (each method returns `Promise.reject(new LuneError("UNAVAILABLE_ON_PLATFORM", …))`) so cross-platform imports keep working; `.catch` the error or branch on `runtime.System.environment().os` to fall back gracefully. The `runtime.d.ts` interface preserves the full signature so TypeScript code type-checks identically across platforms. Items still tracked in `ROADMAP.md`:
 
-- `tray` — needs hidden HWND + `Shell_NotifyIconW`
 - `file_watch` — needs `ReadDirectoryChangesW`
 - `file_drop` — needs `IDropTarget`/`OleInitialize` + drop callback
 - `drag_out` — macOS-only by design (also unimplemented on Linux)

@@ -508,7 +508,11 @@ describe "Lune::Capabilities" do
         methods.should contain("file_watch.watch")
       when :win32
         methods.should_not contain("drag_out.start")
-        methods.should_not contain("tray.show")
+        # Tray ships fully on Win32 — show/hide/clicks via Shell_NotifyIconW,
+        # menus via CreatePopupMenu + TrackPopupMenu, icons via LoadImageW.
+        methods.should contain("tray.show")
+        methods.should contain("tray.hide")
+        methods.should contain("tray.set_menu")
         methods.should_not contain("file_watch.watch")
       end
     end
@@ -528,11 +532,11 @@ describe "Lune::Capabilities" do
       # capability. Decreases when a capability is platform-gated out.
       #   darwin = 60 baseline
       #   linux  = 60 - DragOut(1)                              = 59
-      #   win32  = 60 - DragOut(1) - Tray(5) - FileWatch(2)     = 52
+      #   win32  = 60 - DragOut(1) - FileWatch(2)               = 57
       expected = case Lune::Capabilities::CURRENT_PLATFORM
                  when :darwin then 60
                  when :linux  then 59
-                 when :win32  then 52
+                 when :win32  then 57
                  else              60
                  end
 

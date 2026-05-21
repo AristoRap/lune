@@ -194,8 +194,12 @@ describe Lune::Capabilities::Registry do
 
     it "emits a warning for each cascade-disabled capability" do
       resolved = make_registry.resolve(config_exclude("events"))
+      # Use caps that are present on every platform (default platforms list)
+      # so the cascade-disable step actually runs on them. FileDrop / FileWatch
+      # are platform-filtered out on Win32 before the cascade step, so they
+      # never produce a cascade warning there.
       resolved.warnings.any? { |w| w.includes?("ContextMenu") }.should be_true
-      resolved.warnings.any? { |w| w.includes?("FileDrop") }.should be_true
+      resolved.warnings.any? { |w| w.includes?("DeepLink") }.should be_true
     end
 
     it "keeps a soft-dep capability active when its soft dep is excluded" do
@@ -231,10 +235,13 @@ describe Lune::Capabilities::Registry do
       Lune::Capabilities::DragOut.new.descriptor.platforms.should eq([:darwin])
     end
 
-    it "Tray, FileWatch, and FileDrop declare darwin + linux (no win32)" do
-      Lune::Capabilities::Tray.new.descriptor.platforms.should eq([:darwin, :linux])
+    it "FileWatch and FileDrop declare darwin + linux (no win32)" do
       Lune::Capabilities::FileWatch.new.descriptor.platforms.should eq([:darwin, :linux])
       Lune::Capabilities::FileDrop.new.descriptor.platforms.should eq([:darwin, :linux])
+    end
+
+    it "Tray declares darwin + linux + win32 (partial on win32 — set_menu / set_icon raise UNAVAILABLE_ON_PLATFORM)" do
+      Lune::Capabilities::Tray.new.descriptor.platforms.should eq([:darwin, :linux, :win32])
     end
 
     it "drops platform-unsupported caps from registry.all" do
