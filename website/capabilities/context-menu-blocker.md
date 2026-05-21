@@ -29,9 +29,11 @@ end
 
 ---
 
-## Composing with ContextMenu
+## Relationship to ContextMenu
 
-The two capabilities compose: block the default browser menu with `ContextMenuBlocker`, then show your own native menu via [ContextMenu](./context-menu). When `opts.disable_context_menu = false` (the default), the browser menu shows alongside any custom one you display.
+The [ContextMenu](./context-menu) capability suppresses the browser menu **only while** a custom menu is actively registered via `window.__lune.setContextMenu(items)` — at all other times (and on elements outside the custom menu's scope) the browser menu shows.
+
+`ContextMenuBlocker` suppresses the browser menu **unconditionally** whenever `opts.disable_context_menu = true`. Use both when you want a blanket block plus a custom native menu in specific places.
 
 ---
 

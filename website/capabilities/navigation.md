@@ -11,7 +11,7 @@
 | **Hard deps**    | —                       |
 | **Platforms**    | macOS · Linux · Windows |
 
-Injects a tiny shim that listens for `popstate` and `hashchange` and patches `history.pushState` / `replaceState` so SPA-router transitions also fire. If `opts.on_navigate` is set, the resulting URL is forwarded to the Crystal callback; otherwise the shim is a no-op.
+Injects a tiny shim that listens for `popstate` and `hashchange` and patches `history.pushState` / `replaceState` so SPA-router transitions also fire. The shim is only installed when `opts.on_navigate` is set — without a callback, the capability does nothing at runtime.
 
 ---
 
@@ -25,9 +25,9 @@ Lune.run(app) do |opts|
 end
 ```
 
-| Option         | Type                | Description                                                        |
-| -------------- | ------------------- | ------------------------------------------------------------------ |
-| `on_navigate`  | `(String -> Nil)?`  | Called on every URL change with the new `location.href`. Optional. |
+| Option        | Type               | Description                                                        |
+| ------------- | ------------------ | ------------------------------------------------------------------ |
+| `on_navigate` | `(String -> Nil)?` | Called on every URL change with the new `location.href`. Optional. |
 
 ---
 
@@ -35,14 +35,20 @@ end
 
 The shim consolidates four sources into one callback:
 
-| Trigger                             | Example                          |
-| ----------------------------------- | -------------------------------- |
-| `popstate` (browser back/forward)   | History buttons, `history.back()` |
-| `hashchange`                        | `location.hash = "#foo"`         |
-| `history.pushState`                 | React Router, vue-router HTML5   |
-| `history.replaceState`              | Same — `router.replace(...)`     |
+| Trigger                           | Example                           |
+| --------------------------------- | --------------------------------- |
+| `popstate` (browser back/forward) | History buttons, `history.back()` |
+| `hashchange`                      | `location.hash = "#foo"`          |
+| `history.pushState`               | React Router, vue-router HTML5    |
+| `history.replaceState`            | Same — `router.replace(...)`      |
 
-Same-URL fires are deduped — vue-router hash mode (which calls `pushState` *and* mutates `location.hash` on every click) only triggers the callback once per transition.
+Same-URL fires are deduped — vue-router hash mode (which calls `pushState` _and_ mutates `location.hash` on every click) only triggers the callback once per transition.
+
+---
+
+## Error handling
+
+Exceptions raised inside `on_navigate` are caught and logged (`error` + `debug` with stacktrace) — navigation continues to fire for subsequent URL changes. Your callback can `raise` without breaking further events.
 
 ---
 
