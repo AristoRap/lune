@@ -21,7 +21,7 @@ require "./lune/deep_link_ipc"
 require "./lune/runner"
 
 module Lune
-  VERSION = "0.11.0"
+  VERSION = "0.11.1"
 
   # Default frontend directory name (matches the lune.yml default).
   DEFAULT_FRONTEND_DIR = "frontend"

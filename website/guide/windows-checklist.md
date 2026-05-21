@@ -27,10 +27,16 @@ Windows hardware and what's known to be broken. Items marked
     through Win32 `CF_UNICODETEXT` directly (no PowerShell shellout).
   - `Clipboard.readHtml()` / `writeHtml(html)` work via the existing
     `CF_HTML` clipboard format.
-- **Hotkeys**: `Hotkeys.register` / `unregister` work; `unregister_all`
-  on shutdown is fire-and-forget (Channel-receive across Isolated
-  contexts isn't safe). Per-binding async dispatch means the pump
-  thread is reachable from binding callbacks without a deadlock.
+- **Hotkeys**: `Hotkeys.register` / `unregister` work and the combo
+  actually fires on press. `WM_HOTKEY` is delivered via a dedicated
+  pump thread; the `Msg.w_param` field is declared as `UInt64` so it
+  aligns on the right offset under Windows LLP64 (an earlier
+  `LibC::ULong` declaration silently read from padding, so registration
+  succeeded but the ID lookup always returned nil — fixed in v0.11.1).
+  `unregister_all` on shutdown is fire-and-forget (Channel-receive
+  across Isolated contexts isn't safe). Per-binding async dispatch
+  means the pump thread is reachable from binding callbacks without a
+  deadlock.
 - **Window state**: opt-in via `opts.remember_frame = true`. The
   Windows path uses a live tracker (`WindowState.start_tracker`) that
   polls `GetWindowRect` every 500 ms — the HWND is destroyed by the

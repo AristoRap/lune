@@ -77,7 +77,7 @@ Two capabilities are marked **core**: `events` and `stream`. They are enabled by
 | [Windows](./windows)             | `windows`       | `Windows`       | No      | Bindable · Lifecycle     | —         | —         | all                            |
 
 ¹ Requires XWayland on Wayland compositors.
-² Linux/Windows: cold-start (ARGV) only — no warm-start forwarding yet.
+² Windows: cold-start (ARGV) only — no warm-start forwarding yet (Linux has Unix-socket warm-start).
 ³ Windows: cmd builtins (echo, dir, type, etc.) fail; wrap with `cmd /c <builtin> …`. Real executables work normally — see [Shell › Notes](./shell#notes).
 
 > **Windows runtime caveat.** Every "Windows" entry above is in tree; many are now verified on real hardware. Until Crystal 1.21 ships, building a runnable binary requires the one-line stdlib patch documented in [WINDOWS_SETUP.md](https://github.com/AristoRap/lune/blob/main/WINDOWS_SETUP.md) ([crystal#16929](https://github.com/crystal-lang/crystal/issues/16929), fix in master via [crystal#16933](https://github.com/crystal-lang/crystal/pull/16933)). With the patch applied, the runtime works end-to-end. See [WINDOWS_SETUP.md](https://github.com/AristoRap/lune/blob/main/WINDOWS_SETUP.md) and the [Windows verification checklist](../guide/windows-checklist) for full status.

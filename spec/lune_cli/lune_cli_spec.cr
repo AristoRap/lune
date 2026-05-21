@@ -147,6 +147,8 @@ describe LuneCLI do
 
       expected_output = {% if flag?(:darwin) %}
                           "build/bin/main.app"
+                        {% elsif flag?(:win32) %}
+                          "build\\bin\\main.exe"
                         {% else %}
                           "build/bin/main"
                         {% end %}
@@ -159,6 +161,8 @@ describe LuneCLI do
 
       expected_output = {% if flag?(:darwin) %}
                           "build/bin/demo.app"
+                        {% elsif flag?(:win32) %}
+                          "build\\bin\\demo.exe"
                         {% else %}
                           "build/bin/demo"
                         {% end %}
@@ -506,6 +510,8 @@ describe LuneCLI do
 
       expected_output = {% if flag?(:darwin) %}
                           "build/bin/main.app"
+                        {% elsif flag?(:win32) %}
+                          "build\\bin\\main.exe"
                         {% else %}
                           "build/bin/main"
                         {% end %}
@@ -518,6 +524,8 @@ describe LuneCLI do
 
       expected_output = {% if flag?(:darwin) %}
                           "build/bin/demo.app"
+                        {% elsif flag?(:win32) %}
+                          "build\\bin\\demo.exe"
                         {% else %}
                           "build/bin/demo"
                         {% end %}

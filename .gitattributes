@@ -1,0 +1,9 @@
+# Force LF for all text files. Without this, Git's autocrlf=true on
+# Windows converts checked-in LF to CRLF on checkout, breaking specs that
+# assert on exact byte content (fixture serving, vendor SHA pins) and
+# silently changing the content of any byte-counted operation.
+* text=auto eol=lf
+
+# Spec fixtures embed expected byte content; treat as binary so Git never
+# touches them either at checkout or commit.
+spec/fixtures/** -text
