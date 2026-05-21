@@ -16,7 +16,7 @@ Windows hardware and what's known to be broken. Items marked
   dev URL, no crash or hang.
 - **Build mode**: `lune build` produces `build\bin\<Name>.exe` + DLL
   bundle (gc, iconv, libcrypto, libssl, pcre2, sqlite3, yaml, zlib).
-  The standalone exe boots, the `AssetServer` binds on a random
+  The standalone exe boots, the `Assets::Server` binds on a random
   127.0.0.1 port via `::spawn` on the default context (bind + listen
   pinned to the same context so accept completions land on the right
   IOCP — same constraint as Stream), and the WebView2 window navigates

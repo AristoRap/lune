@@ -39,7 +39,7 @@ Each file is stored as a `Bytes` slice keyed by its URL path. No files are read 
 
 ## What happens at runtime
 
-When the app starts, an `AssetServer` (a small HTTP server) binds to a random local port and serves the embedded files. The WebView navigates to `http://127.0.0.1:<port>`.
+When the app starts, an `Assets::Server` (a small HTTP server) binds to a random local port and serves the embedded files. The WebView navigates to `http://127.0.0.1:<port>`.
 
 Serving over a real `http://` origin — rather than a `file://` URI or inline `data:` URL — means the frontend behaves like a normal web page: relative imports, `fetch`, and browser security policies all work correctly.
 

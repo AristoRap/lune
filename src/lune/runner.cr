@@ -172,7 +172,7 @@ module Lune
       url : String?,
       registry : Capabilities::Registry,
       resolved : Capabilities::ResolvedSet,
-    ) : AssetServer?
+    ) : Assets::Server?
       if h = html
         wv.html = h
       elsif u = url
@@ -196,7 +196,7 @@ module Lune
         )
         wv.navigate(dev_url)
       elsif !Assets.empty?
-        s = AssetServer.new
+        s = Assets::Server.new
         s.start
         wv.navigate(s.url)
         return s
