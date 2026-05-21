@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.11.2] - 2026-05-21
+
+### Fixed
+
+- **Duplicate method definitions in generated `runtime.js` / `runtime.d.ts`** — `Hotkeys.register` / `Hotkeys.unregister` appeared twice in both files, and `Shell.write` / `Shell.closeStdin` appeared twice in `runtime.d.ts`. Root cause: those capabilities registered the methods as bindings (which `to_js_stub` / `to_dts_sig` emit) and *also* re-declared the same methods in `js_helpers` / `dts_helpers`, so the generator concatenated both into the same namespace block. Removed the redundant helper entries — bindings are the single source of truth now. The user-facing API is unchanged. Added regression specs that scan the generated runtime for exact-count occurrences so any future double-emission fails the suite.
+
+### Changed
+
+- **`Definition` / `Binding` gain `arg_transforms` and `ts_args`** — per-arg JS expression and TypeScript type overrides plumbed through `Definition → RuntimeBinding → Binding.to_js_stub / .dts_params`. Lets a capability JSON-stringify an array argument on the JS side and expose a precise TS type (e.g. `TrayMenuItem[]`) without resorting to a helper-override that re-declares the same method. `Tray.setMenu` and `DragOut.start` now use this and no longer emit a placeholder `arg0`-stub followed by an override (`setMenu(arg0) { … }` + `setMenu(items) { … JSON.stringify … }` collapsed to a single `setMenu(items) { … JSON.stringify … }` line). `ContextMenu.show` gained `arg_names: ["x", "y", "itemsJson"]` so its signature reads `show(x, y, itemsJson)` instead of `show(arg0, arg1, arg2)`.
+
 ## [0.11.1] - 2026-05-21
 
 ### Fixed

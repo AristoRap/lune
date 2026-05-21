@@ -91,10 +91,15 @@ describe Lune::Capabilities::Hotkeys do
   end
 
   describe "js_helpers" do
-    it "exposes register and unregister" do
-      h = Lune::Capabilities::Hotkeys.new.js_helpers
-      h.should contain("register(")
-      h.should contain("unregister(")
+    it "exposes register and unregister via bindings (not duplicated in helpers)" do
+      cap = Lune::Capabilities::Hotkeys.new
+      app = Lune::App.new
+      app.install(cap)
+      js = Lune::Runtime::Generator.generate_runtime_js(app.bindings, [cap] of Lune::Capability)
+      js.scan(/\bregister\(accelerator\)/).size.should eq(1)
+      js.scan(/\bunregister\(accelerator\)/).size.should eq(1)
+      cap.js_helpers.should_not contain("register(")
+      cap.js_helpers.should_not contain("unregister(")
     end
 
     it "exposes on, once, and off" do
@@ -106,15 +111,23 @@ describe Lune::Capabilities::Hotkeys do
   end
 
   describe "dts_helpers" do
-    it "declares register and unregister" do
-      d = Lune::Capabilities::Hotkeys.new.dts_helpers
-      d.should contain("register(")
-      d.should contain("unregister(")
+    it "declares register and unregister via bindings (not duplicated in helpers)" do
+      cap = Lune::Capabilities::Hotkeys.new
+      app = Lune::App.new
+      app.install(cap)
+      dts = Lune::Runtime::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Capability)
+      dts.scan(/\bregister\(accelerator: string\)/).size.should eq(1)
+      dts.scan(/\bunregister\(accelerator: string\)/).size.should eq(1)
+      cap.dts_helpers.should_not contain("register(")
+      cap.dts_helpers.should_not contain("unregister(")
     end
 
-    it "includes Promise<void> return types" do
-      d = Lune::Capabilities::Hotkeys.new.dts_helpers
-      d.should contain("Promise<void>")
+    it "includes Promise<void> return types in the generated runtime" do
+      cap = Lune::Capabilities::Hotkeys.new
+      app = Lune::App.new
+      app.install(cap)
+      dts = Lune::Runtime::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Capability)
+      dts.should contain("Promise<void>")
     end
 
     it "declares on, once, and off event listeners" do

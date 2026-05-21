@@ -20,25 +20,15 @@ module Lune
         ctx.register(Definition.new(
           name: "#{name}.start",
           args: ["String"],
+          arg_names: ["paths"],
+          arg_transforms: ["JSON.stringify(paths || [])"] of String?,
+          ts_args: ["string[]"] of String?,
           return_type: "Nil",
           callback: ->(args : Array(JSON::Any)) {
             Lune::Native::Window.start_drag_out(h, JSON.parse(args[0].as_s).as_a.map(&.as_s))
             JSON::Any.new(nil)
           },
         ).binding(binding_namespace))
-      end
-
-      def js_helpers : String
-        bridge_id = "#{BRIDGE_MARKER}.#{name}.start"
-        <<-JS
-          start(paths) { return __lune.call(#{bridge_id.inspect}, JSON.stringify(paths || [])); },
-        JS
-      end
-
-      def dts_helpers : String
-        <<-DTS
-          start(paths: string[]): Promise<void>;
-        DTS
       end
     end
   end

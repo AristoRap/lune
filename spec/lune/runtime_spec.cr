@@ -15,6 +15,13 @@ private def drag_out_caps
   [Lune::Capabilities::DragOut.new] of Lune::Capability
 end
 
+private def drag_out_setup
+  cap = Lune::Capabilities::DragOut.new
+  app = Lune::App.new
+  app.install(cap)
+  {app.bindings, [cap] of Lune::Capability}
+end
+
 describe Lune::Runtime do
   it "generates runtime transport code" do
     js = Lune::Runtime::Generator.generate_runtime_js([] of Lune::Binding)
@@ -95,18 +102,23 @@ describe Lune::Runtime do
     dts.includes?("off(name: string").should be_true
   end
 
-  it "exports DragOut namespace with start helper" do
-    js = Lune::Runtime::Generator.generate_runtime_js([] of Lune::Binding, drag_out_caps)
+  it "exports DragOut namespace with start binding (paths JSON-stringified)" do
+    bindings, caps = drag_out_setup
+    js = Lune::Runtime::Generator.generate_runtime_js(bindings, caps)
 
     js.includes?("export const DragOut").should be_true
     js.includes?("start(paths)").should be_true
+    js.includes?("JSON.stringify(paths || [])").should be_true
+    js.scan(/start\(paths\)/).size.should eq(1)
   end
 
   it "declares DragOut interface in runtime.d.ts" do
-    dts = Lune::Runtime::Generator.generate_runtime_dts([] of Lune::Binding, drag_out_caps)
+    bindings, caps = drag_out_setup
+    dts = Lune::Runtime::Generator.generate_runtime_dts(bindings, caps)
 
     dts.includes?("export interface DragOut").should be_true
     dts.includes?("start(paths: string[])").should be_true
+    dts.scan(/start\(paths: string\[\]\)/).size.should eq(1)
   end
 
   it "generates App.d.ts with namespace interfaces and camelcased binding names" do

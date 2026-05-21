@@ -8,6 +8,8 @@ module Lune
       callback : Proc(Array(JSON::Any), JSON::Any),
       async : Bool = false,
       arg_names : Array(String) = [] of String,
+      arg_transforms : Array(String?) = [] of String?,
+      ts_args : Array(String?) = [] of String?,
       @ts_return_type : String? = nil,
     )
       super(
@@ -19,6 +21,8 @@ module Lune
         internal: true,
         async: async,
         arg_names: arg_names,
+        arg_transforms: arg_transforms,
+        ts_args: ts_args,
       )
     end
 
@@ -37,8 +41,9 @@ module Lune
     def to_js_stub : String
       names = resolved_arg_names
       params = names.join(", ")
-      call_args = names.empty? ? "" : ", #{names.join(", ")}"
-      "  #{js_func_name}(#{params}) { return __lune.call(#{id.inspect}#{call_args}); },"
+      call_args = call_arg_exprs(names)
+      call_tail = call_args.empty? ? "" : ", #{call_args.join(", ")}"
+      "  #{js_func_name}(#{params}) { return __lune.call(#{id.inspect}#{call_tail}); },"
     end
 
     # Interface member for the generated `export interface Namespace { … }` block.

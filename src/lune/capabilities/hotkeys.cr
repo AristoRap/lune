@@ -54,18 +54,14 @@ module Lune
       def js_helpers : String
         bm = BRIDGE_MARKER
         <<-JS
-          register(accelerator)   { return __lune.call(#{("#{bm}.#{name}.register").inspect}, accelerator); },
-          unregister(accelerator) { return __lune.call(#{("#{bm}.#{name}.unregister").inspect}, accelerator); },
-          on(cb)                  { window.#{bm}.on("hotkey", cb, -1); },
-          once(cb)                { window.#{bm}.on("hotkey", cb, 1); },
-          off(cb)                 { window.#{bm}.off("hotkey", cb); },
+          on(cb)   { window.#{bm}.on("hotkey", cb, -1); },
+          once(cb) { window.#{bm}.on("hotkey", cb, 1); },
+          off(cb)  { window.#{bm}.off("hotkey", cb); },
         JS
       end
 
       def dts_helpers : String
         <<-DTS
-          register(accelerator: string): Promise<void>;
-          unregister(accelerator: string): Promise<void>;
           on(cb: (event: { key: string }) => void): void;
           once(cb: (event: { key: string }) => void): void;
           off(cb?: (event: { key: string }) => void): void;

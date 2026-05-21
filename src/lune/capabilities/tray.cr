@@ -38,19 +38,6 @@ module Lune
         !@on_tray_click.nil? || !@on_menu_click.nil? || @event_name != "trayEvent"
       end
 
-      def js_helpers : String
-        bridge_id = "#{BRIDGE_MARKER}.#{name}.set_menu"
-        <<-JS
-          setMenu(items) { return __lune.call(#{bridge_id.inspect}, JSON.stringify(items || [])); },
-        JS
-      end
-
-      def dts_helpers : String
-        <<-DTS
-          setMenu(items: TrayMenuItem[]): Promise<void>;
-        DTS
-      end
-
       # Resolve a click handler for one direction. Priority:
       #   1. user override → fires it (full takeover; no other behavior runs)
       #   2. else, toggle_window lambda (when click is listed in toggle_window_on)
@@ -148,6 +135,9 @@ module Lune
         ctx.register(Definition.new(
           name: "#{name}.set_menu",
           args: ["String"],
+          arg_names: ["items"],
+          arg_transforms: ["JSON.stringify(items || [])"] of String?,
+          ts_args: ["TrayMenuItem[]"] of String?,
           return_type: "Nil",
           callback: ->(args : Array(JSON::Any)) {
             items = begin

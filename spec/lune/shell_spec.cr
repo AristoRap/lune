@@ -193,10 +193,15 @@ describe Lune::Capabilities::Shell do
       Lune::Capabilities::Shell.new.dts_helpers.should contain("unlisten(pid: string)")
     end
 
-    it "types write and close_stdin" do
-      h = Lune::Capabilities::Shell.new.dts_helpers
-      h.should contain("write(pid: string")
-      h.should contain("closeStdin(pid: string)")
+    it "types write and close_stdin via bindings (not duplicated in helpers)" do
+      cap = Lune::Capabilities::Shell.new
+      app = Lune::App.new
+      app.install(cap)
+      dts = Lune::Runtime::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Capability)
+      dts.scan(/write\(pid: string/).size.should eq(1)
+      dts.scan(/closeStdin\(pid: string/).size.should eq(1)
+      cap.dts_helpers.should_not contain("write(pid: string")
+      cap.dts_helpers.should_not contain("closeStdin(pid: string")
     end
   end
 

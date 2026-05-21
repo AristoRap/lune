@@ -149,8 +149,6 @@ module Lune
         <<-DTS
           listen(pid: string, opts: { stdout?: (data: { line: string }) => void; stderr?: (data: { line: string }) => void; exit?: (data: { code: number }) => void }): void;
           unlisten(pid: string): void;
-          write(pid: string, text: string): Promise<void>;
-          closeStdin(pid: string): Promise<void>;
         DTS
       end
 

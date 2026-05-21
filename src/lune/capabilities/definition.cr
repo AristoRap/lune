@@ -13,6 +13,8 @@ module Lune
         @callback : Proc(Array(JSON::Any), JSON::Any),
         @async : Bool = false,
         @arg_names : Array(String) = [] of String,
+        @arg_transforms : Array(String?) = [] of String?,
+        @ts_args : Array(String?) = [] of String?,
         @ts_return_type : String? = nil,
       )
       end
@@ -26,6 +28,8 @@ module Lune
           callback: @callback,
           async: @async,
           arg_names: @arg_names,
+          arg_transforms: @arg_transforms,
+          ts_args: @ts_args,
           ts_return_type: @ts_return_type
         )
       end
