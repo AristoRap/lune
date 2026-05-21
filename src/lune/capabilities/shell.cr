@@ -101,11 +101,28 @@ module Lune
             argv = raw[1].as_a.map(&.as_s)
             out_buf = IO::Memory.new
             err_buf = IO::Memory.new
-            status = Process.run(cmd, args: argv, output: out_buf, error: err_buf)
+            status = Shell.with_win32_cmd_fallback(cmd, argv) do |c, a|
+              Process.run(c, args: a, output: out_buf, error: err_buf)
+            end
             code = status.exit_code? || -1
             JSON.parse({"stdout" => out_buf.to_s, "stderr" => err_buf.to_s, "code" => code}.to_json)
           },
         ).binding(binding_namespace))
+      end
+
+      # Yields (cmd, argv) to the block as-is. On Win32, if the block raises
+      # File::NotFoundError, yields again with ("cmd", ["/c", cmd] + argv) —
+      # which handles cmd builtins (echo, dir, type, cd, more, ...) and
+      # .cmd/.bat shims (npm.cmd, yarn.cmd) that CreateProcess can't exec
+      # directly. POSIX path is unchanged; any error propagates.
+      def self.with_win32_cmd_fallback(cmd : String, argv : Array(String), &)
+        yield cmd, argv
+      rescue File::NotFoundError
+        {% if flag?(:win32) %}
+          yield "cmd", ["/c", cmd] + argv
+        {% else %}
+          raise
+        {% end %}
       end
 
       def shutdown : Nil
@@ -154,7 +171,9 @@ module Lune
 
       private def spawn_proc(app : Lune::App, cmd : String, argv : Array(String)) : String
         pid = Random.new.hex(8)
-        process = Process.new(cmd, args: argv, input: :pipe, output: :pipe, error: :pipe)
+        process = Shell.with_win32_cmd_fallback(cmd, argv) do |c, a|
+          Process.new(c, args: a, input: :pipe, output: :pipe, error: :pipe)
+        end
         @mu.synchronize do
           @processes[pid] = process
           @stdins[pid] = process.input

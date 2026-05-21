@@ -50,6 +50,10 @@ Windows hardware and what's known to be broken. Items marked
   - Async-marked bindings (`Shell.spawn`, `Shell.run`) route through
     the @async_pool so `Process.run`'s internal copy_io / wait fibers
     don't trip the Isolated-context concurrency check.
+  - cmd builtins (`echo`, `dir`, `type`, `cd`, `more`, …) and `.cmd` /
+    `.bat` shims (`npm.cmd`, `yarn.cmd`) work too — the capability
+    catches `File::NotFoundError` from the direct `Process.new` and
+    retries via `cmd /c <name> <args…>` automatically.
 - **Tray**: `Tray.show` / `Tray.hide` register and remove the icon via
   `Shell_NotifyIconW(NIM_ADD/NIM_MODIFY/NIM_DELETE)`. Clicks arrive as
   `WM_APP+1` on a hidden message-only HWND and route via `lParam` —
@@ -77,27 +81,22 @@ Windows hardware and what's known to be broken. Items marked
     returns, since Windows references the icon until the next `NIM_MODIFY`.
     Shared system icons loaded via `LoadIconW(IDI_APPLICATION)` are never
     `DestroyIcon`'d.
+- **Notifications**: `Notifications.notify(title, body)` shows a real toast
+  banner. The PowerShell + WinRT helper registers the AUMID `"Lune"` at
+  `HKCU\Software\Classes\AppUserModelId\Lune` on first call (Microsoft's
+  documented path for non-UWP desktop apps), so Windows accepts the toast
+  for that AUMID and persists it in Action Center. Subsequent calls
+  `Test-Path` and skip the registry write.
 
 ## Broken / partial
 
 - **Multi-window OS close propagation** (`Windows.open(...)`) — closing a child window via the title-bar X doesn't notify the Crystal side. The `@windows` registry still thinks the window is open and any code waiting for a close event hangs. macOS solved this via `NSWindowDelegate#windowWillClose:`; Win32 needs a WindowProc subclass on the child HWND that intercepts `WM_CLOSE`/`WM_DESTROY`. Tracked in `ROADMAP.md`.
 - **DeepLink on Windows** — `install` doesn't crash and cold-start ARGV scanning works, but only if the user has manually registered the URL scheme in the Windows registry. Lune doesn't auto-register schemes during `lune build` yet. Warm-start forwarding (sending a URL to an already-running instance) also isn't implemented on Windows — each launch with a deep-link URL opens a new instance. Tracked in `ROADMAP.md`.
-- **Notifications** (`Notifications.notify`) — the PowerShell + WinRT
-  script now exits cleanly (both `Windows.UI.Notifications` and
-  `Windows.Data.Xml.Dom` projections are explicitly loaded) but
-  Windows **silently drops the toast** because the AUMID `"Lune"`
-  isn't registered with the OS. Distributed apps need a Start Menu
-  shortcut with `System.AppUserModel.ID` set. Tracked under "Windows
-  toast notifications" in `ROADMAP.md`.
 - **Drag-and-drop** (`file_drop` capability) — currently raises
   `NotImplementedError` (`Native::Window.disable_webview_drop` and the
   underlying drop-target plumbing are macOS-only). Exclude `file_drop`
   in `lune.yml` until the Win32 `IDropTarget` shim lands. The demo's
   drop zone won't fire any callbacks.
-- **Shell builtins** — `Shell.spawn("echo …")`, `dir`, `type`, etc.
-  fail with `File::NotFoundError` because those are cmd builtins, not
-  real `.exe`s. Wrap them as `cmd /c <builtin> …` or use a real
-  binary. Tracked in `ROADMAP.md`.
 - **Privileged commands** — anything that needs Administrator (e.g.
   `ping -t …`, low-level network probes) errors with "Access denied"
   or "requires administrative privileges". Run the parent shell as

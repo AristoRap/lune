@@ -1,23 +1,23 @@
 require "../spec_helper"
 
-# Cross-platform spawn helpers: Win32 doesn't have POSIX sleep/echo/cat
-# as standalone binaries, so use the Windows equivalents. Tests assert on
-# binding behaviour, not which command ran.
+# Cross-platform spawn helpers. Echo and the stdin-consumer are cmd
+# builtins on Win32 — the Shell capability's `cmd /c` fallback handles
+# that transparently, so spec callers can use POSIX-style names on every
+# platform. Sleep still needs a Win32-equivalent because `sleep.exe`
+# isn't a standard install.
 {% if flag?(:win32) %}
   SHELL_SPEC_SLEEP_CMD  = "ping"
   SHELL_SPEC_SLEEP_ARGS = ["127.0.0.1", "-n", "5"]
-  SHELL_SPEC_ECHO_CMD   = "cmd"
-  SHELL_SPEC_ECHO_ARGS  = ["/c", "echo", "hello"]
-  SHELL_SPEC_STDIN_CMD  = "cmd"
-  SHELL_SPEC_STDIN_ARGS = ["/c", "more"]
+  SHELL_SPEC_STDIN_CMD  = "more"
+  SHELL_SPEC_STDIN_ARGS = [] of String
 {% else %}
   SHELL_SPEC_SLEEP_CMD  = "sleep"
   SHELL_SPEC_SLEEP_ARGS = ["5"]
-  SHELL_SPEC_ECHO_CMD   = "echo"
-  SHELL_SPEC_ECHO_ARGS  = ["hello"]
   SHELL_SPEC_STDIN_CMD  = "cat"
   SHELL_SPEC_STDIN_ARGS = [] of String
 {% end %}
+SHELL_SPEC_ECHO_CMD  = "echo"
+SHELL_SPEC_ECHO_ARGS = ["hello"]
 
 private def shell_spec_json_args(args : Array(String)) : Array(JSON::Any)
   args.map { |a| JSON::Any.new(a) }
@@ -203,6 +203,39 @@ describe Lune::Capabilities::Shell do
       cap.dts_helpers.should_not contain("write(pid: string")
       cap.dts_helpers.should_not contain("closeStdin(pid: string")
     end
+  end
+
+  describe ".with_win32_cmd_fallback" do
+    it "yields cmd + argv as-is when the block succeeds" do
+      calls = [] of {String, Array(String)}
+      result = Lune::Capabilities::Shell.with_win32_cmd_fallback("git", ["status"]) do |c, a|
+        calls << {c, a}
+        :ok
+      end
+      result.should eq(:ok)
+      calls.should eq([{"git", ["status"]}])
+    end
+
+    {% if flag?(:win32) %}
+      it "retries with cmd /c on Win32 when the block raises File::NotFoundError" do
+        calls = [] of {String, Array(String)}
+        result = Lune::Capabilities::Shell.with_win32_cmd_fallback("echo", ["hi"]) do |c, a|
+          calls << {c, a}
+          raise File::NotFoundError.new("no echo.exe", file: c) if calls.size == 1
+          :retried
+        end
+        result.should eq(:retried)
+        calls.should eq([{"echo", ["hi"]}, {"cmd", ["/c", "echo", "hi"]}])
+      end
+    {% else %}
+      it "re-raises File::NotFoundError on non-Win32" do
+        expect_raises(File::NotFoundError) do
+          Lune::Capabilities::Shell.with_win32_cmd_fallback("nope", [] of String) do |_c, _a|
+            raise File::NotFoundError.new("missing", file: "nope")
+          end
+        end
+      end
+    {% end %}
   end
 
   describe "registry integration" do

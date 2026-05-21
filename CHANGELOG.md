@@ -6,6 +6,11 @@
 
 - **Capability config keys renamed** `include` / `exclude` → `enabled` / `disabled` to keep one consistent pair across YAML, Crystal field names, and prose. `lune.yml` migration is mechanical: rename `capabilities.include:` → `capabilities.enabled:` and `capabilities.exclude:` → `capabilities.disabled:`. Crystal API: `ConfigCapabilities#only` / `#exclude` → `#enabled` / `#disabled`. The semantics are identical (enabled resolved first, then disabled subtracted; both accept `"*"` / `"all"`).
 
+### Fixed
+
+- **`Shell.spawn` / `Shell.run` transparently support cmd builtins on Windows** — calling `Shell.spawn("echo", ["hi"])` (or `dir`, `type`, `cd`, `more`, etc.) no longer raises `File::NotFoundError`. The capability now catches the error and retries via `cmd /c <builtin> <args…>`, which also covers `.cmd` / `.bat` shims like `npm.cmd` that `CreateProcess` can't exec directly. POSIX path unchanged. Helper exposed as `Lune::Capabilities::Shell.with_win32_cmd_fallback` for app code that spawns its own processes.
+- **`Notifications.notify` on Windows actually displays toasts** — previously the WinRT call returned success but Windows silently dropped the toast because the hardcoded AUMID `"Lune"` wasn't registered with the OS. The PowerShell helper now registers the AUMID via `HKCU\Software\Classes\AppUserModelId\Lune` (Microsoft's documented "send local toast from unpackaged app" path) on first call; subsequent calls skip the write. Per-app AUMID derived from `lune.yml`'s `name:` is tracked as a follow-up.
+
 ## [0.12.0] - 2026-05-21
 
 ### Added
