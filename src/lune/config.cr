@@ -1,29 +1,20 @@
 require "yaml"
 
 module Lune
-  struct ConfigPlugins
-    include YAML::Serializable
-
-    getter enabled : Array(String)? = nil
-    getter disabled : Array(String)? = nil
-
-    def initialize(@enabled : Array(String)? = nil, @disabled : Array(String)? = nil); end
-  end
-
   struct Config
     include YAML::Serializable
 
     getter window : Window = Window.new
 
     @[YAML::Field(key: "plugins")]
-    @yaml_plugins : ConfigPlugins? = nil
+    @yaml_plugins : Plugins? = nil
 
     # Deprecated key; still parsed for one minor release. Migrate to `plugins:`.
     @[YAML::Field(key: "capabilities")]
-    @yaml_capabilities : ConfigPlugins? = nil
+    @yaml_capabilities : Plugins? = nil
 
     @[YAML::Field(ignore: true)]
-    getter plugins : ConfigPlugins = ConfigPlugins.new
+    getter plugins : Plugins = Plugins.new
 
     def initialize; end
 
@@ -31,7 +22,7 @@ module Lune
       if @yaml_capabilities && !@yaml_plugins
         Lune.logger.warn { "lune.yml: `capabilities:` is deprecated, rename to `plugins:`" }
       end
-      @plugins = @yaml_plugins || @yaml_capabilities || ConfigPlugins.new
+      @plugins = @yaml_plugins || @yaml_capabilities || Plugins.new
     end
 
     def self.load(path : String = "lune.yml") : Config
@@ -56,6 +47,15 @@ module Lune
       property remember_frame : Bool? = nil
 
       def initialize; end
+    end
+
+    struct Plugins
+      include YAML::Serializable
+
+      getter enabled : Array(String)? = nil
+      getter disabled : Array(String)? = nil
+
+      def initialize(@enabled : Array(String)? = nil, @disabled : Array(String)? = nil); end
     end
   end
 end

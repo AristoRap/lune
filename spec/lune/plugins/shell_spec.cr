@@ -241,13 +241,13 @@ describe Lune::Plugins::Shell do
   describe "registry integration" do
     it "cascade-disables when stream is excluded" do
       r = Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new, -> { })
-      resolved = r.resolve(Lune::ConfigPlugins.new(enabled: nil, disabled: ["stream"]))
+      resolved = r.resolve(Lune::Config::Plugins.new(enabled: nil, disabled: ["stream"]))
       resolved.plugins.map(&.name).should_not contain("shell")
     end
 
     it "is included in the default resolved set" do
       r = Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new, -> { })
-      resolved = r.resolve(Lune::ConfigPlugins.new(enabled: nil, disabled: nil))
+      resolved = r.resolve(Lune::Config::Plugins.new(enabled: nil, disabled: nil))
       resolved.plugins.map(&.name).should contain("shell")
     end
   end

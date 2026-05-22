@@ -1,10 +1,10 @@
 {% if flag?(:darwin) && !flag?(:lune_native_test_mock) %}
-  {% system("cd '#{__DIR__}/../../../../ext/native/macos' && clang -c tray.m -o tray.o -fobjc-arc 2>/dev/null") %}
+  {% system("cd '#{__DIR__}/../../../../ext/native/darwin' && clang -c tray.m -o tray.o -fobjc-arc 2>/dev/null") %}
 
   module Lune
     module Native
       @[Link(framework: "AppKit")]
-      @[Link(ldflags: "#{__DIR__}/../../../../ext/native/macos/tray.o")]
+      @[Link(ldflags: "#{__DIR__}/../../../../ext/native/darwin/tray.o")]
       lib LibNativeTray
         alias Callback     = (Void*) -> Void
         alias MenuCallback = (LibC::Char*, Void*) -> Void

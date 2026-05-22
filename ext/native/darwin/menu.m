@@ -139,6 +139,77 @@ static NSMenuItem *build_edit_menu_item(void) {
     return container;
 }
 
+// ── Shortcut parser ───────────────────────────────────────────────────────────
+
+// Parses "cmd+shift+z" / "cmd+up" / "return" into the key equivalent string
+// and NSEvent modifier mask expected by NSMenuItem. Returns NO for an empty
+// input so callers can skip applying a shortcut. Hotkeys has a sibling parser
+// in hotkeys.m that targets Carbon flags; the two outputs are incompatible so
+// the parsers don't share code.
+static BOOL parse_shortcut(NSString *shortcut, NSString **key_out, NSEventModifierFlags *mods_out) {
+    if (!shortcut || shortcut.length == 0) return NO;
+
+    static NSDictionary *named = nil;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        named = @{
+            @"return":    @"\r",
+            @"enter":     @"\r",
+            @"tab":       @"\t",
+            @"escape":    @"\e",
+            @"esc":       @"\e",
+            @"delete":    @"",
+            @"backspace": @"",
+            @"space":     @" ",
+            @"up":        [NSString stringWithFormat:@"%C", (unichar)NSUpArrowFunctionKey],
+            @"down":      [NSString stringWithFormat:@"%C", (unichar)NSDownArrowFunctionKey],
+            @"left":      [NSString stringWithFormat:@"%C", (unichar)NSLeftArrowFunctionKey],
+            @"right":     [NSString stringWithFormat:@"%C", (unichar)NSRightArrowFunctionKey],
+            @"home":      [NSString stringWithFormat:@"%C", (unichar)NSHomeFunctionKey],
+            @"end":       [NSString stringWithFormat:@"%C", (unichar)NSEndFunctionKey],
+            @"pageup":    [NSString stringWithFormat:@"%C", (unichar)NSPageUpFunctionKey],
+            @"page up":   [NSString stringWithFormat:@"%C", (unichar)NSPageUpFunctionKey],
+            @"pagedown":  [NSString stringWithFormat:@"%C", (unichar)NSPageDownFunctionKey],
+            @"page down": [NSString stringWithFormat:@"%C", (unichar)NSPageDownFunctionKey],
+            @"f1":  [NSString stringWithFormat:@"%C", (unichar)NSF1FunctionKey],
+            @"f2":  [NSString stringWithFormat:@"%C", (unichar)NSF2FunctionKey],
+            @"f3":  [NSString stringWithFormat:@"%C", (unichar)NSF3FunctionKey],
+            @"f4":  [NSString stringWithFormat:@"%C", (unichar)NSF4FunctionKey],
+            @"f5":  [NSString stringWithFormat:@"%C", (unichar)NSF5FunctionKey],
+            @"f6":  [NSString stringWithFormat:@"%C", (unichar)NSF6FunctionKey],
+            @"f7":  [NSString stringWithFormat:@"%C", (unichar)NSF7FunctionKey],
+            @"f8":  [NSString stringWithFormat:@"%C", (unichar)NSF8FunctionKey],
+            @"f9":  [NSString stringWithFormat:@"%C", (unichar)NSF9FunctionKey],
+            @"f10": [NSString stringWithFormat:@"%C", (unichar)NSF10FunctionKey],
+            @"f11": [NSString stringWithFormat:@"%C", (unichar)NSF11FunctionKey],
+            @"f12": [NSString stringWithFormat:@"%C", (unichar)NSF12FunctionKey],
+        };
+    });
+
+    NSArray<NSString *> *tokens = [[shortcut lowercaseString] componentsSeparatedByString:@"+"];
+    if (tokens.count == 0) return NO;
+
+    NSEventModifierFlags mods = 0;
+    NSString *key_token = tokens.lastObject;
+    for (NSUInteger i = 0; i < tokens.count - 1; i++) {
+        NSString *t = tokens[i];
+        if      ([t isEqualToString:@"cmd"]     || [t isEqualToString:@"command"]) mods |= NSEventModifierFlagCommand;
+        else if ([t isEqualToString:@"shift"])                                     mods |= NSEventModifierFlagShift;
+        else if ([t isEqualToString:@"ctrl"]    || [t isEqualToString:@"control"]) mods |= NSEventModifierFlagControl;
+        else if ([t isEqualToString:@"opt"]     || [t isEqualToString:@"alt"]     || [t isEqualToString:@"option"]) mods |= NSEventModifierFlagOption;
+    }
+
+    NSString *key = named[key_token] ?: key_token;
+    // Single-letter keys uppercase when shift is in the mask — macOS convention.
+    if ((mods & NSEventModifierFlagShift) && key.length == 1) {
+        key = [key uppercaseString];
+    }
+
+    *key_out  = key;
+    *mods_out = mods;
+    return YES;
+}
+
 // ── Recursive item builder ────────────────────────────────────────────────────
 
 static void build_children(NSArray *items, NSMenu *menu);
@@ -160,11 +231,14 @@ static void build_children(NSArray *items, NSMenu *menu) {
             [menu addItem:container];
 
         } else if ([kind isEqualToString:@"text"]) {
+            NSString *key = @"";
+            NSEventModifierFlags mods = 0;
+            parse_shortcut(item[@"shortcut"], &key, &mods);
             NSMenuItem *mi = [[NSMenuItem alloc]
                 initWithTitle:item[@"label"] ?: @""
                        action:@selector(textClicked:)
-                keyEquivalent:item[@"key"] ?: @""];
-            mi.keyEquivalentModifierMask = [item[@"modifiers"] unsignedLongLongValue];
+                keyEquivalent:key];
+            mi.keyEquivalentModifierMask = mods;
             mi.target           = _item_handler;
             mi.enabled          = [item[@"enabled"] boolValue];
             mi.representedObject = item[@"id"] ?: @"";
@@ -172,11 +246,14 @@ static void build_children(NSArray *items, NSMenu *menu) {
             [menu addItem:mi];
 
         } else if ([kind isEqualToString:@"checkbox"]) {
+            NSString *key = @"";
+            NSEventModifierFlags mods = 0;
+            parse_shortcut(item[@"shortcut"], &key, &mods);
             NSMenuItem *mi = [[NSMenuItem alloc]
                 initWithTitle:item[@"label"] ?: @""
                        action:@selector(checkboxClicked:)
-                keyEquivalent:item[@"key"] ?: @""];
-            mi.keyEquivalentModifierMask = [item[@"modifiers"] unsignedLongLongValue];
+                keyEquivalent:key];
+            mi.keyEquivalentModifierMask = mods;
             mi.target           = _item_handler;
             mi.enabled          = [item[@"enabled"] boolValue];
             mi.state            = [item[@"checked"] boolValue]
@@ -186,11 +263,14 @@ static void build_children(NSArray *items, NSMenu *menu) {
             [menu addItem:mi];
 
         } else if ([kind isEqualToString:@"radio"]) {
+            NSString *key = @"";
+            NSEventModifierFlags mods = 0;
+            parse_shortcut(item[@"shortcut"], &key, &mods);
             NSMenuItem *mi = [[NSMenuItem alloc]
                 initWithTitle:item[@"label"] ?: @""
                        action:@selector(radioClicked:)
-                keyEquivalent:item[@"key"] ?: @""];
-            mi.keyEquivalentModifierMask = [item[@"modifiers"] unsignedLongLongValue];
+                keyEquivalent:key];
+            mi.keyEquivalentModifierMask = mods;
             mi.target           = _item_handler;
             mi.enabled          = [item[@"enabled"] boolValue];
             mi.state            = [item[@"checked"] boolValue]

@@ -30,7 +30,7 @@ Features the platform exposes that Lune doesn't yet surface.
 
 Structural improvements that unlock whole categories of apps.
 
-- [ ] Plugin system — a Crystal shard interface (`Lune::Plugin`) with lifecycle hooks and runtime binding registration so community authors can publish Lune plugins
+- [x] Plugin system — a Crystal shard interface (`Lune::Plugin`) with lifecycle hooks and runtime binding registration so community authors can publish Lune plugins. `Lune.use(MyPlugin.new)` is the entry point; `config do … end` declares typed options that reopen `Lune::Options` with a matching accessor; lifecycle phases (`setup` / `init_webview` / `set_main_context` / `shutdown`) are opt-in via mixins. See [website/guide/authoring-plugins.md](website/guide/authoring-plugins.md).
 - [ ] Per-window plugins — scope `enabled`/`disabled` lists to individual windows rather than globally
 - [ ] Window-aware option callbacks — `opts.on_navigate` (and likely `on_load` / `on_close`) gets only the URL today; in multi-window apps it can't tell which window fired. Extend the proc signature with a window id, or pass an event struct. Likely shares design with per-window plugins.
 - [ ] Multiple webviews in one window — stack or embed multiple WebView panels within a single native window

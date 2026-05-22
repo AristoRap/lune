@@ -34,13 +34,20 @@ module Lune
   @@registered_plugins = [] of Lune::Plugin
   @@registered_ids = Set(Symbol).new
 
-  def self.use(plugin : Lune::Plugin) : Nil
-    id = plugin.descriptor.id
-    if @@registered_ids.includes?(id)
-      raise ArgumentError.new("Plugin #{id.inspect} already registered (descriptor IDs must be unique)")
+  # Register one or more plugins. Splat shape mirrors `App#install(*mods)` so
+  # callers can group several lines into one — `Lune.use(A.new, B.new, C.new)`.
+  # Uniqueness is checked per plugin: the call fails on the first duplicate
+  # `descriptor.id`, and earlier plugins in the same call remain registered
+  # (the registry is append-only — partial registration is fine).
+  def self.use(*plugins : Lune::Plugin) : Nil
+    plugins.each do |plugin|
+      id = plugin.descriptor.id
+      if @@registered_ids.includes?(id)
+        raise ArgumentError.new("Plugin #{id.inspect} already registered (descriptor IDs must be unique)")
+      end
+      @@registered_ids << id
+      @@registered_plugins << plugin
     end
-    @@registered_ids << id
-    @@registered_plugins << plugin
   end
 
   def self.registered_plugins : Array(Lune::Plugin)
@@ -81,7 +88,9 @@ module Lune
       ::Lune::Assets.embed_dir({{ options[:assets] }})
     {% end %}
 
-    {% if flag?(:build_mode) %}
+    {% if flag?(:lune_inspect) %}
+      ::Lune._inspect_run
+    {% elsif flag?(:build_mode) %}
       ::Lune._build_run({{ app }})
     {% else %}
       runner = ::Lune::Runner.new({{ app }}) do |opts|
@@ -106,5 +115,23 @@ module Lune
       resolved.plugins,
       registry.platform_filtered,
     )
+  end
+
+  # `-Dlune_inspect` short-circuits `Lune.run` before the runner starts and
+  # before `_build_run` writes any artifacts. Prints the registered set to
+  # stdout in a stable, machine-readable shape (one tab-separated row per
+  # plugin: `id<tab>label<tab>platforms<tab>built_in`, framed by
+  # `<<<LUNE_PLUGINS` / `LUNE_PLUGINS>>>`) for `lune doctor --plugins` to
+  # parse. Everything that runs before `Lune.run` — `require`s, `Lune.use`
+  # calls, top-level constants — has already executed by the time we get
+  # here, so the list is what the live app would see.
+  def self._inspect_run : Nil
+    STDOUT.puts "<<<LUNE_PLUGINS"
+    registered_plugins.each do |p|
+      d = p.descriptor
+      STDOUT.puts "#{d.id}\t#{d.label}\t#{d.platforms.join(",")}\t#{p.built_in?}"
+    end
+    STDOUT.puts "LUNE_PLUGINS>>>"
+    exit 0
   end
 end

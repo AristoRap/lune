@@ -74,7 +74,7 @@ describe Lune::Plugins::FileWatch do
   describe "registry integration" do
     it "cascade-disables when events is excluded" do
       r = Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new, -> { })
-      resolved = r.resolve(Lune::ConfigPlugins.new(enabled: nil, disabled: ["events"]))
+      resolved = r.resolve(Lune::Config::Plugins.new(enabled: nil, disabled: ["events"]))
       resolved.plugins.map(&.name).should_not contain("file_watch")
     end
   end

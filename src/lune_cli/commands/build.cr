@@ -15,7 +15,7 @@ module LuneCLI
         )
 
         command.on_pre_run do |_cmd, _args|
-          if error = validate_paths(frontend_dir: config.frontend.dir, app_entry: config.app_entry)
+          if error = validate_paths(config)
             raise Argy::Error.new(error)
           end
         end
@@ -53,9 +53,9 @@ module LuneCLI
         name || File.basename(app_entry, File.extname(app_entry))
       end
 
-      def validate_paths(frontend_dir : String, app_entry : String) : String?
-        return "Frontend directory not found: #{frontend_dir}" unless Dir.exists?(frontend_dir)
-        return "App entry file not found: #{app_entry}" unless File.file?(app_entry)
+      def validate_paths(config : LuneCLI::Config) : String?
+        return "Frontend directory not found: #{config.frontend.dir}" unless Dir.exists?(config.frontend.dir)
+        return "App entry file not found: #{config.app_entry}" unless File.file?(config.app_entry)
 
         nil
       end

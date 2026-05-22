@@ -119,6 +119,16 @@ module Lune
       self.class.name
     end
 
+    # True iff this plugin ships with the framework. The check keys off the
+    # Crystal module path — every first-party plugin lives under
+    # `Lune::Plugins::*` (and `register_builtins!` only registers things
+    # from there). A third-party shard would have to monkey-patch the
+    # `Lune::Plugins` module to forge this, which is deliberate, visible,
+    # and an obvious "don't do that" signal.
+    def built_in? : Bool
+      self.class.name.starts_with?("Lune::Plugins::")
+    end
+
     def sentinel_key : String
       "#{SENTINEL_NS}.#{name}"
     end

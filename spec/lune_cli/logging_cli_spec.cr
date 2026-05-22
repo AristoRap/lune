@@ -8,7 +8,7 @@ private class LoggingCheckCommand < LuneCLI::Commands::Check
     nil
   end
 
-  def run(app_entry : String) : Bool
+  def run(config : LuneCLI::Config) : Bool
     @result
   end
 end
@@ -17,7 +17,7 @@ private class LoggingBuildCommand < LuneCLI::Commands::Build
   def initialize(@result : Bool)
   end
 
-  def validate_paths(frontend_dir : String, app_entry : String) : String?
+  def validate_paths(config : LuneCLI::Config) : String?
     nil
   end
 
@@ -30,11 +30,11 @@ private class LoggingRunCommand < LuneCLI::Commands::Run
   def initialize(@result : Bool)
   end
 
-  def validate_paths(app_entry : String, name : String? = nil) : String?
+  def validate_paths(config : LuneCLI::Config) : String?
     nil
   end
 
-  def run(app_entry : String, name : String? = nil, lock_dir : String = File.join(Path.home, ".lune")) : Bool
+  def run(config : LuneCLI::Config, lock_dir : String = File.join(Path.home, ".lune")) : Bool
     @result
   end
 end
@@ -43,11 +43,11 @@ private class LoggingDevCommand < LuneCLI::Commands::Dev
   def initialize(@result : Bool)
   end
 
-  def validate_paths(frontend_dir : String, app_entry : String) : String?
+  def validate_paths(config : LuneCLI::Config) : String?
     nil
   end
 
-  def run(frontend_dir : String, app_entry : String, dev_url : String, dev_cmd : String = LuneCLI::DEFAULT_DEV_CMD, watcher : LuneCLI::FileWatcher = LuneCLI::FileWatcher.new, lock_dir : String = File.join(Path.home, ".lune")) : Bool
+  def run(config : LuneCLI::Config, watcher : LuneCLI::FileWatcher = LuneCLI::FileWatcher.new, lock_dir : String = File.join(Path.home, ".lune")) : Bool
     @result
   end
 end

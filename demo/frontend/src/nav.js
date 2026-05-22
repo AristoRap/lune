@@ -20,6 +20,7 @@ import Kv from "./views/Kv.vue";
 import Sqlite from "./views/Sqlite.vue";
 import Windows from "./views/Windows.vue";
 import Plugins from "./views/Plugins.vue";
+import Counter from "./views/Counter.vue";
 
 export const navGroups = [
   {
@@ -32,6 +33,7 @@ export const navGroups = [
       { id: "bindings", label: "Bindings", icon: "code", view: Bindings },
       { id: "events", label: "Events", icon: "bolt", view: Events },
       { id: "stream", label: "Stream", icon: "bolt", view: Stream },
+      { id: "counter", label: "Custom plugin", icon: "shield", view: Counter },
     ],
   },
   {

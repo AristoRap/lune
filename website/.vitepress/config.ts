@@ -23,6 +23,7 @@ export default defineConfig({
           { text: 'How It Works', link: '/guide/how-it-works' },
           { text: 'Assets & Build', link: '/guide/assets' },
           { text: 'Bindings', link: '/guide/bindings' },
+          { text: 'Authoring Plugins', link: '/guide/authoring-plugins' },
           { text: 'Error Handling', link: '/guide/error-handling' },
           { text: 'Events', link: '/guide/events' },
           { text: 'Stream', link: '/guide/stream' },

@@ -152,16 +152,16 @@ private def make_registry
   Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new, -> { })
 end
 
-private def config_enabled(*names : String) : Lune::ConfigPlugins
-  Lune::ConfigPlugins.new(enabled: names.to_a, disabled: nil)
+private def config_enabled(*names : String) : Lune::Config::Plugins
+  Lune::Config::Plugins.new(enabled: names.to_a, disabled: nil)
 end
 
-private def config_disabled(*names : String) : Lune::ConfigPlugins
-  Lune::ConfigPlugins.new(enabled: nil, disabled: names.to_a)
+private def config_disabled(*names : String) : Lune::Config::Plugins
+  Lune::Config::Plugins.new(enabled: nil, disabled: names.to_a)
 end
 
-private def empty_config : Lune::ConfigPlugins
-  Lune::ConfigPlugins.new(enabled: nil, disabled: nil)
+private def empty_config : Lune::Config::Plugins
+  Lune::Config::Plugins.new(enabled: nil, disabled: nil)
 end
 
 describe Lune::Plugins::Registry do

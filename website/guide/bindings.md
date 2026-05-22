@@ -222,6 +222,19 @@ Each module gets its own namespace in the generated API.
 
 ---
 
+## User bindings vs plugin bindings
+
+`Lune::Bindable` works on its own, and it also works on subclasses of `Lune::Plugin`. The difference is which JS file the generated stubs land in:
+
+- **`include Lune::Bindable`** alone — user binding. Stubs go to `lunejs/app/App.js`. Namespace is the Crystal class path verbatim (`Demo` → `Demo`/`api.Demo`, `Foo::Bar` → `Foo.Bar`/`api.Foo.Bar`).
+- **`class MyPlugin < Lune::Plugin` + `include Lune::Bindable`** — plugin binding. Stubs go to `lunejs/runtime/runtime.js`. The Crystal class path 1-to-1 maps to the JS path: `Lune::Plugins::Tray.show` → `Lune.Plugins.Tray.show` or `lune.Tray.show` (the `lune` alias is shorthand for `Lune.Plugins` baked into the generated runtime).
+
+The bridge id is identical in shape — `<Namespace>.<method>` where `Namespace` is `@type.name.stringify` with `::` swapped for `.`. No special prefix on plugin ids.
+
+Plugin authors get more than bindings — descriptors, dependency declarations, a `config do … end` macro, lifecycle hooks (`setup`, `init_webview`, `shutdown`), and platform gates. See [Authoring plugins](./authoring-plugins) for the full plugin API.
+
+---
+
 ## Low-level: `Lune::Installable`
 
 `Lune::Bindable` is built on top of `Lune::Installable`, a minimal interface with a single `install(app)` method. You can implement it directly when you need full control — for example, to register bindings with dynamic names or conditional logic:

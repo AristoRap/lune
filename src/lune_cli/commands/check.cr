@@ -19,7 +19,7 @@ module LuneCLI
         command.on_run do |_cmd, _args|
           Lune.logger.info { "Checking #{config.app_entry}..." }
 
-          if run(app_entry: config.app_entry)
+          if run(config)
             Lune.logger.info { "OK" }
           else
             raise Argy::Error.new("check failed")
@@ -34,10 +34,10 @@ module LuneCLI
         nil
       end
 
-      def run(app_entry : String) : Bool
+      def run(config : LuneCLI::Config) : Bool
         Process.run(
           "crystal",
-          ["build", app_entry, "-Dpreview_mt", "--no-codegen", "-Dexecution_context"],
+          ["build", config.app_entry, "-Dpreview_mt", "--no-codegen", "-Dexecution_context"],
           input: Process::Redirect::Inherit,
           output: Process::Redirect::Inherit,
           error: Process::Redirect::Inherit

@@ -1,6 +1,11 @@
 require "./demo"
 require "./file_menu"
+require "./counter"
 require "lune"
+
+# Register the custom Counter plugin alongside the built-ins. Third-party
+# shards would `Lune.use(MyPlugin.new)` from their own `main.cr` here.
+Lune.use(MyCustomPlugin::Counter.new)
 
 app = Lune::App.new
 app.install(Demo.new)
@@ -76,6 +81,14 @@ Lune.run(app, assets: "frontend/dist") do |opts|
   # opts.tray do |t|
   #   t.toggle_window_on = [:left_click] # popover-style: left-click drops the window
   # end
+
+  # Custom-plugin config sits on opts the same way built-in plugin config does.
+  # The `config do … end` macro on `Counter` reopens Lune::Options with this
+  # accessor; `start_at` is read in Counter#setup.
+  opts.counter do |c|
+    c.start_at = 100
+    c.step = 5
+  end
 
   opts.window_drag do |d|
     d.zone = "--lune-draggable"

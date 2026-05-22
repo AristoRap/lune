@@ -65,8 +65,7 @@ describe Lune::Native::Menu do
       item = JSON.parse(json)[0]["children"][0]
       item["kind"].as_s.should eq("text")
       item["label"].as_s.should eq("New")
-      item["key"].as_s.should eq("n")
-      item["modifiers"].as_i64.should eq(Lune::Options::Menu::Shortcut::CMD.to_i64)
+      item["shortcut"].as_s.should eq("cmd+n")
       item["enabled"].as_bool.should be_true
     end
 
@@ -117,14 +116,13 @@ describe Lune::Native::Menu do
       inner["children"][0]["label"].as_s.should eq("doc.txt")
     end
 
-    it "omits shortcut fields when shortcut is nil" do
+    it "emits empty shortcut when none is set" do
       opts = Lune::Options::Menu.new
       opts.submenu("File") { |f| f.item("Open") { } }
       Lune::Native::Menu.set_from_options(opts, "App")
       json = Lune::Native::MenuMock.last_menu_json.not_nil!
       item = JSON.parse(json)[0]["children"][0]
-      item["key"].as_s.should eq("")
-      item["modifiers"].as_i.should eq(0)
+      item["shortcut"].as_s.should eq("")
     end
   end
 

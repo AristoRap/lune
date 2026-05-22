@@ -98,7 +98,7 @@ module Lune
 
       # Apply enabled/disabled config, cascade-drop plugins whose hard deps
       # are inactive, and return a topologically sorted ResolvedSet with warnings.
-      def resolve(config : ConfigPlugins) : ResolvedSet
+      def resolve(config : Config::Plugins) : ResolvedSet
         warnings = [] of String
 
         # If the user explicitly listed plugins via `enabled:` and any of those are
@@ -154,7 +154,7 @@ module Lune
       # Warn about unknown names in the config enabled/disabled lists.
       # A name that's known but unavailable on this platform is NOT unknown —
       # it'll get info-logged by resolve() instead.
-      def validate(config : ConfigPlugins) : Nil
+      def validate(config : Config::Plugins) : Nil
         check = ->(names : Array(String), field : String) {
           names.each do |n|
             next if WILDCARD.includes?(n) || @known_names.includes?(n)
@@ -168,14 +168,14 @@ module Lune
       end
 
       # Kept for the runner until it switches to resolve().
-      def active(config : ConfigPlugins) : Array(Lune::Plugin)
+      def active(config : Config::Plugins) : Array(Lune::Plugin)
         apply_config(@all, config)
       end
 
       # Validate → resolve → log warnings → install BindPhase plugins into `target`.
       # Both the runtime path and build-mode path do this exact sequence; keep
       # them in lockstep so a new step (e.g. another phase) lands in one place.
-      def validate_resolve_install(config : ConfigPlugins, target : Lune::App) : ResolvedSet
+      def validate_resolve_install(config : Config::Plugins, target : Lune::App) : ResolvedSet
         validate(config)
         resolved = resolve(config)
         resolved.warnings.each { |w| Lune.logger.warn { w } }
@@ -183,7 +183,7 @@ module Lune
         resolved
       end
 
-      private def apply_config(plugins : Array(Lune::Plugin), config : ConfigPlugins) : Array(Lune::Plugin)
+      private def apply_config(plugins : Array(Lune::Plugin), config : Config::Plugins) : Array(Lune::Plugin)
         en = config.enabled
         di = config.disabled
 

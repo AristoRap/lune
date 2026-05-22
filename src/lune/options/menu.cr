@@ -31,8 +31,8 @@ module Lune
           Checkbox
           Radio
           Submenu
-          RoleApp   # macOS standard application menu (About, Services, Hide, Quit)
-          RoleEdit  # macOS standard edit menu (Undo, Redo, Cut, Copy, Paste, Select All)
+          RoleApp  # macOS standard application menu (About, Services, Hide, Quit)
+          RoleEdit # macOS standard edit menu (Undo, Redo, Cut, Copy, Paste, Select All)
         end
 
         getter id : String
@@ -53,7 +53,7 @@ module Lune
           @checked : Bool = false,
           @children : Array(Item) = [] of Item,
           @callback : (-> Nil)? = nil,
-          @checked_callback : (Bool -> Nil)? = nil
+          @checked_callback : (Bool -> Nil)? = nil,
         )
           @id = UUID.random.to_s
         end
@@ -166,7 +166,9 @@ module Lune
       # shims (macOS NSMenu builder, Win32 menu builder, mock test recorder).
       # Output: an array of top-level item objects; each item carries `kind`,
       # plus per-kind fields (`label`/`children` for submenus, `id`/`label`/
-      # `enabled`/`checked`/`key`/`modifiers` for clickable items).
+      # `enabled`/`checked`/`shortcut` for clickable items). `shortcut` is
+      # the raw human-readable string (`"cmd+n"`) — each native menu builder
+      # parses it itself, the same way `Native::Hotkeys` does.
       def to_json : String
         JSON.build do |json|
           json.array do
@@ -197,14 +199,7 @@ module Lune
             json.field "label", item.label
             json.field "enabled", item.enabled
             json.field "checked", item.checked
-            if sc = item.shortcut
-              parsed = Shortcut.parse(sc)
-              json.field "key", parsed.key
-              json.field "modifiers", parsed.modifiers
-            else
-              json.field "key", ""
-              json.field "modifiers", 0
-            end
+            json.field "shortcut", item.shortcut || ""
           end
         end
       end

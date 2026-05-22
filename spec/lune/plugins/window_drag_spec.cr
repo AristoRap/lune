@@ -45,7 +45,7 @@ describe Lune::Plugins::WindowDrag do
     {% if flag?(:darwin) %}
       it "can be excluded via config on darwin" do
         r = Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new, -> { })
-        resolved = r.resolve(Lune::ConfigPlugins.new(enabled: nil, disabled: ["window_drag"]))
+        resolved = r.resolve(Lune::Config::Plugins.new(enabled: nil, disabled: ["window_drag"]))
         resolved.plugins.map(&.name).should_not contain("window_drag")
       end
     {% end %}
