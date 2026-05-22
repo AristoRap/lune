@@ -24,19 +24,21 @@ module Lune
 
       def init_webview(ctx : WebviewCtx) : Nil
         return if @css_var.empty?
-
         {% if flag?(:darwin) %}
           handle = @handle
-          start_drag_key = "#{Lune::Capability::BRIDGE_MARKER}.startDrag"
-
           Native::Window.setup_drag_monitor
-
-          ctx.wv.bind(start_drag_key, Webview::JSProc.new { |_args|
+          ctx.wv.bind("#{Lune::Capability::BRIDGE_MARKER}.startDrag", Webview::JSProc.new { |_args|
             Native::Window.start_window_drag(handle)
             JSON::Any.new(nil)
           })
+        {% end %}
+      end
 
-          ctx.wv.init(<<-JS)
+      def init_js : String?
+        return nil if @css_var.empty?
+        {% if flag?(:darwin) %}
+          start_drag_key = "#{Lune::Capability::BRIDGE_MARKER}.startDrag"
+          <<-JS
           (function(){
             document.addEventListener('mousedown', function(e) {
               var el = e.target;
@@ -50,6 +52,8 @@ module Lune
             }, true);
           })();
           JS
+        {% else %}
+          nil
         {% end %}
       end
     end

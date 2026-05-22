@@ -76,7 +76,7 @@
         end
 
         def self.set_right_click_cb(cb : (-> Nil)?)
-          # no-op in tests
+          # not tracked in tests
         end
 
         def self.popup_menu : Nil

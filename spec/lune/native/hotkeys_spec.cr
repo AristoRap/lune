@@ -21,7 +21,7 @@ describe Lune::Native::Hotkeys do
       second.should eq("Ctrl+K")
     end
 
-    it "is a no-op when simulate is called before init" do
+    it "does nothing when simulate is called before init" do
       Lune::Native::HotkeysMock.simulate("Ctrl+K")
     end
   end

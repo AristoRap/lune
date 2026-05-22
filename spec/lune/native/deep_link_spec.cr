@@ -27,7 +27,7 @@ describe Lune::Native::DeepLink do
       second.should eq("myapp://x")
     end
 
-    it "is a no-op when simulate is called before any handler is installed" do
+    it "does nothing when simulate is called before any handler is installed" do
       Lune::Native::DeepLinkMock.simulate("myapp://x")
     end
   end

@@ -59,10 +59,14 @@ module Lune
         on_drop : (Int32, Int32, Array(String)) -> Nil = use_drop_zones ? drop_with_zones(wv, user_callback, bm) : drop_global(wv, app, user_callback, bm)
 
         Native::Window.setup_file_drop(handle, on_drop, on_pos, drag_pos_fn, drop_check_fn)
+      end
 
+      def init_js : String?
+        drop = @options
+        use_drop_zones = !drop.zone.empty?
         drop_prop = use_drop_zones ? drop.zone : nil
         drop_val = use_drop_zones ? drop.value : nil
-        wv.init(js_init(drop_prop, drop_val, bm))
+        js_init(drop_prop, drop_val, BRIDGE_MARKER)
       end
 
       def js_helpers : String
@@ -82,7 +86,7 @@ module Lune
 
       # `on`/`off` are event subscriptions returning void; throwing here would
       # crash app init since drop-handlers are typically wired up front. Warn
-      # once and no-op instead so the rest of the app keeps running.
+      # once and skip instead so the rest of the app keeps running.
       def unavailable_js_stub(platform : Symbol) : String?
         ns = binding_namespace
         msg = "#{ns} is not available on #{platform} — drop events will not fire."
@@ -91,7 +95,7 @@ module Lune
           var _warned = false;
           return {
             on(cb) { if (!_warned) { _warned = true; console.warn(#{msg.inspect}); } },
-            off()  { /* noop */ },
+            off()  { },
           };
         })();
         JS

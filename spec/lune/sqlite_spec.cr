@@ -73,7 +73,7 @@ describe Lune::Capabilities::Sqlite do
       result.raw.should be_nil
     end
 
-    it "close on unknown db_id is a no-op" do
+    it "close on unknown db_id does nothing" do
       cap = Lune::Capabilities::Sqlite.new
       app = Lune::App.new
       app.install(cap)

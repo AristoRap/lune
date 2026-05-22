@@ -363,8 +363,8 @@
         end
 
         # Release the previous HICON, if any. Safe to call unconditionally;
-        # no-op when nothing is pending. Must be called AFTER Shell_NotifyIcon
-        # has switched to the new HICON.
+        # returns early when nothing is pending. Must be called AFTER
+        # Shell_NotifyIcon has switched to the new HICON.
         private def self.destroy_pending_win32_icon : Nil
           return if @@win32_pending_destroy.null?
           LibUser32Tray.destroy_icon(@@win32_pending_destroy)

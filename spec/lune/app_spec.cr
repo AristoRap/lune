@@ -235,7 +235,7 @@ describe Lune::App do
         count.should eq(0)
       end
 
-      it "is a no-op for an event with no handlers" do
+      it "does nothing for an event with no handlers" do
         app = Lune::App.new
         app.events.off("nonexistent") # must not raise
       end
@@ -291,7 +291,7 @@ describe Lune::App do
 
   describe "#stream" do
     describe "#send" do
-      it "is a no-op when no sender is set" do
+      it "does nothing when no sender is set" do
         app = Lune::App.new
         app.stream.send("tick", {price: 100}) # must not raise
       end
@@ -376,7 +376,7 @@ describe Lune::App do
         count.should eq(0)
       end
 
-      it "is a no-op for a name with no handlers" do
+      it "does nothing for a name with no handlers" do
         app = Lune::App.new
         app.stream.off("nonexistent") # must not raise
       end
@@ -424,7 +424,7 @@ describe Lune::App do
       bridge.last_eval.should eq("")
     end
 
-    it "is a no-op when closing without a bridge" do
+    it "does nothing when closing without a bridge" do
       app = Lune::App.new
       app.close! # must not raise — idempotent close
     end

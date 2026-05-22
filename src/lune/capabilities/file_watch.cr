@@ -71,7 +71,7 @@ module Lune
 
       # On unsupported platforms `watch`/`unwatch` reject loudly (they're real
       # API calls users await), while the event-subscription helpers (`on`/
-      # `once`/`off`) silently no-op + one-time console.warn — they return void
+      # `once`/`off`) silently skip + one-time console.warn — they return void
       # in the live API, so throwing here would crash app init for code that
       # wires subscriptions up front.
       def unavailable_js_stub(platform : Symbol) : String?
@@ -86,7 +86,7 @@ module Lune
             unwatch(path) { return Promise.reject(new LuneError("UNAVAILABLE_ON_PLATFORM", #{msg.call("unwatch").inspect})); },
             on(cb)        { _warn(#{msg.call("on").inspect}); },
             once(cb)      { _warn(#{msg.call("once").inspect}); },
-            off(cb)       { /* noop */ },
+            off(cb)       { },
           };
         })();
         JS

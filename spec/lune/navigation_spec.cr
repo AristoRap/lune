@@ -1,5 +1,12 @@
 require "../spec_helper"
 
+private def nav_with_callback : Lune::Capabilities::Navigation
+  cap = Lune::Capabilities::Navigation.new
+  opts = Lune::Options.new.tap { |o| o.on_navigate = ->(_u : String) {} }
+  cap.setup(Lune::Capability::SetupCtx.new(opts, Pointer(Void).null))
+  cap
+end
+
 describe Lune::Capabilities::Navigation do
   describe "descriptor" do
     it "has correct id and label" do
@@ -26,7 +33,7 @@ describe Lune::Capabilities::Navigation do
       Lune::Capabilities::Navigation.new.is_a?(Lune::Capability::WebviewInject).should be_true
     end
 
-    it "does not include BindPhase (no JS namespace exposed)" do
+    it "does not include Bindable (no JS namespace exposed)" do
       Lune::Capabilities::Navigation.new.is_a?(Lune::Bindable).should be_false
     end
   end
@@ -45,35 +52,33 @@ describe Lune::Capabilities::Navigation do
     end
   end
 
-  describe ".init_js" do
+  describe "#init_js" do
+    it "returns nil when no on_navigate is configured" do
+      Lune::Capabilities::Navigation.new.init_js.should be_nil
+    end
+
     it "listens for popstate" do
-      js = Lune::Capabilities::Navigation.init_js("__lune.navigate")
-      js.should contain("'popstate'")
+      nav_with_callback.init_js.not_nil!.should contain("'popstate'")
     end
 
     it "listens for hashchange" do
-      js = Lune::Capabilities::Navigation.init_js("__lune.navigate")
-      js.should contain("'hashchange'")
+      nav_with_callback.init_js.not_nil!.should contain("'hashchange'")
     end
 
     it "patches history.pushState so SPA routers fire on_navigate" do
-      js = Lune::Capabilities::Navigation.init_js("__lune.navigate")
-      js.should contain("history.pushState = ")
+      nav_with_callback.init_js.not_nil!.should contain("history.pushState = ")
     end
 
     it "patches history.replaceState so SPA routers fire on_navigate" do
-      js = Lune::Capabilities::Navigation.init_js("__lune.navigate")
-      js.should contain("history.replaceState = ")
+      nav_with_callback.init_js.not_nil!.should contain("history.replaceState = ")
     end
 
-    it "calls back through the supplied bridge key" do
-      js = Lune::Capabilities::Navigation.init_js("__lune.navigate")
-      js.should contain("\"__lune.navigate\"")
+    it "calls back through the bridge key" do
+      nav_with_callback.init_js.not_nil!.should contain("\"__lune.navigate\"")
     end
 
     it "dedupes back-to-back fires for the same URL (vue-router hash mode triggers both pushState and hashchange per click)" do
-      js = Lune::Capabilities::Navigation.init_js("__lune.navigate")
-      # The JS must remember the last URL it forwarded and skip if unchanged.
+      js = nav_with_callback.init_js.not_nil!
       js.should contain("_last")
       js.should match(/===?\s*_last|_last\s*===?/)
     end

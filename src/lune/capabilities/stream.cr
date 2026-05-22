@@ -38,12 +38,7 @@ module Lune
       @port : Int32 = 0
 
       def init_webview(ctx : WebviewCtx) : Nil
-        if @port != 0
-          inject_client_js(ctx.wv)
-          return
-        end
-
-        wv = ctx.wv
+        return if @port != 0
         app = ctx.app
         sockets = [] of HTTP::WebSocket
         mu = Mutex.new
@@ -103,17 +98,14 @@ module Lune
           copies = mu.synchronize { sockets.dup }
           copies.each { |ws| ws.send(%({"n":#{n.to_json},"d":#{json}})) rescue nil }
         }
-
-        inject_client_js(wv)
       end
 
-      # Injects only the WebSocket client JS — used by secondary windows to
-      # connect to the already-running stream server without starting a new one.
-      def inject_client_js(wv : Webview::Webview) : Nil
-        return if @port == 0
+      # WebSocket client JS; nil until init_webview has bound the port.
+      def init_js : String?
+        return nil if @port == 0
         port = @port
         bm = BRIDGE_MARKER
-        wv.init(<<-JS)
+        <<-JS
         (function(){
           var _h = {};
           var _q = [];

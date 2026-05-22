@@ -31,8 +31,6 @@ module Lune
           end
           JSON::Any.new(nil)
         })
-
-        ctx.wv.init(Navigation.init_js(navigate_key))
       end
 
       # popstate / hashchange are the only events the browser fires on its
@@ -42,7 +40,9 @@ module Lune
       # URL because vue-router hash mode calls pushState AND mutates
       # location.hash on every navigation — without the guard, every click
       # would fire on_navigate twice.
-      def self.init_js(navigate_key : String) : String
+      def init_js : String?
+        return nil unless @on_navigate
+        navigate_key = "#{Lune::Capability::BRIDGE_MARKER}.navigate"
         <<-JS
         (function(){
           var _last;

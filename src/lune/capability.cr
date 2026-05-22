@@ -64,7 +64,8 @@ module Lune
     # handled separately from these lifecycle hooks.
     # -------------------------------------------------------------------------
 
-    # Include if this capability injects JS or registers raw wv.bind calls (runtime only).
+    # Include if the capability needs the webview object itself (wv.bind /
+    # wv.dispatch / wv.eval). Boot-time JS injection goes through `init_js`.
     module WebviewInject
       abstract def init_webview(ctx : WebviewCtx) : Nil
     end
@@ -87,17 +88,11 @@ module Lune
 
     abstract def descriptor : Descriptor
 
-    # Default no-op: capabilities that `include Lune::Bindable` get this
-    # overridden by the macro with the actual binding registrations.
+    # Overridden by Lune::Bindable's macro to register annotated methods.
     def install(app : Lune::App) : Nil
     end
 
-    # A JS string the runner should inject into every webview at boot
-    # (via `wv.init`). Default nil — capabilities that need a boot-time
-    # JS shim return their script here instead of touching the webview
-    # directly. For capabilities that need to register raw JS-to-Crystal
-    # callbacks (wv.bind) or wire up native handle callbacks, use the
-    # `WebviewInject` phase module instead.
+    # Boot-time JS the runner injects via `wv.init`. Return nil to skip.
     def init_js : String?
       nil
     end
@@ -115,7 +110,6 @@ module Lune
     end
 
     # Phase 0: pull options / handle into instance vars before install or init_webview.
-    # Default no-op — stateless capabilities don't need to override.
     def setup(ctx : SetupCtx) : Nil
     end
 

@@ -115,7 +115,7 @@ describe Lune::Capabilities::Shell do
       app = Lune::App.new
       app.install(cap)
       kill_b = app.bindings.find { |b| b.id == "__lune.shell.kill" }.not_nil!
-      # killing a non-existent pid is a no-op
+      # killing a non-existent pid does nothing
       result = kill_b.callback.call([JSON::Any.new("nonexistent")])
       result.raw.should be_nil
     end
@@ -131,7 +131,7 @@ describe Lune::Capabilities::Shell do
       result["code"].as_i.should eq(0)
     end
 
-    it "write to nonexistent pid is a no-op" do
+    it "write to nonexistent pid does nothing" do
       cap = Lune::Capabilities::Shell.new
       app = Lune::App.new
       app.install(cap)
@@ -140,7 +140,7 @@ describe Lune::Capabilities::Shell do
       result.raw.should be_nil
     end
 
-    it "close_stdin to nonexistent pid is a no-op" do
+    it "close_stdin to nonexistent pid does nothing" do
       cap = Lune::Capabilities::Shell.new
       app = Lune::App.new
       app.install(cap)

@@ -96,7 +96,7 @@
         end
 
         # The remaining methods are darwin-specific (NSWindow / NSApplication
-        # vocabulary); Linux silently no-ops to preserve a uniform API.
+        # vocabulary); Linux silently does nothing to preserve a uniform API.
         def self.set_titlebar_transparent(handle : Void*, full_size_content : Bool); end
         def self.set_background_transparent(handle : Void*); end
         def self.setup_drag_monitor; end

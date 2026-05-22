@@ -18,19 +18,18 @@ module Lune
       end
 
       def init_webview(ctx : WebviewCtx) : Nil
-        bm = BRIDGE_MARKER
-        wv = ctx.wv
         app = ctx.app
-
-        js_emit_key = "#{BRIDGE_MARKER}.jsEmit"
-        wv.bind(js_emit_key, Webview::JSProc.new { |args|
+        ctx.wv.bind("#{BRIDGE_MARKER}.jsEmit", Webview::JSProc.new { |args|
           event = args[0]?.try(&.as_s) || ""
           data = args[1]? || JSON::Any.new(nil)
           app.events.dispatch(event, data)
           JSON::Any.new(nil)
         })
+      end
 
-        wv.init(<<-JS)
+      def init_js : String?
+        bm = BRIDGE_MARKER
+        <<-JS
         (function(){
           window.#{bm} = window.#{bm} || {};
           var _ll = {};
