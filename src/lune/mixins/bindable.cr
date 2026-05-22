@@ -17,16 +17,16 @@ module Lune
   # walks its methods, picks up every method tagged `@[Lune::Bind]`, and generates
   # an `install(app)` method that registers each as a `Lune::Binding`.
   #
-  # The output shape switches on whether the including class inherits from
-  # `Lune::Plugin`:
+  # User and plugin bindings share the same bridge-ID shape (`<Namespace>.<method>`).
+  # `internal:` only decides which JS file the binding lands in:
   #
   #   - User class (plain Bindable): namespace = class name, internal: false.
   #     Binding lands in `app.js` as `api.<Class>.method`.
   #
   #   - Plugin subclass: namespace = `binding_namespace`, internal: true.
-  #     Binding lands in `runtime.js` under the plugin's namespace and the
-  #     bridge ID is rooted at `__lune.`. Extra fields (TS types, JS arg
-  #     transforms) come from `@[BindOverride]` on the same method.
+  #     Binding lands in `runtime.js` (and the per-plugin file under `plugins/`)
+  #     under the plugin's namespace. Extra fields (TS types, JS arg transforms)
+  #     come from `@[BindOverride]` on the same method.
   module Bindable
     include Installable
     getter app : Lune::App = Lune::App.new
@@ -43,7 +43,7 @@ module Lune
                 {% async = bind_ann[:async] && bind_ann[:async].id == "true" ? true : false %}
                 app.register(Lune::Binding.new(
                   namespace: {% if is_plugin %}binding_namespace{% else %}{{ @type.name.stringify }}{% end %},
-                  method: {% if is_plugin %}"#{name}.{{ m.name }}"{% else %}{{ m.name.stringify }}{% end %},
+                  method: {{ m.name.stringify }},
                   args: {{ m.args.map(&.restriction.stringify) }} of String,
                   return_type: {{ m.return_type.stringify }},
                   internal: {{ is_plugin }},

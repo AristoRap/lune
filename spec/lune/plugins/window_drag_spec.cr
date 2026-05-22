@@ -26,8 +26,8 @@ describe Lune::Plugins::WindowDrag do
       Lune::Plugins::WindowDrag.new.is_a?(Lune::Plugin::WebviewInject).should be_true
     end
 
-    it "does not include BindPhase" do
-      Lune::Plugins::WindowDrag.new.is_a?(Lune::Bindable).should be_false
+    it "includes Bindable (start callback is a @[Bind] method)" do
+      Lune::Plugins::WindowDrag.new.is_a?(Lune::Bindable).should be_true
     end
   end
 

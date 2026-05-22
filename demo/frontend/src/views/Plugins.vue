@@ -2,10 +2,10 @@
 import { onMounted, ref } from "vue";
 import SectionHead from "../components/SectionHead.vue";
 
-// Availability is detected uniformly via window["plugins.__lune.<cap>"] === true.
+// Availability is detected uniformly via window["lune.plugins.<cap>"] === true.
 // The runner injects this sentinel for every active plugin before calling init_webview,
 // so excluded plugins leave no footprint. fns is display-only.
-const CAP_NS = "plugins.__lune";
+const CAP_NS = "lune.plugins";
 
 const ALL = [
   // Bridge — callable bindings registered over the bridge

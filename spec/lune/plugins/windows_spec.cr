@@ -51,16 +51,16 @@ describe Lune::Plugins::Windows do
       app = Lune::App.new
       app.install(cap)
       ids = app.bindings.map(&.id)
-      ids.should contain("__lune.windows.open")
-      ids.should contain("__lune.windows.close")
-      ids.should contain("__lune.windows.list")
+      ids.should contain("Windows.open")
+      ids.should contain("Windows.close")
+      ids.should contain("Windows.list")
     end
 
     it "list returns empty array when no extra windows are open" do
       cap = Lune::Plugins::Windows.new
       app = Lune::App.new
       app.install(cap)
-      list_b = app.bindings.find { |b| b.id == "__lune.windows.list" }.not_nil!
+      list_b = app.bindings.find { |b| b.id == "Windows.list" }.not_nil!
       result = list_b.callback.call([] of JSON::Any)
       result.as_a.should be_empty
     end

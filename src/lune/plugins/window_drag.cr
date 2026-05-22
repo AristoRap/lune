@@ -4,6 +4,7 @@ module Lune
     # e.g. `style="--lune-drag-zone: yes"`) such that mousedown on them drags
     # the OS window. Configure via `opts.drag.zone` / `opts.drag.value`.
     class WindowDrag < Lune::Plugin
+      include Lune::Bindable
       include Plugin::WebviewInject
 
       DESCRIPTOR = Descriptor.new(id: :window_drag, label: "WindowDrag", platforms: [:darwin])
@@ -25,26 +26,31 @@ module Lune
       def init_webview(ctx : WebviewCtx) : Nil
         return if @css_var.empty?
         {% if flag?(:darwin) %}
-          handle = @handle
           Native::Window.setup_drag_monitor
-          ctx.wv.bind("#{Lune::Plugin::BRIDGE_MARKER}.startDrag", Webview::JSProc.new { |_args|
-            Native::Window.start_window_drag(handle)
-            JSON::Any.new(nil)
-          })
+        {% end %}
+      end
+
+      # Called from init_js when mousedown lands on a drag-zone element.
+      # macOS-only; the platform gate at descriptor.platforms keeps this
+      # method from being invoked elsewhere.
+      @[Lune::Bind]
+      def start : Nil
+        {% if flag?(:darwin) %}
+          Native::Window.start_window_drag(@handle)
         {% end %}
       end
 
       def init_js : String?
         return nil if @css_var.empty?
         {% if flag?(:darwin) %}
-          start_drag_key = "#{Lune::Plugin::BRIDGE_MARKER}.startDrag"
+          start_key = "#{binding_namespace}.start"
           <<-JS
           (function(){
             document.addEventListener('mousedown', function(e) {
               var el = e.target;
               while (el) {
                 if (el.style && el.style.getPropertyValue(#{@css_var.inspect}).trim() === #{@css_val.inspect}) {
-                  window[#{start_drag_key.inspect}]();
+                  window[#{start_key.inspect}]();
                   return;
                 }
                 el = el.parentElement;

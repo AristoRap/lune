@@ -31,10 +31,6 @@ module Lune
         "Stream"
       end
 
-      def init_webview(wv : Webview::Webview, handle : Pointer(Void), app : Lune::App) : Nil
-        init_webview(WebviewCtx.new(wv, handle, app, Set(Symbol).new))
-      end
-
       @port : Int32 = 0
 
       def init_webview(ctx : WebviewCtx) : Nil

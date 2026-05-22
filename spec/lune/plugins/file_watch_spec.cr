@@ -47,8 +47,8 @@ describe Lune::Plugins::FileWatch do
       app = Lune::App.new
       app.install(cap)
       ids = app.bindings.map(&.id)
-      ids.should contain("__lune.file_watch.watch")
-      ids.should contain("__lune.file_watch.unwatch")
+      ids.should contain("FileWatch.watch")
+      ids.should contain("FileWatch.unwatch")
     end
   end
 

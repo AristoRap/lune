@@ -59,8 +59,8 @@ describe Lune::Plugins::Hotkeys do
       app = Lune::App.new
       app.install(cap)
       ids = app.bindings.map(&.id)
-      ids.should contain("__lune.hotkeys.register")
-      ids.should contain("__lune.hotkeys.unregister")
+      ids.should contain("Hotkeys.register")
+      ids.should contain("Hotkeys.unregister")
     end
 
     it "sets up the native hotkey callback without raising" do

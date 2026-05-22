@@ -21,10 +21,6 @@ module Lune
         !@options.zone.empty? || !@options.on_drop.nil? || @options.disable_webview_drop
       end
 
-      def init_webview(wv : Webview::Webview, handle : Pointer(Void), app : Lune::App) : Nil
-        init_webview(WebviewCtx.new(wv, handle, app, Set(Symbol).new))
-      end
-
       def init_webview(ctx : WebviewCtx) : Nil
         drop = @options
         wv = ctx.wv

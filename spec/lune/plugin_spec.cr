@@ -55,12 +55,12 @@ describe Lune::Plugin do
       Lune::Plugins::Filesystem.new.is_a?(Lune::Bindable).should be_true
     end
 
-    it "Events includes WebviewInject" do
-      Lune::Plugins::Events.new.is_a?(Lune::Plugin::WebviewInject).should be_true
+    it "Events includes Bindable (emit is a @[Bind] method, not hand-bound)" do
+      Lune::Plugins::Events.new.is_a?(Lune::Bindable).should be_true
     end
 
-    it "Events does not include Bindable" do
-      Lune::Plugins::Events.new.is_a?(Lune::Bindable).should be_false
+    it "Events does not include WebviewInject (no longer hand-binds via wv.bind)" do
+      Lune::Plugins::Events.new.is_a?(Lune::Plugin::WebviewInject).should be_false
     end
 
     it "Channel includes WebviewInject" do
@@ -124,7 +124,7 @@ describe Lune::Plugin do
       app = Lune::App.new
       app.install(sys)
 
-      binding = app.bindings.find { |b| b.id.ends_with?("system.environment") }
+      binding = app.bindings.find { |b| b.id == "System.environment" }
       binding.should_not be_nil
       result = binding.not_nil!.callback.call([] of JSON::Any)
       result["devtools"].as_bool.should be_true
@@ -236,14 +236,14 @@ describe Lune::Plugins::Registry do
     it "installs BindPhase plugins into the target app" do
       app = Lune::App.new
       make_registry.validate_resolve_install(config_enabled("clipboard"), app)
-      app.bindings.map(&.id).any?(&.includes?("clipboard")).should be_true
+      app.bindings.map(&.id).any?(&.starts_with?("Clipboard.")).should be_true
     end
 
     it "skips plugins that are not BindPhase" do
-      # Events is WebviewInject only — must not be installed via BindCtx.
+      # EditShortcuts is JS-only (init_js, no Bindable, no bindings to install).
       app = Lune::App.new
-      make_registry.validate_resolve_install(config_enabled("events"), app)
-      app.bindings.map(&.id).any?(&.includes?("events")).should be_false
+      make_registry.validate_resolve_install(config_enabled("edit_shortcuts"), app)
+      app.bindings.should be_empty
     end
 
     it "logs resolve warnings via Lune.logger" do

@@ -29,8 +29,12 @@ module Lune
         end
 
         unless ids.includes?(:events)
-          js_emit_key = "#{bm}.jsEmit"
-          wv.init("(function(){window.#{bm}=window.#{bm}||{};var n=function(){};window.#{bm}.crystalEmit=n;window.#{bm}.on=n;window.#{bm}.off=n;window[#{js_emit_key.inspect}]=function(){return Promise.resolve();};})();")
+          # No-op helpers for code that may call window.__lune.on/off/crystalEmit
+          # when the Events plugin is excluded. The Events.emit binding itself
+          # isn't here either; user code that imports `runtime.Events.emit`
+          # would get a ReferenceError from the generated runtime.js — which is
+          # the right shape because they've opted the plugin out.
+          wv.init("(function(){window.#{bm}=window.#{bm}||{};var n=function(){};window.#{bm}.crystalEmit=n;window.#{bm}.on=n;window.#{bm}.off=n;})();")
         end
         unless ids.includes?(:stream)
           wv.init("(function(){window.#{bm}=window.#{bm}||{};var n=function(){};window.#{bm}.stOn=n;window.#{bm}.stOff=n;window.#{bm}.stSend=n;})();")

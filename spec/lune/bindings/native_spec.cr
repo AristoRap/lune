@@ -28,27 +28,27 @@ describe "Lune::Plugins (native)" do
       install_all(handle).should be_a(Array(Lune::Binding))
     end
 
-    it "includes all expected plugin names" do
-      names = install_all(handle).map(&.method)
-      names.should contain("window.minimize")
-      names.should contain("window.maximize")
-      names.should contain("window.center")
-      names.should contain("window.set_title")
-      names.should contain("window.set_size")
-      names.should contain("dialogs.open_file")
-      names.should contain("dialogs.open_dir")
-      names.should contain("dialogs.open_files")
-      names.should contain("dialogs.save_file")
-      names.should contain("dialogs.message_info")
-      names.should contain("dialogs.message_warning")
-      names.should contain("dialogs.message_error")
-      names.should contain("dialogs.message_question")
-      names.should contain("tray.show")
-      names.should contain("tray.hide")
-      names.should contain("tray.set_icon")
-      names.should contain("tray.set_menu")
-      names.should contain("notifications.notify")
-      names.should contain("screen.info")
+    it "includes all expected plugin bindings (by id)" do
+      ids = install_all(handle).map(&.id)
+      ids.should contain("Window.minimize")
+      ids.should contain("Window.maximize")
+      ids.should contain("Window.center")
+      ids.should contain("Window.set_title")
+      ids.should contain("Window.set_size")
+      ids.should contain("Dialogs.open_file")
+      ids.should contain("Dialogs.open_dir")
+      ids.should contain("Dialogs.open_files")
+      ids.should contain("Dialogs.save_file")
+      ids.should contain("Dialogs.message_info")
+      ids.should contain("Dialogs.message_warning")
+      ids.should contain("Dialogs.message_error")
+      ids.should contain("Dialogs.message_question")
+      ids.should contain("Tray.show")
+      ids.should contain("Tray.hide")
+      ids.should contain("Tray.set_icon")
+      ids.should contain("Tray.set_menu")
+      ids.should contain("Notifications.notify")
+      ids.should contain("Screen.info")
     end
 
     it "marks all bindings as internal" do
@@ -66,7 +66,7 @@ describe "Lune::Plugins (native)" do
       app.install(window_cap)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.window.minimize", "seq1", [] of JSON::Any)
+      wv.invoke("Window.minimize", "seq1", [] of JSON::Any)
       Lune::Native::WindowMock.calls.should contain(:minimize)
     end
 
@@ -79,7 +79,7 @@ describe "Lune::Plugins (native)" do
       app.install(window_cap)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.window.maximize", "seq2", [] of JSON::Any)
+      wv.invoke("Window.maximize", "seq2", [] of JSON::Any)
       Lune::Native::WindowMock.calls.should contain(:maximize)
     end
 
@@ -92,7 +92,7 @@ describe "Lune::Plugins (native)" do
       app.install(window_cap)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.window.set_title", "seq3", [JSON::Any.new("My App")])
+      wv.invoke("Window.set_title", "seq3", [JSON::Any.new("My App")])
       Lune::Native::WindowMock.last_title.should eq("My App")
     end
 
@@ -105,7 +105,7 @@ describe "Lune::Plugins (native)" do
       app.install(window_cap)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.window.set_size", "seq4", [JSON::Any.new(1920_i64), JSON::Any.new(1080_i64)])
+      wv.invoke("Window.set_size", "seq4", [JSON::Any.new(1920_i64), JSON::Any.new(1080_i64)])
       Lune::Native::WindowMock.last_size.should eq({1920, 1080})
     end
 
@@ -118,7 +118,7 @@ describe "Lune::Plugins (native)" do
       app.install(window_cap)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.window.center", "seq5", [] of JSON::Any)
+      wv.invoke("Window.center", "seq5", [] of JSON::Any)
       Lune::Native::WindowMock.calls.should contain(:center)
     end
   end
@@ -132,7 +132,7 @@ describe "Lune::Plugins (native)" do
       app.install(Lune::Plugins::Dialogs.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.dialogs.open_file", "seq6", [JSON::Any.new("Pick")])
+      wv.invoke("Dialogs.open_file", "seq6", [JSON::Any.new("Pick")])
       Lune::Native::DialogsMock.calls.map(&.method).should contain(:open_file)
       wv.resolve_calls.find { |r| r[0] == "seq6" }.not_nil![2].should contain("/home/user/file.txt")
     end
@@ -145,7 +145,7 @@ describe "Lune::Plugins (native)" do
       app.install(Lune::Plugins::Dialogs.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.dialogs.save_file", "seq7", [JSON::Any.new("Save"), JSON::Any.new("data.csv")])
+      wv.invoke("Dialogs.save_file", "seq7", [JSON::Any.new("Save"), JSON::Any.new("data.csv")])
       Lune::Native::DialogsMock.calls.map(&.method).should contain(:save_file)
       wv.resolve_calls.find { |r| r[0] == "seq7" }.not_nil![2].should contain("/home/user/out.csv")
     end
@@ -158,7 +158,7 @@ describe "Lune::Plugins (native)" do
       app.install(Lune::Plugins::Dialogs.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.dialogs.open_dir", "seq8a", [JSON::Any.new("Pick folder")])
+      wv.invoke("Dialogs.open_dir", "seq8a", [JSON::Any.new("Pick folder")])
       Lune::Native::DialogsMock.calls.map(&.method).should contain(:open_dir)
       wv.resolve_calls.find { |r| r[0] == "seq8a" }.not_nil![2].should contain("/home/user/docs")
     end
@@ -171,7 +171,7 @@ describe "Lune::Plugins (native)" do
       app.install(Lune::Plugins::Dialogs.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.dialogs.open_files", "seq8b", [JSON::Any.new("Pick files")])
+      wv.invoke("Dialogs.open_files", "seq8b", [JSON::Any.new("Pick files")])
       Lune::Native::DialogsMock.calls.map(&.method).should contain(:open_files)
       result = JSON.parse(wv.resolve_calls.find { |r| r[0] == "seq8b" }.not_nil![2])
       result.as_a.map(&.as_s).should eq(["/a/one.txt", "/b/two.txt"])
@@ -184,7 +184,7 @@ describe "Lune::Plugins (native)" do
       app.install(Lune::Plugins::Dialogs.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.dialogs.message_info", "seq8c", [JSON::Any.new("Title"), JSON::Any.new("Hello")])
+      wv.invoke("Dialogs.message_info", "seq8c", [JSON::Any.new("Title"), JSON::Any.new("Hello")])
       Lune::Native::DialogsMock.calls.map(&.method).should contain(:message)
       _, status, _ = wv.resolve_calls.find { |r| r[0] == "seq8c" }.not_nil!
       status.should eq(0)
@@ -198,7 +198,7 @@ describe "Lune::Plugins (native)" do
       app.install(Lune::Plugins::Dialogs.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.dialogs.message_question", "seq8d", [JSON::Any.new("Confirm"), JSON::Any.new("Are you sure?")])
+      wv.invoke("Dialogs.message_question", "seq8d", [JSON::Any.new("Confirm"), JSON::Any.new("Are you sure?")])
       result = wv.resolve_calls.find { |r| r[0] == "seq8d" }.not_nil!
       result[1].should eq(0)
       JSON.parse(result[2]).as_s.should eq("Yes")
@@ -213,7 +213,7 @@ describe "Lune::Plugins (native)" do
       app.install(Lune::Plugins::Tray.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.tray.show", "seq8", [JSON::Any.new("/icon.png")])
+      wv.invoke("Tray.show", "seq8", [JSON::Any.new("/icon.png")])
       Lune::Native::TrayMock.calls.should contain(:show)
     end
 
@@ -224,7 +224,7 @@ describe "Lune::Plugins (native)" do
       app.install(Lune::Plugins::Tray.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.tray.hide", "seq9", [] of JSON::Any)
+      wv.invoke("Tray.hide", "seq9", [] of JSON::Any)
       Lune::Native::TrayMock.calls.should contain(:hide)
     end
 
@@ -235,7 +235,7 @@ describe "Lune::Plugins (native)" do
       app.install(Lune::Plugins::Tray.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.tray.set_icon", "seq10", [JSON::Any.new("/new.png")])
+      wv.invoke("Tray.set_icon", "seq10", [JSON::Any.new("/new.png")])
       Lune::Native::TrayMock.calls.should contain(:set_icon)
     end
 
@@ -249,7 +249,7 @@ describe "Lune::Plugins (native)" do
       bridge.register_bindings(app.bindings)
 
       json = %([{"id":"open","label":"Open"},{"id":"---","label":""},{"id":"quit","label":"Quit"}])
-      wv.invoke("__lune.tray.set_menu", "seq14", [JSON::Any.new(json)])
+      wv.invoke("Tray.set_menu", "seq14", [JSON::Any.new(json)])
       Lune::Native::TrayMock.calls.should contain(:set_menu)
       Lune::Native::TrayMock.simulate_menu_click("open")
       clicked_id.should eq("open")
@@ -263,7 +263,7 @@ describe "Lune::Plugins (native)" do
       bridge.register_bindings(app.bindings)
 
       json = %([{"id":"quit","label":"Quit"}])
-      wv.invoke("__lune.tray.set_menu", "seq15", [JSON::Any.new(json)])
+      wv.invoke("Tray.set_menu", "seq15", [JSON::Any.new(json)])
       Lune::Native::TrayMock.calls.should contain(:set_menu)
       Lune::Native::TrayMock.simulate_menu_click("quit")
     end
@@ -290,7 +290,7 @@ describe "Lune::Plugins (native)" do
       app.install(Lune::Plugins::Notifications.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.notifications.notify", "seq11", [JSON::Any.new("Hello"), JSON::Any.new("World")])
+      wv.invoke("Notifications.notify", "seq11", [JSON::Any.new("Hello"), JSON::Any.new("World")])
 
       # notifications.notify is async (its native impl shells out on Win32),
       # so the callback runs on @async_pool. Wait for the resolve to land.
@@ -315,7 +315,7 @@ describe "Lune::Plugins (native)" do
       app.install(Lune::Plugins::Screen.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.screen.info", "seq12", [] of JSON::Any)
+      wv.invoke("Screen.info", "seq12", [] of JSON::Any)
       resolved = wv.resolve_calls.find { |r| r[0] == "seq12" }.not_nil![2]
       resolved.should contain("2560")
       resolved.should contain("1440")
@@ -329,7 +329,7 @@ describe "Lune::Plugins (native)" do
       app.install(Lune::Plugins::Screen.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.screen.info", "seq13", [] of JSON::Any)
+      wv.invoke("Screen.info", "seq13", [] of JSON::Any)
       Lune::Native::ScreenMock.calls.should contain(:info)
     end
   end

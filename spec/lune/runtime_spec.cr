@@ -63,15 +63,23 @@ describe Lune::Generator do
     js.includes?("window.__lune.off").should be_true
   end
 
-  it "exports emit for JS-to-Crystal events" do
-    js = Lune::Generator.generate_runtime_js([] of Lune::Binding, events_caps)
+  it "exports emit as a regular @[Bind] method on Events" do
+    # emit moved from js_helpers into a real binding (Events.emit). Plugin
+    # bindings are passed explicitly to the generator alongside the cap.
+    events = Lune::Plugins::Events.new
+    app = Lune::App.new
+    app.install(events)
+    js = Lune::Generator.generate_runtime_js(app.bindings.select(&.internal?), events_caps)
 
     js.includes?("emit(name, data)").should be_true
-    js.includes?("__lune.jsEmit").should be_true
+    js.includes?(%("Events.emit")).should be_true
   end
 
   it "declares emit in runtime.d.ts" do
-    dts = Lune::Generator.generate_runtime_dts([] of Lune::Binding, events_caps)
+    events = Lune::Plugins::Events.new
+    app = Lune::App.new
+    app.install(events)
+    dts = Lune::Generator.generate_runtime_dts(app.bindings.select(&.internal?), events_caps)
 
     dts.includes?("emit(name: string").should be_true
   end
@@ -83,9 +91,9 @@ describe Lune::Generator do
     js.includes?("quit()").should be_true
     js.includes?("openUrl(").should be_true
     js.includes?("environment()").should be_true
-    js.includes?("__lune.system.quit").should be_true
-    js.includes?("__lune.system.open_url").should be_true
-    js.includes?("__lune.system.environment").should be_true
+    js.includes?("System.quit").should be_true
+    js.includes?("System.open_url").should be_true
+    js.includes?("System.environment").should be_true
   end
 
   it "generates runtime.d.ts with typed namespace interfaces" do

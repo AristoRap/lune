@@ -25,7 +25,7 @@ module Lune
 
       def init_js : String?
         bm = BRIDGE_MARKER
-        ctx_show_id = "#{bm}.context_menu.show"
+        show_key = "#{binding_namespace}.show"
         <<-JS
         (function(){
           window.#{bm} = window.#{bm} || {};
@@ -36,7 +36,7 @@ module Lune
           document.addEventListener('contextmenu', function(e) {
             if (!_ctx_items) return;
             e.preventDefault();
-            window[#{ctx_show_id.inspect}](e.clientX, e.clientY, JSON.stringify(_ctx_items));
+            window[#{show_key.inspect}](e.clientX, e.clientY, JSON.stringify(_ctx_items));
           });
         })();
         JS

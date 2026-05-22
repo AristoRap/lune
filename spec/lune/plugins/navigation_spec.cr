@@ -29,12 +29,12 @@ describe Lune::Plugins::Navigation do
   end
 
   describe "phase membership" do
-    it "includes WebviewInject" do
-      Lune::Plugins::Navigation.new.is_a?(Lune::Plugin::WebviewInject).should be_true
+    it "includes Bindable (changed callback is a @[Bind] method)" do
+      Lune::Plugins::Navigation.new.is_a?(Lune::Bindable).should be_true
     end
 
-    it "does not include Bindable (no JS namespace exposed)" do
-      Lune::Plugins::Navigation.new.is_a?(Lune::Bindable).should be_false
+    it "does not include WebviewInject (no longer hand-binds via wv.bind)" do
+      Lune::Plugins::Navigation.new.is_a?(Lune::Plugin::WebviewInject).should be_false
     end
   end
 
@@ -73,8 +73,8 @@ describe Lune::Plugins::Navigation do
       nav_with_callback.init_js.not_nil!.should contain("history.replaceState = ")
     end
 
-    it "calls back through the bridge key" do
-      nav_with_callback.init_js.not_nil!.should contain("\"__lune.navigate\"")
+    it "calls back through the Navigation.changed binding" do
+      nav_with_callback.init_js.not_nil!.should contain("\"Navigation.changed\"")
     end
 
     it "dedupes back-to-back fires for the same URL (vue-router hash mode triggers both pushState and hashchange per click)" do

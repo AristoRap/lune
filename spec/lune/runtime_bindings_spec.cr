@@ -28,7 +28,7 @@ describe "Lune::Plugins" do
       app.install(Lune::Plugins::System.new(on_quit: -> { quit_called = true; nil }))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.system.quit", "seq-1", [] of JSON::Any)
+      fake.invoke("System.quit", "seq-1", [] of JSON::Any)
       quit_called.should be_true
     end
 
@@ -42,7 +42,7 @@ describe "Lune::Plugins" do
       ))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.system.open_url", "seq-2", [JSON::Any.new("https://example.com")])
+      fake.invoke("System.open_url", "seq-2", [JSON::Any.new("https://example.com")])
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -61,7 +61,7 @@ describe "Lune::Plugins" do
       app.install(Lune::Plugins::System.new(on_quit: -> { }, devtools: true))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.system.environment", "seq-3", [] of JSON::Any)
+      fake.invoke("System.environment", "seq-3", [] of JSON::Any)
       _seq, status, result = fake.resolve_calls[0]
       status.should eq(0)
       env = JSON.parse(result)
@@ -76,7 +76,7 @@ describe "Lune::Plugins" do
       app.install(Lune::Plugins::System.new(on_quit: -> { }, devtools: false))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.system.environment", "seq-4", [] of JSON::Any)
+      fake.invoke("System.environment", "seq-4", [] of JSON::Any)
       env = JSON.parse(fake.resolve_calls[0][2])
       env["devtools"].as_bool.should be_false
     end
@@ -87,7 +87,7 @@ describe "Lune::Plugins" do
       app.install(Lune::Plugins::System.new(on_quit: -> { }))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.system.environment", "seq-5", [] of JSON::Any)
+      fake.invoke("System.environment", "seq-5", [] of JSON::Any)
       env = JSON.parse(fake.resolve_calls[0][2])
       ["darwin", "linux", "windows"].should contain(env["os"].as_s)
     end
@@ -100,7 +100,7 @@ describe "Lune::Plugins" do
       app.install(Lune::Plugins::Filesystem.new)
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.filesystem.home_dir", "seq-6", [] of JSON::Any)
+      fake.invoke("Filesystem.home_dir", "seq-6", [] of JSON::Any)
       _, _, result = fake.resolve_calls[0]
       JSON.parse(result).as_s.should eq(Path.home.to_s)
     end
@@ -111,7 +111,7 @@ describe "Lune::Plugins" do
       app.install(Lune::Plugins::Filesystem.new)
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.filesystem.temp_dir", "seq-7", [] of JSON::Any)
+      fake.invoke("Filesystem.temp_dir", "seq-7", [] of JSON::Any)
       _, _, result = fake.resolve_calls[0]
       JSON.parse(result).as_s.should eq(Dir.tempdir)
     end
@@ -122,7 +122,7 @@ describe "Lune::Plugins" do
       app.install(Lune::Plugins::Filesystem.new)
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.filesystem.downloads_dir", "seq-8", [] of JSON::Any)
+      fake.invoke("Filesystem.downloads_dir", "seq-8", [] of JSON::Any)
       _, _, result = fake.resolve_calls[0]
       JSON.parse(result).as_s.should start_with(Path.home.to_s)
     end
@@ -133,7 +133,7 @@ describe "Lune::Plugins" do
       app.install(Lune::Plugins::Filesystem.new)
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.filesystem.app_data_dir", "seq-9", [] of JSON::Any)
+      fake.invoke("Filesystem.app_data_dir", "seq-9", [] of JSON::Any)
       _, _, result = fake.resolve_calls[0]
       JSON.parse(result).as_s.should_not be_empty
     end
@@ -148,7 +148,7 @@ describe "Lune::Plugins" do
       ))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.clipboard.read", "seq-10", [] of JSON::Any)
+      fake.invoke("Clipboard.read", "seq-10", [] of JSON::Any)
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -170,7 +170,7 @@ describe "Lune::Plugins" do
       ))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.clipboard.write", "seq-11", [JSON::Any.new("hello clipboard")])
+      fake.invoke("Clipboard.write", "seq-11", [JSON::Any.new("hello clipboard")])
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -191,7 +191,7 @@ describe "Lune::Plugins" do
       ))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.clipboard.read_html", "seq-20", [] of JSON::Any)
+      fake.invoke("Clipboard.read_html", "seq-20", [] of JSON::Any)
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -213,7 +213,7 @@ describe "Lune::Plugins" do
       ))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.clipboard.write_html", "seq-21", [JSON::Any.new("<p>hi</p>")])
+      fake.invoke("Clipboard.write_html", "seq-21", [JSON::Any.new("<p>hi</p>")])
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -234,7 +234,7 @@ describe "Lune::Plugins" do
       ))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.clipboard.read_image", "seq-22", [] of JSON::Any)
+      fake.invoke("Clipboard.read_image", "seq-22", [] of JSON::Any)
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -261,7 +261,7 @@ describe "Lune::Plugins" do
       ))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.clipboard.read_image", "seq-img-err", [] of JSON::Any)
+      fake.invoke("Clipboard.read_image", "seq-img-err", [] of JSON::Any)
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -285,7 +285,7 @@ describe "Lune::Plugins" do
       ))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.clipboard.write_image", "seq-23", [JSON::Any.new("data:image/png;base64,abc123")])
+      fake.invoke("Clipboard.write_image", "seq-23", [JSON::Any.new("data:image/png;base64,abc123")])
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -311,7 +311,7 @@ describe "Lune::Plugins" do
       bridge.register_bindings(app.bindings)
 
       items_json = "[{\"id\":\"copy\",\"label\":\"Copy\"}]"
-      fake.invoke("__lune.context_menu.show", "seq-40", [
+      fake.invoke("ContextMenu.show", "seq-40", [
         JSON::Any.new(15.0_f64),
         JSON::Any.new(25.0_f64),
         JSON::Any.new(items_json),
@@ -334,7 +334,7 @@ describe "Lune::Plugins" do
       bridge.register_bindings(app.bindings)
 
       items_json = "[{\"id\":\"copy\",\"label\":\"Copy\"}]"
-      fake.invoke("__lune.context_menu.show", "seq-41", [
+      fake.invoke("ContextMenu.show", "seq-41", [
         JSON::Any.new(0.0_f64),
         JSON::Any.new(0.0_f64),
         JSON::Any.new(items_json),
@@ -358,7 +358,7 @@ describe "Lune::Plugins" do
       app.install(Lune::Plugins::Tray.new)
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.tray.show", "seq-tray-1", [JSON::Any.new("")])
+      fake.invoke("Tray.show", "seq-tray-1", [JSON::Any.new("")])
 
       Lune::Native::TrayMock.calls.should contain(:show)
       Lune::Native::TrayMock.last_click_cb.should_not be_nil
@@ -371,7 +371,7 @@ describe "Lune::Plugins" do
       app.install(Lune::Plugins::Tray.new)
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.tray.show", "seq-tray-2", [JSON::Any.new("")])
+      fake.invoke("Tray.show", "seq-tray-2", [JSON::Any.new("")])
       Lune::Native::TrayMock.simulate_click
 
       fake.eval_calls.any?(&.includes?("left_click")).should be_true
@@ -383,7 +383,7 @@ describe "Lune::Plugins" do
       app.install(Lune::Plugins::Tray.new)
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.tray.popup_menu", "seq-tray-3", [] of JSON::Any)
+      fake.invoke("Tray.popup_menu", "seq-tray-3", [] of JSON::Any)
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -404,7 +404,7 @@ describe "Lune::Plugins" do
       app.install(Lune::Plugins::Tray.new(on_tray_click: -> { clicked += 1; nil }))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.tray.show", "seq-tray-5", [JSON::Any.new("")])
+      fake.invoke("Tray.show", "seq-tray-5", [JSON::Any.new("")])
       Lune::Native::TrayMock.simulate_click
 
       clicked.should eq(1)
@@ -447,7 +447,7 @@ describe "Lune::Plugins" do
       bridge.register_bindings(app.bindings)
 
       paths_json = "[\"/etc/hosts\",\"/etc/shells\"]"
-      fake.invoke("__lune.drag_out.start", "seq-50", [JSON::Any.new(paths_json)])
+      fake.invoke("DragOut.start", "seq-50", [JSON::Any.new(paths_json)])
 
       _, status, _ = fake.resolve_calls[0]
       status.should eq(0)
@@ -461,51 +461,56 @@ describe "Lune::Plugins" do
       app = Lune::App.new
       Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |cap| app.install(cap) }
 
-      methods = app.bindings.map(&.method)
+      ids = app.bindings.map(&.id)
 
       # These bindings exist on every platform — regressions here mean a
       # cross-platform plugin's `install` quietly dropped a binding.
-      methods.should contain("system.quit")
-      methods.should contain("system.environment")
-      methods.should contain("system.open_url")
-      methods.should contain("filesystem.home_dir")
-      methods.should contain("clipboard.read")
-      methods.should contain("clipboard.write")
-      methods.should contain("clipboard.read_html")
-      methods.should contain("clipboard.write_html")
-      methods.should contain("clipboard.read_image")
-      methods.should contain("clipboard.write_image")
-      methods.should contain("context_menu.show")
-      methods.should contain("window.minimize")
-      methods.should contain("dialogs.open_file")
-      methods.should contain("notifications.notify")
-      methods.should contain("screen.info")
+      ids.should contain("System.quit")
+      ids.should contain("System.environment")
+      ids.should contain("System.open_url")
+      ids.should contain("Filesystem.home_dir")
+      ids.should contain("Clipboard.read")
+      ids.should contain("Clipboard.write")
+      ids.should contain("Clipboard.read_html")
+      ids.should contain("Clipboard.write_html")
+      ids.should contain("Clipboard.read_image")
+      ids.should contain("Clipboard.write_image")
+      ids.should contain("ContextMenu.show")
+      ids.should contain("Window.minimize")
+      ids.should contain("Dialogs.open_file")
+      ids.should contain("Notifications.notify")
+      ids.should contain("Screen.info")
+      ids.should contain("Events.emit")
+      ids.should contain("Navigation.changed")
     end
 
     it "registers platform-gated bindings only on supported platforms" do
       app = Lune::App.new
       Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |cap| app.install(cap) }
-      methods = app.bindings.map(&.method)
+      ids = app.bindings.map(&.id)
 
       case Lune::Plugins::CURRENT_PLATFORM
       when :darwin
-        methods.should contain("drag_out.start")
-        methods.should contain("tray.show")
-        methods.should contain("tray.set_menu")
-        methods.should contain("tray.popup_menu")
-        methods.should contain("file_watch.watch")
+        ids.should contain("DragOut.start")
+        ids.should contain("WindowDrag.start")
+        ids.should contain("Tray.show")
+        ids.should contain("Tray.set_menu")
+        ids.should contain("Tray.popup_menu")
+        ids.should contain("FileWatch.watch")
       when :linux
-        methods.should_not contain("drag_out.start")
-        methods.should contain("tray.show")
-        methods.should contain("file_watch.watch")
+        ids.should_not contain("DragOut.start")
+        ids.should_not contain("WindowDrag.start")
+        ids.should contain("Tray.show")
+        ids.should contain("FileWatch.watch")
       when :win32
-        methods.should_not contain("drag_out.start")
+        ids.should_not contain("DragOut.start")
+        ids.should_not contain("WindowDrag.start")
         # Tray ships fully on Win32 — show/hide/clicks via Shell_NotifyIconW,
         # menus via CreatePopupMenu + TrackPopupMenu, icons via LoadImageW.
-        methods.should contain("tray.show")
-        methods.should contain("tray.hide")
-        methods.should contain("tray.set_menu")
-        methods.should_not contain("file_watch.watch")
+        ids.should contain("Tray.show")
+        ids.should contain("Tray.hide")
+        ids.should contain("Tray.set_menu")
+        ids.should_not contain("FileWatch.watch")
       end
     end
 
@@ -522,14 +527,16 @@ describe "Lune::Plugins" do
 
       # Per-platform totals — bump these when you add/remove a binding on any
       # plugin. Decreases when a plugin is platform-gated out.
-      #   darwin = 60 baseline
-      #   linux  = 60 - DragOut(1)                              = 59
-      #   win32  = 60 - DragOut(1) - FileWatch(2)               = 57
+      # Baseline now includes Events.emit, Navigation.changed (both cross-
+      # platform) and WindowDrag.start (darwin-only).
+      #   darwin = 63 baseline (was 60 + Events.emit + Navigation.changed + WindowDrag.start)
+      #   linux  = 63 - DragOut(1) - WindowDrag(1)             = 61
+      #   win32  = 63 - DragOut(1) - WindowDrag(1) - FileWatch(2) = 59
       expected = case Lune::Plugins::CURRENT_PLATFORM
-                 when :darwin then 60
-                 when :linux  then 59
-                 when :win32  then 57
-                 else              60
+                 when :darwin then 63
+                 when :linux  then 61
+                 when :win32  then 59
+                 else              63
                  end
 
       app.bindings.size.should eq(expected)

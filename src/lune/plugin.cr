@@ -2,8 +2,14 @@ module Lune
   abstract class Plugin
     include Lune::Installable
 
+    # JS-side helper namespace (`window.__lune.on`, `window.__lune.crystalEmit`,
+    # `window.__lune.stOn`, …). Bridge binding IDs no longer use this prefix —
+    # they're plain `<Namespace>.<method>`, same for user and plugin bindings.
     BRIDGE_MARKER = "__lune"
-    SENTINEL_NS   = "plugins.#{BRIDGE_MARKER}"
+
+    # Sentinel keys (`window["lune.plugins.<id>"] = true`) let JS feature-detect
+    # which plugins are active in this build.
+    SENTINEL_NS = "lune.plugins"
 
     # -------------------------------------------------------------------------
     # Descriptor — static self-description for each plugin.

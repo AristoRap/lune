@@ -1,9 +1,9 @@
 module Lune
   module Plugins
     # Fires `opts.on_navigate(url)` whenever the page-side `popstate` or
-    # `hashchange` event fires. No-op unless `opts.on_navigate` is set.
+    # `hashchange` event fires. Skipped unless `opts.on_navigate` is set.
     class Navigation < Lune::Plugin
-      include Plugin::WebviewInject
+      include Lune::Bindable
 
       DESCRIPTOR = Descriptor.new(id: :navigation, label: "Navigation")
 
@@ -17,20 +17,18 @@ module Lune
         @on_navigate = ctx.options.on_navigate
       end
 
-      def init_webview(ctx : WebviewCtx) : Nil
-        nav_cb = @on_navigate
-        return unless nav_cb
-
-        navigate_key = "#{Lune::Plugin::BRIDGE_MARKER}.navigate"
-        ctx.wv.bind(navigate_key, Webview::JSProc.new { |args|
-          begin
-            nav_cb.call(args[0]?.try(&.as_s) || "")
-          rescue ex
-            Lune.logger.error { "on_navigate callback failed: #{ex.message}" }
-            Lune.logger.debug(exception: ex) { "on_navigate callback failed (stacktrace)" }
-          end
-          JSON::Any.new(nil)
-        })
+      # Called from init_js whenever the page-side history changes
+      # (popstate / hashchange / pushState / replaceState).
+      @[Lune::Bind]
+      def changed(url : String) : Nil
+        cb = @on_navigate
+        return unless cb
+        begin
+          cb.call(url)
+        rescue ex
+          Lune.logger.error { "on_navigate callback failed: #{ex.message}" }
+          Lune.logger.debug(exception: ex) { "on_navigate callback failed (stacktrace)" }
+        end
       end
 
       # popstate / hashchange are the only events the browser fires on its
@@ -42,7 +40,7 @@ module Lune
       # would fire on_navigate twice.
       def init_js : String?
         return nil unless @on_navigate
-        navigate_key = "#{Lune::Plugin::BRIDGE_MARKER}.navigate"
+        changed_key = "#{binding_namespace}.changed"
         <<-JS
         (function(){
           var _last;
@@ -50,7 +48,7 @@ module Lune
             var u = location.href;
             if (u === _last) return;
             _last = u;
-            window[#{navigate_key.inspect}](u);
+            window[#{changed_key.inspect}](u);
           }
           window.addEventListener('popstate', _nav);
           window.addEventListener('hashchange', _nav);

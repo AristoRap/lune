@@ -1,7 +1,7 @@
 module Lune
   module Plugins
     class Events < Lune::Plugin
-      include Plugin::WebviewInject
+      include Lune::Bindable
 
       DESCRIPTOR = Descriptor.new(id: :events, label: "Events", core: true)
 
@@ -13,18 +13,12 @@ module Lune
         "Events"
       end
 
-      def init_webview(wv : Webview::Webview, handle : Pointer(Void), app : Lune::App) : Nil
-        init_webview(WebviewCtx.new(wv, handle, app, Set(Symbol).new))
-      end
-
-      def init_webview(ctx : WebviewCtx) : Nil
-        app = ctx.app
-        ctx.wv.bind("#{BRIDGE_MARKER}.jsEmit", Webview::JSProc.new { |args|
-          event = args[0]?.try(&.as_s) || ""
-          data = args[1]? || JSON::Any.new(nil)
-          app.events.dispatch(event, data)
-          JSON::Any.new(nil)
-        })
+      # JS-→-Crystal event dispatch. Generated stub on `runtime.Events.emit`
+      # routes directly here; no hand-binding, no helper layer.
+      @[Lune::Bind]
+      @[Lune::BindOverride(arg_names: ["name", "data"], ts_args: ["string", "unknown"] of String?, ts_return_type: "Promise<void>")]
+      def emit(name : String, data : JSON::Any) : Nil
+        @app.events.dispatch(name, data)
       end
 
       def init_js : String?
@@ -57,12 +51,10 @@ module Lune
 
       def js_helpers : String
         bm = BRIDGE_MARKER
-        js_emit_key = "#{BRIDGE_MARKER}.jsEmit"
         <<-JS
           on(name, cb)     { window.#{bm}.on(name, cb, -1); },
           once(name, cb)   { window.#{bm}.on(name, cb,  1); },
           off(name, cb)    { window.#{bm}.off(name, cb); },
-          emit(name, data) { return window[#{js_emit_key.inspect}](name, data); },
         JS
       end
 
@@ -71,7 +63,6 @@ module Lune
           on(name: string, cb: (data: unknown) => void): void;
           once(name: string, cb: (data: unknown) => void): void;
           off(name: string, cb?: (data: unknown) => void): void;
-          emit(name: string, data?: unknown): Promise<void>;
         DTS
       end
     end
