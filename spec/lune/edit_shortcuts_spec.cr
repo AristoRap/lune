@@ -22,8 +22,8 @@ describe Lune::Capabilities::EditShortcuts do
   end
 
   describe "phase membership" do
-    it "includes WebviewInject" do
-      Lune::Capabilities::EditShortcuts.new.is_a?(Lune::Capability::WebviewInject).should be_true
+    it "exposes a boot-time init_js script" do
+      Lune::Capabilities::EditShortcuts.new.init_js.should_not be_nil
     end
 
     it "does not include BindPhase (no JS namespace exposed)" do

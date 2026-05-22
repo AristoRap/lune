@@ -2,7 +2,6 @@ module Lune
   module Capabilities
     class ContextMenu < Lune::Capability
       include Lune::Bindable
-      include Capability::WebviewInject
 
       DESCRIPTOR = Descriptor.new(id: :context_menu, label: "ContextMenu", deps: [:events])
 
@@ -24,14 +23,10 @@ module Lune
         end
       end
 
-      def init_webview(wv : Webview::Webview, handle : Pointer(Void), app : Lune::App) : Nil
-        init_webview(WebviewCtx.new(wv, handle, app, Set(Symbol).new))
-      end
-
-      def init_webview(ctx : WebviewCtx) : Nil
+      def init_js : String?
         bm = BRIDGE_MARKER
         ctx_show_id = "#{bm}.context_menu.show"
-        ctx.wv.init(<<-JS)
+        <<-JS
         (function(){
           window.#{bm} = window.#{bm} || {};
           var _ctx_items = null;

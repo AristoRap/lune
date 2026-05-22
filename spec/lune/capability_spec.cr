@@ -75,10 +75,10 @@ describe Lune::Capability do
       Lune::Capabilities::FileDrop.new.is_a?(Lune::Bindable).should be_false
     end
 
-    it "ContextMenu includes both Bindable and WebviewInject" do
+    it "ContextMenu includes Bindable and exposes init_js" do
       cap = Lune::Capabilities::ContextMenu.new
       cap.is_a?(Lune::Bindable).should be_true
-      cap.is_a?(Lune::Capability::WebviewInject).should be_true
+      cap.init_js.should_not be_nil
     end
   end
 

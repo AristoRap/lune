@@ -22,8 +22,12 @@ describe Lune::Capabilities::ContextMenuBlocker do
   end
 
   describe "phase membership" do
-    it "includes WebviewInject" do
-      Lune::Capabilities::ContextMenuBlocker.new.is_a?(Lune::Capability::WebviewInject).should be_true
+    it "exposes init_js when enabled, nil otherwise" do
+      blocker = Lune::Capabilities::ContextMenuBlocker.new
+      blocker.init_js.should be_nil
+      opts = Lune::Options.new.tap { |o| o.disable_context_menu = true }
+      blocker.setup(Lune::Capability::SetupCtx.new(opts, Pointer(Void).null))
+      blocker.init_js.should_not be_nil
     end
 
     it "does not include BindPhase" do

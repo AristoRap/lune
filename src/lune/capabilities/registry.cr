@@ -22,6 +22,9 @@ module Lune
 
         @capabilities.each do |cap|
           wv.init("window[#{cap.sentinel_key.inspect}] = true;")
+          if js = cap.init_js
+            wv.init(js)
+          end
           cap.init_webview(ctx) if cap.is_a?(Lune::Capability::WebviewInject)
         end
 

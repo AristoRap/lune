@@ -92,6 +92,16 @@ module Lune
     def install(app : Lune::App) : Nil
     end
 
+    # A JS string the runner should inject into every webview at boot
+    # (via `wv.init`). Default nil — capabilities that need a boot-time
+    # JS shim return their script here instead of touching the webview
+    # directly. For capabilities that need to register raw JS-to-Crystal
+    # callbacks (wv.bind) or wire up native handle callbacks, use the
+    # `WebviewInject` phase module instead.
+    def init_js : String?
+      nil
+    end
+
     def name : String
       descriptor.id.to_s
     end

@@ -5,8 +5,6 @@ module Lune
     # capability (which shows custom native menus); the two compose — block
     # the default, then let `ContextMenu` show your own.
     class ContextMenuBlocker < Lune::Capability
-      include Capability::WebviewInject
-
       DESCRIPTOR = Descriptor.new(id: :context_menu_blocker, label: "ContextMenuBlocker")
 
       def descriptor : Descriptor
@@ -19,9 +17,9 @@ module Lune
         @enabled = ctx.options.disable_context_menu
       end
 
-      def init_webview(ctx : WebviewCtx) : Nil
-        return unless @enabled
-        ctx.wv.init("document.addEventListener('contextmenu',function(e){e.preventDefault();});")
+      def init_js : String?
+        return nil unless @enabled
+        "document.addEventListener('contextmenu',function(e){e.preventDefault();});"
       end
     end
   end

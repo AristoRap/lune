@@ -4,16 +4,14 @@ module Lune
     # Default-on; disable via `lune.yml` capabilities.disabled if the app
     # wants to handle these keys itself.
     class EditShortcuts < Lune::Capability
-      include Capability::WebviewInject
-
       DESCRIPTOR = Descriptor.new(id: :edit_shortcuts, label: "EditShortcuts")
 
       def descriptor : Descriptor
         DESCRIPTOR
       end
 
-      def init_webview(ctx : WebviewCtx) : Nil
-        ctx.wv.init(<<-JS)
+      def init_js : String?
+        <<-JS
         (function(){
           document.addEventListener('keydown', function(e) {
             if (!e.metaKey && !e.ctrlKey) return;
