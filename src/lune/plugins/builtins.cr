@@ -4,30 +4,22 @@ module Lune
     # mirrors the dependency graph (Events / Stream first so plugins that
     # soft-depend on them resolve cleanly) but isn't load-bearing — `Registry`
     # runs a topological sort before install.
+    #
+    # Each built-in is blessed before registration so it passes the
+    # `Lune::Plugins::` namespace guard in `Lune.use` — the same guard that
+    # rejects third-party plugins from squatting on the framework namespace.
     def self.register_builtins! : Nil
-      Lune.use(Events.new)
-      Lune.use(Stream.new)
-      Lune.use(FileDrop.new)
-      Lune.use(System.new)
-      Lune.use(Filesystem.new)
-      Lune.use(Clipboard.new)
-      Lune.use(Window.new)
-      Lune.use(Dialogs.new)
-      Lune.use(Tray.new)
-      Lune.use(Notifications.new)
-      Lune.use(Screen.new)
-      Lune.use(ContextMenu.new)
-      Lune.use(DragOut.new)
-      Lune.use(DeepLink.new)
-      Lune.use(FileWatch.new)
-      Lune.use(Shell.new)
-      Lune.use(Hotkeys.new)
-      Lune.use(Sqlite.new)
-      Lune.use(Kv.new)
-      Lune.use(Windows.new)
-      Lune.use(EditShortcuts.new)
-      Lune.use(Navigation.new)
-      Lune.use(WindowDrag.new)
+      builtins = [
+        Events.new, Stream.new, FileDrop.new, System.new, Filesystem.new,
+        Clipboard.new, Window.new, Dialogs.new, Tray.new, Notifications.new,
+        Screen.new, ContextMenu.new, DragOut.new, DeepLink.new, FileWatch.new,
+        Shell.new, Hotkeys.new, Sqlite.new, Kv.new, Windows.new,
+        EditShortcuts.new, Navigation.new, WindowDrag.new,
+      ] of ::Lune::Plugin
+      builtins.each do |p|
+        ::Lune._bless_builtin(p.class.name)
+        ::Lune.use(p)
+      end
     end
   end
 end

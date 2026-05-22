@@ -68,6 +68,20 @@ private class CustomAccessorPlugin < Lune::Plugin
   end
 end
 
+# Simulates a third-party shard squatting on the reserved built-in namespace.
+# `Lune.use` should reject this at registration. A genuine reopen of an
+# existing built-in's class (e.g. `class Lune::Plugins::Tray` defined in a
+# second file) is monkey-patching at the Crystal language level and can't be
+# caught here — it would still pass the bless check because the registered
+# class IS the built-in.
+class ::Lune::Plugins::Squatter < Lune::Plugin
+  DESCRIPTOR = Descriptor.new(id: :squatter, label: "Squatter")
+
+  def descriptor : Descriptor
+    DESCRIPTOR
+  end
+end
+
 describe "Lune.use" do
   it "registers a plugin so it appears in registered_plugins" do
     plugin = SpecPlugin.new
@@ -95,6 +109,14 @@ describe "Lune.use" do
   it "explicit accessor argument overrides the class-derived name" do
     plugin = CustomAccessorPlugin.new
     plugin.lune_options_accessor.should eq(:my_unique_accessor)
+  end
+
+  it "raises when a non-built-in class is registered under Lune::Plugins::" do
+    Lune.with_plugins do
+      expect_raises(ArgumentError, /Lune::Plugins.*reserved/) do
+        Lune.use(::Lune::Plugins::Squatter.new)
+      end
+    end
   end
 
   it "with_plugins restores the previous registration set" do

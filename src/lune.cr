@@ -35,6 +35,22 @@ module Lune
   @@registered_ids = Set(Symbol).new
   @@registered_accessors = {} of Symbol => Symbol # opts accessor → descriptor.id of the plugin holding it
 
+  # Classes blessed to live in the reserved `Lune::Plugins::` namespace.
+  # Populated by `Lune::Plugins.register_builtins!` before each `Lune.use` call.
+  # `Lune.use` checks this set to catch third-party shards that squat on the
+  # framework namespace — class reopens (monkey-patching an existing built-in)
+  # still get through because the registered class IS the built-in, but that
+  # requires deliberately re-declaring the framework class and is a
+  # don't-do-that signal we don't try to police at runtime.
+  @@blessed_builtins = Set(String).new
+
+  # Marks a class name as an allowed inhabitant of `Lune::Plugins::`. Called
+  # from `register_builtins!` for every built-in at module load. Not for
+  # third-party use — third-party plugins live in their own namespace.
+  def self._bless_builtin(klass_name : String) : Nil
+    @@blessed_builtins << klass_name
+  end
+
   # Register one or more plugins. Splat shape mirrors `App#install(*mods)` so
   # callers can group several lines into one — `Lune.use(A.new, B.new, C.new)`.
   # Uniqueness is checked per plugin on two axes:
@@ -50,6 +66,16 @@ module Lune
   def self.use(*plugins : Lune::Plugin) : Nil
     plugins.each do |plugin|
       id = plugin.descriptor.id
+      klass_name = plugin.class.name
+
+      if klass_name.starts_with?("Lune::Plugins::") && !@@blessed_builtins.includes?(klass_name)
+        raise ArgumentError.new(
+          "Plugin class `#{klass_name}` is in the `Lune::Plugins::` namespace, " \
+          "which is reserved for built-in plugins. Third-party plugins should " \
+          "live in their own top-level namespace (e.g. `MyShard::MyPlugin`)."
+        )
+      end
+
       if @@registered_ids.includes?(id)
         raise ArgumentError.new("Plugin #{id.inspect} already registered (descriptor IDs must be unique)")
       end

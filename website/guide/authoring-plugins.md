@@ -48,6 +48,8 @@ Subclass `Lune::Plugin` and write your bindings against it. The Crystal class pa
 
 Both are first-class. Use the flat form when your plugin is one cohesive thing; use the nested form when you want to group multiple plugins under a shared shard namespace (e.g. `LuneAuth::OAuth`, `LuneAuth::Sessions`).
 
+> **`Lune::Plugins::` is reserved.** Built-in plugins live there. `Lune.use` raises `ArgumentError` if a plugin class with that prefix isn't on the blessed-built-ins list, so third-party shards can't accidentally squat on the framework namespace. Pick a top-level namespace named for your shard (`LuneAuth::OAuth`, not `Lune::Plugins::OAuth`).
+
 > **Heads up on the `opts` accessor.** The `config do … end` macro derives the accessor from the **simple class name** (the last `::` segment) — `MyPlugin::MyModule` ⇒ `opts.my_module`. If two plugins share a simple class name (e.g. `LuneAuth::Session` and `LuneCache::Session`), they'd both try to claim `opts.session`. `Lune.use` catches this and raises `ArgumentError` at registration time — the plugin registered second is the one that fails. Either pick a distinctive class name, or pass an explicit accessor to the macro: `config(:my_session) do …`.
 
 A worked example:
