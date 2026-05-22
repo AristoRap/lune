@@ -1,5 +1,7 @@
 module Lune
   abstract class Capability
+    include Lune::Installable
+
     BRIDGE_MARKER = "__lune"
     SENTINEL_NS   = "capabilities.#{BRIDGE_MARKER}"
 
@@ -24,45 +26,6 @@ module Lune
       getter handle : Pointer(Void)
 
       def initialize(@options : Options, @handle : Pointer(Void))
-      end
-    end
-
-    struct BindCtx
-      getter app : App
-      getter cap : Lune::Capability
-
-      def initialize(@app : App, @cap : Lune::Capability)
-      end
-
-      delegate register, to: @app
-
-      # Register a bridge binding under this capability's JS namespace.
-      # `method` is the leaf name (no capability prefix); the full bridge ID
-      # becomes `__lune.<cap-name>.<method>` and the JS path becomes
-      # `<Cap.binding_namespace>.<methodCamelCase>(...)`.
-      def define(
-        method : String,
-        args : Array(String) = [] of String,
-        return_type : String = "Nil",
-        arg_names : Array(String) = [] of String,
-        arg_transforms : Array(String?) = [] of String?,
-        ts_args : Array(String?) = [] of String?,
-        ts_return_type : String? = nil,
-        async : Bool = false,
-        &callback : Array(JSON::Any) -> JSON::Any
-      ) : Nil
-        @app.register(Lune::RuntimeBinding.new(
-          js_namespace: @cap.binding_namespace,
-          method: "#{@cap.name}.#{method}",
-          args: args,
-          return_type: return_type,
-          callback: callback,
-          async: async,
-          arg_names: arg_names,
-          arg_transforms: arg_transforms,
-          ts_args: ts_args,
-          ts_return_type: ts_return_type,
-        ))
       end
     end
 
@@ -96,13 +59,10 @@ module Lune
 
     # -------------------------------------------------------------------------
     # Phase modules — include only the phases a capability participates in.
-    # The compiler then enforces the abstract method for that phase.
+    # The compiler then enforces the abstract method for that phase. Binding
+    # registration is opt-in via `include Lune::Bindable` + `@[Bind]` and is
+    # handled separately from these lifecycle hooks.
     # -------------------------------------------------------------------------
-
-    # Include if this capability registers bridge bindings (also runs in build mode).
-    module BindPhase
-      abstract def install(ctx : BindCtx) : Nil
-    end
 
     # Include if this capability injects JS or registers raw wv.bind calls (runtime only).
     module WebviewInject
@@ -126,6 +86,11 @@ module Lune
     # -------------------------------------------------------------------------
 
     abstract def descriptor : Descriptor
+
+    # Default no-op: capabilities that `include Lune::Bindable` get this
+    # overridden by the macro with the actual binding registrations.
+    def install(app : Lune::App) : Nil
+    end
 
     def name : String
       descriptor.id.to_s

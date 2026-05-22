@@ -29,7 +29,7 @@ describe Lune::Capabilities::Kv do
 
   describe "phase membership" do
     it "includes Bindable" do
-      Lune::Capabilities::Kv.new.is_a?(Lune::Capability::BindPhase).should be_true
+      Lune::Capabilities::Kv.new.is_a?(Lune::Bindable).should be_true
     end
 
     it "includes Lifecycle" do

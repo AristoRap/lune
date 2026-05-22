@@ -31,7 +31,7 @@ setup:
 CRYSTAL_FLAGS := -Dpreview_mt -Dexecution_context
 
 test:
-	crystal spec -D lune_native_test_mock $(CRYSTAL_FLAGS)
+	crystal spec -Dlune_native_test_mock $(CRYSTAL_FLAGS)
 
 build:
 	$(MAKE) test && shards build $(CRYSTAL_FLAGS)

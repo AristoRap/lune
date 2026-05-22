@@ -1,7 +1,7 @@
 module Lune
   module Capabilities
     class System < Lune::Capability
-      include Capability::BindPhase
+      include Lune::Bindable
 
       DESCRIPTOR = Descriptor.new(id: :system, label: "System")
 
@@ -33,46 +33,34 @@ module Lune
         @devtools = ctx.options.devtools
       end
 
-      def install(ctx : BindCtx) : Nil
-        on_quit = @on_quit
-        ctx.define("quit") do |_args|
-          on_quit.call
-          JSON::Any.new(nil)
-        end
+      @[Lune::Bind]
+      def quit : Nil
+        @on_quit.call
+      end
 
-        on_open_url = @on_open_url
-        ctx.define("open_url",
-          args: ["String"],
-          async: true,
-          arg_names: ["url"],
-        ) do |args|
-          on_open_url.call(args[0].as_s)
-          JSON::Any.new(nil)
-        end
+      @[Lune::Bind(async: true)]
+      def open_url(url : String) : Nil
+        @on_open_url.call(url)
+      end
 
-        devtools = @devtools
-        ctx.define("environment",
-          return_type: "JSON",
-          ts_return_type: "Promise<LuneEnvironment>",
-        ) do |_args|
-          os =
-            {% if flag?(:darwin) %}
-              "darwin"
-            {% elsif flag?(:linux) %}
-              "linux"
-            {% elsif flag?(:win32) %}
-              "windows"
-            {% else %}
-              "unknown"
-            {% end %}
-          arch =
-            {% if flag?(:aarch64) %}
-              "arm64"
-            {% else %}
-              "x86_64"
-            {% end %}
-          JSON.parse({os: os, arch: arch, devtools: devtools}.to_json)
-        end
+      @[Lune::Bind]
+      @[Lune::BindOverride(ts_return_type: "Promise<LuneEnvironment>")]
+      def environment : NamedTuple(os: String, arch: String, devtools: Bool)
+        os = {% if flag?(:darwin) %}
+          "darwin"
+        {% elsif flag?(:linux) %}
+          "linux"
+        {% elsif flag?(:win32) %}
+          "windows"
+        {% else %}
+          "unknown"
+        {% end %}
+        arch = {% if flag?(:aarch64) %}
+          "arm64"
+        {% else %}
+          "x86_64"
+        {% end %}
+        {os: os, arch: arch, devtools: @devtools}
       end
     end
   end

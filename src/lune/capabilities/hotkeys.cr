@@ -1,7 +1,7 @@
 module Lune
   module Capabilities
     class Hotkeys < Lune::Capability
-      include Capability::BindPhase
+      include Lune::Bindable
       include Capability::Lifecycle
 
       DESCRIPTOR = Descriptor.new(id: :hotkeys, label: "Hotkeys", soft_deps: [:events])
@@ -10,35 +10,27 @@ module Lune
         DESCRIPTOR
       end
 
-      def install(ctx : BindCtx) : Nil
-        app = ctx.app
-
+      # Hook the macro-generated install to also start the native pump that
+      # delivers hotkey events back to JS via `app.events`.
+      def install(app : Lune::App) : Nil
+        previous_def
         Native::Hotkeys.init do |accelerator|
           app.events.emit("hotkey", {"key" => accelerator})
         end
+      end
 
-        # async so the callback runs on the @async_pool (Parallel) instead of
-        # the webview Isolated thread — Native::Hotkeys.register blocks on a
-        # reply Channel from the dedicated pump thread, which would raise
-        # "Concurrency is disabled" if called from Isolated.
-        ctx.define("register",
-          args: ["String"],
-          arg_names: ["accelerator"],
-          async: true,
-        ) do |args|
-          acc = args[0].as_s
-          Lune.logger.warn { "Hotkeys.register: could not register #{acc.inspect}" } unless Native::Hotkeys.register(acc)
-          JSON::Any.new(nil)
-        end
+      # async so the callback runs on the @async_pool (Parallel) instead of
+      # the webview Isolated thread — Native::Hotkeys.register blocks on a
+      # reply Channel from the dedicated pump thread, which would raise
+      # "Concurrency is disabled" if called from Isolated.
+      @[Lune::Bind(async: true)]
+      def register(accelerator : String) : Nil
+        Lune.logger.warn { "Hotkeys.register: could not register #{accelerator.inspect}" } unless Native::Hotkeys.register(accelerator)
+      end
 
-        ctx.define("unregister",
-          args: ["String"],
-          arg_names: ["accelerator"],
-          async: true,
-        ) do |args|
-          Native::Hotkeys.unregister(args[0].as_s)
-          JSON::Any.new(nil)
-        end
+      @[Lune::Bind(async: true)]
+      def unregister(accelerator : String) : Nil
+        Native::Hotkeys.unregister(accelerator)
       end
 
       def shutdown : Nil

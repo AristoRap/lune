@@ -153,7 +153,7 @@ function Invoke-Test {
     Assert-NativeDeps
     Push-Location $RepoRoot
     try {
-        crystal spec -D lune_native_test_mock @CrystalFlags
+        crystal spec -Dlune_native_test_mock @CrystalFlags
         if ($LASTEXITCODE -ne 0) { throw "specs failed (exit $LASTEXITCODE)" }
     } finally { Pop-Location }
 }

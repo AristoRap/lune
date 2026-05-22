@@ -193,9 +193,7 @@ module Lune
         validate(config)
         resolved = resolve(config)
         resolved.warnings.each { |w| Lune.logger.warn { w } }
-        resolved.capabilities.each do |cap|
-          cap.install(Lune::Capability::BindCtx.new(target, cap)) if cap.is_a?(Lune::Capability::BindPhase)
-        end
+        resolved.capabilities.each(&.install(target))
         resolved
       end
 

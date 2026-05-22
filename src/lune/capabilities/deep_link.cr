@@ -1,8 +1,6 @@
 module Lune
   module Capabilities
     class DeepLink < Lune::Capability
-      include Capability::BindPhase
-
       DESCRIPTOR = Descriptor.new(id: :deep_link, label: "DeepLink", deps: [:events])
 
       def descriptor : Descriptor
@@ -15,7 +13,7 @@ module Lune
         @app_title = ctx.options.title
       end
 
-      def install(ctx : BindCtx) : Nil
+      def install(app : Lune::App) : Nil
         url_from_argv = ARGV.find { |arg| arg.includes?("://") }
 
         # Linux warm-start: if a primary instance is already running, send
@@ -30,13 +28,13 @@ module Lune
 
           # We're the primary — listen for forwards from future invocations.
           Lune::DeepLinkIPC.listen(@app_title) do |incoming|
-            ctx.app.events.emit("deep_link", {"url" => incoming})
+            app.events.emit("deep_link", {"url" => incoming})
           end
         {% end %}
 
         {% if flag?(:lune_native_test_mock) || flag?(:darwin) %}
           Native::DeepLink.install do |url|
-            ctx.app.events.emit("deep_link", {"url" => url})
+            app.events.emit("deep_link", {"url" => url})
           end
         {% elsif flag?(:linux) || flag?(:win32) %}
           # Cold-start delivery: OS launches the app with a URL on the
@@ -44,7 +42,7 @@ module Lune
           # or registry); the URL lands in ARGV. Same path on Linux and
           # Windows.
           if url = url_from_argv
-            ctx.app.events.emit("deep_link", {"url" => url})
+            app.events.emit("deep_link", {"url" => url})
           end
         {% end %}
       end

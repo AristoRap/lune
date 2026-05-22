@@ -1,7 +1,7 @@
 module Lune
   module Capabilities
     class ContextMenu < Lune::Capability
-      include Capability::BindPhase
+      include Lune::Bindable
       include Capability::WebviewInject
 
       DESCRIPTOR = Descriptor.new(id: :context_menu, label: "ContextMenu", deps: [:events])
@@ -16,16 +16,11 @@ module Lune
         @handle = ctx.handle
       end
 
-      def install(ctx : BindCtx) : Nil
-        h = @handle
-        ctx.define("show",
-          args: ["Float64", "Float64", "String"],
-          arg_names: ["x", "y", "itemsJson"],
-        ) do |args|
-          Lune::Native::Menu.show_context_menu(h, args[0].as_f.to_f32, args[1].as_f.to_f32, args[2].as_s) do |id|
-            ctx.app.events.emit("context_menu", {"id" => id})
-          end
-          JSON::Any.new(nil)
+      @[Lune::Bind]
+      @[Lune::BindOverride(arg_names: ["x", "y", "itemsJson"])]
+      def show(x : Float64, y : Float64, items_json : String) : Nil
+        Lune::Native::Menu.show_context_menu(@handle, x.to_f32, y.to_f32, items_json) do |id|
+          @app.events.emit("context_menu", {"id" => id})
         end
       end
 

@@ -48,11 +48,11 @@ describe Lune::Capability do
 
   describe "phase module membership" do
     it "Clipboard includes Bindable" do
-      Lune::Capabilities::Clipboard.new.is_a?(Lune::Capability::BindPhase).should be_true
+      Lune::Capabilities::Clipboard.new.is_a?(Lune::Bindable).should be_true
     end
 
     it "Filesystem includes Bindable" do
-      Lune::Capabilities::Filesystem.new.is_a?(Lune::Capability::BindPhase).should be_true
+      Lune::Capabilities::Filesystem.new.is_a?(Lune::Bindable).should be_true
     end
 
     it "Events includes WebviewInject" do
@@ -60,7 +60,7 @@ describe Lune::Capability do
     end
 
     it "Events does not include Bindable" do
-      Lune::Capabilities::Events.new.is_a?(Lune::Capability::BindPhase).should be_false
+      Lune::Capabilities::Events.new.is_a?(Lune::Bindable).should be_false
     end
 
     it "Channel includes WebviewInject" do
@@ -72,12 +72,12 @@ describe Lune::Capability do
     end
 
     it "FileDrop does not include Bindable" do
-      Lune::Capabilities::FileDrop.new.is_a?(Lune::Capability::BindPhase).should be_false
+      Lune::Capabilities::FileDrop.new.is_a?(Lune::Bindable).should be_false
     end
 
     it "ContextMenu includes both Bindable and WebviewInject" do
       cap = Lune::Capabilities::ContextMenu.new
-      cap.is_a?(Lune::Capability::BindPhase).should be_true
+      cap.is_a?(Lune::Bindable).should be_true
       cap.is_a?(Lune::Capability::WebviewInject).should be_true
     end
   end

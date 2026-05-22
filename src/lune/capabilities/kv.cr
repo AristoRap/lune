@@ -3,7 +3,7 @@ require "json"
 module Lune
   module Capabilities
     class Kv < Lune::Capability
-      include Capability::BindPhase
+      include Lune::Bindable
       include Capability::Lifecycle
 
       DESCRIPTOR = Descriptor.new(id: :kv, label: "Kv")
@@ -30,58 +30,39 @@ module Lune
         load_store
       end
 
-      def install(ctx : BindCtx) : Nil
-        ctx.define("get",
-          args: ["String"],
-          return_type: "Any",
-          arg_names: ["key"],
-          ts_return_type: "Promise<unknown>",
-        ) do |raw|
-          key = raw[0].as_s
-          @mu.synchronize { @store[key]? || JSON::Any.new(nil) }
-        end
+      @[Lune::Bind]
+      @[Lune::BindOverride(ts_return_type: "Promise<unknown>")]
+      def get(key : String) : JSON::Any
+        @mu.synchronize { @store[key]? || JSON::Any.new(nil) }
+      end
 
-        ctx.define("set",
-          args: ["String", "Any"],
-          arg_names: ["key", "value"],
-        ) do |raw|
-          key = raw[0].as_s
-          @mu.synchronize { @store[key] = raw[1] }
-          save_store
-          JSON::Any.new(nil)
-        end
+      @[Lune::Bind]
+      @[Lune::BindOverride(ts_args: [nil, "unknown"] of String?)]
+      def set(key : String, value : JSON::Any) : Nil
+        @mu.synchronize { @store[key] = value }
+        save_store
+      end
 
-        ctx.define("delete",
-          args: ["String"],
-          arg_names: ["key"],
-        ) do |raw|
-          key = raw[0].as_s
-          @mu.synchronize { @store.delete(key) }
-          save_store
-          JSON::Any.new(nil)
-        end
+      @[Lune::Bind]
+      def delete(key : String) : Nil
+        @mu.synchronize { @store.delete(key) }
+        save_store
+      end
 
-        ctx.define("has",
-          args: ["String"],
-          return_type: "Bool",
-          arg_names: ["key"],
-        ) do |raw|
-          key = raw[0].as_s
-          JSON::Any.new(@mu.synchronize { @store.has_key?(key) })
-        end
+      @[Lune::Bind]
+      def has(key : String) : Bool
+        @mu.synchronize { @store.has_key?(key) }
+      end
 
-        ctx.define("keys",
-          return_type: "Array(String)",
-        ) do |_raw|
-          keys = @mu.synchronize { @store.keys.map { |k| JSON::Any.new(k) } }
-          JSON::Any.new(keys)
-        end
+      @[Lune::Bind]
+      def keys : Array(String)
+        @mu.synchronize { @store.keys }
+      end
 
-        ctx.define("clear") do |_raw|
-          @mu.synchronize { @store.clear }
-          save_store
-          JSON::Any.new(nil)
-        end
+      @[Lune::Bind]
+      def clear : Nil
+        @mu.synchronize { @store.clear }
+        save_store
       end
 
       def shutdown : Nil

@@ -29,7 +29,7 @@ describe Lune::Capabilities::Windows do
 
   describe "phase membership" do
     it "includes Bindable" do
-      Lune::Capabilities::Windows.new.is_a?(Lune::Capability::BindPhase).should be_true
+      Lune::Capabilities::Windows.new.is_a?(Lune::Bindable).should be_true
     end
 
     it "includes Lifecycle" do

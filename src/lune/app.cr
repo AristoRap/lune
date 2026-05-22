@@ -30,31 +30,12 @@ module Lune
     # ----------------------------
 
     def install(*mods : Installable)
-      mods.each do |mod|
-        mod.install(self)
-      end
-    end
-
-    def install(cap : Capability)
-      cap.install(Capability::BindCtx.new(self, cap)) if cap.is_a?(Capability::BindPhase)
+      mods.each(&.install(self))
     end
 
     # ----------------------------
     # Bindings
     # ----------------------------
-
-    def bind(
-      namespace : String,
-      method : String,
-      args : Array(String),
-      return_type : String,
-      async : Bool,
-      runtime : Bool = false,
-      arg_names : Array(String) = [] of String,
-      &block : Array(JSON::Any) -> JSON::Any
-    )
-      @bindings << add_binding(namespace, method, args, return_type, async, runtime, arg_names, &block)
-    end
 
     def register(binding : Binding)
       @bindings << binding
@@ -99,28 +80,6 @@ module Lune
 
     def close!
       @bridge.try(&.close!)
-    end
-
-    private def add_binding(
-      namespace : String,
-      method : String,
-      args : Array(String),
-      return_type : String,
-      async : Bool,
-      runtime : Bool = false,
-      arg_names : Array(String) = [] of String,
-      &block : Array(JSON::Any) -> JSON::Any
-    )
-      Binding.new(
-        namespace: namespace,
-        method: method,
-        args: args,
-        return_type: return_type,
-        callback: block,
-        async: async,
-        internal: runtime,
-        arg_names: arg_names
-      )
     end
   end
 end

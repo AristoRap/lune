@@ -29,7 +29,7 @@ describe Lune::Capabilities::Sqlite do
 
   describe "phase membership" do
     it "includes Bindable" do
-      Lune::Capabilities::Sqlite.new.is_a?(Lune::Capability::BindPhase).should be_true
+      Lune::Capabilities::Sqlite.new.is_a?(Lune::Bindable).should be_true
     end
 
     it "includes Lifecycle" do

@@ -27,7 +27,7 @@ describe Lune::Capabilities::WindowDrag do
     end
 
     it "does not include BindPhase" do
-      Lune::Capabilities::WindowDrag.new.is_a?(Lune::Capability::BindPhase).should be_false
+      Lune::Capabilities::WindowDrag.new.is_a?(Lune::Bindable).should be_false
     end
   end
 

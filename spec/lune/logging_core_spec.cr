@@ -61,15 +61,13 @@ describe "Lune core logging" do
     with_logger(logger) do
       app = Lune::App.new
 
-      app.bind(
+      app.register(Lune::Binding.new(
         namespace: "test",
         method: "boom",
         args: [] of String,
         return_type: "void",
-        async: false
-      ) do |_args|
-        raise "boom"
-      end
+        callback: ->(_a : Array(JSON::Any)) { raise "boom" },
+      ))
 
       wv = LoggingFakeWebview.new
       bridge = Lune::Bridge.new(wv)

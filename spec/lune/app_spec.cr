@@ -38,19 +38,17 @@ describe Lune::App do
     end
   end
 
-  describe "#bind" do
+  describe "#register" do
     it "adds a binding definition" do
       app = Lune::App.new
 
-      app.bind(
+      app.register(Lune::Binding.new(
         namespace: "math",
         method: "sum",
         args: ["a", "b"],
         return_type: "number",
-        async: false
-      ) do |args|
-        JSON::Any.new(args[0].as_i + args[1].as_i)
-      end
+        callback: ->(args : Array(JSON::Any)) { JSON::Any.new(args[0].as_i + args[1].as_i) },
+      ))
 
       app.bindings.size.should eq(1)
 
@@ -66,15 +64,14 @@ describe Lune::App do
     it "stores async bindings" do
       app = Lune::App.new
 
-      app.bind(
+      app.register(Lune::Binding.new(
         namespace: "api",
         method: "fetch",
         args: ["url"],
         return_type: "object",
-        async: true
-      ) do |_args|
-        JSON.parse(%({"ok": true}))
-      end
+        async: true,
+        callback: ->(_a : Array(JSON::Any)) { JSON.parse(%({"ok": true})) },
+      ))
 
       app.bindings.first.async.should be_true
     end
@@ -82,15 +79,13 @@ describe Lune::App do
     it "stores the callback block" do
       app = Lune::App.new
 
-      app.bind(
+      app.register(Lune::Binding.new(
         namespace: "util",
         method: "echo",
         args: ["value"],
         return_type: "string",
-        async: false
-      ) do |args|
-        JSON::Any.new(args.first.as_s)
-      end
+        callback: ->(args : Array(JSON::Any)) { JSON::Any.new(args.first.as_s) },
+      ))
 
       binding = app.bindings.first
 
@@ -100,18 +95,17 @@ describe Lune::App do
 
       result.as_s.should eq("hello")
     end
-  end
 
-  describe "#register" do
-    it "accepts a pre-built binding directly" do
+    it "accepts a pre-built internal binding directly" do
       app = Lune::App.new
 
-      rb = Lune::RuntimeBinding.new(
-        js_namespace: "Test",
+      rb = Lune::Binding.new(
+        namespace: "Test",
         method: "test.ping",
         args: [] of String,
         return_type: "String",
-        callback: ->(_a : Array(JSON::Any)) { JSON::Any.new("ok") }
+        callback: ->(_a : Array(JSON::Any)) { JSON::Any.new("ok") },
+        internal: true,
       )
 
       app.register(rb)

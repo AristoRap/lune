@@ -27,7 +27,7 @@ describe Lune::Capabilities::EditShortcuts do
     end
 
     it "does not include BindPhase (no JS namespace exposed)" do
-      Lune::Capabilities::EditShortcuts.new.is_a?(Lune::Capability::BindPhase).should be_false
+      Lune::Capabilities::EditShortcuts.new.is_a?(Lune::Bindable).should be_false
     end
   end
 

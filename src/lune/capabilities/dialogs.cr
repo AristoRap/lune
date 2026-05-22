@@ -1,7 +1,7 @@
 module Lune
   module Capabilities
     class Dialogs < Lune::Capability
-      include Capability::BindPhase
+      include Lune::Bindable
 
       DESCRIPTOR = Descriptor.new(id: :dialogs, label: "Dialogs")
 
@@ -9,56 +9,44 @@ module Lune
         DESCRIPTOR
       end
 
-      def install(ctx : BindCtx) : Nil
-        ctx.define("open_file",
-          args: ["String"],
-          return_type: "String",
-          arg_names: ["prompt"],
-        ) do |args|
-          JSON::Any.new(Lune::Native::Dialogs.open_file(args[0].as_s) || "")
-        end
+      @[Lune::Bind]
+      def open_file(prompt : String) : String
+        Lune::Native::Dialogs.open_file(prompt) || ""
+      end
 
-        ctx.define("open_dir",
-          args: ["String"],
-          return_type: "String",
-          arg_names: ["prompt"],
-        ) do |args|
-          JSON::Any.new(Lune::Native::Dialogs.open_dir(args[0].as_s) || "")
-        end
+      @[Lune::Bind]
+      def open_dir(prompt : String) : String
+        Lune::Native::Dialogs.open_dir(prompt) || ""
+      end
 
-        ctx.define("open_files",
-          args: ["String"],
-          return_type: "Array",
-          arg_names: ["prompt"],
-          ts_return_type: "Promise<string[]>",
-        ) do |args|
-          JSON.parse(Lune::Native::Dialogs.open_files(args[0].as_s).to_json)
-        end
+      @[Lune::Bind]
+      def open_files(prompt : String) : Array(String)
+        Lune::Native::Dialogs.open_files(prompt)
+      end
 
-        ctx.define("save_file",
-          args: ["String", "String"],
-          return_type: "String",
-          arg_names: ["prompt", "filename"],
-        ) do |args|
-          JSON::Any.new(Lune::Native::Dialogs.save_file(args[0].as_s, args[1].as_s) || "")
-        end
+      @[Lune::Bind]
+      def save_file(prompt : String, filename : String) : String
+        Lune::Native::Dialogs.save_file(prompt, filename) || ""
+      end
 
-        [
-          {"info", 0, false},
-          {"warning", 1, false},
-          {"error", 2, false},
-          {"question", 3, true},
-        ].each do |(variant, code, returns_value)|
-          return_type = returns_value ? "String" : "Nil"
-          ctx.define("message_#{variant}",
-            args: ["String", "String"],
-            return_type: return_type,
-            arg_names: ["title", "message"],
-          ) do |args|
-            result = Lune::Native::Dialogs.message(code, args[0].as_s, args[1].as_s)
-            returns_value ? JSON::Any.new(result) : JSON::Any.new(nil)
-          end
-        end
+      @[Lune::Bind]
+      def message_info(title : String, message : String) : Nil
+        Lune::Native::Dialogs.message(0, title, message)
+      end
+
+      @[Lune::Bind]
+      def message_warning(title : String, message : String) : Nil
+        Lune::Native::Dialogs.message(1, title, message)
+      end
+
+      @[Lune::Bind]
+      def message_error(title : String, message : String) : Nil
+        Lune::Native::Dialogs.message(2, title, message)
+      end
+
+      @[Lune::Bind]
+      def message_question(title : String, message : String) : String
+        Lune::Native::Dialogs.message(3, title, message)
       end
     end
   end

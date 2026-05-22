@@ -27,7 +27,7 @@ describe Lune::Capabilities::ContextMenuBlocker do
     end
 
     it "does not include BindPhase" do
-      Lune::Capabilities::ContextMenuBlocker.new.is_a?(Lune::Capability::BindPhase).should be_false
+      Lune::Capabilities::ContextMenuBlocker.new.is_a?(Lune::Bindable).should be_false
     end
   end
 

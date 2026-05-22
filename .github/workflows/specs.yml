@@ -171,7 +171,7 @@ jobs:
         run: shards install --skip-postinstall
 
       - name: Run all specs
-        run: crystal spec -D lune_native_test_mock ${{ matrix.spec_flags }}
+        run: crystal spec -Dlune_native_test_mock ${{ matrix.spec_flags }}
 
       # The spec run uses `lune_native_test_mock`, which short-circuits the
       # native Win32 paths in src/lune/native/*. To make sure the real native

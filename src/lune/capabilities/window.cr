@@ -1,7 +1,7 @@
 module Lune
   module Capabilities
     class Window < Lune::Capability
-      include Capability::BindPhase
+      include Lune::Bindable
 
       DESCRIPTOR = Descriptor.new(id: :window, label: "Window")
 
@@ -15,37 +15,39 @@ module Lune
         @handle = ctx.handle
       end
 
-      def install(ctx : BindCtx) : Nil
-        h = @handle
+      @[Lune::Bind]
+      def minimize : Nil
+        Lune::Native::Window.minimize(@handle)
+      end
 
-        [
-          {"minimize", -> { Lune::Native::Window.minimize(h) }},
-          {"maximize", -> { Lune::Native::Window.maximize(h) }},
-          {"center", -> { Lune::Native::Window.center(h) }},
-          {"hide", -> { Lune::Native::Window.hide(h) }},
-          {"show", -> { Lune::Native::Window.show(h) }},
-        ].each do |(method, action)|
-          ctx.define(method) do |_args|
-            action.call
-            JSON::Any.new(nil)
-          end
-        end
+      @[Lune::Bind]
+      def maximize : Nil
+        Lune::Native::Window.maximize(@handle)
+      end
 
-        ctx.define("set_title",
-          args: ["String"],
-          arg_names: ["title"],
-        ) do |args|
-          Lune::Native::Window.set_title(h, args[0].as_s)
-          JSON::Any.new(nil)
-        end
+      @[Lune::Bind]
+      def center : Nil
+        Lune::Native::Window.center(@handle)
+      end
 
-        ctx.define("set_size",
-          args: ["Int32", "Int32"],
-          arg_names: ["width", "height"],
-        ) do |args|
-          Lune::Native::Window.set_size(h, args[0].as_i, args[1].as_i)
-          JSON::Any.new(nil)
-        end
+      @[Lune::Bind]
+      def hide : Nil
+        Lune::Native::Window.hide(@handle)
+      end
+
+      @[Lune::Bind]
+      def show : Nil
+        Lune::Native::Window.show(@handle)
+      end
+
+      @[Lune::Bind]
+      def set_title(title : String) : Nil
+        Lune::Native::Window.set_title(@handle, title)
+      end
+
+      @[Lune::Bind]
+      def set_size(width : Int32, height : Int32) : Nil
+        Lune::Native::Window.set_size(@handle, width, height)
       end
     end
   end

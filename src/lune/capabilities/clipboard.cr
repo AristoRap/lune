@@ -1,7 +1,7 @@
 module Lune
   module Capabilities
     class Clipboard < Lune::Capability
-      include Capability::BindPhase
+      include Lune::Bindable
 
       DESCRIPTOR = Descriptor.new(id: :clipboard, label: "Clipboard")
 
@@ -81,27 +81,35 @@ module Lune
       )
       end
 
-      def install(ctx : BindCtx) : Nil
-        [
-          {"read", @on_read},
-          {"read_html", @on_read_html},
-          {"read_image", @on_read_image},
-        ].each do |(method, reader)|
-          ctx.define(method, return_type: "String") do |_args|
-            JSON::Any.new(reader.call)
-          end
-        end
+      @[Lune::Bind]
+      def read : String
+        @on_read.call
+      end
 
-        [
-          {"write", "text", @on_write},
-          {"write_html", "html", @on_write_html},
-          {"write_image", "dataUrl", @on_write_image},
-        ].each do |(method, arg_name, writer)|
-          ctx.define(method, args: ["String"], arg_names: [arg_name]) do |args|
-            writer.call(args[0].as_s)
-            JSON::Any.new(nil)
-          end
-        end
+      @[Lune::Bind]
+      def read_html : String
+        @on_read_html.call
+      end
+
+      @[Lune::Bind]
+      def read_image : String
+        @on_read_image.call
+      end
+
+      @[Lune::Bind]
+      def write(text : String) : Nil
+        @on_write.call(text)
+      end
+
+      @[Lune::Bind]
+      def write_html(html : String) : Nil
+        @on_write_html.call(html)
+      end
+
+      @[Lune::Bind]
+      @[Lune::BindOverride(arg_names: ["dataUrl"])]
+      def write_image(data_url : String) : Nil
+        @on_write_image.call(data_url)
       end
     end
   end

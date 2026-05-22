@@ -185,8 +185,7 @@ module Lune
         # JS stubs separately via `registry.platform_filtered` below.
         registry.all.each do |cap|
           next if resolved.active_ids.includes?(cap.descriptor.id)
-          next unless cap.is_a?(Lune::Capability::BindPhase)
-          cap.install(Lune::Capability::BindCtx.new(all_stubs, cap))
+          cap.install(all_stubs)
         end
         Lune::Generator.write_js(
           @app.bindings + all_stubs.bindings.select(&.internal?),

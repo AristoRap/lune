@@ -1,7 +1,7 @@
 module Lune
   module Capabilities
     class Shell < Lune::Capability
-      include Capability::BindPhase
+      include Lune::Bindable
       include Capability::Lifecycle
 
       DESCRIPTOR = Descriptor.new(id: :shell, label: "Shell", deps: [:stream])
@@ -14,83 +14,52 @@ module Lune
       @stdins = {} of String => IO::FileDescriptor
       @mu = Mutex.new
 
-      def install(ctx : BindCtx) : Nil
-        app = ctx.app
+      # spawn calls @app.async three times to start the stdout/stderr/wait
+      # pumps. On Windows those run through Channel#receive in the Parallel
+      # scheduler — illegal from the webview Isolated thread. async routes
+      # the callback through @async_pool so the spawn is safe.
+      @[Lune::Bind(async: true)]
+      @[Lune::BindOverride(arg_names: ["command", "args"])]
+      def spawn(command : String, argv : Array(String)) : String
+        spawn_proc(@app, command, argv)
+      end
 
-        # spawn_proc calls app.async three times to start the stdout/stderr/
-        # wait pumps. On Windows those run through Channel#receive in the
-        # Parallel scheduler — illegal from the webview Isolated thread. async
-        # routes the callback through @async_pool so the spawn is safe.
-        ctx.define("spawn",
-          args: ["String", "Array"],
-          return_type: "String",
-          arg_names: ["command", "args"],
-          async: true,
-        ) do |raw|
-          cmd = raw[0].as_s
-          argv = raw[1].as_a.map(&.as_s)
-          JSON::Any.new(spawn_proc(app, cmd, argv))
+      @[Lune::Bind]
+      def kill(pid : String) : Nil
+        @mu.synchronize do
+          @processes[pid]?.try(&.terminate)
+          @stdins.delete(pid).try { |io| io.close rescue nil }
         end
+      end
 
-        ctx.define("kill",
-          args: ["String"],
-          arg_names: ["pid"],
-        ) do |raw|
-          pid = raw[0].as_s
-          @mu.synchronize do
-            @processes[pid]?.try(&.terminate)
-            @stdins.delete(pid).try { |io| io.close rescue nil }
-          end
-          JSON::Any.new(nil)
-        end
+      @[Lune::Bind]
+      def write(pid : String, text : String) : Nil
+        @mu.synchronize { @stdins[pid]? }.try { |io| io.print(text) rescue nil }
+      end
 
-        ctx.define("write",
-          args: ["String", "String"],
-          arg_names: ["pid", "text"],
-        ) do |raw|
-          pid = raw[0].as_s
-          text = raw[1].as_s
-          @mu.synchronize { @stdins[pid]? }.try { |io| io.print(text) rescue nil }
-          JSON::Any.new(nil)
-        end
+      @[Lune::Bind]
+      def close_stdin(pid : String) : Nil
+        @mu.synchronize { @stdins.delete(pid) }.try { |io| io.close rescue nil }
+      end
 
-        ctx.define("close_stdin",
-          args: ["String"],
-          arg_names: ["pid"],
-        ) do |raw|
-          pid = raw[0].as_s
-          @mu.synchronize { @stdins.delete(pid) }.try { |io| io.close rescue nil }
-          JSON::Any.new(nil)
-        end
+      @[Lune::Bind(async: true)]
+      def list : Array(String)
+        @mu.synchronize { @processes.keys }
+      end
 
-        ctx.define("list",
-          return_type: "Array(String)",
-          async: true,
-        ) do |_raw|
-          pids = @mu.synchronize { @processes.keys.map { |k| JSON::Any.new(k) } }
-          JSON::Any.new(pids)
+      # Blocking async binding — collects all output then resolves.
+      # Avoids the Stream listener race that occurs when a process exits
+      # before the JS .then() callback can register Stream handlers.
+      @[Lune::Bind(async: true)]
+      @[Lune::BindOverride(arg_names: ["command", "args"], ts_return_type: "Promise<{ stdout: string; stderr: string; code: number }>")]
+      def run(command : String, argv : Array(String)) : NamedTuple(stdout: String, stderr: String, code: Int32)
+        out_buf = IO::Memory.new
+        err_buf = IO::Memory.new
+        status = Shell.with_win32_cmd_fallback(command, argv) do |c, a|
+          Process.run(c, args: a, output: out_buf, error: err_buf)
         end
-
-        # Blocking async binding — collects all output then resolves.
-        # Avoids the Stream listener race that occurs when a process exits
-        # before the JS .then() callback can register Stream handlers.
-        ctx.define("run",
-          args: ["String", "Array"],
-          return_type: "Hash",
-          arg_names: ["command", "args"],
-          async: true,
-          ts_return_type: "Promise<{ stdout: string; stderr: string; code: number }>",
-        ) do |raw|
-          cmd = raw[0].as_s
-          argv = raw[1].as_a.map(&.as_s)
-          out_buf = IO::Memory.new
-          err_buf = IO::Memory.new
-          status = Shell.with_win32_cmd_fallback(cmd, argv) do |c, a|
-            Process.run(c, args: a, output: out_buf, error: err_buf)
-          end
-          code = status.exit_code? || -1
-          JSON.parse({"stdout" => out_buf.to_s, "stderr" => err_buf.to_s, "code" => code}.to_json)
-        end
+        code = status.exit_code? || -1
+        {stdout: out_buf.to_s, stderr: err_buf.to_s, code: code}
       end
 
       # Yields (cmd, argv) to the block as-is. On Win32, if the block raises

@@ -1,7 +1,7 @@
 module Lune
   module Capabilities
     class FileWatch < Lune::Capability
-      include Capability::BindPhase
+      include Lune::Bindable
       include Capability::Lifecycle
 
       # macOS (kqueue) + Linux (inotify). Win32 needs `ReadDirectoryChangesW`
@@ -24,8 +24,10 @@ module Lune
         @debounce = ctx.options.file_watch.debounce
       end
 
-      def install(ctx : BindCtx) : Nil
-        app = ctx.app
+      # Hook the macro-generated install to also kick off the native watcher
+      # pump, which delivers `(path, kind)` callbacks into `app.events`.
+      def install(app : Lune::App) : Nil
+        previous_def
         debounce = @debounce
         last_fired = @last_fired
         @watcher.start do |path, kind|
@@ -34,23 +36,16 @@ module Lune
           last_fired[path] = now
           app.events.emit("file_watch", {"path" => path, "kind" => kind})
         end
+      end
 
-        watcher = @watcher
-        ctx.define("watch",
-          args: ["String"],
-          arg_names: ["path"],
-        ) do |args|
-          watcher.add_watch(args[0].as_s)
-          JSON::Any.new(nil)
-        end
+      @[Lune::Bind]
+      def watch(path : String) : Nil
+        @watcher.add_watch(path)
+      end
 
-        ctx.define("unwatch",
-          args: ["String"],
-          arg_names: ["path"],
-        ) do |args|
-          watcher.remove_watch(args[0].as_s)
-          JSON::Any.new(nil)
-        end
+      @[Lune::Bind]
+      def unwatch(path : String) : Nil
+        @watcher.remove_watch(path)
       end
 
       def shutdown : Nil
