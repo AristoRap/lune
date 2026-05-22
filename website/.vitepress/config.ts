@@ -30,7 +30,6 @@ export default defineConfig({
           { text: 'Window', link: '/guide/window' },
           { text: 'Menubar Apps', link: '/guide/menubar' },
           { text: 'Distribution', link: '/guide/distribution' },
-          { text: 'Windows Verification Checklist', link: '/guide/windows-checklist' },
         ],
       },
       {

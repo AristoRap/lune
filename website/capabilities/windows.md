@@ -1,4 +1,4 @@
-# Windows
+﻿# Windows
 
 > Open and manage additional native windows from JavaScript.
 
@@ -59,7 +59,7 @@ const id = await Windows.open({
 await Windows.close(id);
 ```
 
-Closes the native window and releases all resources. Call this rather than letting the user close the window via the title bar — see [Notes](#notes).
+Closes the native window and releases all resources. Both `Windows.close(id)` and the user clicking the OS × button follow the same cleanup path — the bridge is torn down, the handle is freed, and the `window_closed` event fires on the main window.
 
 ---
 
@@ -115,6 +115,14 @@ Secondary windows are fully capable — every capability active in the main wind
 ## Notes
 
 - **No `run` needed.** Secondary windows join the existing Cocoa/GTK run loop automatically; you don't need to do anything extra to keep them alive.
+
+---
+
+## Platform notes
+
+- **macOS** — Verified.
+- **Linux** — Untested.
+- **Windows** — Verified.
 
 ---
 

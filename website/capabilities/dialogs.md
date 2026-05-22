@@ -1,4 +1,4 @@
-# Dialogs
+﻿# Dialogs
 
 > Native file pickers and message dialogs.
 
@@ -70,6 +70,14 @@ if (answer === "OK") deleteAll();
 | `messageWarning`  | `messageWarning(title, message)`  | `Promise<void>`                  |
 | `messageError`    | `messageError(title, message)`    | `Promise<void>`                  |
 | `messageQuestion` | `messageQuestion(title, message)` | `Promise<string>` — button label |
+
+---
+
+## Platform notes
+
+- **macOS** — Verified.
+- **Linux** — Untested.
+- **Windows** — Verified. Open/save/message all work; correct icons/buttons since v0.11.0.
 
 ---
 

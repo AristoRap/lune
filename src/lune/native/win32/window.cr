@@ -25,6 +25,11 @@
         SM_CXSCREEN = 0
         SM_CYSCREEN = 1
 
+        WM_DESTROY = 0x0002_u32
+        WM_CLOSE   = 0x0010_u32
+
+        GWLP_WNDPROC = -4
+
         fun is_window = IsWindow(hwnd : Void*) : LibC::Int
         fun get_window_rect = GetWindowRect(hwnd : Void*, rect : Rect*) : LibC::Int
         fun move_window = MoveWindow(hwnd : Void*, x : LibC::Int, y : LibC::Int, w : LibC::Int, h : LibC::Int, repaint : LibC::Int) : LibC::Int
@@ -32,6 +37,10 @@
         fun show_window = ShowWindow(hwnd : Void*, cmd : LibC::Int) : LibC::Int
         fun set_window_pos = SetWindowPos(hwnd : Void*, after : Void*, x : LibC::Int, y : LibC::Int, w : LibC::Int, h : LibC::Int, flags : UInt32) : LibC::Int
         fun get_system_metrics = GetSystemMetrics(index : LibC::Int) : LibC::Int
+        fun post_message_w = PostMessageW(hwnd : Void*, msg : UInt32, wparam : LibC::UIntPtrT, lparam : LibC::IntPtrT) : LibC::Int
+        fun set_window_long_ptr_w = SetWindowLongPtrW(hwnd : Void*, idx : LibC::Int, new_long : LibC::IntPtrT) : LibC::IntPtrT
+        fun call_window_proc_w = CallWindowProcW(prev_proc : Void*, hwnd : Void*, msg : UInt32, wparam : LibC::UIntPtrT, lparam : LibC::IntPtrT) : LibC::IntPtrT
+        fun def_window_proc_w = DefWindowProcW(hwnd : Void*, msg : UInt32, wparam : LibC::UIntPtrT, lparam : LibC::IntPtrT) : LibC::IntPtrT
       end
 
       module Window
@@ -121,7 +130,6 @@
         def self.set_appearance(handle : Void*, mode : Int32); end
         def self.set_content_protection(handle : Void*, enabled : Bool); end
         def self.set_always_on_top(handle : Void*, enabled : Bool); end
-        def self.close(handle : Void*); end
         def self.set_activation_policy_accessory; end
         def self.hide(handle : Void*); end
         def self.show(handle : Void*); end
@@ -132,7 +140,49 @@
 
         def self.auto_hide_on_resign_key(handle : Void*); end
 
-        def self.on_close(handle : Void*, &block : ->) : Nil; end
+        # PostMessage(WM_CLOSE) lets the existing WNDPROC chain destroy the
+        # window normally (webview shard cleanup + our subclassed on_close trap
+        # both still fire). Matches `[NSWindow close]` semantics on darwin.
+        def self.close(handle : Void*)
+          LibUser32.post_message_w(handle, LibUser32::WM_CLOSE, LibC::UIntPtrT.new(0), LibC::IntPtrT.new(0))
+        end
+
+        # Map HWND → user block + previous WNDPROC. Accessed only from the UI
+        # thread (on_close is called inside main_wv.dispatch; the subclassed
+        # WNDPROC runs on the same message-pump thread).
+        @@close_procs = {} of Void* => Proc(Nil)
+        @@prev_wndprocs = {} of Void* => Void*
+
+        # Subclass the HWND to trap WM_DESTROY and invoke the block. Mirrors
+        # darwin's NSWindowWillCloseNotification observer (fires for both
+        # programmatic close and user-clicked X).
+        def self.on_close(handle : Void*, &block : ->) : Nil
+          @@close_procs[handle] = block
+
+          new_proc = ->Window.lune_wndproc(Void*, UInt32, LibC::UIntPtrT, LibC::IntPtrT)
+          new_addr = LibC::IntPtrT.new!(new_proc.pointer.address)
+          prev_addr = LibUser32.set_window_long_ptr_w(handle, LibUser32::GWLP_WNDPROC, new_addr)
+          @@prev_wndprocs[handle] = Pointer(Void).new(prev_addr.to_u64!) if prev_addr != 0
+        end
+
+        # Static WNDPROC: forward every message to the shard's original proc,
+        # but on WM_DESTROY first invoke the user's block (HWND still valid).
+        def self.lune_wndproc(hwnd : Void*, msg : UInt32, wparam : LibC::UIntPtrT, lparam : LibC::IntPtrT) : LibC::IntPtrT
+          if msg == LibUser32::WM_DESTROY
+            if block = @@close_procs.delete(hwnd)
+              block.call
+            end
+          end
+
+          result = if prev = @@prev_wndprocs[hwnd]?
+                     LibUser32.call_window_proc_w(prev, hwnd, msg, wparam, lparam)
+                   else
+                     LibUser32.def_window_proc_w(hwnd, msg, wparam, lparam)
+                   end
+
+          @@prev_wndprocs.delete(hwnd) if msg == LibUser32::WM_DESTROY
+          result
+        end
       end
     end
   end

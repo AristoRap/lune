@@ -1,4 +1,4 @@
-# Clipboard
+﻿# Clipboard
 
 > Read and write the system clipboard — text, HTML, and images.
 
@@ -59,7 +59,9 @@ await Clipboard.writeImage(dataUrl);
 
 ## Platform notes
 
-Text read/write uses `pbpaste`/`pbcopy` on macOS, `xclip` on Linux, and direct Win32 (`OpenClipboard` + `SetClipboardData(CF_UNICODETEXT)` / `GetClipboardData`) on Windows. HTML reads/writes use native APIs on all three. Image reads/writes work on macOS + Linux; on Windows they reject the returned `Promise` with `LuneError("UNAVAILABLE_ON_PLATFORM", …)` so cross-platform code can `.catch` and fall back. PNG ↔ CF_DIB conversion isn't implemented yet — tracked in [ROADMAP.md](https://github.com/AristoRap/lune/blob/main/ROADMAP.md).
+- **macOS** — Verified. Text via `pbpaste`/`pbcopy`; HTML and image via native APIs.
+- **Linux** — Untested. Text via `xclip`; HTML and image via native APIs.
+- **Windows** — Verified (text + HTML); image Not implemented. Text/HTML go through Win32 `CF_UNICODETEXT` / `CF_HTML`. Image needs PNG ↔ `CF_DIB` conversion — tracked in [ROADMAP.md](https://github.com/AristoRap/lune/blob/main/ROADMAP.md).
 
 ---
 

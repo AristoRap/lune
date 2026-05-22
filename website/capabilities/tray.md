@@ -1,4 +1,4 @@
-# Tray
+﻿# Tray
 
 > System tray icon with an optional dropdown menu.
 
@@ -177,6 +177,14 @@ Tray ships fully on Windows via `Shell_NotifyIconW` + `CreatePopupMenu` + `LoadI
 - **`Tray.setIcon` requires a `.ico` file.** Pass a path ending in `.ico`; PNG / SVG / JPEG fall back to the default Windows app icon (`IDI_APPLICATION`) and emit a `logger.warn`. Convert your icon at build time — the bundled `assets/lune-logo.ico` is a multi-resolution example (16/32/48/64/128/256 px embedded as PNG entries) generated from `assets/lune-logo.png`.
 - **`opts.tray.toggle_window_on` is currently a no-op on Windows.** The macOS implementation positions the window directly under the tray icon using the icon's screen rect; on Windows that requires `Shell_NotifyIconGetRect` plumbing that isn't wired yet. The click handler still fires — it just doesn't move or show the window. Tracked in [ROADMAP.md](https://github.com/AristoRap/lune/blob/main/ROADMAP.md). Until then, wire `opts.tray.on_click = -> { ... }` manually if you want click-to-toggle behaviour on Windows.
 - **Native context menus render at the cursor position**, not anchored to the tray icon (this matches Win32 convention — `TrackPopupMenu` takes screen coordinates and Lune passes `GetCursorPos`). The Win32 menu also uses the system's classic submenu style, not the rounded "Mica" popovers you see in some Windows 11 apps — those require Acrylic / DirectComposition work that isn't in scope.
+
+---
+
+## Platform notes
+
+- **macOS** — Verified.
+- **Linux** — Untested. Requires XWayland on Wayland compositors.
+- **Windows** — Verified with caveats. Core functionality (icon, menu, click, right-click) works via `Shell_NotifyIconW`. `setIcon` requires `.ico` (PNG/SVG fall back to default with warning); `toggle_window_on` is a no-op (needs `Shell_NotifyIconGetRect`); native menus render at cursor position rather than anchored to icon.
 
 ---
 

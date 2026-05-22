@@ -41,9 +41,11 @@ Mark an element as a drag handle with an inline style:
 
 ---
 
-## Platform support
+## Platform notes
 
-macOS only. On Linux and Windows the capability is auto-filtered from the registry (the native shim is Cocoa-only) and setting `drag.zone` is a silent no-op — the page still works, the marked elements just don't drag the window. Implementations are tracked on the [roadmap](https://github.com/AristoRap/lune/blob/main/ROADMAP.md): Win32 uses `WM_NCLBUTTONDOWN` + `HTCAPTION`; X11 uses `_NET_WM_MOVERESIZE`.
+- **macOS** — Verified.
+- **Linux** — Not implemented. Needs `_NET_WM_MOVERESIZE`; auto-filtered from the registry. Tracked in [ROADMAP.md](https://github.com/AristoRap/lune/blob/main/ROADMAP.md).
+- **Windows** — Not implemented. Needs `WM_NCLBUTTONDOWN` + `HTCAPTION`; auto-filtered from the registry. Tracked in [ROADMAP.md](https://github.com/AristoRap/lune/blob/main/ROADMAP.md).
 
 ---
 

@@ -1,4 +1,4 @@
-# Events
+﻿# Events
 
 > Bidirectional event bus between Crystal and JavaScript.
 
@@ -166,3 +166,11 @@ Events.emit("frontend-ready");
 - Events emitted before the WebView has opened are silently dropped. Emit from `on_load` or in response to a JS event to guarantee delivery.
 - Crystal `app.events.on` handlers run on the webview main thread. Keep them short; dispatch long work to `app.async`.
 - For high-frequency or ordered streams, use [Stream](./stream) instead.
+
+---
+
+## Platform notes
+
+- **macOS** — Verified.
+- **Linux** — Untested.
+- **Windows** — Verified.

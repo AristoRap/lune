@@ -57,6 +57,14 @@ try {
 
 ---
 
+## Platform notes
+
+- **macOS** — Verified.
+- **Linux** — Not implemented. Tracked in [ROADMAP.md](https://github.com/AristoRap/lune/blob/main/ROADMAP.md).
+- **Windows** — Not implemented. Needs OLE `DoDragDrop` + `IDataObject` / `IDropSource`.
+
+---
+
 ## Disabling
 
 ```yaml

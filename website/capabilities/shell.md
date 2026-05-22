@@ -1,4 +1,4 @@
-# Shell
+﻿# Shell
 
 > Spawn child processes and stream their output to the frontend in real time.
 
@@ -9,7 +9,7 @@
 | **Core**         | No                       |
 | **Phases**       | Bindable · Lifecycle     |
 | **Hard deps**    | `stream`                 |
-| **Platforms**    | macOS · Linux · Windows¹ |
+| **Platforms**    | macOS · Linux · Windows  |
 
 Shell lets you run commands and pipe their `stdout`/`stderr` to the browser over the WebSocket stream. Use it for build pipelines, log tailing, long-running tools, or anything that writes to standard output.
 
@@ -171,8 +171,15 @@ Crystal reads `stdout` and `stderr` in parallel async fibers, then waits for bot
 - **Output is line-buffered.** Each `{ line }` payload is one line. Processes that don't flush until exit produce no output until they exit or flush.
 - **Shell metacharacters are not expanded.** Pass the binary as the first argument and flags as separate array elements. For pipes or globs: `spawn("/bin/sh", ["-c", "ls | grep foo"])`.
 - **Auto-cleanup on window close.** The `Lifecycle` shutdown hook sends SIGTERM to all running processes when the app quits.
+- **Windows cmd builtins and `.cmd`/`.bat` shims work transparently.** When `CreateProcess` raises `File::NotFoundError` for a name like `echo`, `dir`, `type`, `npm.cmd`, or `yarn.cmd`, the capability auto-retries via `cmd /c <name> …`. No manual wrapping required.
 
-¹ **Windows note** — `Shell.spawn`/`Shell.run` resolve binaries via `CreateProcess`, which only finds real `.exe`s (and `.bat`/`.cmd` files Crystal explicitly wraps). cmd builtins (`echo`, `dir`, `type`, `cd`, etc.) fail with `File::NotFoundError`. Use `cmd /c <builtin> …` if you need them. Real executables (`git`, `curl`, `node`, project binaries, etc.) work normally.
+---
+
+## Platform notes
+
+- **macOS** — Verified.
+- **Linux** — Untested.
+- **Windows** — Verified. cmd builtins (echo, dir, type, etc.) and `.cmd`/`.bat` shims (npm.cmd, yarn.cmd) work — the capability auto-retries via `cmd /c` when direct `Process.new` raises `File::NotFoundError`.
 
 ---
 

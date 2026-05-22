@@ -1,4 +1,4 @@
-# Window
+﻿# Window
 
 > Programmatic window controls from JavaScript.
 
@@ -42,6 +42,14 @@ await Window.setSize(1440, 900);
 
 - `setSize` sets the content area in logical pixels (independent of screen DPI).
 - For initial size and position constraints (`min_width`, `max_width`, etc.) use the [Window Configuration](../guide/window) options.
+
+---
+
+## Platform notes
+
+- **macOS** — Verified.
+- **Linux** — Untested.
+- **Windows** — Verified. Window state opt-in via `remember_frame = true` (live `GetWindowRect` tracker since HWND is destroyed before save). `chrome` opts are macOS-only.
 
 ---
 

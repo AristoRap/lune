@@ -1,4 +1,4 @@
-# FileWatch
+﻿# FileWatch
 
 > Monitor files and directories for filesystem changes.
 
@@ -107,3 +107,11 @@ capabilities:
 ```
 
 On Windows you don't need to disable it manually — the platform filter handles it. The `disabled:` entry is only useful on macOS / Linux.
+
+---
+
+## Platform notes
+
+- **macOS** — Verified. Backed by kqueue `EVFILT_VNODE`.
+- **Linux** — Untested. Backed by inotify.
+- **Windows** — Not implemented. Needs `ReadDirectoryChangesW`. Auto-filtered by capability registry on Windows.
