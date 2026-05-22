@@ -1,4 +1,4 @@
-# Hotkeys
+﻿# Hotkeys
 
 System-wide keyboard shortcuts that fire even when the app window is not focused.
 
@@ -90,10 +90,13 @@ async function setupHotkeys() {
 }
 ```
 
-## Platform notes
+## Notes
 
-- **macOS** — uses Carbon `RegisterEventHotKey`. No Accessibility permission required.
-- **Linux** — uses `XGrabKey` on the root window via a background X11 connection.
-- **Windows** — uses `RegisterHotKey` on a dedicated pump thread that owns the WM_HOTKEY message queue. Producer-side `register`/`unregister` calls from any fiber are marshalled through a Mutex-protected ops queue; bindings are marked `async: true` on the bridge so they're safe to call from the webview thread. `Cmd+…` and `Win+…` both map to the Windows key modifier.
 - Shortcuts that conflict with another app's system-wide hotkeys (e.g. OS shortcuts) will silently fail to register. A `warn` log entry is emitted when registration fails.
 - Registered hotkeys are global to the session — they fire regardless of which app has focus.
+
+## Platform notes
+
+- **macOS** — Verified. Uses Carbon `RegisterEventHotKey`; no Accessibility permission required.
+- **Linux** — Untested. Uses `XGrabKey` on the root window via a background X11 connection.
+- **Windows** — Verified. Uses `RegisterHotKey` on a dedicated WM_HOTKEY pump thread; `Cmd+…` and `Win+…` both map to the Windows key modifier.

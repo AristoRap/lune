@@ -282,7 +282,7 @@ describe Lune::Capabilities::Sqlite do
       cap = Lune::Capabilities::Sqlite.new
       app = Lune::App.new
       app.install(cap)
-      dts = Lune::Runtime::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Capability)
+      dts = Lune::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Capability)
       dts.should contain("open(path: string): Promise<string>")
     end
   end

@@ -407,10 +407,10 @@ describe Lune::App do
   end
 
   describe "bridge requirements" do
-    it "raises when calling eval without a bridge" do
+    it "raises Lune::BridgeNotReadyError when calling eval without a bridge" do
       app = Lune::App.new
 
-      expect_raises(NilAssertionError) do
+      expect_raises(Lune::BridgeNotReadyError) do
         app.eval("1 + 1")
       end
     end
@@ -430,12 +430,9 @@ describe Lune::App do
       bridge.last_eval.should eq("")
     end
 
-    it "raises when closing without a bridge" do
+    it "is a no-op when closing without a bridge" do
       app = Lune::App.new
-
-      expect_raises(NilAssertionError) do
-        app.close!
-      end
+      app.close! # must not raise — idempotent close
     end
   end
 

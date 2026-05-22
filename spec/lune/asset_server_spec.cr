@@ -9,9 +9,9 @@ private def http_get(url : String) : HTTP::Client::Response
   client.get(uri.request_target)
 end
 
-describe Lune::AssetServer do
+describe Lune::Assets::Server do
   it "url returns an http://127.0.0.1 address on a non-zero port" do
-    server = Lune::AssetServer.new
+    server = Lune::Assets::Server.new
     server.start
     begin
       server.url.should match(/\Ahttp:\/\/127\.0\.0\.1:\d+\z/)
@@ -22,9 +22,9 @@ describe Lune::AssetServer do
   end
 
   it "each instance binds its own port" do
-    a = Lune::AssetServer.new
+    a = Lune::Assets::Server.new
     a.start
-    b = Lune::AssetServer.new
+    b = Lune::Assets::Server.new
     b.start
     begin
       a.port.should_not eq(b.port)
@@ -35,7 +35,7 @@ describe Lune::AssetServer do
   end
 
   it "serves /index.html from embedded assets" do
-    server = Lune::AssetServer.new
+    server = Lune::Assets::Server.new
     server.start
     begin
       response = http_get("#{server.url}/index.html")
@@ -47,7 +47,7 @@ describe Lune::AssetServer do
   end
 
   it "normalises / to /index.html" do
-    server = Lune::AssetServer.new
+    server = Lune::Assets::Server.new
     server.start
     begin
       response = http_get(server.url)
@@ -59,7 +59,7 @@ describe Lune::AssetServer do
   end
 
   it "serves nested assets" do
-    server = Lune::AssetServer.new
+    server = Lune::Assets::Server.new
     server.start
     begin
       response = http_get("#{server.url}/nested/info.txt")
@@ -71,7 +71,7 @@ describe Lune::AssetServer do
   end
 
   it "returns 404 for unknown paths" do
-    server = Lune::AssetServer.new
+    server = Lune::Assets::Server.new
     server.start
     begin
       response = http_get("#{server.url}/no-such-file.html")
@@ -82,7 +82,7 @@ describe Lune::AssetServer do
   end
 
   it "sets Content-Type for html files" do
-    server = Lune::AssetServer.new
+    server = Lune::Assets::Server.new
     server.start
     begin
       response = http_get("#{server.url}/index.html")

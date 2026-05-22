@@ -96,60 +96,60 @@ describe Lune::Binding do
 
   describe ".crystal_to_ts" do
     it "maps primitive Crystal types" do
-      Lune::Runtime::Generator.crystal_to_ts("String").should eq("string")
-      Lune::Runtime::Generator.crystal_to_ts("Bool").should eq("boolean")
-      Lune::Runtime::Generator.crystal_to_ts("Nil").should eq("void")
-      Lune::Runtime::Generator.crystal_to_ts("Int32").should eq("number")
-      Lune::Runtime::Generator.crystal_to_ts("Int64").should eq("number")
-      Lune::Runtime::Generator.crystal_to_ts("Float32").should eq("number")
-      Lune::Runtime::Generator.crystal_to_ts("Float64").should eq("number")
+      Lune::Generator.crystal_to_ts("String").should eq("string")
+      Lune::Generator.crystal_to_ts("Bool").should eq("boolean")
+      Lune::Generator.crystal_to_ts("Nil").should eq("void")
+      Lune::Generator.crystal_to_ts("Int32").should eq("number")
+      Lune::Generator.crystal_to_ts("Int64").should eq("number")
+      Lune::Generator.crystal_to_ts("Float32").should eq("number")
+      Lune::Generator.crystal_to_ts("Float64").should eq("number")
     end
 
     it "maps bare collection types to permissive fallbacks" do
-      Lune::Runtime::Generator.crystal_to_ts("Array").should eq("any[]")
-      Lune::Runtime::Generator.crystal_to_ts("Hash").should eq("Record<string, any>")
+      Lune::Generator.crystal_to_ts("Array").should eq("any[]")
+      Lune::Generator.crystal_to_ts("Hash").should eq("Record<string, any>")
     end
 
     it "maps parameterized Array to a typed TS array" do
-      Lune::Runtime::Generator.crystal_to_ts("Array(String)").should eq("string[]")
-      Lune::Runtime::Generator.crystal_to_ts("Array(Int32)").should eq("number[]")
-      Lune::Runtime::Generator.crystal_to_ts("Array(Bool)").should eq("boolean[]")
+      Lune::Generator.crystal_to_ts("Array(String)").should eq("string[]")
+      Lune::Generator.crystal_to_ts("Array(Int32)").should eq("number[]")
+      Lune::Generator.crystal_to_ts("Array(Bool)").should eq("boolean[]")
     end
 
     it "maps parameterized Hash to Record<K, V>" do
-      Lune::Runtime::Generator.crystal_to_ts("Hash(String, Int32)").should eq("Record<string, number>")
-      Lune::Runtime::Generator.crystal_to_ts("Hash(String, Bool)").should eq("Record<string, boolean>")
+      Lune::Generator.crystal_to_ts("Hash(String, Int32)").should eq("Record<string, number>")
+      Lune::Generator.crystal_to_ts("Hash(String, Bool)").should eq("Record<string, boolean>")
     end
 
     it "maps Tuple to TS tuple syntax" do
-      Lune::Runtime::Generator.crystal_to_ts("Tuple(String, Int32)").should eq("[string, number]")
-      Lune::Runtime::Generator.crystal_to_ts("Tuple(String, Int32, Bool)").should eq("[string, number, boolean]")
+      Lune::Generator.crystal_to_ts("Tuple(String, Int32)").should eq("[string, number]")
+      Lune::Generator.crystal_to_ts("Tuple(String, Int32, Bool)").should eq("[string, number, boolean]")
     end
 
     it "recurses through nested generics" do
-      Lune::Runtime::Generator.crystal_to_ts("Array(Array(String))").should eq("string[][]")
-      Lune::Runtime::Generator.crystal_to_ts("Hash(String, Array(Int32))").should eq("Record<string, number[]>")
-      Lune::Runtime::Generator.crystal_to_ts("Array(Hash(String, Bool))").should eq("Record<string, boolean>[]")
+      Lune::Generator.crystal_to_ts("Array(Array(String))").should eq("string[][]")
+      Lune::Generator.crystal_to_ts("Hash(String, Array(Int32))").should eq("Record<string, number[]>")
+      Lune::Generator.crystal_to_ts("Array(Hash(String, Bool))").should eq("Record<string, boolean>[]")
     end
 
     it "tolerates whitespace inside generics" do
-      Lune::Runtime::Generator.crystal_to_ts("Array( String )").should eq("string[]")
-      Lune::Runtime::Generator.crystal_to_ts("Hash( String , Int32 )").should eq("Record<string, number>")
+      Lune::Generator.crystal_to_ts("Array( String )").should eq("string[]")
+      Lune::Generator.crystal_to_ts("Hash( String , Int32 )").should eq("Record<string, number>")
     end
 
     it "falls back to Record<string, any> for unknown types" do
-      Lune::Runtime::Generator.crystal_to_ts("MyStruct").should eq("Record<string, any>")
+      Lune::Generator.crystal_to_ts("MyStruct").should eq("Record<string, any>")
     end
 
     it "falls back to Record<string, any> for unknown inner generic types" do
-      Lune::Runtime::Generator.crystal_to_ts("Array(MyStruct)").should eq("Record<string, any>[]")
+      Lune::Generator.crystal_to_ts("Array(MyStruct)").should eq("Record<string, any>[]")
     end
 
     it "supports extended integer / unsigned int primitives" do
-      Lune::Runtime::Generator.crystal_to_ts("Int8").should eq("number")
-      Lune::Runtime::Generator.crystal_to_ts("Int16").should eq("number")
-      Lune::Runtime::Generator.crystal_to_ts("UInt32").should eq("number")
-      Lune::Runtime::Generator.crystal_to_ts("UInt64").should eq("number")
+      Lune::Generator.crystal_to_ts("Int8").should eq("number")
+      Lune::Generator.crystal_to_ts("Int16").should eq("number")
+      Lune::Generator.crystal_to_ts("UInt32").should eq("number")
+      Lune::Generator.crystal_to_ts("UInt64").should eq("number")
     end
   end
 end

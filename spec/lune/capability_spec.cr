@@ -226,6 +226,45 @@ describe Lune::Capabilities::Registry do
     end
   end
 
+  describe "#validate_resolve_install" do
+    it "returns the same ResolvedSet that resolve() would" do
+      app = Lune::App.new
+      resolved = make_registry.validate_resolve_install(config_enabled("clipboard"), app)
+      resolved.active_ids.should eq(Set{:clipboard})
+    end
+
+    it "installs BindPhase capabilities into the target app" do
+      app = Lune::App.new
+      make_registry.validate_resolve_install(config_enabled("clipboard"), app)
+      app.bindings.map(&.id).any?(&.includes?("clipboard")).should be_true
+    end
+
+    it "skips capabilities that are not BindPhase" do
+      # Events is WebviewInject only — must not be installed via BindCtx.
+      app = Lune::App.new
+      make_registry.validate_resolve_install(config_enabled("events"), app)
+      app.bindings.map(&.id).any?(&.includes?("events")).should be_false
+    end
+
+    it "logs resolve warnings via Lune.logger" do
+      backend = CaptureBackend.new
+      logger = Log.new("lune.spec.vri", backend, :debug)
+      with_logger(logger) do
+        make_registry.validate_resolve_install(config_disabled("events"), Lune::App.new)
+      end
+      backend.entries.any? { |e| e.message.includes?("ContextMenu") }.should be_true
+    end
+
+    it "logs validate warnings for unknown capability names" do
+      backend = CaptureBackend.new
+      logger = Log.new("lune.spec.vri", backend, :debug)
+      with_logger(logger) do
+        make_registry.validate_resolve_install(config_enabled("not_a_real_cap"), Lune::App.new)
+      end
+      backend.entries.any? { |e| e.message.includes?("unknown capability") }.should be_true
+    end
+  end
+
   describe "platform filtering" do
     it "CURRENT_PLATFORM is one of the known OS symbols" do
       [:darwin, :linux, :win32, :unknown].should contain(Lune::Capabilities::CURRENT_PLATFORM)

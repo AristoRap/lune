@@ -6,4 +6,7 @@ module Lune
       super(message)
     end
   end
+
+  class BridgeNotReadyError < Exception
+  end
 end

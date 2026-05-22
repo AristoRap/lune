@@ -121,9 +121,9 @@ describe Lune::Capabilities::Kv do
       cap = Lune::Capabilities::Kv.new
       app = Lune::App.new
       app.install(cap)
-      set_b  = app.bindings.find { |b| b.id == "__lune.kv.set" }.not_nil!
-      del_b  = app.bindings.find { |b| b.id == "__lune.kv.delete" }.not_nil!
-      has_b  = app.bindings.find { |b| b.id == "__lune.kv.has" }.not_nil!
+      set_b = app.bindings.find { |b| b.id == "__lune.kv.set" }.not_nil!
+      del_b = app.bindings.find { |b| b.id == "__lune.kv.delete" }.not_nil!
+      has_b = app.bindings.find { |b| b.id == "__lune.kv.has" }.not_nil!
       set_b.callback.call([JSON::Any.new("tmp"), JSON::Any.new("val")])
       del_b.callback.call([JSON::Any.new("tmp")])
       has_b.callback.call([JSON::Any.new("tmp")]).as_bool.should be_false
@@ -133,9 +133,9 @@ describe Lune::Capabilities::Kv do
       cap = Lune::Capabilities::Kv.new
       app = Lune::App.new
       app.install(cap)
-      set_b   = app.bindings.find { |b| b.id == "__lune.kv.set" }.not_nil!
+      set_b = app.bindings.find { |b| b.id == "__lune.kv.set" }.not_nil!
       clear_b = app.bindings.find { |b| b.id == "__lune.kv.clear" }.not_nil!
-      keys_b  = app.bindings.find { |b| b.id == "__lune.kv.keys" }.not_nil!
+      keys_b = app.bindings.find { |b| b.id == "__lune.kv.keys" }.not_nil!
       set_b.callback.call([JSON::Any.new("k1"), JSON::Any.new("v1")])
       set_b.callback.call([JSON::Any.new("k2"), JSON::Any.new("v2")])
       clear_b.callback.call([] of JSON::Any)
@@ -162,7 +162,7 @@ describe Lune::Capabilities::Kv do
       cap = Lune::Capabilities::Kv.new
       app = Lune::App.new
       app.install(cap)
-      dts = Lune::Runtime::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Capability)
+      dts = Lune::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Capability)
       dts.should contain("keys(): Promise<string[]>")
     end
 
@@ -170,7 +170,7 @@ describe Lune::Capabilities::Kv do
       cap = Lune::Capabilities::Kv.new
       app = Lune::App.new
       app.install(cap)
-      dts = Lune::Runtime::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Capability)
+      dts = Lune::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Capability)
       dts.should contain("has(key: string): Promise<boolean>")
     end
   end

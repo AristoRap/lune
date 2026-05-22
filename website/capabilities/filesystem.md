@@ -1,4 +1,4 @@
-# Filesystem
+﻿# Filesystem
 
 > Resolve standard OS directories (home, downloads, app data, temp).
 
@@ -30,6 +30,14 @@ const tmp = await Filesystem.tempDir();
 | `downloadsDir()` | `Promise<string>` | `~/Downloads`                   | `~/Downloads`                        | `~/Downloads` |
 | `appDataDir()`   | `Promise<string>` | `~/Library/Application Support` | `$XDG_DATA_HOME` or `~/.local/share` | `%APPDATA%`   |
 | `tempDir()`      | `Promise<string>` | `/tmp`                          | `/tmp`                               | `%TEMP%`      |
+
+---
+
+## Platform notes
+
+- **macOS** — Verified.
+- **Linux** — Untested.
+- **Windows** — Verified.
 
 ---
 

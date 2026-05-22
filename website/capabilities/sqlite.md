@@ -1,4 +1,4 @@
-# SQLite
+﻿# SQLite
 
 > Embedded database access with a typed JS bridge.
 
@@ -153,6 +153,14 @@ Accessing a database that was never opened (or already closed) throws `LuneError
 - **One pool per handle.** `crystal-sqlite3` manages a connection pool per `DB::Database` instance. SQLite's WAL mode is recommended for write-heavy apps with concurrent reads.
 - **Lifecycle cleanup.** All open databases are closed when the app quits — the `Lifecycle` shutdown hook calls `db.close` on every tracked handle.
 - **BLOB columns** arrive in JavaScript as base64-encoded strings.
+
+---
+
+## Platform notes
+
+- **macOS** — Verified.
+- **Linux** — Untested.
+- **Windows** — Verified. Uses bundled `sqlite3.dll`; build requires the import library (see WINDOWS_SETUP.md).
 
 ---
 

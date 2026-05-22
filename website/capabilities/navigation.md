@@ -1,4 +1,4 @@
-# Navigation
+﻿# Navigation
 
 > Drive `opts.on_navigate` from every client-side URL change, including SPA-router transitions.
 
@@ -61,3 +61,11 @@ capabilities:
 ```
 
 Disable if you have your own URL-change router on the JS side and don't want the Crystal callback to fire (the `opts.on_navigate` field becomes a no-op).
+
+---
+
+## Platform notes
+
+- **macOS** — Verified.
+- **Linux** — Untested.
+- **Windows** — Verified.

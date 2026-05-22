@@ -1,4 +1,4 @@
-# ContextMenu
+﻿# ContextMenu
 
 > Programmatic native context menus triggered on right-click.
 
@@ -74,6 +74,14 @@ interface ContextMenuItem {
 - The native menu is shown by a Crystal binding call; the selected item ID is emitted back as a `context_menu` event on Events.
 - Only one context menu set is active at a time. Call `set` again to update the items.
 - To show different menus on different elements, call `set` in a `contextmenu` event listener on the target before it propagates.
+
+---
+
+## Platform notes
+
+- **macOS** — Verified.
+- **Linux** — Untested.
+- **Windows** — Partial. Custom Win32 menu works via `TrackPopupMenu`, but WebView2's built-in browser context menu shows on top.
 
 ---
 

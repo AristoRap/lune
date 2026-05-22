@@ -186,6 +186,19 @@ module Lune
         apply_config(@all, config)
       end
 
+      # Validate → resolve → log warnings → install BindPhase caps into `target`.
+      # Both the runtime path and build-mode path do this exact sequence; keep
+      # them in lockstep so a new step (e.g. another phase) lands in one place.
+      def validate_resolve_install(config : ConfigCapabilities, target : Lune::App) : ResolvedSet
+        validate(config)
+        resolved = resolve(config)
+        resolved.warnings.each { |w| Lune.logger.warn { w } }
+        resolved.capabilities.each do |cap|
+          cap.install(Lune::Capability::BindCtx.new(target, cap)) if cap.is_a?(Lune::Capability::BindPhase)
+        end
+        resolved
+      end
+
       private def apply_config(caps : Array(Lune::Capability), config : ConfigCapabilities) : Array(Lune::Capability)
         en = config.enabled
         di = config.disabled

@@ -164,7 +164,7 @@ Replace the MSVC and Windows Kits version numbers with whatever's installed on y
 
 ### Capability exclusions
 
-Several capabilities aren't yet implemented on Windows and raise `NotImplementedError` if active. The canonical list lives at [`website/guide/windows-checklist.md`](website/guide/windows-checklist.md) — exclude any of those in your app's `lune.yml` until the implementations land. The demo's `lune.yml` carries a commented-out exclude block you can copy from.
+Some capabilities are unimplemented or partial on Windows — see each [capability page](website/capabilities/) for status. The demo's `lune.yml` carries a commented-out exclude block you can copy from.
 
 ## Known setup limitations
 
@@ -172,7 +172,7 @@ Several capabilities aren't yet implemented on Windows and raise `NotImplemented
 - **Crystal 1.21.0**: Step 3's stdlib patch becomes unnecessary once Crystal 1.21 ships ([crystal#16933](https://github.com/crystal-lang/crystal/pull/16933)). Drop the patch and re-upgrade Crystal at that point.
 - **Running Specs**: `crystal spec` hits the same `LibC::PidT` error. Until Crystal 1.21+, CI type-checks with `--no-codegen`.
 
-For per-capability status (what's verified, what's broken, what's not yet implemented) see [`website/guide/windows-checklist.md`](website/guide/windows-checklist.md). For the path to parity see [`ROADMAP.md`](ROADMAP.md).
+For per-capability status (what's verified, what's broken, what's not yet implemented) see the **Platform notes** section on each [capability page](website/capabilities/). For the path to parity see [`ROADMAP.md`](ROADMAP.md).
 
 ## Troubleshooting
 

@@ -62,13 +62,7 @@ module Lune
         {% end %}
 
         registry = Capabilities::Registry.new(handle, @options, on_quit: -> { wv.dispatch { wv.terminate } })
-        registry.validate(@config.capabilities)
-        resolved = registry.resolve(@config.capabilities)
-        resolved.warnings.each { |w| Lune.logger.warn { w } }
-
-        resolved.capabilities.each do |cap|
-          cap.install(Lune::Capability::BindCtx.new(@app, cap)) if cap.is_a?(Lune::Capability::BindPhase)
-        end
+        resolved = registry.validate_resolve_install(@config.capabilities, @app)
 
         bridge = Bridge.new(wv)
         bridge.register_bindings(@app.bindings.reject(&.internal?))
@@ -178,7 +172,7 @@ module Lune
       url : String?,
       registry : Capabilities::Registry,
       resolved : Capabilities::ResolvedSet,
-    ) : AssetServer?
+    ) : Assets::Server?
       if h = html
         wv.html = h
       elsif u = url
@@ -194,7 +188,7 @@ module Lune
           next unless cap.is_a?(Lune::Capability::BindPhase)
           cap.install(Lune::Capability::BindCtx.new(all_stubs, cap))
         end
-        Lune::Runtime::Generator.write_js(
+        Lune::Generator.write_js(
           @app.bindings + all_stubs.bindings.select(&.internal?),
           @lunejs_dir,
           registry.all,
@@ -202,7 +196,7 @@ module Lune
         )
         wv.navigate(dev_url)
       elsif !Assets.empty?
-        s = AssetServer.new
+        s = Assets::Server.new
         s.start
         wv.navigate(s.url)
         return s

@@ -1,4 +1,4 @@
-# EditShortcuts
+﻿# EditShortcuts
 
 > Wire cmd/ctrl + A/C/V/X/Z/Y to native edit commands inside the webview.
 
@@ -42,3 +42,11 @@ capabilities:
 ```
 
 Disable when your app already binds these shortcuts (e.g. a custom code editor view that needs raw `cmd+Z` semantics).
+
+---
+
+## Platform notes
+
+- **macOS** — Verified.
+- **Linux** — Untested.
+- **Windows** — Verified.

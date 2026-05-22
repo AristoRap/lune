@@ -5,7 +5,7 @@ require "./lune/options/registry"
 require "./lune/logger"
 require "./lune/binding"
 require "./lune/runtime_binding"
-require "./lune/native/*"
+require "./lune/native/**"
 require "./lune/webview"
 require "./lune/error"
 require "./lune/bridge"
@@ -15,7 +15,7 @@ require "./lune/messaging/events"
 require "./lune/messaging/stream"
 require "./lune/capability"
 require "./lune/capabilities/*"
-require "./lune/runtime"
+require "./lune/generator"
 require "./lune/mixins/bindable"
 require "./lune/app"
 require "./lune/platform/window_state"
@@ -65,14 +65,9 @@ module Lune
     lunejs_dir = File.join(ENV.fetch(ENV_FRONTEND_DIR, DEFAULT_FRONTEND_DIR), LUNEJS_SUBDIR)
     config = Config.load
     registry = Capabilities::Registry.new(Pointer(Void).null, Options.new)
-    registry.validate(config.capabilities)
-    resolved = registry.resolve(config.capabilities)
-    resolved.warnings.each { |w| logger.warn { w } }
     stubs = App.new
-    resolved.capabilities.each do |cap|
-      cap.install(Capability::BindCtx.new(stubs, cap)) if cap.is_a?(Capability::BindPhase)
-    end
-    Runtime::Generator.write_js(
+    resolved = registry.validate_resolve_install(config.capabilities, stubs)
+    Generator.write_js(
       app.bindings + stubs.bindings.select(&.internal?),
       lunejs_dir,
       resolved.capabilities,

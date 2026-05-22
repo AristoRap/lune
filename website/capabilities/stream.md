@@ -1,4 +1,4 @@
-# Stream
+﻿# Stream
 
 > WebSocket-backed IPC stream for high-frequency or ordered data delivery.
 
@@ -164,3 +164,11 @@ end
 | Throughput   | Low–medium                        | High (batched WS frames)          |
 | Ordering     | Best-effort                       | Guaranteed per-connection         |
 | Best for     | UI signals, one-off notifications | Tickers, log tails, token streams |
+
+---
+
+## Platform notes
+
+- **macOS** — Verified.
+- **Linux** — Untested.
+- **Windows** — Verified. WebSocket IPC; bind + listen pinned to the same execution context for IOCP correctness.

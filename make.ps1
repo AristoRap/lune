@@ -126,7 +126,7 @@ function Assert-NativeDeps {
     # sqlite3.lib is required at link time; the dir must be on LIB.
     $hasSqlite = ($env:LIB -split ';') | Where-Object { $_ -and (Test-Path (Join-Path $_ 'sqlite3.lib')) }
     if (-not $hasSqlite) {
-        throw "sqlite3.lib not found on LIB. Place sqlite3.dll/.lib in C:\sqlite3 (or set LIB to include it) -- see website/guide/windows-checklist.md."
+        throw "sqlite3.lib not found on LIB. Place sqlite3.dll/.lib in C:\sqlite3 (or set LIB to include it) -- see WINDOWS_SETUP.md."
     }
     $hasWebviewH = ($env:INCLUDE + ';' + $env:LIB -split ';') | Where-Object {
         $_ -and (Test-Path (Join-Path $_ 'webview.h'))
@@ -142,13 +142,13 @@ function Assert-NativeDeps {
 # --- Targets --------------------------------------------------------------
 
 function Invoke-Setup {
-    Require-Command 'shards' 'Install Crystal -- see website/guide/windows-checklist.md'
+    Require-Command 'shards' 'Install Crystal -- see WINDOWS_SETUP.md'
     Push-Location $RepoRoot
     try { shards install } finally { Pop-Location }
 }
 
 function Invoke-Test {
-    Require-Command 'crystal' 'Install Crystal -- see website/guide/windows-checklist.md'
+    Require-Command 'crystal' 'Install Crystal -- see WINDOWS_SETUP.md'
     Initialize-LuneEnv
     Assert-NativeDeps
     Push-Location $RepoRoot
@@ -159,7 +159,7 @@ function Invoke-Test {
 }
 
 function Invoke-Build([switch]$Release) {
-    Require-Command 'shards' 'Install Crystal -- see website/guide/windows-checklist.md'
+    Require-Command 'shards' 'Install Crystal -- see WINDOWS_SETUP.md'
     Invoke-Test
     Initialize-LuneEnv
     Push-Location $RepoRoot

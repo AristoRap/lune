@@ -1,4 +1,4 @@
-# DeepLink
+﻿# DeepLink
 
 > Receive custom URL scheme events (`myapp://...`) from the OS.
 
@@ -96,17 +96,9 @@ DeepLink.on((url) => {
 
 ## Platform notes
 
-### macOS
-
-Scheme registration is build-time only — `Info.plist` must contain `CFBundleURLTypes` before the app is installed. During development (`lune dev`) URL scheme routing is not active; test against a `lune build` output.
-
-### Linux
-
-Cold-start and warm-start are both wired up — see [How it works](#how-it-works). URL scheme registration still requires the `.desktop` file from `lune dist`; `lune dev` runs don't get OS-level scheme routing.
-
-### Windows
-
-Cold-start works once the URL scheme is registered in the registry; warm-start (forwarding a URL from a second launch to a primary instance) isn't implemented yet. Track v0.12.0 for named-pipe IPC and auto-registration via `lune build`.
+- **macOS** — Verified. Scheme registration is build-time only via `Info.plist` `CFBundleURLTypes`; `lune dev` runs don't get OS-level scheme routing.
+- **Linux** — Untested. Cold-start and warm-start both wired; requires `.desktop` file from `lune dist`.
+- **Windows** — Partial. Cold-start (ARGV) works once registered in the registry; warm-start forwarding and scheme auto-registration not yet implemented.
 
 ---
 

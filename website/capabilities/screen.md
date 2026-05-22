@@ -1,4 +1,4 @@
-# Screen
+﻿# Screen
 
 > Query the primary screen's resolution and pixel density.
 
@@ -35,6 +35,14 @@ interface ScreenInfo {
   scale: number; // device pixel ratio (e.g. 2.0 on Retina)
 }
 ```
+
+---
+
+## Platform notes
+
+- **macOS** — Verified.
+- **Linux** — Untested.
+- **Windows** — Verified.
 
 ---
 

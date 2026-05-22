@@ -1,4 +1,4 @@
-# ContextMenuBlocker
+﻿# ContextMenuBlocker
 
 > Block the browser's default right-click menu when `opts.disable_context_menu` is set.
 
@@ -46,3 +46,11 @@ capabilities:
 ```
 
 Disabling the cap means `opts.disable_context_menu = true` has no effect — the browser menu shows regardless.
+
+---
+
+## Platform notes
+
+- **macOS** — Verified.
+- **Linux** — Untested.
+- **Windows** — Verified.

@@ -1,4 +1,4 @@
-# FileDrop
+﻿# FileDrop
 
 > Accept files dragged onto the app window from the OS.
 
@@ -120,3 +120,11 @@ capabilities:
 ```
 
 On Windows you don't need to disable it manually — the platform filter handles it. The `disabled:` entry is only useful on macOS / Linux.
+
+---
+
+## Platform notes
+
+- **macOS** — Verified.
+- **Linux** — Untested.
+- **Windows** — Not implemented. Needs `IDropTarget` + `OleInitialize`. Auto-filtered by capability registry on Windows.

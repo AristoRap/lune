@@ -1,18 +1,6 @@
-module Lune
-  module Native
-    # Win32 process tree control via Job Objects. Windows has no POSIX-style
-    # `kill(-pgid)` for terminating a process tree, and `Process.terminate`
-    # only kills the leader -- so `cmd /c npm run dev` leaves orphaned npm.cmd
-    # + node.exe holding the dev-server port. A Job Object with
-    # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE solves it: once we assign the leader
-    # to the job, every descendant inherits it, and terminating (or merely
-    # closing) the job atomically kills the whole tree.
-    #
-    # Lifecycle: `create` -> `assign(job, pid)` -> on shutdown
-    # `terminate(job)` + `close(job)`. If lune.exe exits ungracefully the
-    # kernel closes our handles, refcount drops to zero, and KILL_ON_JOB_CLOSE
-    # cleans up anyway.
-    {% if flag?(:win32) %}
+{% if flag?(:win32) %}
+  module Lune
+    module Native
       # Stdlib LibC already declares CreateJobObjectW, SetInformationJobObject,
       # AssignProcessToJobObject, OpenProcess, CloseHandle, plus the struct
       # JOBOBJECT_EXTENDED_LIMIT_INFORMATION and enum JOBOBJECTINFOCLASS in
@@ -34,10 +22,20 @@ module Lune
         PROCESS_TERMINATE = 0x0001_u32
         PROCESS_SET_QUOTA = 0x0100_u32
       end
-    {% end %}
 
-    module ProcessGroup
-      {% if flag?(:win32) %}
+      # Win32 process tree control via Job Objects. Windows has no POSIX-style
+      # `kill(-pgid)` for terminating a process tree, and `Process.terminate`
+      # only kills the leader -- so `cmd /c npm run dev` leaves orphaned npm.cmd
+      # + node.exe holding the dev-server port. A Job Object with
+      # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE solves it: once we assign the leader
+      # to the job, every descendant inherits it, and terminating (or merely
+      # closing) the job atomically kills the whole tree.
+      #
+      # Lifecycle: `create` -> `assign(job, pid)` -> on shutdown
+      # `terminate(job)` + `close(job)`. If lune.exe exits ungracefully the
+      # kernel closes our handles, refcount drops to zero, and KILL_ON_JOB_CLOSE
+      # cleans up anyway.
+      module ProcessGroup
         # Creates a job, assigns the current process (lune.exe) to it, and
         # returns the handle. Because the job has no breakaway flag, every
         # descendant Windows creates from this point on is forced into the
@@ -103,7 +101,7 @@ module Lune
         def self.close(job : Void*) : Nil
           LibC.CloseHandle(job.as(LibC::HANDLE))
         end
-      {% end %}
+      end
     end
   end
-end
+{% end %}

@@ -1,4 +1,4 @@
-# KV
+﻿# KV
 
 > Persistent key-value store for preferences and app config.
 
@@ -99,6 +99,14 @@ await Kv.clear(); // removes all entries
 - **Reads return `null` for missing keys**, not `undefined`, for consistent JSON round-tripping.
 - **Writes flush to disk immediately.** There is no buffering; each `set`, `delete`, and `clear` call writes the whole file.
 - **The `shutdown` lifecycle hook** calls `save_store` one final time on clean exit, guarding against any write that was skipped due to an error.
+
+---
+
+## Platform notes
+
+- **macOS** — Verified.
+- **Linux** — Untested.
+- **Windows** — Verified. Pure Crystal on top of `%APPDATA%`.
 
 ---
 

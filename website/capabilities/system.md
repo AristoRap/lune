@@ -1,4 +1,4 @@
-# System
+﻿# System
 
 > Quit the app, open URLs in the default browser, and query the runtime environment.
 
@@ -58,6 +58,14 @@ Lune.run(app) do |opts|
   # openUrl uses `open` on macOS, `xdg-open` on Linux
 end
 ```
+
+---
+
+## Platform notes
+
+- **macOS** — Verified.
+- **Linux** — Untested.
+- **Windows** — Verified. `environment`, `openUrl`, `quit` all work.
 
 ---
 

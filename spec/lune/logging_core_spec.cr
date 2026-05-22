@@ -35,7 +35,7 @@ describe "Lune core logging" do
 
     with_logger(logger) do
       in_blank_project do
-        Lune::Runtime::Generator.write_js([
+        Lune::Generator.write_js([
           Lune::Binding.new(
             namespace: "test",
             method: "ping",
@@ -45,7 +45,7 @@ describe "Lune core logging" do
             internal: false,
             async: false
           ),
-        ])
+        ], "frontend/lunejs")
       end
     end
 
