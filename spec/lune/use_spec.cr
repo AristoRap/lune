@@ -90,19 +90,19 @@ describe "Lune.use" do
     end
   end
 
-  it "raises on duplicate descriptor id" do
+  it "raises Lune::RegistrationError on duplicate descriptor id" do
     a = SpecPlugin.new
     b = SpecPlugin.new
     Lune.with_plugins(a) do
-      expect_raises(ArgumentError, /already registered/) { Lune.use(b) }
+      expect_raises(Lune::RegistrationError, /already registered/) { Lune.use(b) }
     end
   end
 
-  it "raises on duplicate opts accessor name" do
+  it "raises Lune::RegistrationError on duplicate opts accessor name" do
     a = AccessorClashA.new
     b = AccessorClashB.new
     Lune.with_plugins(a) do
-      expect_raises(ArgumentError, /accessor.*shared_accessor.*accessor_clash_a/) { Lune.use(b) }
+      expect_raises(Lune::RegistrationError, /accessor `shared_accessor`.*accessor_clash_a/) { Lune.use(b) }
     end
   end
 
@@ -111,9 +111,9 @@ describe "Lune.use" do
     plugin.lune_options_accessor.should eq(:my_unique_accessor)
   end
 
-  it "raises when a non-built-in class is registered under Lune::Plugins::" do
+  it "raises Lune::RegistrationError when a non-built-in class is registered under Lune::Plugins::" do
     Lune.with_plugins do
-      expect_raises(ArgumentError, /Lune::Plugins.*reserved/) do
+      expect_raises(Lune::RegistrationError, /Lune::Plugins.*reserved/) do
         Lune.use(::Lune::Plugins::Squatter.new)
       end
     end

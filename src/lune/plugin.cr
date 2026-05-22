@@ -188,7 +188,12 @@ module Lune
       class ::Lune::Options
         def {{ accessor_name }} : {{ @type }}::Config
           plugin = ::Lune.registered_plugins.find { |p| p.is_a?({{ @type }}) }
-          raise "plugin :{{ accessor_name }} referenced before Lune.use" unless plugin
+          unless plugin
+            raise ::Lune::ConfigurationError.new(
+              "`opts.{{ accessor_name }}` was referenced before `Lune.use({{ @type }}.new)`",
+              hint: "Register the plugin with `Lune.use` before configuring it."
+            )
+          end
           plugin.as({{ @type }}).config
         end
 

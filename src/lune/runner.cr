@@ -200,7 +200,10 @@ module Lune
         wv.navigate(s.url)
         return s
       else
-        raise "Lune.run: provide html:, url:, LUNE_DEV_URL, or assets:"
+        raise ConfigurationError.new(
+          "Lune.run has no navigation source",
+          hint: "Pass one of `html:`, `url:`, or `assets:` to `Lune.run`, or set LUNE_DEV_URL in the env (the CLI does this automatically in `lune dev`)."
+        )
       end
       nil
     end

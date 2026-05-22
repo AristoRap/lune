@@ -69,22 +69,23 @@ module Lune
       klass_name = plugin.class.name
 
       if klass_name.starts_with?("Lune::Plugins::") && !@@blessed_builtins.includes?(klass_name)
-        raise ArgumentError.new(
-          "Plugin class `#{klass_name}` is in the `Lune::Plugins::` namespace, " \
-          "which is reserved for built-in plugins. Third-party plugins should " \
-          "live in their own top-level namespace (e.g. `MyShard::MyPlugin`)."
+        raise RegistrationError.new(
+          "Plugin class `#{klass_name}` lives in the `Lune::Plugins::` namespace, which is reserved for built-in plugins",
+          hint: "Move your plugin under your own top-level namespace, e.g. `MyShard::MyPlugin`."
         )
       end
 
       if @@registered_ids.includes?(id)
-        raise ArgumentError.new("Plugin #{id.inspect} already registered (descriptor IDs must be unique)")
+        raise RegistrationError.new(
+          "Plugin #{id.inspect} already registered",
+          hint: "Descriptor ids must be unique across built-ins and third-party plugins."
+        )
       end
       if accessor = plugin.lune_options_accessor
         if previous_id = @@registered_accessors[accessor]?
-          raise ArgumentError.new(
-            "Plugin #{id.inspect} claims opts accessor `#{accessor}` but it is already taken by " \
-            "plugin #{previous_id.inspect}. Pass an explicit name to override: " \
-            "`config(:my_unique_name) do …`."
+          raise RegistrationError.new(
+            "Plugin #{id.inspect} claims opts accessor `#{accessor}`, already taken by #{previous_id.inspect}",
+            hint: "Pass an explicit name to the macro: `config(:my_unique_name) do …`."
           )
         end
         @@registered_accessors[accessor] = id
