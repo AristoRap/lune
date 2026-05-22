@@ -133,6 +133,15 @@ module Lune
       "#{SENTINEL_NS}.#{name}"
     end
 
+    # Returns the `opts.<name>` accessor this plugin claims on `Lune::Options`,
+    # or nil if the plugin didn't declare a `config` block. Used by `Lune.use`
+    # to fail early on collision instead of letting Crystal's silent method
+    # redefinition decide which plugin wins. Plugins using `config` get this
+    # overridden via the macro; plugins without config keep the nil default.
+    def lune_options_accessor : Symbol?
+      nil
+    end
+
     # Phase 0: pull options / handle into instance vars before install or init_webview.
     def setup(ctx : SetupCtx) : Nil
     end
@@ -155,7 +164,7 @@ module Lune
     # access. Direct mutations on the returned config persist on the plugin
     # instance — `setup(ctx)` later observes whatever the user assigned in
     # the `Lune.run` block.
-    macro config(&block)
+    macro config(accessor = nil, &block)
       class Config
         {{ block.body }}
 
@@ -166,17 +175,25 @@ module Lune
       @config : Config = Config.new
       getter config : Config
 
-      {% accessor = @type.name.split("::").last.underscore %}
+      {% if accessor %}
+        {% accessor_name = accessor.id %}
+      {% else %}
+        {% accessor_name = @type.name.split("::").last.underscore.id %}
+      {% end %}
+
+      def lune_options_accessor : Symbol?
+        :{{ accessor_name }}
+      end
 
       class ::Lune::Options
-        def {{ accessor.id }} : {{ @type }}::Config
+        def {{ accessor_name }} : {{ @type }}::Config
           plugin = ::Lune.registered_plugins.find { |p| p.is_a?({{ @type }}) }
-          raise "plugin :{{ accessor.id }} referenced before Lune.use" unless plugin
+          raise "plugin :{{ accessor_name }} referenced before Lune.use" unless plugin
           plugin.as({{ @type }}).config
         end
 
-        def {{ accessor.id }}(& : {{ @type }}::Config ->) : Nil
-          yield {{ accessor.id }}
+        def {{ accessor_name }}(& : {{ @type }}::Config ->) : Nil
+          yield {{ accessor_name }}
         end
       end
     end

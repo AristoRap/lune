@@ -84,18 +84,19 @@ module Lune
   end
 
   def self.clear_registered_plugins! : Nil
-    replace_registration!([] of Lune::Plugin, ids: Set(Symbol).new)
+    replace_registration!([] of Lune::Plugin, ids: Set(Symbol).new, accessors: {} of Symbol => Symbol)
   end
 
   private def self.swap_registered(plugins : Array(Lune::Plugin), &)
     saved_plugins = registered_plugins.dup
     saved_ids = registered_ids.dup
-    replace_registration!([] of Lune::Plugin, ids: Set(Symbol).new)
+    saved_accessors = registered_accessors.dup
+    replace_registration!([] of Lune::Plugin, ids: Set(Symbol).new, accessors: {} of Symbol => Symbol)
     plugins.each { |p| use(p) }
     begin
       yield
     ensure
-      replace_registration!(saved_plugins, saved_ids)
+      replace_registration!(saved_plugins, saved_ids, accessors: saved_accessors)
     end
   end
 end

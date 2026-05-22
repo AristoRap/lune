@@ -33,17 +33,35 @@ module Lune
   # them. `Plugins::Registry` consumes this array — no hardcoded list.
   @@registered_plugins = [] of Lune::Plugin
   @@registered_ids = Set(Symbol).new
+  @@registered_accessors = {} of Symbol => Symbol # opts accessor → descriptor.id of the plugin holding it
 
   # Register one or more plugins. Splat shape mirrors `App#install(*mods)` so
   # callers can group several lines into one — `Lune.use(A.new, B.new, C.new)`.
-  # Uniqueness is checked per plugin: the call fails on the first duplicate
-  # `descriptor.id`, and earlier plugins in the same call remain registered
-  # (the registry is append-only — partial registration is fine).
+  # Uniqueness is checked per plugin on two axes:
+  #   1. `descriptor.id` — the `lune.yml` / soft-dep / sentinel key.
+  #   2. `lune_options_accessor` (set by the `config` macro) — the `opts.<name>`
+  #      method the plugin grafts onto `Lune::Options`. Two plugins claiming
+  #      the same accessor would silently fight at compile time (Crystal lets
+  #      the second `def` win); catching it here surfaces the conflict at
+  #      registration with a fix the user can act on (pass an explicit name
+  #      to `config(:my_name)`).
+  # The registry is append-only — earlier plugins in the same call remain
+  # registered, so partial registration is fine.
   def self.use(*plugins : Lune::Plugin) : Nil
     plugins.each do |plugin|
       id = plugin.descriptor.id
       if @@registered_ids.includes?(id)
         raise ArgumentError.new("Plugin #{id.inspect} already registered (descriptor IDs must be unique)")
+      end
+      if accessor = plugin.lune_options_accessor
+        if previous_id = @@registered_accessors[accessor]?
+          raise ArgumentError.new(
+            "Plugin #{id.inspect} claims opts accessor `#{accessor}` but it is already taken by " \
+            "plugin #{previous_id.inspect}. Pass an explicit name to override: " \
+            "`config(:my_unique_name) do …`."
+          )
+        end
+        @@registered_accessors[accessor] = id
       end
       @@registered_ids << id
       @@registered_plugins << plugin
@@ -61,9 +79,18 @@ module Lune
     @@registered_ids
   end
 
-  protected def self.replace_registration!(plugins : Array(Lune::Plugin), ids : Set(Symbol)) : Nil
+  protected def self.registered_accessors : Hash(Symbol, Symbol)
+    @@registered_accessors
+  end
+
+  protected def self.replace_registration!(
+    plugins : Array(Lune::Plugin),
+    ids : Set(Symbol),
+    accessors : Hash(Symbol, Symbol) = {} of Symbol => Symbol,
+  ) : Nil
     @@registered_plugins = plugins
     @@registered_ids = ids
+    @@registered_accessors = accessors
   end
 
   # Default frontend directory name (matches the lune.yml default).
