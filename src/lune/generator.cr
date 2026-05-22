@@ -7,10 +7,10 @@ module Lune
     # ----------------------------
     def self.generate_runtime_js(
       bindings : Array(Lune::Binding),
-      capabilities : Array(Lune::Capability) = [] of Lune::Capability,
-      unavailable_caps : Array(Lune::Capability) = [] of Lune::Capability,
+      plugins : Array(Lune::Plugin) = [] of Lune::Plugin,
+      unavailable_caps : Array(Lune::Plugin) = [] of Lune::Plugin,
     ) : String
-      binding_groups, helper_groups, all_namespaces = namespace_groups(bindings, capabilities, &.js_helpers)
+      binding_groups, helper_groups, all_namespaces = namespace_groups(bindings, plugins, &.js_helpers)
 
       live_blocks = all_namespaces.map do |ns|
         body = namespace_body(ns, binding_groups, helper_groups, &.to_js_stub)
@@ -19,8 +19,8 @@ module Lune
 
       live_set = all_namespaces.to_set
       new_unavailable = unavailable_caps.reject { |cap| live_set.includes?(cap.binding_namespace) }
-      unavailable_stubs = new_unavailable.compact_map(&.unavailable_js_stub(Lune::Capabilities::CURRENT_PLATFORM))
-      unavailable_namespaces = new_unavailable.select(&.unavailable_js_stub(Lune::Capabilities::CURRENT_PLATFORM)).map(&.binding_namespace)
+      unavailable_stubs = new_unavailable.compact_map(&.unavailable_js_stub(Lune::Plugins::CURRENT_PLATFORM))
+      unavailable_namespaces = new_unavailable.select(&.unavailable_js_stub(Lune::Plugins::CURRENT_PLATFORM)).map(&.binding_namespace)
 
       namespace_blocks = (live_blocks + unavailable_stubs).join("\n\n")
       runtime_members = (all_namespaces + unavailable_namespaces).join(",\n  ")
@@ -59,10 +59,10 @@ module Lune
 
     def self.generate_runtime_dts(
       bindings : Array(Lune::Binding),
-      capabilities : Array(Lune::Capability) = [] of Lune::Capability,
-      unavailable_caps : Array(Lune::Capability) = [] of Lune::Capability,
+      plugins : Array(Lune::Plugin) = [] of Lune::Plugin,
+      unavailable_caps : Array(Lune::Plugin) = [] of Lune::Plugin,
     ) : String
-      binding_groups, helper_groups, all_namespaces = namespace_groups(bindings, capabilities, &.dts_helpers)
+      binding_groups, helper_groups, all_namespaces = namespace_groups(bindings, plugins, &.dts_helpers)
 
       live_interfaces = all_namespaces.map do |ns|
         body = namespace_body(ns, binding_groups, helper_groups, &.to_dts_sig)
@@ -121,14 +121,14 @@ module Lune
     # ----------------------------
     private def self.namespace_groups(
       bindings : Array(Lune::Binding),
-      capabilities : Array(Lune::Capability),
-      &helper_fn : Lune::Capability -> String
+      plugins : Array(Lune::Plugin),
+      &helper_fn : Lune::Plugin -> String
     ) : Tuple(Hash(String, Array(Lune::Binding)), Hash(String, String), Array(String))
       binding_groups = Hash(String, Array(Lune::Binding)).new { |h, k| h[k] = [] of Lune::Binding }
       bindings.each { |b| binding_groups[b.namespace] << b }
 
       helper_groups = Hash(String, String).new
-      capabilities.each do |cap|
+      plugins.each do |cap|
         h = helper_fn.call(cap)
         next if h.empty?
         helper_groups[cap.binding_namespace] = (helper_groups[cap.binding_namespace]? || "") + h
@@ -301,8 +301,8 @@ module Lune
     def self.write_js(
       bindings : Array(Binding),
       lunejs_dir : String,
-      capabilities : Array(Lune::Capability) = [] of Lune::Capability,
-      unavailable_caps : Array(Lune::Capability) = [] of Lune::Capability,
+      plugins : Array(Lune::Plugin) = [] of Lune::Plugin,
+      unavailable_caps : Array(Lune::Plugin) = [] of Lune::Plugin,
     ) : Nil
       user_bindings = bindings.reject(&.internal?)
       runtime_bindings = bindings.select(&.internal?)
@@ -315,8 +315,8 @@ module Lune
       FileUtils.mkdir_p(File.dirname(app_path))
       FileUtils.mkdir_p(File.dirname(runtime_path))
 
-      runtime_changed = write_if_changed(runtime_path, generate_runtime_js(runtime_bindings, capabilities, unavailable_caps))
-      write_if_changed(runtime_dts_path, generate_runtime_dts(runtime_bindings, capabilities, unavailable_caps))
+      runtime_changed = write_if_changed(runtime_path, generate_runtime_js(runtime_bindings, plugins, unavailable_caps))
+      write_if_changed(runtime_dts_path, generate_runtime_dts(runtime_bindings, plugins, unavailable_caps))
 
       app_changed = write_if_changed(app_path, generate_app_js(user_bindings))
       write_if_changed(app_dts_path, generate_app_dts(user_bindings))

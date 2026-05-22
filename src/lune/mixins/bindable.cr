@@ -18,13 +18,13 @@ module Lune
   # an `install(app)` method that registers each as a `Lune::Binding`.
   #
   # The output shape switches on whether the including class inherits from
-  # `Lune::Capability`:
+  # `Lune::Plugin`:
   #
   #   - User class (plain Bindable): namespace = class name, internal: false.
   #     Binding lands in `app.js` as `api.<Class>.method`.
   #
-  #   - Capability subclass: namespace = `binding_namespace`, internal: true.
-  #     Binding lands in `runtime.js` under the capability's namespace and the
+  #   - Plugin subclass: namespace = `binding_namespace`, internal: true.
+  #     Binding lands in `runtime.js` under the plugin's namespace and the
   #     bridge ID is rooted at `__lune.`. Extra fields (TS types, JS arg
   #     transforms) come from `@[BindOverride]` on the same method.
   module Bindable
@@ -36,17 +36,17 @@ module Lune
         {% verbatim do %}
           {% begin %}
             @app = app
-            {% is_capability = @type.ancestors.includes?(Lune::Capability) %}
+            {% is_plugin = @type.ancestors.includes?(Lune::Plugin) %}
             {% for m in @type.methods %}
               {% if bind_ann = m.annotation(Lune::Bind) %}
                 {% override_ann = m.annotation(Lune::BindOverride) %}
                 {% async = bind_ann[:async] && bind_ann[:async].id == "true" ? true : false %}
                 app.register(Lune::Binding.new(
-                  namespace: {% if is_capability %}binding_namespace{% else %}{{ @type.name.stringify }}{% end %},
-                  method: {% if is_capability %}"#{name}.{{ m.name }}"{% else %}{{ m.name.stringify }}{% end %},
+                  namespace: {% if is_plugin %}binding_namespace{% else %}{{ @type.name.stringify }}{% end %},
+                  method: {% if is_plugin %}"#{name}.{{ m.name }}"{% else %}{{ m.name.stringify }}{% end %},
                   args: {{ m.args.map(&.restriction.stringify) }} of String,
                   return_type: {{ m.return_type.stringify }},
-                  internal: {{ is_capability }},
+                  internal: {{ is_plugin }},
                   async: {{ async }},
                   arg_names: {% if override_ann && override_ann[:arg_names] %}{{ override_ann[:arg_names] }}{% else %}{{ m.args.map(&.name.stringify) }} of String{% end %},
                   {% if override_ann && override_ann[:arg_transforms] %}arg_transforms: {{ override_ann[:arg_transforms] }},{% end %}

@@ -17,11 +17,11 @@
         IMAGE_BUF_SIZE = 10 * 1024 * 1024 # 10 MB — covers base64 of most clipboard images
 
         def self.read : String
-          raise NotImplementedError.new("Lune::Native::Clipboard.read — use the capability's DEFAULT_READ on non-Windows platforms")
+          raise NotImplementedError.new("Lune::Native::Clipboard.read — use the plugin's DEFAULT_READ on non-Windows platforms")
         end
 
         def self.write(text : String) : Nil
-          raise NotImplementedError.new("Lune::Native::Clipboard.write — use the capability's DEFAULT_WRITE on non-Windows platforms")
+          raise NotImplementedError.new("Lune::Native::Clipboard.write — use the plugin's DEFAULT_WRITE on non-Windows platforms")
         end
 
         def self.read_html : String

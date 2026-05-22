@@ -58,7 +58,7 @@ The `Lune::Bindable` module uses Crystal macros to inspect annotated methods at 
 
 When you call `app.install(MyModule.new)`, the generated `install` method fires. Each binding is added to the `App`'s binding list. When the WebView starts, the `Runner` hands the full list to the `Bridge`, which wires each one as a WebView binding callback — a JavaScript-callable function backed by native code.
 
-Lune's own built-in capabilities (system, filesystem, clipboard, window controls, dialogs, tray, notifications, screen) are registered the same way — as `Installable` classes. There is no separate path for built-in vs user bindings.
+Lune's own built-in plugins (system, filesystem, clipboard, window controls, dialogs, tray, notifications, screen) are registered the same way — as `Installable` classes. There is no separate path for built-in vs user bindings.
 
 ### 4. JavaScript stub generation
 
@@ -130,25 +130,25 @@ On Unix, this means the main thread is permanently occupied by Cocoa/GTK once `w
 | `app.events.on` handlers                 | Webview thread                                            | Same as sync bindings; offload heavy work to `app.async` |
 | `app.async { }` tasks                    | `lune-tasks` `Parallel` pool (`System.cpu_count` threads) | Use for timers, pollers, anything long-running           |
 
-### Dedicated `Isolated` threads (one OS thread each, opt-in by capability)
+### Dedicated `Isolated` threads (one OS thread each, opt-in by plugin)
 
 | Thread name          | When active                                 | What it does                                                                                                                                                                                                                                                                                             |
 | -------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `webview`            | Windows always                              | Drives the WebView2 event loop, freeing the main thread for the Crystal scheduler                                                                                                                                                                                                                        |
 | `lune-sigchld-pump`  | macOS + Linux always                        | Polls `SignalChildHandler` every 10 ms so `Process.run`/`Shell.spawn` don't hang while the main thread is in Cocoa/GTK                                                                                                                                                                                   |
-| `lune-hotkeys`       | Hotkeys capability active                   | macOS Carbon `RegisterEventHotKey`, Linux X11 `XGrabKey`, Windows `RegisterHotKey` + `WM_HOTKEY` pump                                                                                                                                                                                                    |
-| `lune-tray`          | Tray capability active on Windows           | Owns a message-only HWND, drains `WM_APP+1` notifications from `Shell_NotifyIconW`, and runs the menu op queue (macOS / Linux drive the tray on the existing AppKit / GTK main loop, no extra thread)                                                                                                    |
-| `lune-file-watch`    | FileWatch on macOS + Linux                  | macOS kqueue / Linux inotify event loop (not spawned on Windows — capability is platform-filtered there)                                                                                                                                                                                                 |
-| `lune-deep-link-ipc` | DeepLink capability on Linux                | Unix-socket accept loop for warm-start URL forwarding                                                                                                                                                                                                                                                    |
-| `lune-stream`        | Stream capability on macOS / Linux          | 2-thread `Parallel` pool that owns the WebSocket server's `bind` + `listen`. On Win32, Stream instead spawns the bind+listen pair via `::spawn` on the default context to keep accept completions on the right IOCP — no dedicated thread.                                                               |
+| `lune-hotkeys`       | Hotkeys plugin active                   | macOS Carbon `RegisterEventHotKey`, Linux X11 `XGrabKey`, Windows `RegisterHotKey` + `WM_HOTKEY` pump                                                                                                                                                                                                    |
+| `lune-tray`          | Tray plugin active on Windows           | Owns a message-only HWND, drains `WM_APP+1` notifications from `Shell_NotifyIconW`, and runs the menu op queue (macOS / Linux drive the tray on the existing AppKit / GTK main loop, no extra thread)                                                                                                    |
+| `lune-file-watch`    | FileWatch on macOS + Linux                  | macOS kqueue / Linux inotify event loop (not spawned on Windows — plugin is platform-filtered there)                                                                                                                                                                                                 |
+| `lune-deep-link-ipc` | DeepLink plugin on Linux                | Unix-socket accept loop for warm-start URL forwarding                                                                                                                                                                                                                                                    |
+| `lune-stream`        | Stream plugin on macOS / Linux          | 2-thread `Parallel` pool that owns the WebSocket server's `bind` + `listen`. On Win32, Stream instead spawns the bind+listen pair via `::spawn` on the default context to keep accept completions on the right IOCP — no dedicated thread.                                                               |
 | `lune-assets`        | Embedded-asset HTTP server on macOS / Linux | Isolated accept loop on top of a 2-thread `lune-assets-pool` `Parallel` pool for per-connection request handling. On Win32, Assets::Server spawns bind+listen via `::spawn` on the default context (same IOCP-affinity reason as Stream — separating the two contexts parks accept completions forever). |
 
 ### Rules of thumb
 
 - **Never block in a sync binding or `app.events.on` handler.** It freezes the UI for the duration. Move work to `app.async { … }` or mark the binding `async: true`.
 - **`spawn` is unreliable** across platforms — works on Windows where the main thread isn't busy, doesn't on Unix where it's parked in Cocoa/GTK. Use `app.async` for portability.
-- **`Fiber::ExecutionContext::Isolated` is the right primitive for capabilities** that own an OS resource (a poll loop, an accept loop, a message pump) and need to stay responsive even when the rest of the app is blocked.
-- **Main-thread-only native calls** (NSStatusItem, GTK widget creation, etc.) are handled inside Lune's `Native::*` modules — capabilities don't have to think about marshaling.
+- **`Fiber::ExecutionContext::Isolated` is the right primitive for plugins** that own an OS resource (a poll loop, an accept loop, a message pump) and need to stay responsive even when the rest of the app is blocked.
+- **Main-thread-only native calls** (NSStatusItem, GTK widget creation, etc.) are handled inside Lune's `Native::*` modules — plugins don't have to think about marshaling.
 
 ---
 

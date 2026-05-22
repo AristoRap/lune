@@ -4,20 +4,21 @@
 
 ### Breaking
 
-- **Capability config keys renamed** `include` / `exclude` → `enabled` / `disabled` to keep one consistent pair across YAML, Crystal field names, and prose. `lune.yml` migration is mechanical: rename `capabilities.include:` → `capabilities.enabled:` and `capabilities.exclude:` → `capabilities.disabled:`. Crystal API: `ConfigCapabilities#only` / `#exclude` → `#enabled` / `#disabled`. The semantics are identical (enabled resolved first, then disabled subtracted; both accept `"*"` / `"all"`).
+- **Renamed `Capability` → `Plugin` throughout the public API.** `Lune::Capability` → `Lune::Plugin`, `Lune::Capabilities::*` → `Lune::Plugins::*`, `ConfigCapabilities` → `ConfigPlugins`. The `capabilities:` key in `lune.yml` is renamed to `plugins:`; the old key is still parsed for one minor release with a deprecation warning logged at load. Website paths moved `/capabilities/<id>` → `/plugins/<id>`. Source layout: `src/lune/capability.cr` → `src/lune/plugin.cr`, `src/lune/capabilities/` → `src/lune/plugins/`. Spec layout: per-plugin specs nest under `spec/lune/plugins/`. No behavior change.
+- **Plugin config keys renamed** `include` / `exclude` → `enabled` / `disabled` to keep one consistent pair across YAML, Crystal field names, and prose. `lune.yml` migration is mechanical: rename `plugins.include:` → `plugins.enabled:` and `plugins.exclude:` → `plugins.disabled:`. Crystal API: `ConfigPlugins#only` / `#exclude` → `#enabled` / `#disabled`. The semantics are identical (enabled resolved first, then disabled subtracted; both accept `"*"` / `"all"`).
 
 ### Added
 
-- **Four runtime behaviors are now disable-able via `lune.yml`** — `edit_shortcuts` (cmd/ctrl+A/C/V/X/Z/Y → execCommand), `navigation` (drives `opts.on_navigate`), `window_drag` (darwin-only, wires `opts.drag.zone`), `context_menu_blocker` (gates `opts.disable_context_menu`). Previously injected unconditionally from the runner; now first-class capabilities you can opt out of via `capabilities.disabled`.
+- **Four runtime behaviors are now disable-able via `lune.yml`** — `edit_shortcuts` (cmd/ctrl+A/C/V/X/Z/Y → execCommand), `navigation` (drives `opts.on_navigate`), `window_drag` (darwin-only, wires `opts.drag.zone`), `context_menu_blocker` (gates `opts.disable_context_menu`). Previously injected unconditionally from the runner; now first-class plugins you can opt out of via `plugins.disabled`.
 
 ### Changed
 
-- **Generic-aware Crystal → TypeScript type mapping** — `Array(String)` → `string[]`, `Hash(K, V)` → `Record<K, V>`, `Tuple(...)` → `[A, B]`, recursive. Capabilities can drop ad-hoc `ts_return_type:` overrides in favor of parameterized `return_type:` declarations.
+- **Generic-aware Crystal → TypeScript type mapping** — `Array(String)` → `string[]`, `Hash(K, V)` → `Record<K, V>`, `Tuple(...)` → `[A, B]`, recursive. Plugins can drop ad-hoc `ts_return_type:` overrides in favor of parameterized `return_type:` declarations.
 
 ### Fixed
 
-- **`App#eval` raises a typed `Lune::BridgeNotReadyError`** instead of a generic `NilAssertionError` when called before the runner wires the bridge (e.g. from a capability `install` hook or an `App#async` task that races startup). **`App#close!` is now an idempotent no-op** when the bridge has not been wired yet — useful when a SIGINT during init triggers the shutdown path before bridge attach.
-- **Win32 Shell builtins** — `Shell.spawn` / `Shell.run` fall back to `cmd /c` on `File::NotFoundError`, so `echo`, `dir`, `npm.cmd`, etc. work directly. Helper: `Lune::Capabilities::Shell.with_win32_cmd_fallback`.
+- **`App#eval` raises a typed `Lune::BridgeNotReadyError`** instead of a generic `NilAssertionError` when called before the runner wires the bridge (e.g. from a plugin `install` hook or an `App#async` task that races startup). **`App#close!` is now an idempotent no-op** when the bridge has not been wired yet — useful when a SIGINT during init triggers the shutdown path before bridge attach.
+- **Win32 Shell builtins** — `Shell.spawn` / `Shell.run` fall back to `cmd /c` on `File::NotFoundError`, so `echo`, `dir`, `npm.cmd`, etc. work directly. Helper: `Lune::Plugins::Shell.with_win32_cmd_fallback`.
 - **Win32 toast notifications** — `Notifications.notify` registers the AUMID at `HKCU\Software\Classes\AppUserModelId\Lune` on first call; toasts actually display instead of being silently dropped.
 - **Win32 `lune build` blank window** — `Assets::Server` now binds + listens from the same `::spawn` on the default context (mirroring Stream's Win32 pattern) so IOCP accept completions reach the listen fiber. POSIX path unchanged.
 - **Win32 secondary-window close** — `Native::Window.close` posts `WM_CLOSE` via `PostMessageW`, and `Native::Window.on_close` subclasses the child HWND via `SetWindowLongPtrW(GWLP_WNDPROC, …)` to trap `WM_DESTROY` and run the cleanup block before forwarding to the previous WNDPROC. `Windows.close(id)` actually closes the window, and the user clicking the X now fires `window_closed` to the main window.

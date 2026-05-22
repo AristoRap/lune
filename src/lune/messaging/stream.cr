@@ -1,7 +1,7 @@
 module Lune
-  # One-way Crystal→JS streaming bus. Used by capabilities (Shell, FileWatch,
+  # One-way Crystal→JS streaming bus. Used by plugins (Shell, FileWatch,
   # SQLite, …) to push high-volume payloads that don't need an `emit`-style
-  # round-trip. `#sender` is set by the Stream capability at install time.
+  # round-trip. `#sender` is set by the Stream plugin at install time.
   class Stream
     include Subscribable
 

@@ -31,7 +31,7 @@
 
         def self.set_from_options(opts : Options::Menu, app_name : String); end
 
-        # Parse the JSON shape used by Lune::Capabilities::ContextMenu —
+        # Parse the JSON shape used by Lune::Plugins::ContextMenu —
         # an array of {id, label, enabled?} or {kind: "separator"}.
         # Build a popup menu, track it modally, and translate the result
         # back to the user's item id via a Crystal-side id→string map.

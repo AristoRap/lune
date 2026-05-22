@@ -172,7 +172,7 @@ This builds the frontend with Vite, then compiles the Crystal binary with the fr
 
 ## Demo app
 
-The repository ships with a full showcase in `demo/` — a Vue 3 app that exercises every Lune capability in one window. See [Capabilities](./capabilities/) for the full list of what's available.
+The repository ships with a full showcase in `demo/` — a Vue 3 app that exercises every Lune plugin in one window. See [Plugins](./plugins/) for the full list of what's available.
 
 Run it from the repo root:
 

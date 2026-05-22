@@ -13,7 +13,7 @@ module Lune
     class FileDrop
       # Disables the webview's built-in drag handling globally.
       # Prevents files from accidentally opening or navigating in the webview.
-      # Enable the `file_drop` capability in lune.yml to receive drops in your app.
+      # Enable the `file_drop` plugin in lune.yml to receive drops in your app.
       property disable_webview_drop : Bool = false
 
       # CSS custom property that marks an element as a drop zone.

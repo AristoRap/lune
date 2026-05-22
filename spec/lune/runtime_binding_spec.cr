@@ -18,7 +18,7 @@ end
 
 describe "Lune::Binding (internal: true — runtime surface)" do
   describe "#id" do
-    it "puts BRIDGE_MARKER at root: __lune.<capability>.<method>" do
+    it "puts BRIDGE_MARKER at root: __lune.<plugin>.<method>" do
       make_internal(method: "system.quit").id.should eq("__lune.system.quit")
       make_internal(method: "clipboard.read").id.should eq("__lune.clipboard.read")
       make_internal(method: "screen.info").id.should eq("__lune.screen.info")

@@ -12,9 +12,9 @@ require "./lune/mixins/installable"
 require "./lune/mixins/subscribable"
 require "./lune/messaging/events"
 require "./lune/messaging/stream"
-require "./lune/capability"
+require "./lune/plugin"
 require "./lune/mixins/bindable"
-require "./lune/capabilities/*"
+require "./lune/plugins/*"
 require "./lune/generator"
 require "./lune/app"
 require "./lune/platform/window_state"
@@ -63,13 +63,13 @@ module Lune
     logger.info { "Running in build mode" }
     lunejs_dir = File.join(ENV.fetch(ENV_FRONTEND_DIR, DEFAULT_FRONTEND_DIR), LUNEJS_SUBDIR)
     config = Config.load
-    registry = Capabilities::Registry.new(Pointer(Void).null, Options.new)
+    registry = Plugins::Registry.new(Pointer(Void).null, Options.new)
     stubs = App.new
-    resolved = registry.validate_resolve_install(config.capabilities, stubs)
+    resolved = registry.validate_resolve_install(config.plugins, stubs)
     Generator.write_js(
       app.bindings + stubs.bindings.select(&.internal?),
       lunejs_dir,
-      resolved.capabilities,
+      resolved.plugins,
       registry.platform_filtered,
     )
   end

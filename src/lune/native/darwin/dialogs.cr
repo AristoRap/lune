@@ -48,7 +48,7 @@
         end
 
         # type code maps the dialog kind; matches the macOS/Linux native shim and
-        # the capability layer (see src/lune/capabilities/dialogs.cr):
+        # the plugin layer (see src/lune/plugins/dialogs.cr):
         #   0 = info, 1 = warning, 2 = error, 3 = question (yes/no).
         # info/warning/error are notification-style dialogs (single OK button,
         # icon distinguishes severity); question is the only variant that

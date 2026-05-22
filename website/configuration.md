@@ -13,8 +13,8 @@ name: my_app
 # Path to the app icon asset, relative to the project root (optional)
 icon: assets/icon.icns
 
-# Active capabilities (default: all). Omit to expose everything.
-capabilities:
+# Active plugins (default: all). Omit to expose everything.
+plugins:
   enabled:
     - system
     - clipboard
@@ -218,7 +218,7 @@ If omitted, Lune generates a minimal default plist that includes the entitlement
 <true/>
 ```
 
-Provide a custom file only when your app needs additional capabilities (e.g. camera, microphone, file access beyond the sandbox).
+Provide a custom file only when your app needs additional plugins (e.g. camera, microphone, file access beyond the sandbox).
 
 ---
 
@@ -263,7 +263,7 @@ See [Distribution → Notarization](./guide/distribution#notarization) for the f
 
 **Type:** `Array(String)` — **Default:** `[]`
 
-URL schemes to register with the OS so the system routes `myapp://...` links into your app. Each entry becomes a `CFBundleURLTypes` entry in `Info.plist` on macOS (injected by `lune build`); on Linux a `MimeType` entry is written into the `.desktop` file (injected by `lune dist`), but the runtime handler that forwards URLs to `DeepLink.on` is **macOS-only** in this release — see [Deep Link → Roadmap](./capabilities/deep-link#roadmap).
+URL schemes to register with the OS so the system routes `myapp://...` links into your app. Each entry becomes a `CFBundleURLTypes` entry in `Info.plist` on macOS (injected by `lune build`); on Linux a `MimeType` entry is written into the `.desktop` file (injected by `lune dist`), but the runtime handler that forwards URLs to `DeepLink.on` is **macOS-only** in this release — see [Deep Link → Roadmap](./plugins/deep-link#roadmap).
 
 ```yaml
 url_schemes:
@@ -279,7 +279,7 @@ DeepLink.on((url) => {
 });
 ```
 
-See [Deep Link capability](./capabilities/deep-link) for the full guide.
+See [Deep Link plugin](./plugins/deep-link) for the full guide.
 
 ---
 
@@ -304,51 +304,51 @@ All keys are optional. Omitted keys fall back to the `Lune::Options` defaults (`
 
 ---
 
-### `capabilities`
+### `plugins`
 
-**Default:** all capabilities active (both `enabled` and `disabled` omitted)
+**Default:** all plugins active (both `enabled` and `disabled` omitted)
 
-Controls which built-in capabilities are active. The unit is a **capability** — a named group of related functions. `enabled` is resolved first, then `disabled` is subtracted. Both keys accept `"*"` or `"all"` as explicit wildcards.
+Controls which built-in plugins are active. The unit is a **plugin** — a named group of related functions. `enabled` is resolved first, then `disabled` is subtracted. Both keys accept `"*"` or `"all"` as explicit wildcards.
 
-Values must be **capability names** (e.g. `system`, `clipboard`). Individual function names like `quit` are not valid — they will log a warning and be ignored.
+Values must be **plugin names** (e.g. `system`, `clipboard`). Individual function names like `quit` are not valid — they will log a warning and be ignored.
 
 | `enabled`                 | `disabled`           | result               |
 | ------------------------- | -------------------- | -------------------- |
-| omitted or `[]`           | omitted              | all capabilities     |
+| omitted or `[]`           | omitted              | all plugins     |
 | `["system"]`              | omitted              | system only          |
 | `["*"]` or `["all"]`      | omitted              | all (explicit)       |
 | omitted or `[]`           | `["clipboard"]`      | all except clipboard |
 | omitted                   | `["*"]` or `["all"]` | none                 |
 | `["system", "clipboard"]` | `["clipboard"]`      | only system          |
 
-See [Capabilities](./capabilities/) for the full list of capability names and the JS namespaces each one controls.
+See [Plugins](./plugins/) for the full list of plugin names and the JS namespaces each one controls.
 
 #### Dev vs build behaviour
 
-- **Dev mode** (`lune dev`) — the bridge is filtered: disabled capability functions throw if called. `runtime.js` still includes all capabilities so the dev Capabilities view can show which are active vs disabled, and imports keep working while you iterate.
+- **Dev mode** (`lune dev`) — the bridge is filtered: disabled plugin functions throw if called. `runtime.js` still includes all plugins so the dev Plugins view can show which are active vs disabled, and imports keep working while you iterate.
 - **Build mode** (`lune build`) — both the bridge and `runtime.js` are filtered. Importing a disabled function is a hard bundler error.
 
 #### Platform filtering
 
-A capability whose `platforms` list excludes the current OS is auto-filtered from the registry — no manual `disabled` entry needed. Its JS namespace still appears in `runtime.js`, but every method returns `Promise.reject(new LuneError("UNAVAILABLE_ON_PLATFORM", "…"))` so cross-platform imports keep working. Catch the error (or branch on `runtime.System.environment().os`) to fall back gracefully. The `runtime.d.ts` interface preserves the full signature, so the same TypeScript code type-checks on every platform.
+A plugin whose `platforms` list excludes the current OS is auto-filtered from the registry — no manual `disabled` entry needed. Its JS namespace still appears in `runtime.js`, but every method returns `Promise.reject(new LuneError("UNAVAILABLE_ON_PLATFORM", "…"))` so cross-platform imports keep working. Catch the error (or branch on `runtime.System.environment().os`) to fall back gracefully. The `runtime.d.ts` interface preserves the full signature, so the same TypeScript code type-checks on every platform.
 
-If `enabled:` explicitly names a capability that's auto-filtered on the current OS, the registry emits a single `INFO` log line so you know the cap was recognised but couldn't be activated. Default-active caps skip silently — a shared `lune.yml` won't produce noise across platforms.
+If `enabled:` explicitly names a plugin that's auto-filtered on the current OS, the registry emits a single `INFO` log line so you know the cap was recognised but couldn't be activated. Default-active caps skip silently — a shared `lune.yml` won't produce noise across platforms.
 
 Any unknown name in `enabled` or `disabled` logs a warning at startup and is ignored.
 
 ```yaml
-# expose only the system capability
-capabilities:
+# expose only the system plugin
+plugins:
   enabled:
     - system
 
 # expose everything except file dialogs
-capabilities:
+plugins:
   disabled:
     - dialogs
 
 # expose system and clipboard, then remove clipboard
-capabilities:
+plugins:
   enabled:
     - system
     - clipboard

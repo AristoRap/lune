@@ -1,6 +1,6 @@
 # Runtime Functions
 
-Lune exposes built-in JavaScript functions via `runtime.js`, organised into **namespace objects** — one per capability. Import the namespaces you need:
+Lune exposes built-in JavaScript functions via `runtime.js`, organised into **namespace objects** — one per plugin. Import the namespaces you need:
 
 ```js
 import { System, Clipboard, Events } from "../lunejs/runtime/runtime.js";
@@ -17,7 +17,7 @@ import runtime from "../lunejs/runtime/runtime.js";
 await runtime.System.quit();
 ```
 
-For the full method list, signatures, and per-platform behaviour, see [Capabilities](../capabilities/) — each namespace has its own page with its complete JS API.
+For the full method list, signatures, and per-platform behaviour, see [Plugins](../plugins/) — each namespace has its own page with its complete JS API.
 
 > **Linux prerequisites:** GTK3 and libnotify headers are required for native features (window controls, tray, dialogs, notifications, screen).
 >

@@ -260,7 +260,7 @@ After the user resizes and moves the window, the next launch will reopen it at e
 
 Lune provides a complete drag-and-drop file API: CSS-based drop zones for per-element highlighting, a Crystal callback, and JS helpers for subscribing to drops.
 
-Enable the `file_drop` capability in `lune.yml` to activate native drop handling. Options in `opts.file_drop` configure its behaviour.
+Enable the `file_drop` plugin in `lune.yml` to activate native drop handling. Options in `opts.file_drop` configure its behaviour.
 
 ```crystal
 opts.file_drop do |fd|
@@ -275,7 +275,7 @@ end
 
 **Type:** `Bool` — **Default:** `false`
 
-Disables the WebView's built-in drag handling globally, without enabling the `file_drop` capability. Prevents files from accidentally opening or navigating inside the WebView.
+Disables the WebView's built-in drag handling globally, without enabling the `file_drop` plugin. Prevents files from accidentally opening or navigating inside the WebView.
 
 ---
 
@@ -305,7 +305,7 @@ end
 }
 ```
 
-Requires the `file_drop` capability to be active. The `lune-drop-target-active` class is added and removed in real time as the pointer moves.
+Requires the `file_drop` plugin to be active. The `lune-drop-target-active` class is added and removed in real time as the pointer moves.
 
 ---
 
@@ -313,7 +313,7 @@ Requires the `file_drop` capability to be active. The `lune-drop-target-active` 
 
 **Type:** `((Int32, Int32, Array(String)) -> Nil)?` — **Default:** `nil`
 
-Crystal-side callback fired when the user drops files. Receives the drop position in logical pixels and an array of absolute file paths. Requires the `file_drop` capability to be active in `lune.yml`.
+Crystal-side callback fired when the user drops files. Receives the drop position in logical pixels and an array of absolute file paths. Requires the `file_drop` plugin to be active in `lune.yml`.
 
 ```crystal
 opts.file_drop do |fd|

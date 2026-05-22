@@ -12,7 +12,7 @@ module Lune
     def emit(event : String, data = nil) : Nil
       return unless (b = @bridge_fn.call)
       json = data.nil? ? "null" : data.to_json
-      bm = Lune::Capability::BRIDGE_MARKER
+      bm = Lune::Plugin::BRIDGE_MARKER
       b.dispatch_eval("if(window.#{bm}&&typeof window.#{bm}.crystalEmit==='function')window.#{bm}.crystalEmit(#{event.inspect},#{json})")
       @extra_bridges.each(&.dispatch_eval("if(window.#{bm}&&typeof window.#{bm}.crystalEmit==='function')window.#{bm}.crystalEmit(#{event.inspect},#{json})"))
     end

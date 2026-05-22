@@ -31,14 +31,14 @@ module Lune
 
     def id : String
       if @internal
-        "#{Lune::Capability::BRIDGE_MARKER}.#{@method}"
+        "#{Lune::Plugin::BRIDGE_MARKER}.#{@method}"
       else
         @namespace.empty? ? @method : "#{@namespace.split("::").join(".")}.#{@method}"
       end
     end
 
     # User bindings camelcase the whole method name. Framework bindings carry a
-    # capability-prefixed path (`clipboard.read_html`) and only the leaf is the
+    # plugin-prefixed path (`clipboard.read_html`) and only the leaf is the
     # JS function name.
     def js_func_name : String
       @internal ? @method.split(".").last.camelcase(lower: true) : @method.camelcase(lower: true)

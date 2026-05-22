@@ -19,7 +19,7 @@ import Shell from "./views/Shell.vue";
 import Kv from "./views/Kv.vue";
 import Sqlite from "./views/Sqlite.vue";
 import Windows from "./views/Windows.vue";
-import Capabilities from "./views/Capabilities.vue";
+import Plugins from "./views/Plugins.vue";
 
 export const navGroups = [
   {
@@ -62,10 +62,10 @@ export const navGroups = [
       { id: "sqlite", label: "SQLite", icon: "database", view: Sqlite },
       { id: "windows", label: "Windows", icon: "window", view: Windows },
       {
-        id: "capabilities",
-        label: "Capabilities",
+        id: "plugins",
+        label: "Plugins",
         icon: "shield",
-        view: Capabilities,
+        view: Plugins,
       },
     ],
   },

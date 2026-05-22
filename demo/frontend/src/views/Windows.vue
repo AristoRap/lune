@@ -60,7 +60,7 @@ onBeforeUnmount(() => Events.off("window_closed", onWindowClosed));
   <SectionHead eyebrow="Native" title="Windows">
     <template #desc>
       Open additional native windows pointing to any URL. Each window shares
-      the same capability bindings as the main window.
+      the same plugin bindings as the main window.
     </template>
   </SectionHead>
 

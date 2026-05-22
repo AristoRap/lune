@@ -2,7 +2,7 @@
 
 Lune includes a WebSocket-backed IPC stream for ordered, low-latency data delivery between Crystal and JavaScript. Use it when you need high-frequency or continuous streams — price ticks, log lines, LLM token output, sensor data — where firing a new `evaluateJavaScript` call per message would saturate the event loop.
 
-For the full API reference see [Stream capability](../capabilities/stream).
+For the full API reference see [Stream plugin](../plugins/stream).
 
 ---
 
@@ -59,4 +59,4 @@ Use Events for discrete, low-frequency signals; use Stream for sustained data fl
 
 ---
 
-See [Stream capability](../capabilities/stream) for the full API reference including common patterns and listener management.
+See [Stream plugin](../plugins/stream) for the full API reference including common patterns and listener management.

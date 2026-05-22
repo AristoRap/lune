@@ -32,7 +32,7 @@ mac:
 
 #### Entitlements
 
-WKWebView requires two entitlements under the hardened runtime. Lune generates them automatically — you don't need a custom plist unless your app needs additional capabilities.
+WKWebView requires two entitlements under the hardened runtime. Lune generates them automatically — you don't need a custom plist unless your app needs additional plugins.
 
 If you do (e.g. camera, microphone), create a plist and point to it:
 
