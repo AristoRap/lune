@@ -23,7 +23,7 @@ describe Lune::Plugins::Windows do
     end
 
     it "has Windows binding namespace" do
-      Lune::Plugins::Windows.new.binding_namespace.should eq("Windows")
+      Lune::Plugins::Windows.new.binding_namespace.should eq("Lune::Plugins::Windows")
     end
   end
 
@@ -51,16 +51,16 @@ describe Lune::Plugins::Windows do
       app = Lune::App.new
       app.install(cap)
       ids = app.bindings.map(&.id)
-      ids.should contain("Windows.open")
-      ids.should contain("Windows.close")
-      ids.should contain("Windows.list")
+      ids.should contain("Lune.Plugins.Windows.open")
+      ids.should contain("Lune.Plugins.Windows.close")
+      ids.should contain("Lune.Plugins.Windows.list")
     end
 
     it "list returns empty array when no extra windows are open" do
       cap = Lune::Plugins::Windows.new
       app = Lune::App.new
       app.install(cap)
-      list_b = app.bindings.find { |b| b.id == "Windows.list" }.not_nil!
+      list_b = app.bindings.find { |b| b.id == "Lune.Plugins.Windows.list" }.not_nil!
       result = list_b.callback.call([] of JSON::Any)
       result.as_a.should be_empty
     end

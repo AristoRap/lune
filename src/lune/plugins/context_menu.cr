@@ -25,7 +25,7 @@ module Lune
 
       def init_js : String?
         bm = BRIDGE_MARKER
-        show_key = "#{binding_namespace}.show"
+        show_key = "#{binding_namespace.gsub("::", ".")}.show"
         <<-JS
         (function(){
           window.#{bm} = window.#{bm} || {};

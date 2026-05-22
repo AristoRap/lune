@@ -27,10 +27,6 @@ module Lune
         DESCRIPTOR
       end
 
-      def binding_namespace : String
-        "Stream"
-      end
-
       @port : Int32 = 0
 
       def init_webview(ctx : WebviewCtx) : Nil

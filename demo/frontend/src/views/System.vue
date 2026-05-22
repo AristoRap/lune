@@ -1,7 +1,8 @@
 <script setup>
 import { ref } from "vue";
 import SectionHead from "../components/SectionHead.vue";
-import { System, Screen, Notifications } from "../lune.js";
+import { lune } from "../lune.js";
+const { System, Screen, Notifications } = lune;
 
 const envOut = ref("");
 const screenOut = ref("");

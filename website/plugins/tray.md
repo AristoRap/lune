@@ -14,7 +14,7 @@
 
 ¹ Requires XWayland on Wayland compositors.
 
-² Windows: `Tray.setIcon` requires a `.ico` path (PNG / SVG fall back to the default Windows app icon with a logger warning). See [Windows notes](#windows-notes) below.
+² Windows: `lune.Tray.setIcon` requires a `.ico` path (PNG / SVG fall back to the default Windows app icon with a logger warning). See [Windows notes](#windows-notes) below.
 
 Tray has a soft dependency on `events`. When events is active, tray icon clicks and menu item selections emit events automatically. When events is absent, use the Crystal-side callbacks in the `opts.tray` block instead.
 
@@ -51,7 +51,7 @@ Lune.run(app) do |opts|
     # Optional: override the event name used when emitting via events.
     t.event = "myTrayEvent"  # default: "trayEvent"
 
-    # Optional: show the tray icon at boot without a JS `Tray.show("")` call.
+    # Optional: show the tray icon at boot without a JS `lune.Tray.show("")` call.
     # Auto-enabled by `mac.menubar_mode`.
     t.auto_show = true
   end
@@ -74,34 +74,34 @@ end
 Show the tray icon, set a menu, and handle events:
 
 ```js
-import { Tray, Events, System } from "../lunejs/runtime/runtime.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
 // Show the tray icon
-await Tray.show("/assets/icon.png");
+await lune.Tray.show("/assets/icon.png");
 
 // Set a dropdown menu
-await Tray.setMenu([
+await lune.Tray.setMenu([
   { id: "show", label: "Show window" },
   { id: "---", label: "" }, // separator
   { id: "quit", label: "Quit" },
 ]);
 
 // Listen for tray events (requires events)
-Events.on("trayEvent", (payload) => {
+lune.Events.on("trayEvent", (payload) => {
   if (payload === "left_click") console.log("plain left click");
   if (payload === "right_click") console.log("plain right click");
-  if (payload === "show") Window.show();
-  if (payload === "quit") System.quit();
+  if (payload === "show") lune.Window.show();
+  if (payload === "quit") lune.System.quit();
 });
 
 // Open the menu programmatically (no-op if no menu set)
-await Tray.popupMenu();
+await lune.Tray.popupMenu();
 
 // Update the icon dynamically
-await Tray.setIcon("/assets/icon-active.png");
+await lune.Tray.setIcon("/assets/icon-active.png");
 
 // Hide the tray icon
-await Tray.hide();
+await lune.Tray.hide();
 ```
 
 | Method      | Signature        | Returns         | Description                      |
@@ -137,7 +137,7 @@ Event name defaults to `"trayEvent"`. Override with `opts.tray.event`:
 
 ```crystal
 opts.tray do |t|
-  t.event = "app-tray"  # Events.on("app-tray", ...) in JS
+  t.event = "app-tray"  # lune.Events.on("app-tray", ...) in JS
 end
 ```
 
@@ -148,11 +148,11 @@ end
 **Both clicks show the menu (Docker style):**
 
 ```crystal
-# Nothing to set in Crystal — just call Tray.setMenu from JS.
+# Nothing to set in Crystal — just call lune.Tray.setMenu from JS.
 ```
 
 ```js
-Tray.setMenu([{ id: "quit", label: "Quit" }]);
+lune.Tray.setMenu([{ id: "quit", label: "Quit" }]);
 ```
 
 **Left toggles window, right shows menu (popover style):**
@@ -174,7 +174,7 @@ opts.tray.on_right_click = -> { Lune::Native::Tray.popup_menu; nil }
 
 Tray ships fully on Windows via `Shell_NotifyIconW` + `CreatePopupMenu` + `LoadImageW`. Three behavioural differences from macOS / Linux to be aware of:
 
-- **`Tray.setIcon` requires a `.ico` file.** Pass a path ending in `.ico`; PNG / SVG / JPEG fall back to the default Windows app icon (`IDI_APPLICATION`) and emit a `logger.warn`. Convert your icon at build time — the bundled `assets/lune-logo.ico` is a multi-resolution example (16/32/48/64/128/256 px embedded as PNG entries) generated from `assets/lune-logo.png`.
+- **`lune.Tray.setIcon` requires a `.ico` file.** Pass a path ending in `.ico`; PNG / SVG / JPEG fall back to the default Windows app icon (`IDI_APPLICATION`) and emit a `logger.warn`. Convert your icon at build time — the bundled `assets/lune-logo.ico` is a multi-resolution example (16/32/48/64/128/256 px embedded as PNG entries) generated from `assets/lune-logo.png`.
 - **`opts.tray.toggle_window_on` is currently a no-op on Windows.** The macOS implementation positions the window directly under the tray icon using the icon's screen rect; on Windows that requires `Shell_NotifyIconGetRect` plumbing that isn't wired yet. The click handler still fires — it just doesn't move or show the window. Tracked in [ROADMAP.md](https://github.com/AristoRap/lune/blob/main/ROADMAP.md). Until then, wire `opts.tray.on_click = -> { ... }` manually if you want click-to-toggle behaviour on Windows.
 - **Native context menus render at the cursor position**, not anchored to the tray icon (this matches Win32 convention — `TrackPopupMenu` takes screen coordinates and Lune passes `GetCursorPos`). The Win32 menu also uses the system's classic submenu style, not the rounded "Mica" popovers you see in some Windows 11 apps — those require Acrylic / DirectComposition work that isn't in scope.
 

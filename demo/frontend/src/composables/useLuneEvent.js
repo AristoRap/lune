@@ -1,7 +1,7 @@
 import { onBeforeUnmount } from "vue";
-import { Events } from "../../lunejs/runtime/runtime.js";
+import { lune } from "../lune.js";
 
 export function useLuneEvent(name, handler) {
-  Events.on(name, handler);
-  onBeforeUnmount(() => Events.off(name, handler));
+  lune.Events.on(name, handler);
+  onBeforeUnmount(() => lune.Events.off(name, handler));
 }

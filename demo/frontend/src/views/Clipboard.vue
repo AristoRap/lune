@@ -1,7 +1,8 @@
 <script setup>
 import { ref } from "vue";
 import SectionHead from "../components/SectionHead.vue";
-import { Clipboard } from "../lune.js";
+import { lune } from "../lune.js";
+const { Clipboard } = lune;
 
 const readOut = ref("");
 const writeIn = ref("");

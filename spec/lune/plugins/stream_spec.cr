@@ -9,7 +9,7 @@ describe Lune::Plugins::Stream do
 
   describe "#binding_namespace" do
     it "is Stream" do
-      Lune::Plugins::Stream.new.binding_namespace.should eq("Stream")
+      Lune::Plugins::Stream.new.binding_namespace.should eq("Lune::Plugins::Stream")
     end
   end
 

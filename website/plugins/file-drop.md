@@ -35,13 +35,13 @@ Or omit `plugins:` entirely.
 Listen for drops anywhere in the window:
 
 ```js
-import { FileDrop } from "../lunejs/runtime/runtime.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
-FileDrop.on((x, y, paths) => {
+lune.FileDrop.on((x, y, paths) => {
   console.log("Dropped at", x, y, paths);
 });
 
-FileDrop.off(); // stop listening
+lune.FileDrop.off(); // stop listening
 ```
 
 ---
@@ -107,7 +107,7 @@ end
 
 ## Windows behaviour
 
-The plugin is auto-filtered from the registry on Windows (Win32 needs `OleInitialize` + `RegisterDragDrop` plumbing — tracked in [ROADMAP.md](https://github.com/AristoRap/lune/blob/main/ROADMAP.md)). The runtime still exports a `FileDrop` namespace on Windows so cross-platform imports keep working, but `FileDrop.on(cb)` is a one-time `console.warn` + no-op — the callback never fires. Guard with `runtime.System.environment().os` or simply accept that drops won't trigger on Win32.
+The plugin is auto-filtered from the registry on Windows (Win32 needs `OleInitialize` + `RegisterDragDrop` plumbing — tracked in [ROADMAP.md](https://github.com/AristoRap/lune/blob/main/ROADMAP.md)). The runtime still exports a `FileDrop` namespace on Windows so cross-platform imports keep working, but `lune.FileDrop.on(cb)` is a one-time `console.warn` + no-op — the callback never fires. Guard with `lune.System.environment().os` or simply accept that drops won't trigger on Win32.
 
 ---
 

@@ -107,8 +107,15 @@ module Lune
       descriptor.id.to_s
     end
 
+    # Binding namespace follows the Crystal module path of the plugin class
+    # verbatim. So `Lune::Plugins::Tray` becomes `Lune::Plugins::Tray`, which
+    # `Binding#id` later renders as `Lune.Plugins.Tray.<method>` on the JS
+    # side. Following the Crystal namespace 1-to-1 keeps the rule predictable
+    # (no special stripping) and prevents collisions with user `Bindable`
+    # classes — a user `class Tray` exports under `api.Tray`, the plugin
+    # exports under `runtime.Lune.Plugins.Tray`.
     def binding_namespace : String
-      name.camelcase
+      self.class.name
     end
 
     def sentinel_key : String

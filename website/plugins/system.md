@@ -16,16 +16,16 @@
 ## JavaScript API
 
 ```js
-import { System } from "../lunejs/runtime/runtime.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
 // Close the window and exit the app
-await System.quit();
+await lune.System.quit();
 
 // Open a URL in the default browser
-await System.openUrl("https://example.com");
+await lune.System.openUrl("https://example.com");
 
 // Query the runtime environment
-const env = await System.environment();
+const env = await lune.System.environment();
 console.log(env.os, env.arch, env.devtools);
 // "darwin", "arm64", false
 ```

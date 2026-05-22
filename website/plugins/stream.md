@@ -42,13 +42,13 @@ app.stream.send("heartbeat")  # no payload
 ### Listening in JavaScript
 
 ```js
-import { Stream } from "../lunejs/runtime/runtime.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
-Stream.on("trade", (tick) => {
+lune.Stream.on("trade", (tick) => {
   console.log(tick.symbol, tick.price);
 });
 
-Stream.once("ready", () => showReadyState());
+lune.Stream.once("ready", () => showReadyState());
 ```
 
 ---
@@ -58,11 +58,11 @@ Stream.once("ready", () => showReadyState());
 ### Sending from JavaScript
 
 ```js
-Stream.send("stream-start");
-Stream.send("order", { symbol: "BTC", qty: 1, side: "buy" });
+lune.Stream.send("stream-start");
+lune.Stream.send("order", { symbol: "BTC", qty: 1, side: "buy" });
 ```
 
-`Stream.send` is fire-and-forget — no `await` needed.
+`lune.Stream.send` is fire-and-forget — no `await` needed.
 
 ### Listening in Crystal
 
@@ -112,9 +112,9 @@ end
 ```
 
 ```js
-Stream.on("tick", ({ price }) => renderTicker(price));
-startButton.addEventListener("click", () => Stream.send("stream-start"));
-stopButton.addEventListener("click", () => Stream.send("stream-stop"));
+lune.Stream.on("tick", ({ price }) => renderTicker(price));
+startButton.addEventListener("click", () => lune.Stream.send("stream-start"));
+stopButton.addEventListener("click", () => lune.Stream.send("stream-stop"));
 ```
 
 ### LLM token streaming
@@ -130,11 +130,11 @@ end
 
 ```js
 let output = "";
-Stream.on("token", (tok) => {
+lune.Stream.on("token", (tok) => {
   output += tok;
   el.textContent = output;
 });
-Stream.once("done", () => {
+lune.Stream.once("done", () => {
   el.dataset.streaming = "false";
 });
 ```
@@ -157,13 +157,13 @@ end
 
 ## Events vs Stream
 
-|              | Events                            | Stream                            |
-| ------------ | --------------------------------- | --------------------------------- |
-| Transport    | `evaluateJavaScript` per call     | WebSocket frames                  |
-| JS → Crystal | `await Events.emit(...)`          | `Stream.send(...)` (no await)     |
-| Throughput   | Low–medium                        | High (batched WS frames)          |
-| Ordering     | Best-effort                       | Guaranteed per-connection         |
-| Best for     | UI signals, one-off notifications | Tickers, log tails, token streams |
+|              | Events                            | Stream                             |
+| ------------ | --------------------------------- | ---------------------------------- |
+| Transport    | `evaluateJavaScript` per call     | WebSocket frames                   |
+| JS → Crystal | `await Events.emit(...)`          | `lune.Stream.send(...)` (no await) |
+| Throughput   | Low–medium                        | High (batched WS frames)           |
+| Ordering     | Best-effort                       | Guaranteed per-connection          |
+| Best for     | UI signals, one-off notifications | Tickers, log tails, token streams  |
 
 ---
 

@@ -42,14 +42,14 @@ The payload can be any Crystal value that serializes to JSON — strings, number
 ### Listening in JavaScript
 
 ```js
-import { Events } from "../lunejs/runtime/runtime.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
-Events.on("status-changed", (status) => {
+lune.Events.on("status-changed", (status) => {
   console.log("New status:", status);
 });
 
 // One-shot listener — fires once, then removes itself
-Events.once("connected", () => showWelcomeMessage());
+lune.Events.once("connected", () => showWelcomeMessage());
 ```
 
 ---
@@ -59,12 +59,12 @@ Events.once("connected", () => showWelcomeMessage());
 ### Emitting from JavaScript
 
 ```js
-await Events.emit("search", { query: input.value });
-await Events.emit("user-action", "button-clicked");
-await Events.emit("ready");
+await lune.Events.emit("search", { query: input.value });
+await lune.Events.emit("user-action", "button-clicked");
+await lune.Events.emit("ready");
 ```
 
-`Events.emit` is async — it resolves once Crystal has received the event.
+`lune.Events.emit` is async — it resolves once Crystal has received the event.
 
 ### Listening in Crystal
 
@@ -102,9 +102,9 @@ The `data` argument is a `JSON::Any` — use `.as_s`, `.as_i`, `.as_a`, `[]` etc
 ```js
 const handler = (data) => console.log(data);
 
-Events.on("tick", handler);
-Events.off("tick", handler); // remove this handler
-Events.off("tick"); // remove ALL handlers for "tick"
+lune.Events.on("tick", handler);
+lune.Events.off("tick", handler); // remove this handler
+lune.Events.off("tick"); // remove ALL handlers for "tick"
 ```
 
 ---
@@ -124,7 +124,7 @@ end
 ```
 
 ```js
-Events.on("progress", ({ done, total }) => {
+lune.Events.on("progress", ({ done, total }) => {
   progressBar.value = done / total;
 });
 ```
@@ -139,9 +139,9 @@ end
 ```
 
 ```js
-Events.on("search-results", (results) => renderResults(results));
+lune.Events.on("search-results", (results) => renderResults(results));
 searchInput.addEventListener("input", (e) => {
-  Events.emit("search", { query: e.target.value });
+  lune.Events.emit("search", { query: e.target.value });
 });
 ```
 
@@ -154,8 +154,8 @@ end
 ```
 
 ```js
-Events.on("config", (cfg) => applyConfig(cfg));
-Events.emit("frontend-ready");
+lune.Events.on("config", (cfg) => applyConfig(cfg));
+lune.Events.emit("frontend-ready");
 ```
 
 ---

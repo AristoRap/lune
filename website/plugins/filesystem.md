@@ -16,12 +16,12 @@
 ## JavaScript API
 
 ```js
-import { Filesystem } from "../lunejs/runtime/runtime.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
-const home = await Filesystem.homeDir();
-const downloads = await Filesystem.downloadsDir();
-const appData = await Filesystem.appDataDir();
-const tmp = await Filesystem.tempDir();
+const home = await lune.Filesystem.homeDir();
+const downloads = await lune.Filesystem.downloadsDir();
+const appData = await lune.Filesystem.appDataDir();
+const tmp = await lune.Filesystem.tempDir();
 ```
 
 | Method           | Returns           | macOS                           | Linux                                | Windows       |

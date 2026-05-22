@@ -35,7 +35,7 @@ describe Lune::Plugins::Hotkeys do
     end
 
     it "has Hotkeys binding namespace" do
-      Lune::Plugins::Hotkeys.new.binding_namespace.should eq("Hotkeys")
+      Lune::Plugins::Hotkeys.new.binding_namespace.should eq("Lune::Plugins::Hotkeys")
     end
   end
 
@@ -59,8 +59,8 @@ describe Lune::Plugins::Hotkeys do
       app = Lune::App.new
       app.install(cap)
       ids = app.bindings.map(&.id)
-      ids.should contain("Hotkeys.register")
-      ids.should contain("Hotkeys.unregister")
+      ids.should contain("Lune.Plugins.Hotkeys.register")
+      ids.should contain("Lune.Plugins.Hotkeys.unregister")
     end
 
     it "sets up the native hotkey callback without raising" do

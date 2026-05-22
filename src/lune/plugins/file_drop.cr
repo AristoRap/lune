@@ -84,26 +84,19 @@ module Lune
       # crash app init since drop-handlers are typically wired up front. Warn
       # once and skip instead so the rest of the app keeps running.
       def unavailable_js_stub(platform : Symbol) : String?
-        ns = binding_namespace
+        ns = binding_namespace.gsub("::", ".")
         msg = "#{ns} is not available on #{platform} — drop events will not fire."
         <<-JS
-        export const #{ns} = (function(){
-          var _warned = false;
-          return {
-            on(cb) { if (!_warned) { _warned = true; console.warn(#{msg.inspect}); } },
-            off()  { },
-          };
-        })();
+          _warned: false,
+          on(cb) { if (!this._warned) { this._warned = true; console.warn(#{msg.inspect}); } },
+          off()  { },
         JS
       end
 
       def unavailable_dts_stub : String?
-        ns = binding_namespace
         <<-DTS
-        export interface #{ns} {
           on(cb: (x: number, y: number, paths: string[]) => void): void;
           off(): void;
-        }
         DTS
       end
 

@@ -263,7 +263,7 @@ See [Distribution → Notarization](./guide/distribution#notarization) for the f
 
 **Type:** `Array(String)` — **Default:** `[]`
 
-URL schemes to register with the OS so the system routes `myapp://...` links into your app. Each entry becomes a `CFBundleURLTypes` entry in `Info.plist` on macOS (injected by `lune build`); on Linux a `MimeType` entry is written into the `.desktop` file (injected by `lune dist`), but the runtime handler that forwards URLs to `DeepLink.on` is **macOS-only** in this release — see [Deep Link → Roadmap](./plugins/deep-link#roadmap).
+URL schemes to register with the OS so the system routes `myapp://...` links into your app. Each entry becomes a `CFBundleURLTypes` entry in `Info.plist` on macOS (injected by `lune build`); on Linux a `MimeType` entry is written into the `.desktop` file (injected by `lune dist`), but the runtime handler that forwards URLs to `lune.DeepLink.on` is **macOS-only** in this release — see [Deep Link → Roadmap](./plugins/deep-link#roadmap).
 
 ```yaml
 url_schemes:
@@ -273,8 +273,8 @@ url_schemes:
 After receiving a URL the `deep_link` runtime event fires in JavaScript:
 
 ```js
-import { DeepLink } from "../lunejs/runtime/runtime.js";
-DeepLink.on((url) => {
+import { lune } from "../lunejs/runtime/runtime.js";
+lune.DeepLink.on((url) => {
   /* url = "myapp://..." */
 });
 ```
@@ -314,7 +314,7 @@ Values must be **plugin names** (e.g. `system`, `clipboard`). Individual functio
 
 | `enabled`                 | `disabled`           | result               |
 | ------------------------- | -------------------- | -------------------- |
-| omitted or `[]`           | omitted              | all plugins     |
+| omitted or `[]`           | omitted              | all plugins          |
 | `["system"]`              | omitted              | system only          |
 | `["*"]` or `["all"]`      | omitted              | all (explicit)       |
 | omitted or `[]`           | `["clipboard"]`      | all except clipboard |
@@ -330,7 +330,7 @@ See [Plugins](./plugins/) for the full list of plugin names and the JS namespace
 
 #### Platform filtering
 
-A plugin whose `platforms` list excludes the current OS is auto-filtered from the registry — no manual `disabled` entry needed. Its JS namespace still appears in `runtime.js`, but every method returns `Promise.reject(new LuneError("UNAVAILABLE_ON_PLATFORM", "…"))` so cross-platform imports keep working. Catch the error (or branch on `runtime.System.environment().os`) to fall back gracefully. The `runtime.d.ts` interface preserves the full signature, so the same TypeScript code type-checks on every platform.
+A plugin whose `platforms` list excludes the current OS is auto-filtered from the registry — no manual `disabled` entry needed. Its JS namespace still appears in `runtime.js`, but every method returns `Promise.reject(new LuneError("UNAVAILABLE_ON_PLATFORM", "…"))` so cross-platform imports keep working. Catch the error (or branch on `lune.System.environment().os`) to fall back gracefully. The `runtime.d.ts` interface preserves the full signature, so the same TypeScript code type-checks on every platform.
 
 If `enabled:` explicitly names a plugin that's auto-filtered on the current OS, the registry emits a single `INFO` log line so you know the cap was recognised but couldn't be activated. Default-active caps skip silently — a shared `lune.yml` won't produce noise across platforms.
 

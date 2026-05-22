@@ -124,14 +124,14 @@ Then rename your entry point from `.js` to `.ts` and update `vite.config.js` to 
 
 ```ts
 import api from "../lunejs/app/App.js";
-import { System, Events } from "../lunejs/runtime/runtime.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 import type { LuneError } from "../lunejs/runtime/runtime.js";
 
 // Fully typed — autocomplete works here
 const result = await api.FileModule.read("/tmp/hello.txt");
 
 // environment() returns LuneEnvironment
-const env = await System.environment();
+const env = await lune.System.environment();
 if (env.os === "darwin") {
   // macOS-specific code
 }
@@ -149,7 +149,7 @@ interface ProgressEvent {
   total: number;
 }
 
-Events.on("progress", (data) => {
+lune.Events.on("progress", (data) => {
   const { done, total } = data as ProgressEvent;
   updateProgressBar(done / total);
 });

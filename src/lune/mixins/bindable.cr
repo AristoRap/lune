@@ -14,19 +14,15 @@ module Lune
   annotation BindOverride; end
 
   # `include Lune::Bindable` turns a class into a bridge surface. The compiler
-  # walks its methods, picks up every method tagged `@[Lune::Bind]`, and generates
-  # an `install(app)` method that registers each as a `Lune::Binding`.
+  # walks its methods, picks up every method tagged `@[Lune::Bind]`, and
+  # generates an `install(app)` method that registers each as a `Lune::Binding`.
   #
-  # User and plugin bindings share the same bridge-ID shape (`<Namespace>.<method>`).
-  # `internal:` only decides which JS file the binding lands in:
-  #
-  #   - User class (plain Bindable): namespace = class name, internal: false.
-  #     Binding lands in `app.js` as `api.<Class>.method`.
-  #
-  #   - Plugin subclass: namespace = `binding_namespace`, internal: true.
-  #     Binding lands in `runtime.js` (and the per-plugin file under `plugins/`)
-  #     under the plugin's namespace. Extra fields (TS types, JS arg transforms)
-  #     come from `@[BindOverride]` on the same method.
+  # The binding namespace is the Crystal class path verbatim — `@type.name`.
+  # `Demo` stays `Demo`, `Lune::Plugins::Tray` becomes `Lune::Plugins::Tray`,
+  # and `Binding#id` later splits `::` into `.` to produce the JS path
+  # (`Demo.greet`, `Lune.Plugins.Tray.show`). User and plugin bindings go
+  # through identical code; `internal:` only decides which JS file the binding
+  # lands in (`app/App.js` vs `runtime/runtime.js`).
   module Bindable
     include Installable
     getter app : Lune::App = Lune::App.new
@@ -42,7 +38,7 @@ module Lune
                 {% override_ann = m.annotation(Lune::BindOverride) %}
                 {% async = bind_ann[:async] && bind_ann[:async].id == "true" ? true : false %}
                 app.register(Lune::Binding.new(
-                  namespace: {% if is_plugin %}binding_namespace{% else %}{{ @type.name.stringify }}{% end %},
+                  namespace: {{ @type.name.stringify }},
                   method: {{ m.name.stringify }},
                   args: {{ m.args.map(&.restriction.stringify) }} of String,
                   return_type: {{ m.return_type.stringify }},

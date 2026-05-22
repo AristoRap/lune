@@ -2,14 +2,14 @@
 
 > Spawn child processes and stream their output to the frontend in real time.
 
-|                  |                          |
-| ---------------- | ------------------------ |
-| **Config key**   | `shell`                  |
-| **JS namespace** | `Shell`                  |
-| **Core**         | No                       |
-| **Phases**       | Bindable · Lifecycle     |
-| **Hard deps**    | `stream`                 |
-| **Platforms**    | macOS · Linux · Windows  |
+|                  |                         |
+| ---------------- | ----------------------- |
+| **Config key**   | `shell`                 |
+| **JS namespace** | `Shell`                 |
+| **Core**         | No                      |
+| **Phases**       | Bindable · Lifecycle    |
+| **Hard deps**    | `stream`                |
+| **Platforms**    | macOS · Linux · Windows |
 
 Shell lets you run commands and pipe their `stdout`/`stderr` to the browser over the WebSocket stream. Use it for build pipelines, log tailing, long-running tools, or anything that writes to standard output.
 
@@ -32,14 +32,14 @@ Or omit `plugins:` entirely.
 
 ## Spawning a process
 
-`Shell.spawn` starts the process immediately and returns a **pid** (a random hex string). Use the pid to subscribe to output and kill the process.
+`lune.Shell.spawn` starts the process immediately and returns a **pid** (a random hex string). Use the pid to subscribe to output and kill the process.
 
 ```js
-import { Shell } from "../lunejs/runtime/runtime.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
-const pid = await Shell.spawn("ping", ["-c", "5", "127.0.0.1"]);
+const pid = await lune.Shell.spawn("ping", ["-c", "5", "127.0.0.1"]);
 
-Shell.listen(pid, {
+lune.Shell.listen(pid, {
   stdout: ({ line }) => console.log("out:", line),
   stderr: ({ line }) => console.error("err:", line),
   exit: ({ code }) => console.log("exited with", code),
@@ -52,10 +52,10 @@ Shell.listen(pid, {
 
 ## Collecting all output
 
-`Shell.run` is an async binding that captures all output and resolves with `{ stdout, stderr, code }` once the process exits. Use it for short-lived commands where you want all output at once.
+`lune.Shell.run` is an async binding that captures all output and resolves with `{ stdout, stderr, code }` once the process exits. Use it for short-lived commands where you want all output at once.
 
 ```js
-const { stdout, stderr, code } = await Shell.run("uname", ["-a"]);
+const { stdout, stderr, code } = await lune.Shell.run("uname", ["-a"]);
 console.log(stdout); // Darwin …
 ```
 
@@ -64,24 +64,24 @@ console.log(stdout); // Darwin …
 ## Killing a process
 
 ```js
-const pid = await Shell.spawn("sleep", ["60"]);
-await Shell.kill(pid); // sends SIGTERM
+const pid = await lune.Shell.spawn("sleep", ["60"]);
+await lune.Shell.kill(pid); // sends SIGTERM
 ```
 
-Calling `Shell.kill` on an already-exited pid is a no-op.
+Calling `lune.Shell.kill` on an already-exited pid is a no-op.
 
 ---
 
 ## Listing running processes
 
-`Shell.list` returns the pids of all processes currently alive. Use it to hydrate state in secondary windows that didn't spawn the processes.
+`lune.Shell.list` returns the pids of all processes currently alive. Use it to hydrate state in secondary windows that didn't spawn the processes.
 
 ```js
-const pids = await Shell.list();
+const pids = await lune.Shell.list();
 // ["a1b2c3d4...", ...]
 
 for (const pid of pids) {
-  Shell.listen(pid, {
+  lune.Shell.listen(pid, {
     stdout: ({ line }) => console.log(line),
     exit: ({ code }) => console.log("done", code),
   });
@@ -92,41 +92,41 @@ for (const pid of pids) {
 
 ## Writing to stdin
 
-`Shell.write` sends text to the standard input of a running process. Use it for interactive programs that read commands from stdin — shells, REPLs, password prompts, etc.
+`lune.Shell.write` sends text to the standard input of a running process. Use it for interactive programs that read commands from stdin — shells, REPLs, password prompts, etc.
 
 ```js
-const pid = await Shell.spawn("/bin/sh", ["-i"]);
+const pid = await lune.Shell.spawn("/bin/sh", ["-i"]);
 
-Shell.listen(pid, {
+lune.Shell.listen(pid, {
   stdout: ({ line }) => console.log(line),
   exit: ({ code }) => console.log("exited", code),
 });
 
-await Shell.write(pid, "echo hello\n");
-await Shell.write(pid, "exit\n");
+await lune.Shell.write(pid, "echo hello\n");
+await lune.Shell.write(pid, "exit\n");
 ```
 
-`Shell.close_stdin` closes the stdin pipe, which sends EOF to the process. Many programs (e.g. `sort`, `cat`, `wc`) only flush their output once stdin is closed:
+`lune.Shell.close_stdin` closes the stdin pipe, which sends EOF to the process. Many programs (e.g. `sort`, `cat`, `wc`) only flush their output once stdin is closed:
 
 ```js
-const pid = await Shell.spawn("sort", []);
-await Shell.write(pid, "banana\n");
-await Shell.write(pid, "apple\n");
-Shell.closeStdin(pid); // EOF → sort prints sorted output and exits
+const pid = await lune.Shell.spawn("sort", []);
+await lune.Shell.write(pid, "banana\n");
+await lune.Shell.write(pid, "apple\n");
+lune.Shell.closeStdin(pid); // EOF → sort prints sorted output and exits
 ```
 
-`Shell.kill` also closes stdin automatically.
+`lune.Shell.kill` also closes stdin automatically.
 
 ---
 
 ## Unsubscribing early
 
 ```js
-const pid = await Shell.spawn("tail", ["-f", "/var/log/system.log"]);
-Shell.listen(pid, { stdout: ({ line }) => render(line) });
+const pid = await lune.Shell.spawn("tail", ["-f", "/var/log/system.log"]);
+lune.Shell.listen(pid, { stdout: ({ line }) => render(line) });
 
 // Stop receiving output but let the process keep running
-Shell.unlisten(pid);
+lune.Shell.unlisten(pid);
 ```
 
 ---

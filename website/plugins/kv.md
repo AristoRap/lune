@@ -30,18 +30,18 @@ Or omit `plugins:` entirely.
 ## Reading and writing values
 
 ```js
-import { Kv } from "../lunejs/runtime/runtime.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
 // Write any JSON-serialisable value
-await Kv.set("theme", "dark");
-await Kv.set("window_scale", 1.5);
-await Kv.set("recent_files", ["/tmp/a.txt", "/tmp/b.txt"]);
+await lune.Kv.set("theme", "dark");
+await lune.Kv.set("window_scale", 1.5);
+await lune.Kv.set("recent_files", ["/tmp/a.txt", "/tmp/b.txt"]);
 
 // Read back (returns null if the key doesn't exist)
-const theme = await Kv.get("theme");
+const theme = await lune.Kv.get("theme");
 console.log(theme); // "dark"
 
-const missing = await Kv.get("no_such_key");
+const missing = await lune.Kv.get("no_such_key");
 console.log(missing); // null
 ```
 
@@ -50,9 +50,9 @@ console.log(missing); // null
 ## Checking and deleting keys
 
 ```js
-const exists = await Kv.has("theme"); // true
-await Kv.delete("theme");
-const gone = await Kv.has("theme"); // false
+const exists = await lune.Kv.has("theme"); // true
+await lune.Kv.delete("theme");
+const gone = await lune.Kv.has("theme"); // false
 ```
 
 ---
@@ -60,10 +60,10 @@ const gone = await Kv.has("theme"); // false
 ## Listing and clearing
 
 ```js
-const keys = await Kv.keys();
+const keys = await lune.Kv.keys();
 console.log(keys); // ["window_scale", "recent_files"]
 
-await Kv.clear(); // removes all entries
+await lune.Kv.clear(); // removes all entries
 ```
 
 ---

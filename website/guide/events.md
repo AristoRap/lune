@@ -16,23 +16,23 @@ app.events.emit("progress", { "percent" => 42 })
 app.events.emit("file-saved")
 ```
 
-Listen in JavaScript with `Events.on` or `Events.once`:
+Listen in JavaScript with `lune.Events.on` or `lune.Events.once`:
 
 ```js
-import { Events } from "../lunejs/runtime/runtime.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
-Events.on("status-changed", (status) => console.log(status));
-Events.once("connected", () => showWelcomeMessage());
+lune.Events.on("status-changed", (status) => console.log(status));
+lune.Events.once("connected", () => showWelcomeMessage());
 ```
 
 ---
 
 ## JavaScript → Crystal
 
-Emit from JavaScript with `Events.emit`:
+Emit from JavaScript with `lune.Events.emit`:
 
 ```js
-await Events.emit("search", { query: input.value });
+await lune.Events.emit("search", { query: input.value });
 ```
 
 Listen in Crystal with `app.events.on` or `app.events.once`:
@@ -59,9 +59,9 @@ end
 
 ```js
 // JS side
-Events.on("results", (data) => renderList(data));
+lune.Events.on("results", (data) => renderList(data));
 searchButton.addEventListener("click", () =>
-  Events.emit("search", { query: input.value }),
+  lune.Events.emit("search", { query: input.value }),
 );
 ```
 
@@ -77,7 +77,7 @@ Crystal `app.events.on` handlers run on the webview main thread. Keep them short
 
 ## Events vs Stream
 
-For high-frequency or ordered data flows, use [Stream](./stream) instead of Events.
+For high-frequency or ordered data flows, use [Stream](./stream) instead of lune.Events.
 
 |           | Events                            | Stream                            |
 | --------- | --------------------------------- | --------------------------------- |

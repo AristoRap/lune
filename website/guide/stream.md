@@ -15,24 +15,24 @@ app.stream.send("tick", { "price" => 45123.50 })
 app.stream.send("log-line", "build finished in 4.2s")
 ```
 
-Listen in JavaScript with `Stream.on`:
+Listen in JavaScript with `lune.Stream.on`:
 
 ```js
-import { Stream } from "../lunejs/runtime/runtime.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
-Stream.on("tick", ({ price }) => renderTicker(price));
-Stream.once("ready", () => showReadyState());
+lune.Stream.on("tick", ({ price }) => renderTicker(price));
+lune.Stream.once("ready", () => showReadyState());
 ```
 
 ---
 
 ## JavaScript → Crystal
 
-Fire-and-forget with `Stream.send` — no `await` needed:
+Fire-and-forget with `lune.Stream.send` — no `await` needed:
 
 ```js
-Stream.send("stream-start");
-Stream.send("order", { symbol: "BTC", qty: 1 });
+lune.Stream.send("stream-start");
+lune.Stream.send("order", { symbol: "BTC", qty: 1 });
 ```
 
 Listen in Crystal with `app.stream.on`:
@@ -49,13 +49,13 @@ end
 
 Use Events for discrete, low-frequency signals; use Stream for sustained data flows.
 
-|              | Events                            | Stream                            |
-| ------------ | --------------------------------- | --------------------------------- |
-| Transport    | `evaluateJavaScript` per call     | WebSocket frames                  |
-| JS → Crystal | `await Events.emit(...)`          | `Stream.send(...)` (no await)     |
-| Throughput   | Low–medium                        | High (batched WS frames)          |
-| Ordering     | Best-effort                       | Guaranteed per-connection         |
-| Best for     | UI signals, one-off notifications | Tickers, log tails, token streams |
+|              | Events                            | Stream                             |
+| ------------ | --------------------------------- | ---------------------------------- |
+| Transport    | `evaluateJavaScript` per call     | WebSocket frames                   |
+| JS → Crystal | `await Events.emit(...)`          | `lune.Stream.send(...)` (no await) |
+| Throughput   | Low–medium                        | High (batched WS frames)           |
+| Ordering     | Best-effort                       | Guaranteed per-connection          |
+| Best for     | UI signals, one-off notifications | Tickers, log tails, token streams  |
 
 ---
 

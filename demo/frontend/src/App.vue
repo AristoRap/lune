@@ -7,7 +7,8 @@ import Sidebar from "./components/Sidebar.vue";
 import Statusbar from "./components/Statusbar.vue";
 import Toast from "./components/Toast.vue";
 import { flatNav } from "./nav.js";
-import { System, Events } from "./lune.js";
+import { lune } from "./lune.js";
+const { System, Events } = lune;
 
 const route = useRoute();
 const router = useRouter();

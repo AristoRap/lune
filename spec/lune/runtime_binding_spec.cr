@@ -20,9 +20,9 @@ end
 describe "Lune::Binding (internal: true — plugin surface)" do
   describe "#id" do
     it "uses <Namespace>.<method> — same shape as user bindings" do
-      make_internal(namespace: "System", method: "quit").id.should eq("System.quit")
-      make_internal(namespace: "Clipboard", method: "read").id.should eq("Clipboard.read")
-      make_internal(namespace: "Screen", method: "info").id.should eq("Screen.info")
+      make_internal(namespace: "Lune::Plugins::System", method: "quit").id.should eq("Lune.Plugins.System.quit")
+      make_internal(namespace: "Lune::Plugins::Clipboard", method: "read").id.should eq("Lune.Plugins.Clipboard.read")
+      make_internal(namespace: "Lune::Plugins::Screen", method: "info").id.should eq("Lune.Plugins.Screen.info")
     end
   end
 
@@ -42,41 +42,41 @@ describe "Lune::Binding (internal: true — plugin surface)" do
 
   describe "#to_js_stub" do
     it "emits a stub calling the unified <Namespace>.<method> bridge ID" do
-      stub = make_internal(namespace: "System", method: "quit").to_js_stub
-      stub.includes?(%("System.quit")).should be_true
+      stub = make_internal(namespace: "Lune::Plugins::System", method: "quit").to_js_stub
+      stub.includes?(%("Lune.Plugins.System.quit")).should be_true
       stub.includes?("quit()").should be_true
     end
 
     it "emits an object method with named args" do
-      stub = make_internal(namespace: "System", method: "open_url", args: ["String"], arg_names: ["url"]).to_js_stub
+      stub = make_internal(namespace: "Lune::Plugins::System", method: "open_url", args: ["String"], arg_names: ["url"]).to_js_stub
       stub.includes?("openUrl(url)").should be_true
-      stub.includes?(%("System.open_url", url)).should be_true
+      stub.includes?(%("Lune.Plugins.System.open_url", url)).should be_true
     end
 
     it "falls back to arg0..argN when arg_names is empty" do
-      stub = make_internal(namespace: "Window", method: "set_size", args: ["Int32", "Int32"]).to_js_stub
+      stub = make_internal(namespace: "Lune::Plugins::Window", method: "set_size", args: ["Int32", "Int32"]).to_js_stub
       stub.includes?("setSize(arg0, arg1)").should be_true
     end
   end
 
   describe "#to_dts_sig" do
     it "emits an interface member wrapping return in Promise" do
-      sig = make_internal(namespace: "Filesystem", method: "home_dir", return_type: "String").to_dts_sig
+      sig = make_internal(namespace: "Lune::Plugins::Filesystem", method: "home_dir", return_type: "String").to_dts_sig
       sig.should eq("  homeDir(): Promise<string>;")
     end
 
     it "uses ts_return_type as the full return type bypassing auto-wrap" do
-      sig = make_internal(namespace: "System", method: "environment", return_type: "JSON", ts_return_type: "LuneEnvironment").to_dts_sig
+      sig = make_internal(namespace: "Lune::Plugins::System", method: "environment", return_type: "JSON", ts_return_type: "LuneEnvironment").to_dts_sig
       sig.should eq("  environment(): LuneEnvironment;")
     end
 
     it "uses ts_return_type with explicit Promise when needed" do
-      sig = make_internal(namespace: "Screen", method: "info", return_type: "String", ts_return_type: "Promise<ScreenInfo>").to_dts_sig
+      sig = make_internal(namespace: "Lune::Plugins::Screen", method: "info", return_type: "String", ts_return_type: "Promise<ScreenInfo>").to_dts_sig
       sig.should eq("  info(): Promise<ScreenInfo>;")
     end
 
     it "includes named params in the signature" do
-      sig = make_internal(namespace: "Notifications", method: "notify", args: ["String", "String"], return_type: "Nil", arg_names: ["title", "body"]).to_dts_sig
+      sig = make_internal(namespace: "Lune::Plugins::Notifications", method: "notify", args: ["String", "String"], return_type: "Nil", arg_names: ["title", "body"]).to_dts_sig
       sig.should eq("  notify(title: string, body: string): Promise<void>;")
     end
   end

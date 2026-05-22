@@ -24,21 +24,16 @@ module Lune
       end
 
       def unavailable_js_stub(platform : Symbol) : String?
-        ns = binding_namespace
+        ns = binding_namespace.gsub("::", ".")
         msg = "#{ns}.start is not available on #{platform}"
         <<-JS
-        export const #{ns} = {
           start(paths) { return Promise.reject(new LuneError("UNAVAILABLE_ON_PLATFORM", #{msg.inspect})); },
-        };
         JS
       end
 
       def unavailable_dts_stub : String?
-        ns = binding_namespace
         <<-DTS
-        export interface #{ns} {
           start(paths: string[]): Promise<void>;
-        }
         DTS
       end
     end

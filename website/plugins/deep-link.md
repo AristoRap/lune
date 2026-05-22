@@ -45,8 +45,8 @@ Scheme names must be lowercase alphanumeric.
 
 **Linux** — `lune dist` injects `MimeType=x-scheme-handler/myapp;` into the generated `.desktop` file, so the OS associates the scheme with your binary at install time. At runtime, Lune handles two cases:
 
-1. **Cold start** — the OS launches a fresh app with the URL on the command line. Lune scans `ARGV` for an arg containing `://` and fires `DeepLink.on` with that URL.
-2. **Warm start** — the OS launches a second process while the primary is already running. The second process tries to connect to a Unix-domain socket at `$XDG_RUNTIME_DIR/lune-<slug>.sock` (or `/tmp/…` if XDG isn't set); on success it forwards the URL and exits, and the primary instance fires `DeepLink.on` instead. If no primary is listening, the second instance continues as the new primary.
+1. **Cold start** — the OS launches a fresh app with the URL on the command line. Lune scans `ARGV` for an arg containing `://` and fires `lune.DeepLink.on` with that URL.
+2. **Warm start** — the OS launches a second process while the primary is already running. The second process tries to connect to a Unix-domain socket at `$XDG_RUNTIME_DIR/lune-<slug>.sock` (or `/tmp/…` if XDG isn't set); on success it forwards the URL and exits, and the primary instance fires `lune.DeepLink.on` instead. If no primary is listening, the second instance continues as the new primary.
 
 **Windows** — `myapp://` schemes need to be registered in the registry (`HKCU\Software\Classes\myapp\shell\open\command` → `"C:\path\to\app.exe" "%1"`) — Lune doesn't auto-register today. Once registered, the OS launches a fresh app with the URL on the command line and Lune scans `ARGV` like on Linux. Warm-start forwarding is not yet implemented on Windows (will use a named pipe in a follow-up).
 
@@ -55,18 +55,18 @@ Scheme names must be lowercase alphanumeric.
 ## JavaScript API
 
 ```js
-import { DeepLink } from "../lunejs/runtime/runtime.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
-DeepLink.on((url) => {
+lune.DeepLink.on((url) => {
   console.log("Opened via:", url);
   // e.g. "myapp://oauth/callback?code=abc123"
 });
 
 // Stop listening
-DeepLink.off();
+lune.DeepLink.off();
 ```
 
-Call `DeepLink.on` early (top-level module scope or `onMounted`) so the handler is registered before the first event fires.
+Call `lune.DeepLink.on` early (top-level module scope or `onMounted`) so the handler is registered before the first event fires.
 
 | Method | Signature | Description                                            |
 | ------ | --------- | ------------------------------------------------------ |
@@ -78,15 +78,15 @@ Call `DeepLink.on` early (top-level module scope or `onMounted`) so the handler 
 ## OAuth redirect example
 
 ```js
-import { System, DeepLink } from "../lunejs/runtime/runtime.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
 // 1. Open browser to auth URL
-System.openUrl(
+lune.System.openUrl(
   "https://provider.com/oauth/authorize?redirect_uri=myapp://oauth/callback&...",
 );
 
 // 2. Handle the redirect
-DeepLink.on((url) => {
+lune.DeepLink.on((url) => {
   const code = new URL(url).searchParams.get("code");
   exchangeCodeForToken(code);
 });

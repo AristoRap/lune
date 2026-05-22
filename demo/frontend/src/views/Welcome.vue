@@ -3,7 +3,8 @@ import { onMounted, ref } from "vue";
 import luneSrc from "../assets/images/lune.svg";
 import vueSrc from "../assets/images/vue.svg";
 import Icon from "../components/Icon.vue";
-import { System, Screen } from "../lune.js";
+import { lune } from "../lune.js";
+const { System, Screen } = lune;
 
 const env = ref(null);
 const screen = ref(null);

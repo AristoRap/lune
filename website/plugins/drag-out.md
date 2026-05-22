@@ -11,24 +11,24 @@
 | **Hard deps**    | —                              |
 | **Platforms**    | macOS (Linux/Windows: planned) |
 
-DragOut lets users drag files from your app's UI to external targets — Finder, the Desktop, other apps. Call `DragOut.start` from a `mousedown` or `dragstart` handler with the file paths to drag.
+DragOut lets users drag files from your app's UI to external targets — Finder, the Desktop, other apps. Call `lune.DragOut.start` from a `mousedown` or `dragstart` handler with the file paths to drag.
 
 ---
 
 ## JavaScript API
 
 ```js
-import { DragOut } from "../lunejs/runtime/runtime.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
 fileCard.addEventListener("mousedown", async (e) => {
-  await DragOut.start(["/path/to/file.png"]);
+  await lune.DragOut.start(["/path/to/file.png"]);
 });
 ```
 
 Multiple paths can be dragged at once:
 
 ```js
-await DragOut.start(["/exports/chart.png", "/exports/data.csv"]);
+await lune.DragOut.start(["/exports/chart.png", "/exports/data.csv"]);
 ```
 
 | Method  | Signature                | Returns         |
@@ -41,11 +41,11 @@ await DragOut.start(["/exports/chart.png", "/exports/data.csv"]);
 
 - Paths must be absolute.
 - The drag operation is native and modal — `start` resolves once the drag ends (drop or cancel).
-- **macOS only.** On Linux/Windows the runtime still exports a `DragOut` namespace, but `start(...)` returns a rejected `Promise` carrying a `LuneError` with code `"UNAVAILABLE_ON_PLATFORM"`. Catch it (or branch on `runtime.System.environment().os` ahead of time) to fall back gracefully:
+- **macOS only.** On Linux/Windows the runtime still exports a `DragOut` namespace, but `start(...)` returns a rejected `Promise` carrying a `LuneError` with code `"UNAVAILABLE_ON_PLATFORM"`. Catch it (or branch on `lune.System.environment().os` ahead of time) to fall back gracefully:
 
 ```js
 try {
-  await DragOut.start(["/exports/chart.png"]);
+  await lune.DragOut.start(["/exports/chart.png"]);
 } catch (err) {
   if (err.code === "UNAVAILABLE_ON_PLATFORM") {
     // Show a fallback "Download" button, etc.

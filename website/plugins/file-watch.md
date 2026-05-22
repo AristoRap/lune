@@ -33,16 +33,16 @@ Or omit `plugins:` entirely.
 ## JavaScript API
 
 ```js
-import { FileWatch } from "../lunejs/runtime/runtime.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
-FileWatch.watch("/tmp/config.json");
+lune.FileWatch.watch("/tmp/config.json");
 
-FileWatch.on((event) => {
+lune.FileWatch.on((event) => {
   console.log(event.path, event.kind);
   // e.g. "/tmp/config.json", "modified"
 });
 
-FileWatch.unwatch("/tmp/config.json");
+lune.FileWatch.unwatch("/tmp/config.json");
 ```
 
 | Method    | Signature       | Description                               |
@@ -94,7 +94,7 @@ end
 
 ## Windows behaviour
 
-The plugin is auto-filtered from the registry on Windows (Win32 needs `ReadDirectoryChangesW` plumbing — tracked in [ROADMAP.md](https://github.com/AristoRap/lune/blob/main/ROADMAP.md)). The runtime still exports a `FileWatch` namespace on Windows so cross-platform imports keep working, but the methods don't do real work: `watch(path)` / `unwatch(path)` reject with `LuneError("UNAVAILABLE_ON_PLATFORM", …)`, and `on` / `once` / `off` are a one-time `console.warn` + no-op. Catch the rejection or guard with `runtime.System.environment().os`.
+The plugin is auto-filtered from the registry on Windows (Win32 needs `ReadDirectoryChangesW` plumbing — tracked in [ROADMAP.md](https://github.com/AristoRap/lune/blob/main/ROADMAP.md)). The runtime still exports a `FileWatch` namespace on Windows so cross-platform imports keep working, but the methods don't do real work: `watch(path)` / `unwatch(path)` reject with `LuneError("UNAVAILABLE_ON_PLATFORM", …)`, and `on` / `once` / `off` are a one-time `console.warn` + no-op. Catch the rejection or guard with `lune.System.environment().os`.
 
 ---
 

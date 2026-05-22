@@ -32,7 +32,7 @@ Optionally set a custom icon from JavaScript once the app has mounted:
 import { Tray } from "../lune.js";
 
 // Falls back to ● if not called
-await Tray.setIcon("/absolute/path/to/icon.png");
+await lune.Tray.setIcon("/absolute/path/to/icon.png");
 ```
 
 ---
@@ -96,20 +96,20 @@ end
 
 ## Context menu
 
-Set a context menu with `Tray.setMenu`. With no `toggle_window_on` set, both clicks open the menu (rule 3 above):
+Set a context menu with `lune.Tray.setMenu`. With no `toggle_window_on` set, both clicks open the menu (rule 3 above):
 
 ```js
 import { Tray, Events, System } from "../lune.js";
 
-Tray.setMenu([
+lune.Tray.setMenu([
   { id: "show", label: "Open Window" },
   { id: "---", label: "" },
   { id: "quit", label: "Quit" },
 ]);
 
-Events.on("trayEvent", (id) => {
-  if (id === "show") Window.show();
-  if (id === "quit") System.quit();
+lune.Events.on("trayEvent", (id) => {
+  if (id === "show") lune.Window.show();
+  if (id === "quit") lune.System.quit();
 });
 ```
 
@@ -121,7 +121,7 @@ If you want left-click to toggle the window and right-click to show the menu, ad
 
 ## Programmatic menu popup
 
-Need to open the menu from your own click handler, a keyboard shortcut, or anywhere else? `Tray.popupMenu()` opens whatever menu was last set.
+Need to open the menu from your own click handler, a keyboard shortcut, or anywhere else? `lune.Tray.popupMenu()` opens whatever menu was last set.
 
 ```crystal
 opts.tray.on_click = -> {
@@ -135,7 +135,7 @@ opts.tray.on_click = -> {
 import { Tray } from "../lune.js";
 
 // e.g. from a global keyboard shortcut
-await Tray.popupMenu();
+await lune.Tray.popupMenu();
 ```
 
 If no menu has been set, it's a no-op.
@@ -149,8 +149,8 @@ When you're managing visibility yourself (custom `on_click`, menu items, etc.):
 ```js
 import { Window } from "../lune.js";
 
-await Window.show();
-await Window.hide();
+await lune.Window.show();
+await lune.Window.hide();
 ```
 
 ---

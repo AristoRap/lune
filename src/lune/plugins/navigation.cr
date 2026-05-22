@@ -40,7 +40,7 @@ module Lune
       # would fire on_navigate twice.
       def init_js : String?
         return nil unless @on_navigate
-        changed_key = "#{binding_namespace}.changed"
+        changed_key = "#{binding_namespace.gsub("::", ".")}.changed"
         <<-JS
         (function(){
           var _last;

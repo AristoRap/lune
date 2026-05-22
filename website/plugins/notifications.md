@@ -2,23 +2,26 @@
 
 > Send native OS desktop notifications.
 
-|                  |                          |
-| ---------------- | ------------------------ |
-| **Config key**   | `notifications`          |
-| **JS namespace** | `Notifications`          |
-| **Core**         | No                       |
-| **Phases**       | Bindable                 |
-| **Hard deps**    | —                        |
-| **Platforms**    | macOS · Linux · Windows  |
+|                  |                         |
+| ---------------- | ----------------------- |
+| **Config key**   | `notifications`         |
+| **JS namespace** | `Notifications`         |
+| **Core**         | No                      |
+| **Phases**       | Bindable                |
+| **Hard deps**    | —                       |
+| **Platforms**    | macOS · Linux · Windows |
 
 ---
 
 ## JavaScript API
 
 ```js
-import { Notifications } from "../lunejs/runtime/runtime.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
-await Notifications.notify("Build complete", "Your app compiled successfully.");
+await lune.Notifications.notify(
+  "Build complete",
+  "Your app compiled successfully.",
+);
 ```
 
 | Method   | Signature             | Returns         |

@@ -12,10 +12,6 @@ module Lune
         DESCRIPTOR
       end
 
-      def binding_namespace : String
-        "FileWatch"
-      end
-
       @watcher = Lune::Native::FileWatch.new
       @debounce = 50.milliseconds
       @last_fired = {} of String => Time::Instant
@@ -75,33 +71,26 @@ module Lune
       # in the live API, so throwing here would crash app init for code that
       # wires subscriptions up front.
       def unavailable_js_stub(platform : Symbol) : String?
-        ns = binding_namespace
+        ns = binding_namespace.gsub("::", ".")
         msg = ->(m : String) { "#{ns}.#{m} is not available on #{platform}" }
         <<-JS
-        export const #{ns} = (function(){
-          var _warned = false;
-          var _warn = function(m) { if (!_warned) { _warned = true; console.warn(m + " — subscription will not fire."); } };
-          return {
-            watch(path)   { return Promise.reject(new LuneError("UNAVAILABLE_ON_PLATFORM", #{msg.call("watch").inspect})); },
-            unwatch(path) { return Promise.reject(new LuneError("UNAVAILABLE_ON_PLATFORM", #{msg.call("unwatch").inspect})); },
-            on(cb)        { _warn(#{msg.call("on").inspect}); },
-            once(cb)      { _warn(#{msg.call("once").inspect}); },
-            off(cb)       { },
-          };
-        })();
+          _warned: false,
+          _warn(m) { if (!this._warned) { this._warned = true; console.warn(m + " — subscription will not fire."); } },
+          watch(path)   { return Promise.reject(new LuneError("UNAVAILABLE_ON_PLATFORM", #{msg.call("watch").inspect})); },
+          unwatch(path) { return Promise.reject(new LuneError("UNAVAILABLE_ON_PLATFORM", #{msg.call("unwatch").inspect})); },
+          on(cb)        { this._warn(#{msg.call("on").inspect}); },
+          once(cb)      { this._warn(#{msg.call("once").inspect}); },
+          off(cb)       { },
         JS
       end
 
       def unavailable_dts_stub : String?
-        ns = binding_namespace
         <<-DTS
-        export interface #{ns} {
           watch(path: string): Promise<void>;
           unwatch(path: string): Promise<void>;
           on(cb: (event: { path: string; kind: "modified" | "created" | "deleted" | "renamed" }) => void): void;
           once(cb: (event: { path: string; kind: "modified" | "created" | "deleted" | "renamed" }) => void): void;
           off(cb?: (event: { path: string; kind: "modified" | "created" | "deleted" | "renamed" }) => void): void;
-        }
         DTS
       end
     end

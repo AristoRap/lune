@@ -1,7 +1,8 @@
 <script setup>
 import { ref, onUnmounted } from "vue";
 import SectionHead from "../components/SectionHead.vue";
-import { Hotkeys, Events } from "../lune.js";
+import { lune } from "../lune.js";
+const { Hotkeys, Events } = lune;
 
 const keyInput = ref("");
 const registered = ref([]);

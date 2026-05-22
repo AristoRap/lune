@@ -1,7 +1,8 @@
 <script setup>
 import { ref, onUnmounted } from "vue";
 import SectionHead from "../components/SectionHead.vue";
-import { Sqlite } from "../lune.js";
+import { lune } from "../lune.js";
+const { Sqlite } = lune;
 
 // ---- state ----
 const db = ref(null);

@@ -55,7 +55,8 @@ describe Lune::Generator do
   it "exports Events namespace with on, once, off helpers" do
     js = Lune::Generator.generate_runtime_js([] of Lune::Binding, events_caps)
 
-    js.includes?("export const Events").should be_true
+    js.includes?("export const Lune").should be_true
+    js.includes?("Events:").should be_true
     js.includes?("on(name, cb)").should be_true
     js.includes?("once(name, cb)").should be_true
     js.includes?("off(name, cb)").should be_true
@@ -72,7 +73,7 @@ describe Lune::Generator do
     js = Lune::Generator.generate_runtime_js(app.bindings.select(&.internal?), events_caps)
 
     js.includes?("emit(name, data)").should be_true
-    js.includes?(%("Events.emit")).should be_true
+    js.includes?(%("Lune.Plugins.Events.emit")).should be_true
   end
 
   it "declares emit in runtime.d.ts" do
@@ -87,24 +88,26 @@ describe Lune::Generator do
   it "exports System namespace with quit, openUrl, environment" do
     js = Lune::Generator.generate_runtime_js(runtime_bindings)
 
-    js.includes?("export const System").should be_true
+    js.includes?("export const Lune").should be_true
+    js.includes?("System:").should be_true
     js.includes?("quit()").should be_true
     js.includes?("openUrl(").should be_true
     js.includes?("environment()").should be_true
-    js.includes?("System.quit").should be_true
-    js.includes?("System.open_url").should be_true
-    js.includes?("System.environment").should be_true
+    js.includes?("Lune.Plugins.System.quit").should be_true
+    js.includes?("Lune.Plugins.System.open_url").should be_true
+    js.includes?("Lune.Plugins.System.environment").should be_true
   end
 
   it "generates runtime.d.ts with typed namespace interfaces" do
     dts = Lune::Generator.generate_runtime_dts(runtime_bindings, events_caps)
 
     dts.includes?("LuneEnvironment").should be_true
-    dts.includes?("export interface System").should be_true
+    dts.includes?("export declare const Lune").should be_true
+    dts.includes?("System: {").should be_true
+    dts.includes?("Events: {").should be_true
     dts.includes?("quit()").should be_true
     dts.includes?("openUrl(").should be_true
     dts.includes?("environment()").should be_true
-    dts.includes?("export interface Events").should be_true
     dts.includes?("on(name: string").should be_true
     dts.includes?("once(name: string").should be_true
     dts.includes?("off(name: string").should be_true
@@ -114,7 +117,8 @@ describe Lune::Generator do
     bindings, caps = drag_out_setup
     js = Lune::Generator.generate_runtime_js(bindings, caps)
 
-    js.includes?("export const DragOut").should be_true
+    js.includes?("export const Lune").should be_true
+    js.includes?("DragOut:").should be_true
     js.includes?("start(paths)").should be_true
     js.includes?("JSON.stringify(paths || [])").should be_true
     js.scan(/start\(paths\)/).size.should eq(1)
@@ -124,7 +128,7 @@ describe Lune::Generator do
     bindings, caps = drag_out_setup
     dts = Lune::Generator.generate_runtime_dts(bindings, caps)
 
-    dts.includes?("export interface DragOut").should be_true
+    dts.includes?("DragOut: {").should be_true
     dts.includes?("start(paths: string[])").should be_true
     dts.scan(/start\(paths: string\[\]\)/).size.should eq(1)
   end
@@ -137,11 +141,10 @@ describe Lune::Generator do
         [Lune::Plugins::DragOut.new] of Lune::Plugin,
       )
 
-      js.includes?("export const DragOut").should be_true
-      js.includes?("Promise.reject(new LuneError(\"UNAVAILABLE_ON_PLATFORM\"").should be_true
-      js.includes?("DragOut.start is not available on").should be_true
-      # The stub namespace shows up in the runtime object literal too.
+      js.includes?("export const Lune").should be_true
       js.includes?("DragOut").should be_true
+      js.includes?("Promise.reject(new LuneError(\"UNAVAILABLE_ON_PLATFORM\"").should be_true
+      js.includes?("Lune.Plugins.DragOut.start is not available on").should be_true
     end
 
     it "emits a same-shape d.ts interface for a filtered-out plugin" do
@@ -151,9 +154,8 @@ describe Lune::Generator do
         [Lune::Plugins::DragOut.new] of Lune::Plugin,
       )
 
-      dts.includes?("export interface DragOut").should be_true
+      dts.includes?("DragOut: {").should be_true
       dts.includes?("start(paths: string[]): Promise<void>").should be_true
-      dts.includes?("DragOut: DragOut").should be_true
     end
 
     it "does not duplicate a namespace when both live and unavailable lists name it" do
@@ -165,11 +167,11 @@ describe Lune::Generator do
         caps,
         [Lune::Plugins::DragOut.new] of Lune::Plugin,
       )
-      js.scan(/export const DragOut = \{/).size.should eq(1)
+      js.scan(/DragOut: \{/).size.should eq(1)
     end
   end
 
-  it "generates App.d.ts with namespace interfaces and camelcased binding names" do
+  it "generates App.d.ts with type literal namespaces and camelcased binding names" do
     bindings = [
       Lune::Binding.new(
         namespace: "alpha",
@@ -193,14 +195,10 @@ describe Lune::Generator do
 
     dts = Lune::Generator.generate_app_dts(bindings)
 
-    dts.includes?("export interface alpha").should be_true
-    dts.includes?("export interface counter").should be_true
+    dts.includes?("export declare const alpha").should be_true
+    dts.includes?("export declare const counter").should be_true
     dts.includes?("greet(").should be_true
     dts.includes?("inc(").should be_true
-    dts.includes?("export interface Api").should be_true
-    dts.includes?("alpha: alpha;").should be_true
-    dts.includes?("counter: counter;").should be_true
-    dts.includes?("export declare const api: Api;").should be_true
   end
 
   it "maps JSON::Serializable struct args to Record<string, any> in App.d.ts" do
@@ -301,17 +299,15 @@ describe Lune::Generator do
 
     js = Lune::Generator.generate_app_js(bindings)
 
-    js.includes?("export const api").should be_true
-    js.includes?("export default api").should be_true
     js.includes?("export const alpha = {").should be_true
     js.includes?("export const counter = {").should be_true
   end
 
-  it "generates app API code even with no bindings" do
+  it "generates app code even with no bindings" do
     js = Lune::Generator.generate_app_js([] of Lune::Binding)
 
-    js.includes?("export const api").should be_true
-    js.includes?("export default api").should be_true
+    js.includes?("Generated by Lune").should be_true
+    js.includes?("import { __lune }").should be_true
   end
 
   it "writes split app/runtime files to default location" do

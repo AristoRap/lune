@@ -11,7 +11,7 @@
 | **Hard deps**    | —                    |
 | **Platforms**    | all                  |
 
-SQLite gives your app a local, embedded database backed by [crystal-lang/crystal-sqlite3](https://github.com/crystal-lang/crystal-sqlite3). Open as many databases as you need — each call to `Sqlite.open` returns an opaque handle you pass to subsequent operations. Use `:memory:` for an in-process database that lives only for the session, or an absolute path for a persistent file.
+SQLite gives your app a local, embedded database backed by [crystal-lang/crystal-sqlite3](https://github.com/crystal-lang/crystal-sqlite3). Open as many databases as you need — each call to `lune.Sqlite.open` returns an opaque handle you pass to subsequent operations. Use `:memory:` for an in-process database that lives only for the session, or an absolute path for a persistent file.
 
 ---
 
@@ -30,34 +30,34 @@ Or omit `plugins:` entirely — SQLite is active by default.
 ## Opening and closing a database
 
 ```js
-import { Sqlite } from "../lunejs/runtime/runtime.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
 // In-memory: cleared when closed
-const db = await Sqlite.open(":memory:");
+const db = await lune.Sqlite.open(":memory:");
 
 // Persistent file
-const db = await Sqlite.open(
+const db = await lune.Sqlite.open(
   "/Users/alice/Library/Application Support/myapp/data.db",
 );
 
 // Always close when done
-await Sqlite.close(db);
+await lune.Sqlite.close(db);
 ```
 
 ---
 
 ## Executing statements
 
-`Sqlite.exec` runs any statement that does not return rows — `CREATE`, `INSERT`, `UPDATE`, `DELETE`, `DROP`, etc. It returns `{ changes, lastInsertId }`.
+`lune.Sqlite.exec` runs any statement that does not return rows — `CREATE`, `INSERT`, `UPDATE`, `DELETE`, `DROP`, etc. It returns `{ changes, lastInsertId }`.
 
 ```js
-await Sqlite.exec(
+await lune.Sqlite.exec(
   db,
   "CREATE TABLE notes (id INTEGER PRIMARY KEY, body TEXT)",
   [],
 );
 
-const { changes, lastInsertId } = await Sqlite.exec(
+const { changes, lastInsertId } = await lune.Sqlite.exec(
   db,
   "INSERT INTO notes (body) VALUES (?)",
   ["Hello, Lune!"],
@@ -71,10 +71,10 @@ Pass an empty array `[]` for statements with no parameters.
 
 ## Querying rows
 
-`Sqlite.query` returns an array of plain objects, one per row, keyed by column name.
+`lune.Sqlite.query` returns an array of plain objects, one per row, keyed by column name.
 
 ```js
-const rows = await Sqlite.query(
+const rows = await lune.Sqlite.query(
   db,
   "SELECT id, body FROM notes ORDER BY id",
   [],
@@ -82,7 +82,7 @@ const rows = await Sqlite.query(
 // [{ id: 1, body: "Hello, Lune!" }]
 
 // Parameterised query
-const filtered = await Sqlite.query(
+const filtered = await lune.Sqlite.query(
   db,
   "SELECT * FROM notes WHERE body LIKE ?",
   ["%Lune%"],
@@ -97,10 +97,10 @@ All four SQLite placeholder styles are supported (`?`, `?N`, `@name`, `:name`, `
 
 ```js
 // Positional
-await Sqlite.exec(db, "INSERT INTO t VALUES (?, ?)", [42, "hello"]);
+await lune.Sqlite.exec(db, "INSERT INTO t VALUES (?, ?)", [42, "hello"]);
 
 // Named (pass an array of values in bind order)
-await Sqlite.exec(db, "INSERT INTO t VALUES (:n, :s)", [42, "hello"]);
+await lune.Sqlite.exec(db, "INSERT INTO t VALUES (:n, :s)", [42, "hello"]);
 ```
 
 ---
@@ -122,10 +122,10 @@ await Sqlite.exec(db, "INSERT INTO t VALUES (:n, :s)", [42, "hello"]);
 Both `exec` and `query` reject with a `LuneError` on failure:
 
 ```js
-import { LuneError, Sqlite } from "../lunejs/runtime/runtime.js";
+import { LuneError, lune } from "../lunejs/runtime/runtime.js";
 
 try {
-  await Sqlite.exec(db, "NOT VALID SQL", []);
+  await lune.Sqlite.exec(db, "NOT VALID SQL", []);
 } catch (err) {
   if (err instanceof LuneError) {
     console.error(err.code, err.message); // "sqlite_error" + driver message

@@ -43,7 +43,7 @@ module Lune
       def init_js : String?
         return nil if @css_var.empty?
         {% if flag?(:darwin) %}
-          start_key = "#{binding_namespace}.start"
+          start_key = "#{binding_namespace.gsub("::", ".")}.start"
           <<-JS
           (function(){
             document.addEventListener('mousedown', function(e) {

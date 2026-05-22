@@ -17,14 +17,14 @@ Soft-depends on `events` — hotkey events are delivered via the event bus. If `
 ## Registering shortcuts
 
 ```js
-import { Hotkeys, Events } from "./runtime.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
 // Register on page load
-await Hotkeys.register("Ctrl+Shift+K");
-await Hotkeys.register("Ctrl+Shift+P");
+await lune.Hotkeys.register("Ctrl+Shift+K");
+await lune.Hotkeys.register("Ctrl+Shift+P");
 
 // Unregister when no longer needed
-await Hotkeys.unregister("Ctrl+Shift+K");
+await lune.Hotkeys.unregister("Ctrl+Shift+K");
 ```
 
 Shortcuts are released automatically when the app quits. You do not need to unregister them manually on exit.
@@ -34,7 +34,7 @@ Shortcuts are released automatically when the app quits. You do not need to unre
 Hotkey events arrive via the event bus under the `"hotkey"` event name. `data.key` is the accelerator string exactly as registered:
 
 ```js
-Events.on("hotkey", (data) => {
+lune.Events.on("hotkey", (data) => {
   switch (data.key) {
     case "Ctrl+Shift+K":
       openSearch();
@@ -46,10 +46,10 @@ Events.on("hotkey", (data) => {
 });
 ```
 
-Or use the `Hotkeys.on` convenience wrapper (identical to `Events.on("hotkey", ...)`):
+Or use the `lune.Hotkeys.on` convenience wrapper (identical to `lune.Events.on("hotkey", ...)`):
 
 ```js
-Hotkeys.on((data) => {
+lune.Hotkeys.on((data) => {
   console.log("pressed:", data.key);
 });
 ```
@@ -68,22 +68,22 @@ Accelerators are `+`-separated modifier and key names, case-insensitive:
 Key names: `A`–`Z`, `0`–`9`, `F1`–`F12`, `Space`, `Return`, `Enter`, `Tab`, `Backspace`, `Delete`, `Escape`, `Left`, `Right`, `Up`, `Down`, `Home`, `End`, `PageUp`, `PageDown`, `Minus`, `Equal`, and common punctuation (`[`, `]`, `;`, `'`, `` ` ``, `,`, `.`, `/`, `\`).
 
 ```js
-await Hotkeys.register("Ctrl+K"); // single modifier
-await Hotkeys.register("Cmd+Shift+P"); // macOS
-await Hotkeys.register("Ctrl+Shift+F5"); // modifier + function key
-await Hotkeys.register("Alt+Left"); // modifier + arrow
+await lune.Hotkeys.register("Ctrl+K"); // single modifier
+await lune.Hotkeys.register("Cmd+Shift+P"); // macOS
+await lune.Hotkeys.register("Ctrl+Shift+F5"); // modifier + function key
+await lune.Hotkeys.register("Alt+Left"); // modifier + arrow
 ```
 
 ## Full example
 
 ```js
-import { Hotkeys, Events } from "./runtime.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
 async function setupHotkeys() {
-  await Hotkeys.register("Ctrl+Shift+K");
-  await Hotkeys.register("Ctrl+Shift+N");
+  await lune.Hotkeys.register("Ctrl+Shift+K");
+  await lune.Hotkeys.register("Ctrl+Shift+N");
 
-  Hotkeys.on((data) => {
+  lune.Hotkeys.on((data) => {
     if (data.key === "Ctrl+Shift+K") toggleSearch();
     if (data.key === "Ctrl+Shift+N") createNew();
   });

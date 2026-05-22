@@ -23,7 +23,7 @@ describe Lune::Plugins::FileWatch do
     end
 
     it "has FileWatch binding namespace" do
-      Lune::Plugins::FileWatch.new.binding_namespace.should eq("FileWatch")
+      Lune::Plugins::FileWatch.new.binding_namespace.should eq("Lune::Plugins::FileWatch")
     end
   end
 
@@ -47,8 +47,8 @@ describe Lune::Plugins::FileWatch do
       app = Lune::App.new
       app.install(cap)
       ids = app.bindings.map(&.id)
-      ids.should contain("FileWatch.watch")
-      ids.should contain("FileWatch.unwatch")
+      ids.should contain("Lune.Plugins.FileWatch.watch")
+      ids.should contain("Lune.Plugins.FileWatch.unwatch")
     end
   end
 

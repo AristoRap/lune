@@ -1,6 +1,7 @@
 <script setup>
 import SectionHead from "../components/SectionHead.vue";
-import { DragOut } from "../lune.js";
+import { lune } from "../lune.js";
+const { DragOut } = lune;
 
 const files = [
   { label: "/etc/hosts", path: "/etc/hosts" },

@@ -18,14 +18,14 @@ The Window plugin exposes runtime window controls to JavaScript — minimize, ma
 ## JavaScript API
 
 ```js
-import { Window } from "../lunejs/runtime/runtime.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
-await Window.minimize();
-await Window.maximize();
-await Window.center();
+await lune.Window.minimize();
+await lune.Window.maximize();
+await lune.Window.center();
 
-await Window.setTitle("My App — Unsaved");
-await Window.setSize(1440, 900);
+await lune.Window.setTitle("My App — Unsaved");
+await lune.Window.setSize(1440, 900);
 ```
 
 | Method     | Signature                | Returns         |

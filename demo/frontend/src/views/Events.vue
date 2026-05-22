@@ -1,7 +1,8 @@
 <script setup>
 import { nextTick, ref, useTemplateRef } from "vue";
 import SectionHead from "../components/SectionHead.vue";
-import { api, Dialogs, Events } from "../lune.js";
+import { api, lune } from "../lune.js";
+const { Dialogs, Events } = lune;
 import { useLuneEvent } from "../composables/useLuneEvent.js";
 
 const clock = ref("—");

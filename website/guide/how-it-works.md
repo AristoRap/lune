@@ -66,7 +66,7 @@ Lune writes four files into `frontend/lunejs/`:
 
 - `app/App.js` — one stub function per user binding, grouped by namespace
 - `app/App.d.ts` — TypeScript declarations with exact types derived from Crystal signatures
-- `runtime/runtime.js` — built-in functions (`System.quit`, `System.openUrl`, `Events.on`, `Events.emit`, …)
+- `runtime/runtime.js` — built-in functions (`lune.System.quit`, `lune.System.openUrl`, `lune.Events.on`, `lune.Events.emit`, …)
 - `runtime/runtime.d.ts` — TypeScript declarations for runtime functions
 
 This happens automatically on `lune dev` startup and during `lune build` (before Vite runs).
@@ -136,11 +136,11 @@ On Unix, this means the main thread is permanently occupied by Cocoa/GTK once `w
 | -------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `webview`            | Windows always                              | Drives the WebView2 event loop, freeing the main thread for the Crystal scheduler                                                                                                                                                                                                                        |
 | `lune-sigchld-pump`  | macOS + Linux always                        | Polls `SignalChildHandler` every 10 ms so `Process.run`/`Shell.spawn` don't hang while the main thread is in Cocoa/GTK                                                                                                                                                                                   |
-| `lune-hotkeys`       | Hotkeys plugin active                   | macOS Carbon `RegisterEventHotKey`, Linux X11 `XGrabKey`, Windows `RegisterHotKey` + `WM_HOTKEY` pump                                                                                                                                                                                                    |
-| `lune-tray`          | Tray plugin active on Windows           | Owns a message-only HWND, drains `WM_APP+1` notifications from `Shell_NotifyIconW`, and runs the menu op queue (macOS / Linux drive the tray on the existing AppKit / GTK main loop, no extra thread)                                                                                                    |
-| `lune-file-watch`    | FileWatch on macOS + Linux                  | macOS kqueue / Linux inotify event loop (not spawned on Windows — plugin is platform-filtered there)                                                                                                                                                                                                 |
-| `lune-deep-link-ipc` | DeepLink plugin on Linux                | Unix-socket accept loop for warm-start URL forwarding                                                                                                                                                                                                                                                    |
-| `lune-stream`        | Stream plugin on macOS / Linux          | 2-thread `Parallel` pool that owns the WebSocket server's `bind` + `listen`. On Win32, Stream instead spawns the bind+listen pair via `::spawn` on the default context to keep accept completions on the right IOCP — no dedicated thread.                                                               |
+| `lune-hotkeys`       | Hotkeys plugin active                       | macOS Carbon `RegisterEventHotKey`, Linux X11 `XGrabKey`, Windows `RegisterHotKey` + `WM_HOTKEY` pump                                                                                                                                                                                                    |
+| `lune-tray`          | Tray plugin active on Windows               | Owns a message-only HWND, drains `WM_APP+1` notifications from `Shell_NotifyIconW`, and runs the menu op queue (macOS / Linux drive the tray on the existing AppKit / GTK main loop, no extra thread)                                                                                                    |
+| `lune-file-watch`    | FileWatch on macOS + Linux                  | macOS kqueue / Linux inotify event loop (not spawned on Windows — plugin is platform-filtered there)                                                                                                                                                                                                     |
+| `lune-deep-link-ipc` | DeepLink plugin on Linux                    | Unix-socket accept loop for warm-start URL forwarding                                                                                                                                                                                                                                                    |
+| `lune-stream`        | Stream plugin on macOS / Linux              | 2-thread `Parallel` pool that owns the WebSocket server's `bind` + `listen`. On Win32, Stream instead spawns the bind+listen pair via `::spawn` on the default context to keep accept completions on the right IOCP — no dedicated thread.                                                               |
 | `lune-assets`        | Embedded-asset HTTP server on macOS / Linux | Isolated accept loop on top of a 2-thread `lune-assets-pool` `Parallel` pool for per-connection request handling. On Win32, Assets::Server spawns bind+listen via `::spawn` on the default context (same IOCP-affinity reason as Stream — separating the two contexts parks accept completions forever). |
 
 ### Rules of thumb
@@ -201,7 +201,7 @@ When using `Lune.run` with `assets:`, the macro internally creates a `Runner` an
 
 ## Event system
 
-The event bus is bidirectional. Crystal pushes to JS via `app.events.emit`; JS pushes to Crystal via `Events.emit` from `runtime.js`. Both sides share the same event name namespace and use symmetric `on`, `once`, `off` APIs.
+The event bus is bidirectional. Crystal pushes to JS via `app.events.emit`; JS pushes to Crystal via `lune.Events.emit` from `runtime.js`. Both sides share the same event name namespace and use symmetric `on`, `once`, `off` APIs.
 
 ```crystal
 # Crystal → JS
@@ -221,10 +221,10 @@ end
 
 ```js
 // JS → Crystal
-import { Events } from "../lunejs/runtime/runtime.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
-Events.on("results", (data) => renderResults(data));
-await Events.emit("search", { query: input.value });
+lune.Events.on("results", (data) => renderResults(data));
+await lune.Events.emit("search", { query: input.value });
 ```
 
-Under the hood, `app.events.emit` calls `window.__lune.crystalEmit` (Crystal→JS); `Events.emit` calls the `__lune.jsEmit` WebView binding (JS→Crystal). See the [Events](./events) guide for the full API.
+Under the hood, `app.events.emit` calls `window.__lune.crystalEmit` (Crystal→JS); `lune.Events.emit` calls the `__lune.jsEmit` WebView binding (JS→Crystal). See the [Events](./events) guide for the full API.

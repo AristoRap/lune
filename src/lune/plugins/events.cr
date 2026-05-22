@@ -9,11 +9,7 @@ module Lune
         DESCRIPTOR
       end
 
-      def binding_namespace : String
-        "Events"
-      end
-
-      # JS-→-Crystal event dispatch. Generated stub on `runtime.Events.emit`
+      # JS-→-Crystal event dispatch. Generated stub on `runtime.Lune.Plugins.Events.emit`
       # routes directly here; no hand-binding, no helper layer.
       @[Lune::Bind]
       @[Lune::BindOverride(arg_names: ["name", "data"], ts_args: ["string", "unknown"] of String?, ts_return_type: "Promise<void>")]

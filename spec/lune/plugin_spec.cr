@@ -124,7 +124,7 @@ describe Lune::Plugin do
       app = Lune::App.new
       app.install(sys)
 
-      binding = app.bindings.find { |b| b.id == "System.environment" }
+      binding = app.bindings.find { |b| b.id == "Lune.Plugins.System.environment" }
       binding.should_not be_nil
       result = binding.not_nil!.callback.call([] of JSON::Any)
       result["devtools"].as_bool.should be_true
@@ -236,7 +236,7 @@ describe Lune::Plugins::Registry do
     it "installs BindPhase plugins into the target app" do
       app = Lune::App.new
       make_registry.validate_resolve_install(config_enabled("clipboard"), app)
-      app.bindings.map(&.id).any?(&.starts_with?("Clipboard.")).should be_true
+      app.bindings.map(&.id).any?(&.starts_with?("Lune.Plugins.Clipboard.")).should be_true
     end
 
     it "skips plugins that are not BindPhase" do

@@ -33,22 +33,22 @@ Or omit `plugins:` entirely to enable everything.
 ## JavaScript API
 
 ```js
-import { ContextMenu } from "../lunejs/runtime/runtime.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
 // Set the items that appear on right-click
-ContextMenu.set([
+lune.ContextMenu.set([
   { id: "copy", label: "Copy" },
   { id: "paste", label: "Paste" },
   { id: "delete", label: "Delete" },
 ]);
 
 // Listen for a selection
-ContextMenu.onSelect((id) => {
+lune.ContextMenu.onSelect((id) => {
   console.log("Selected:", id);
 });
 
 // Remove the menu
-ContextMenu.clear();
+lune.ContextMenu.clear();
 ```
 
 | Method     | Signature      | Description                                  |
@@ -70,7 +70,7 @@ interface ContextMenuItem {
 
 ## Notes
 
-- `ContextMenu.set` and `ContextMenu.clear` are synchronous — they update a JS-side registry that intercepts the `contextmenu` DOM event.
+- `lune.ContextMenu.set` and `lune.ContextMenu.clear` are synchronous — they update a JS-side registry that intercepts the `contextmenu` DOM event.
 - The native menu is shown by a Crystal binding call; the selected item ID is emitted back as a `context_menu` event on Events.
 - Only one context menu set is active at a time. Call `set` again to update the items.
 - To show different menus on different elements, call `set` in a `contextmenu` event listener on the target before it propagates.

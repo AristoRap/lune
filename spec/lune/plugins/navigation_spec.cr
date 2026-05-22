@@ -74,7 +74,7 @@ describe Lune::Plugins::Navigation do
     end
 
     it "calls back through the Navigation.changed binding" do
-      nav_with_callback.init_js.not_nil!.should contain("\"Navigation.changed\"")
+      nav_with_callback.init_js.not_nil!.should contain("\"Lune.Plugins.Navigation.changed\"")
     end
 
     it "dedupes back-to-back fires for the same URL (vue-router hash mode triggers both pushState and hashchange per click)" do

@@ -16,9 +16,9 @@
 ## JavaScript API
 
 ```js
-import { Screen } from "../lunejs/runtime/runtime.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
-const { width, height, scale } = await Screen.info();
+const { width, height, scale } = await lune.Screen.info();
 console.log(`${width}×${height} @ ${scale}x`);
 ```
 

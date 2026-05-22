@@ -1,7 +1,8 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import SectionHead from "../components/SectionHead.vue";
-import { Windows, Events } from "../lune.js";
+import { lune } from "../lune.js";
+const { Windows, Events } = lune;
 
 const openWindows = ref([]);
 const log = ref([]);

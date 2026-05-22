@@ -326,26 +326,26 @@ end
 
 ---
 
-### JS helpers — `FileDrop.on` / `FileDrop.off`
+### JS helpers — `lune.FileDrop.on` / `lune.FileDrop.off`
 
 Convenience wrappers around the event bus for subscribing to file drops from the frontend.
 
 ```js
-import { FileDrop } from "../lunejs/runtime/runtime.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
-FileDrop.on((x, y, paths) => {
+lune.FileDrop.on((x, y, paths) => {
   console.log("Dropped at", x, y, paths);
 });
 
 // later — unsubscribe
-FileDrop.off();
+lune.FileDrop.off();
 ```
 
 TypeScript signature:
 
 ```ts
-FileDrop.on(cb: (x: number, y: number, paths: string[]) => void): void;
-FileDrop.off(): void;
+lune.FileDrop.on(cb: (x: number, y: number, paths: string[]) => void): void;
+lune.FileDrop.off(): void;
 ```
 
 ---
@@ -379,9 +379,9 @@ end
 ```
 
 ```js
-import { FileDrop } from "../lunejs/runtime/runtime.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
-FileDrop.on((x, y, paths) => {
+lune.FileDrop.on((x, y, paths) => {
   paths.forEach((p) => console.log("File:", p));
 });
 ```
@@ -395,9 +395,9 @@ Tray events are emitted automatically on the event bus — no `opts.tray` block 
 By default the event name is `"trayEvent"`. Both tray icon clicks (`"click"`) and menu item selections (item `id`) are emitted under the same event name.
 
 ```js
-import { Events } from "../lunejs/runtime/runtime.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
-Events.on("trayEvent", (payload) => {
+lune.Events.on("trayEvent", (payload) => {
   if (payload === "click") console.log("icon clicked");
   else console.log("menu item:", payload);
 });

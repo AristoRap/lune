@@ -20,20 +20,20 @@ All methods return a `Promise` and block until the user dismisses the dialog.
 ### File pickers
 
 ```js
-import { Dialogs } from "../lunejs/runtime/runtime.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
 // Single file
-const path = await Dialogs.openFile("Select a config file");
+const path = await lune.Dialogs.openFile("Select a config file");
 if (path) loadConfig(path);
 
 // Directory
-const dir = await Dialogs.openDir("Choose output folder");
+const dir = await lune.Dialogs.openDir("Choose output folder");
 
 // Multiple files
-const paths = await Dialogs.openFiles("Select images");
+const paths = await lune.Dialogs.openFiles("Select images");
 
 // Save dialog
-const dest = await Dialogs.saveFile("Save as", "output.csv");
+const dest = await lune.Dialogs.saveFile("Save as", "output.csv");
 ```
 
 File pickers return an empty string (or empty array for `openFiles`) when the user cancels.
@@ -41,18 +41,24 @@ File pickers return an empty string (or empty array for `openFiles`) when the us
 ### Message dialogs
 
 ```js
-await Dialogs.messageInfo(
+await lune.Dialogs.messageInfo(
   "Update available",
   "Version 2.0 is ready to install.",
 );
-await Dialogs.messageWarning("Low disk space", "Less than 1 GB remaining.");
-await Dialogs.messageError(
+await lune.Dialogs.messageWarning(
+  "Low disk space",
+  "Less than 1 GB remaining.",
+);
+await lune.Dialogs.messageError(
   "Export failed",
   "Could not write to the destination.",
 );
 
 // Question — returns the label of the clicked button
-const answer = await Dialogs.messageQuestion("Confirm", "Delete all files?");
+const answer = await lune.Dialogs.messageQuestion(
+  "Confirm",
+  "Delete all files?",
+);
 if (answer === "OK") deleteAll();
 ```
 

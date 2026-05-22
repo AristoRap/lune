@@ -20,17 +20,17 @@ All methods return a `Promise`.
 ### Text
 
 ```js
-import { Clipboard } from "../lunejs/runtime/runtime.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
-const text = await Clipboard.read();
-await Clipboard.write("Hello from Lune");
+const text = await lune.Clipboard.read();
+await lune.Clipboard.write("Hello from Lune");
 ```
 
 ### HTML
 
 ```js
-const html = await Clipboard.readHtml();
-await Clipboard.writeHtml("<b>bold</b>");
+const html = await lune.Clipboard.readHtml();
+await lune.Clipboard.writeHtml("<b>bold</b>");
 ```
 
 ### Images
@@ -38,8 +38,8 @@ await Clipboard.writeHtml("<b>bold</b>");
 Images are exchanged as data URLs (`data:image/png;base64,...`):
 
 ```js
-const dataUrl = await Clipboard.readImage();
-await Clipboard.writeImage(dataUrl);
+const dataUrl = await lune.Clipboard.readImage();
+await lune.Clipboard.writeImage(dataUrl);
 ```
 
 ---
