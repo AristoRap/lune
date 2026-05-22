@@ -50,6 +50,32 @@
           @@image = data_url
         end
       end
+
+      module Clipboard
+        def self.read : String
+          ClipboardMock.record_read
+        end
+
+        def self.write(text : String) : Nil
+          ClipboardMock.record_write(text)
+        end
+
+        def self.read_html : String
+          ClipboardMock.record_read_html
+        end
+
+        def self.write_html(html : String) : Nil
+          ClipboardMock.record_write_html(html)
+        end
+
+        def self.read_image : String
+          ClipboardMock.record_read_image
+        end
+
+        def self.write_image(data_url : String) : Nil
+          ClipboardMock.record_write_image(data_url)
+        end
+      end
     end
   end
 {% end %}
