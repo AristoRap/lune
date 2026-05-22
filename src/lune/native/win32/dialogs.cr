@@ -83,6 +83,9 @@
       end
 
       module Dialogs
+        PATH_BUF_SIZE  =  4096
+        PATHS_BUF_SIZE = 65536
+
         # Null-terminated UTF-16 buffer for Win32 W-suffix APIs.
         private def self.to_wstr(s : String) : UInt16*
           arr = s.to_utf16

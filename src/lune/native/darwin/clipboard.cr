@@ -13,6 +13,9 @@
       end
 
       module Clipboard
+        HTML_BUF_SIZE  = 1 * 1024 * 1024  # 1 MB — generous for any HTML payload
+        IMAGE_BUF_SIZE = 10 * 1024 * 1024 # 10 MB — covers base64 of most clipboard images
+
         def self.read : String
           raise NotImplementedError.new("Lune::Native::Clipboard.read — use the capability's DEFAULT_READ on non-Windows platforms")
         end

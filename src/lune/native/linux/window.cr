@@ -28,6 +28,11 @@
       end
 
       module Window
+        # Pinned per window handle — Linux uses both drop + drag-position
+        # boxed callbacks; GtkStatusIcon close events aren't wired (yet).
+        @@drop_boxes = {} of Void* => Pointer(Void)
+        @@drop_pos_boxes = {} of Void* => Pointer(Void)
+
         def self.disable_webview_drop(handle : Void*)
           LibNativeWindow.disable_webview_drop(handle)
         end

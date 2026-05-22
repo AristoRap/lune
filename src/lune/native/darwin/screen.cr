@@ -10,12 +10,12 @@
       end
 
       module Screen
-        def self.info : ScreenInfo
+        def self.info : NamedTuple(width: Int32, height: Int32, scale: Float64)
           w = uninitialized LibC::Int
           h = uninitialized LibC::Int
           s = uninitialized LibC::Double
           LibNativeScreen.screen_info(pointerof(w), pointerof(h), pointerof(s))
-          ScreenInfo.new(w.to_i32, h.to_i32, s.to_f64)
+          {width: w.to_i32, height: h.to_i32, scale: s.to_f64}
         end
       end
     end

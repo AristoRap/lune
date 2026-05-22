@@ -14,6 +14,9 @@
       end
 
       module Dialogs
+        PATH_BUF_SIZE  =  4096
+        PATHS_BUF_SIZE = 65536
+
         def self.open_file(title : String) : String?
           buf = Bytes.new(PATH_BUF_SIZE)
           if LibNativeDialogs.open_file_dialog(title, buf.to_unsafe.as(LibC::Char*), PATH_BUF_SIZE) == 1

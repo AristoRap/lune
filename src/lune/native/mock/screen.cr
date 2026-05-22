@@ -22,14 +22,14 @@
           @@stub_scale = scale
         end
 
-        def self.record_info : ScreenInfo
+        def self.record_info : NamedTuple(width: Int32, height: Int32, scale: Float64)
           @@calls << :info
-          ScreenInfo.new(@@stub_width, @@stub_height, @@stub_scale)
+          {width: @@stub_width, height: @@stub_height, scale: @@stub_scale}
         end
       end
 
       module Screen
-        def self.info : ScreenInfo
+        def self.info : NamedTuple(width: Int32, height: Int32, scale: Float64)
           ScreenMock.record_info
         end
       end

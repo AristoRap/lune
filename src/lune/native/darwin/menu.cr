@@ -32,8 +32,7 @@
         end
 
         def self.set_from_options(opts : Options::Menu, app_name : String)
-          @@app_name = app_name
-          json = serialize(opts)
+          json = opts.to_json
           registry = collect_registry(opts.top_level)
           @@box = Box.box(registry)
           LibNativeMenu.lune_set_menu(

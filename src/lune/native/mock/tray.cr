@@ -84,7 +84,6 @@
         end
 
         def self.set_menu(items : Array({id: String, label: String}), on_menu_click : (String -> Nil)? = nil)
-          @@has_menu = items.any?
           TrayMock.record_set_menu(items, on_menu_click)
         end
       end

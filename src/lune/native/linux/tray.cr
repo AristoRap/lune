@@ -52,7 +52,6 @@
         def self.popup_menu : Nil; end
 
         def self.set_menu(items : Array({id: String, label: String}), on_menu_click : (String -> Nil)? = nil)
-          @@has_menu = items.any?
           ids = items.map { |i| i[:id].to_unsafe }
           labels = items.map { |i| i[:label].to_unsafe }
           if cb = on_menu_click

@@ -46,8 +46,7 @@
         end
 
         def self.set_from_options(opts : Options::Menu, app_name : String)
-          @@app_name = app_name
-          MenuMock.record_set_menu(app_name, serialize(opts))
+          MenuMock.record_set_menu(app_name, opts.to_json)
         end
 
         def self.show_context_menu(handle : Void*, x : Float32, y : Float32, items_json : String, &on_select : String -> Nil)

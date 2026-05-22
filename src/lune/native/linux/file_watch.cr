@@ -58,10 +58,11 @@
       end
 
       class FileWatch
+        @mu = Mutex.new
         @inotify_fd : Int32 = -1
         @watches = WatchMap.new
 
-        def start(app : Lune::App, debounce : Time::Span = 50.milliseconds) : Nil
+        def start(&on_event : String, String -> Nil) : Nil
           return if @mu.synchronize { @inotify_fd >= 0 }
           ifd = LibInotify.inotify_init
           if ifd < 0
@@ -73,10 +74,10 @@
           ifd_val = ifd
           mu = @mu
           watches = @watches
+          emit = on_event
 
           Fiber::ExecutionContext::Isolated.new("lune-file-watch") do
             buf = Bytes.new(4096)
-            last_fired = {} of String => Time::Instant
             loop do
               n = LibC.read(ifd_val, buf.to_unsafe.as(Void*), buf.size)
               break if n <= 0
@@ -101,7 +102,7 @@
                          else
                            "modified"
                          end
-                  maybe_emit(app, path, kind, debounce, last_fired)
+                  emit.call(path, kind)
                 end
                 offset += step
                 buf = buf[step..]

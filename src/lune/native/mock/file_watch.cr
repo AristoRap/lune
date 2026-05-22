@@ -2,7 +2,7 @@
   module Lune
     module Native
       class FileWatch
-        def start(app : Lune::App, debounce : Time::Span = 50.milliseconds) : Nil; end
+        def start(&on_event : String, String -> Nil) : Nil; end
 
         def add_watch(path : String) : Nil; end
 

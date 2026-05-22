@@ -396,14 +396,6 @@ describe "Lune::Capabilities" do
       Lune::Native::TrayMock.calls.should contain(:popup_menu)
     end
 
-    it "Native::Tray.has_menu? reflects the last set_menu call" do
-      Lune::Native::Tray.set_menu([{id: "a", label: "A"}, {id: "b", label: "B"}])
-      Lune::Native::Tray.has_menu?.should be_true
-
-      Lune::Native::Tray.set_menu([] of {id: String, label: String})
-      Lune::Native::Tray.has_menu?.should be_false
-    end
-
     it "user-provided on_click override skips default emission" do
       fake, bridge = make_bridge
       app = Lune::App.new

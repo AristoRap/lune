@@ -1,3 +1,4 @@
+require "json"
 require "uuid"
 
 module Lune
@@ -159,6 +160,53 @@ module Lune
 
       def any? : Bool
         !@top_level.empty?
+      end
+
+      # Serializes the menu tree into the JSON shape consumed by the native
+      # shims (macOS NSMenu builder, Win32 menu builder, mock test recorder).
+      # Output: an array of top-level item objects; each item carries `kind`,
+      # plus per-kind fields (`label`/`children` for submenus, `id`/`label`/
+      # `enabled`/`checked`/`key`/`modifiers` for clickable items).
+      def to_json : String
+        JSON.build do |json|
+          json.array do
+            @top_level.each { |item| Menu.serialize_item(json, item) }
+          end
+        end
+      end
+
+      protected def self.serialize_item(json : JSON::Builder, item : Item)
+        json.object do
+          kind_str = case item.kind
+                     when Item::Kind::RoleApp  then "role_app"
+                     when Item::Kind::RoleEdit then "role_edit"
+                     else                           item.kind.to_s.downcase
+                     end
+          json.field "kind", kind_str
+
+          case item.kind
+          when Item::Kind::Separator, Item::Kind::RoleApp, Item::Kind::RoleEdit
+            # no additional fields
+          when Item::Kind::Submenu
+            json.field "label", item.label
+            json.field "children" do
+              json.array { item.children.each { |c| serialize_item(json, c) } }
+            end
+          else
+            json.field "id", item.id
+            json.field "label", item.label
+            json.field "enabled", item.enabled
+            json.field "checked", item.checked
+            if sc = item.shortcut
+              parsed = Shortcut.parse(sc)
+              json.field "key", parsed.key
+              json.field "modifiers", parsed.modifiers
+            else
+              json.field "key", ""
+              json.field "modifiers", 0
+            end
+          end
+        end
       end
     end
   end

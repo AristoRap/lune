@@ -52,6 +52,11 @@
       end
 
       module Window
+        # Pinned per window handle so multiple windows can have live drop /
+        # close callbacks without overwriting each other's GC anchors.
+        @@drop_boxes = {} of Void* => Pointer(Void)
+        @@close_procs = {} of Void* => Proc(Nil)
+
         def self.disable_webview_drop(handle : Void*)
           LibNativeWindow.disable_webview_drop(handle)
         end

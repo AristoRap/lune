@@ -128,18 +128,6 @@ describe Lune::Native::Menu do
     end
   end
 
-  describe ".update" do
-    it "re-applies the menu using the stored app name" do
-      opts = Lune::Options::Menu.new
-      opts.app_menu
-      Lune::Native::Menu.set_from_options(opts, "MyApp")
-      Lune::Native::MenuMock.reset
-      Lune::Native::Menu.update(opts)
-      Lune::Native::MenuMock.calls.should contain(:set_menu)
-      Lune::Native::MenuMock.last_app_name.should eq("MyApp")
-    end
-  end
-
   describe ".show_context_menu" do
     it "records the call with coordinates and JSON" do
       Lune::Native::Menu.show_context_menu(Pointer(Void).null, 10.0_f32, 20.0_f32, "[{\"id\":\"cut\"}]") { }

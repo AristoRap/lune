@@ -24,6 +24,7 @@ module Lune
         @handle = Pointer(Void).null
         @width = 0
         @height = 0
+        @has_menu = false
       end
 
       def setup(ctx : SetupCtx) : Nil
@@ -53,13 +54,14 @@ module Lune
         event_name : String,
         payload : String,
         toggle_window : (-> Nil)? = nil,
+        has_menu : (-> Bool) = -> { false },
       ) : -> Nil
         return user_override.not_nil! if user_override
         toggle = toggle_window
         -> {
           if toggle
             toggle.call
-          elsif Lune::Native::Tray.has_menu?
+          elsif has_menu.call
             Lune::Native::Tray.popup_menu
           else
             events.emit(event_name, payload)
@@ -98,8 +100,9 @@ module Lune
 
       def install(ctx : BindCtx) : Nil
         event_name = @event_name
-        on_tray_click = Tray.build_click_default(@on_tray_click, ctx.app.events, event_name, "left_click", window_toggle_for(:left_click))
-        on_right_click = Tray.build_click_default(@on_right_click, ctx.app.events, event_name, "right_click", window_toggle_for(:right_click))
+        has_menu_check = -> { @has_menu }
+        on_tray_click = Tray.build_click_default(@on_tray_click, ctx.app.events, event_name, "left_click", window_toggle_for(:left_click), has_menu_check)
+        on_right_click = Tray.build_click_default(@on_right_click, ctx.app.events, event_name, "right_click", window_toggle_for(:right_click), has_menu_check)
 
         ctx.define("show",
           args: ["String"],
@@ -147,6 +150,7 @@ module Lune
             Lune.logger.warn { "Tray.set_menu: invalid menu JSON — #{ex.message}" }
             [] of {id: String, label: String}
           end
+          @has_menu = items.any?
           Lune::Native::Tray.set_menu(items, on_menu_click)
           JSON::Any.new(nil)
         end

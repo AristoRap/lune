@@ -29,9 +29,7 @@
         # App menu (setup_default / set_from_options) is not wired on Win32.
         def self.setup_default(app_name : String); end
 
-        def self.set_from_options(opts : Options::Menu, app_name : String)
-          @@app_name = app_name
-        end
+        def self.set_from_options(opts : Options::Menu, app_name : String); end
 
         # Parse the JSON shape used by Lune::Capabilities::ContextMenu —
         # an array of {id, label, enabled?} or {kind: "separator"}.

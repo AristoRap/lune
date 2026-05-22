@@ -9,10 +9,11 @@
       O_EVTONLY    =         0x8000
 
       class FileWatch
+        @mu = Mutex.new
         @kq : Int32 = -1
         @watch_fds = {} of String => Int32
 
-        def start(app : Lune::App, debounce : Time::Span = 50.milliseconds) : Nil
+        def start(&on_event : String, String -> Nil) : Nil
           return if @mu.synchronize { @kq >= 0 }
           kq = LibC.kqueue
           if kq < 0
@@ -24,10 +25,10 @@
           kq_val = kq
           mu = @mu
           watch_fds = @watch_fds
+          emit = on_event
 
           Fiber::ExecutionContext::Isolated.new("lune-file-watch") do
             events = StaticArray(LibC::Kevent, 32).new { LibC::Kevent.new }
-            last_fired = {} of String => Time::Instant
             loop do
               n = LibC.kevent(kq_val, Pointer(LibC::Kevent).null, 0, events.to_unsafe, 32, Pointer(LibC::Timespec).null)
               break if n < 0
@@ -44,7 +45,7 @@
                        else
                          "modified"
                        end
-                maybe_emit(app, path, kind, debounce, last_fired)
+                emit.call(path, kind)
               end
             end
           end

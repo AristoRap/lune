@@ -18,6 +18,7 @@ module Lune
 
       @watcher = Lune::Native::FileWatch.new
       @debounce = 50.milliseconds
+      @last_fired = {} of String => Time::Instant
 
       def setup(ctx : SetupCtx) : Nil
         @debounce = ctx.options.file_watch.debounce
@@ -25,7 +26,14 @@ module Lune
 
       def install(ctx : BindCtx) : Nil
         app = ctx.app
-        @watcher.start(app, @debounce)
+        debounce = @debounce
+        last_fired = @last_fired
+        @watcher.start do |path, kind|
+          now = Time.instant
+          next if (prev = last_fired[path]?) && (now - prev) < debounce
+          last_fired[path] = now
+          app.events.emit("file_watch", {"path" => path, "kind" => kind})
+        end
 
         watcher = @watcher
         ctx.define("watch",
