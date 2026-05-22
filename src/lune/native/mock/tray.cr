@@ -57,6 +57,37 @@
           @@mock_button_rect = r
         end
       end
+
+      module Tray
+        def self.show(icon_path : String = "", on_click : (-> Nil)? = nil)
+          TrayMock.record_show(icon_path, on_click)
+        end
+
+        def self.hide
+          TrayMock.record_hide
+        end
+
+        def self.set_icon(icon_path : String)
+          TrayMock.record_set_icon(icon_path)
+        end
+
+        def self.button_screen_rect : {Int32, Int32, Int32, Int32}?
+          TrayMock.mock_button_rect
+        end
+
+        def self.set_right_click_cb(cb : (-> Nil)?)
+          # no-op in tests
+        end
+
+        def self.popup_menu : Nil
+          TrayMock.record_popup_menu
+        end
+
+        def self.set_menu(items : Array({id: String, label: String}), on_menu_click : (String -> Nil)? = nil)
+          @@has_menu = items.any?
+          TrayMock.record_set_menu(items, on_menu_click)
+        end
+      end
     end
   end
 {% end %}

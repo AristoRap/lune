@@ -137,6 +137,96 @@
           @@last_visible = v
         end
       end
+
+      module Window
+        def self.disable_webview_drop(handle : Void*)
+          WindowMock.record_disable_webview_drop
+        end
+
+        def self.setup_file_drop(handle : Void*,
+                                 on_drop : (Int32, Int32, Array(String)) -> Nil,
+                                 on_pos : (Int32, Int32) -> Nil,
+                                 drag_pos_fn : String? = nil,
+                                 drop_check_fn : String? = nil)
+          WindowMock.record_setup_file_drop(on_drop)
+        end
+
+        def self.start_drag_out(handle : Void*, paths : Array(String))
+          WindowMock.record_start_drag_out(paths)
+        end
+
+        def self.minimize(handle : Void*); WindowMock.record_minimize; end
+        def self.maximize(handle : Void*); WindowMock.record_maximize; end
+        def self.center(handle : Void*); WindowMock.record_center; end
+
+        def self.set_title(handle : Void*, title : String)
+          WindowMock.record_set_title(title)
+        end
+
+        def self.set_size(handle : Void*, width : Int32, height : Int32)
+          WindowMock.record_set_size(width, height)
+        end
+
+        def self.get_frame(handle : Void*) : {Int32, Int32, Int32, Int32}
+          WindowMock.mock_frame
+        end
+
+        def self.alive?(handle : Void*) : Bool
+          true
+        end
+
+        def self.set_frame(handle : Void*, x : Int32, y : Int32, width : Int32, height : Int32)
+          WindowMock.record_set_frame(x, y, width, height)
+        end
+
+        def self.set_titlebar_transparent(handle : Void*, full_size_content : Bool)
+          WindowMock.record_set_titlebar_transparent(full_size_content)
+        end
+
+        def self.set_background_transparent(handle : Void*)
+          WindowMock.record_set_background_transparent
+        end
+
+        def self.setup_drag_monitor
+          WindowMock.record_setup_drag_monitor
+        end
+
+        def self.start_window_drag(handle : Void*)
+          WindowMock.record_start_window_drag
+        end
+
+        def self.hide_title(handle : Void*); WindowMock.record_hide_title; end
+        def self.hide_traffic_lights(handle : Void*); WindowMock.record_hide_traffic_lights; end
+
+        def self.set_appearance(handle : Void*, mode : Int32)
+          WindowMock.record_set_appearance(mode)
+        end
+
+        def self.set_content_protection(handle : Void*, enabled : Bool)
+          WindowMock.record_set_content_protection
+        end
+
+        def self.set_always_on_top(handle : Void*, enabled : Bool)
+          WindowMock.record_set_always_on_top
+        end
+
+        def self.close(handle : Void*); end
+
+        def self.set_activation_policy_accessory
+          WindowMock.record_set_activation_policy_accessory
+        end
+
+        def self.hide(handle : Void*); WindowMock.record_hide; end
+        def self.show(handle : Void*); WindowMock.record_show; end
+
+        def self.visible?(handle : Void*) : Bool
+          WindowMock.last_visible
+        end
+
+        def self.auto_hide_on_resign_key(handle : Void*); end
+
+        def self.on_close(handle : Void*, &block : ->) : Nil; end
+      end
     end
   end
 {% end %}

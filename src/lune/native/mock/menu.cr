@@ -39,6 +39,22 @@
           on_select.call(@@context_stub_id) unless @@context_stub_id.empty?
         end
       end
+
+      module Menu
+        def self.setup_default(app_name : String)
+          MenuMock.record_setup_default(app_name)
+        end
+
+        def self.set_from_options(opts : Options::Menu, app_name : String)
+          @@app_name = app_name
+          MenuMock.record_set_menu(app_name, serialize(opts))
+        end
+
+        def self.show_context_menu(handle : Void*, x : Float32, y : Float32, items_json : String, &on_select : String -> Nil)
+          cb = on_select
+          MenuMock.record_show_context_menu(x, y, items_json) { |id| cb.call(id) }
+        end
+      end
     end
   end
 {% end %}

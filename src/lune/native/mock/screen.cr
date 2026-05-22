@@ -27,6 +27,12 @@
           ScreenInfo.new(@@stub_width, @@stub_height, @@stub_scale)
         end
       end
+
+      module Screen
+        def self.info : ScreenInfo
+          ScreenMock.record_info
+        end
+      end
     end
   end
 {% end %}

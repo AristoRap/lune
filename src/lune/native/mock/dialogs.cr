@@ -67,6 +67,28 @@
           @@next_message_result
         end
       end
+
+      module Dialogs
+        def self.open_file(title : String) : String?
+          DialogsMock.record_open(title)
+        end
+
+        def self.open_dir(title : String) : String?
+          DialogsMock.record_open_dir(title)
+        end
+
+        def self.open_files(title : String) : Array(String)
+          DialogsMock.record_open_files(title)
+        end
+
+        def self.save_file(title : String, default_name : String = "") : String?
+          DialogsMock.record_save(title, default_name)
+        end
+
+        def self.message(type : Int32, title : String, message : String) : String
+          DialogsMock.record_message(type, title)
+        end
+      end
     end
   end
 {% end %}

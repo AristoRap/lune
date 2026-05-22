@@ -16,6 +16,12 @@
           @@handler.try(&.call(url))
         end
       end
+
+      module DeepLink
+        def self.install(&handler : String -> Nil)
+          DeepLinkMock.set_handler(handler)
+        end
+      end
     end
   end
 {% end %}

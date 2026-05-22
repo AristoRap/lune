@@ -10,6 +10,12 @@
       lib LibNativeNotifications
         fun show_notification(title : LibC::Char*, body : LibC::Char*) : Void
       end
+
+      module Notifications
+        def self.show(title : String, body : String)
+          LibNativeNotifications.show_notification(title, body)
+        end
+      end
     end
   end
 {% end %}

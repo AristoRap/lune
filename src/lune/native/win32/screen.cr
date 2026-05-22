@@ -10,6 +10,16 @@
         # Windows the symbol won't resolve; we fall back to GetDeviceCaps.
         fun get_dpi_for_system = GetDpiForSystem : LibC::UInt
       end
+
+      module Screen
+        def self.info : ScreenInfo
+          w = LibUser32Screen.get_system_metrics(LibUser32Screen::SM_CXSCREEN).to_i32
+          h = LibUser32Screen.get_system_metrics(LibUser32Screen::SM_CYSCREEN).to_i32
+          dpi = LibUser32Screen.get_dpi_for_system
+          scale = dpi > 0 ? dpi.to_f64 / 96.0 : 1.0
+          ScreenInfo.new(w, h, scale)
+        end
+      end
     end
   end
 {% end %}

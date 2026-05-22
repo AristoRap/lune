@@ -20,6 +20,12 @@
           @@last_body = body
         end
       end
+
+      module Notifications
+        def self.show(title : String, body : String)
+          NotificationsMock.record_show(title, body)
+        end
+      end
     end
   end
 {% end %}
