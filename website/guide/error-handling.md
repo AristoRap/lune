@@ -78,7 +78,7 @@ try {
 }
 ```
 
-You can also subclass `Lune::Error` in Crystal for reuse across bindings:
+You can also subclass `Lune::Error` in Crystal for reuse across bindings. The constructor takes `(code, message, hint: nil)` — pass a hint when there's a specific corrective action the caller can take:
 
 ```crystal
 class NotFoundError < Lune::Error
@@ -89,10 +89,30 @@ end
 
 class UnauthorizedError < Lune::Error
   def initialize
-    super("unauthorized", "you do not have permission")
+    super(
+      "unauthorized",
+      "you do not have permission",
+      hint: "Sign in again — your session may have expired."
+    )
   end
 end
 ```
+
+---
+
+## Framework error subclasses
+
+Three framework-internal errors all live under the `Lune::Error` tree, so JS-side `instanceof LuneError` catches every framework exception in a single branch:
+
+| Crystal class               | `code`                | When it fires                                                               |
+| --------------------------- | --------------------- | --------------------------------------------------------------------------- |
+| `Lune::RegistrationError`   | `PLUGIN_REGISTRATION` | `Lune.use` rejection: duplicate id, accessor collision, reserved namespace  |
+| `Lune::ConfigurationError`  | `CONFIGURATION`       | Setup misuse: no nav source, `opts.<plugin>` referenced before registration |
+| `Lune::BridgeNotReadyError` | `BRIDGE_NOT_READY`    | `App#eval` before the runner wires the bridge                               |
+
+Each is raised by the framework itself and would normally crash startup. The `inspect_with_backtrace` override on `Lune::Error` formats them as a short `[CODE] message` header plus a `Fix: <hint>` line — no Crystal stack trace, no `(ArgumentError)` suffix.
+
+Set `LUNE_TRACE=1` in the environment to opt back into the full Crystal backtrace when you're debugging a framework error.
 
 ---
 

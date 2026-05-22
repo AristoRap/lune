@@ -83,17 +83,20 @@ await api.Database.Queries.findUser(42);
 
 ## Type mapping
 
-Lune maps Crystal types to TypeScript types for the generated `.d.ts` file:
+Lune maps Crystal types to TypeScript types for the generated `.d.ts` file. The mapping is **generic-aware** — parameterised collections produce the matching parameterised TypeScript type, and the rule applies recursively:
 
-| Crystal                                | TypeScript            |
-| -------------------------------------- | --------------------- |
-| `String`                               | `string`              |
-| `Bool`                                 | `boolean`             |
-| `Int32`, `Int64`, `Float32`, `Float64` | `number`              |
-| `Nil`                                  | `void`                |
-| `Array`                                | `any[]`               |
-| `Hash`                                 | `Record<string, any>` |
-| Custom struct/class                    | `Record<string, any>` |
+| Crystal                                | TypeScript                                |
+| -------------------------------------- | ----------------------------------------- |
+| `String`                               | `string`                                  |
+| `Bool`                                 | `boolean`                                 |
+| `Int32`, `Int64`, `Float32`, `Float64` | `number`                                  |
+| `Nil`                                  | `void`                                    |
+| `Array(T)`                             | `T[]` (e.g. `Array(String)` → `string[]`) |
+| `Hash(K, V)`                           | `Record<K, V>`                            |
+| `Tuple(A, B, ...)`                     | `[A, B, ...]`                             |
+| Custom struct/class                    | `Record<string, any>`                     |
+
+Bare `Array` / `Hash` (no parameters) fall back to `any[]` / `Record<string, any>`. Use `Array(T)` / `Hash(K, V)` in signatures whenever you can — the generated `.d.ts` propagates the parameter, so frontend code keeps its types without `as` casts.
 
 Custom types must be JSON-serializable. Add `include JSON::Serializable` to your structs:
 

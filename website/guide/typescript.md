@@ -62,34 +62,47 @@ export default api;
 
 ## runtime.d.ts — runtime types
 
-The runtime declarations include:
+The runtime declarations export a single nested `Lune` object plus a short alias `lune = Lune.Plugins`, so every built-in lives at `lune.<Plugin>.<method>` (e.g. `lune.System.quit`, `lune.Events.on`, `lune.Filesystem.homeDir`). Third-party plugins published via `Lune.use` are top-level named exports alongside `Lune` and `LuneError` — not nested under `lune`.
+
+The exact shape is generated per project from the registered plugin set, so the snippet below is illustrative:
 
 ```ts
+export class LuneError extends Error {
+  readonly code: string;
+}
+
 export interface LuneEnvironment {
   os: "darwin" | "linux" | "windows";
   arch: string;
   devtools: boolean;
 }
 
-export interface LuneError {
-  code: string;
-  error: string;
-}
-
-export declare function on(name: string, cb: (data: unknown) => void): void;
-export declare function once(name: string, cb: (data: unknown) => void): void;
-export declare function off(name: string, cb?: (data: unknown) => void): void;
-export declare function emit(name: string, data?: unknown): Promise<void>;
-
-export declare function quit(): Promise<void>;
-export declare function openUrl(url: string): Promise<void>;
-export declare function environment(): LuneEnvironment;
-
-export declare function homeDir(): Promise<string>;
-export declare function tempDir(): Promise<string>;
-export declare function downloadsDir(): Promise<string>;
-export declare function appDataDir(): Promise<string>;
+export const Lune: {
+  Plugins: {
+    System: {
+      quit(): Promise<void>;
+      openUrl(url: string): Promise<void>;
+      environment(): Promise<LuneEnvironment>;
+    };
+    Events: {
+      on(name: string, cb: (data: unknown) => void): void;
+      once(name: string, cb: (data: unknown) => void): void;
+      off(name: string, cb?: (data: unknown) => void): void;
+      emit(name: string, data?: unknown): Promise<void>;
+    };
+    Filesystem: {
+      homeDir(): Promise<string>;
+      tempDir(): Promise<string>;
+      downloadsDir(): Promise<string>;
+      appDataDir(): Promise<string>;
+    };
+    // …all other built-in plugins…
+  };
+};
+export const lune: typeof Lune.Plugins;
 ```
+
+For the full per-plugin signature list see the [Plugins](../plugins/) reference — each page documents its JS surface, which is what shows up in `runtime.d.ts`.
 
 ---
 
@@ -159,20 +172,18 @@ lune.Events.on("progress", (data) => {
 
 ## Handling errors with types
 
-Use the `LuneError` interface from `runtime.d.ts`:
+`LuneError` is a real `Error` subclass, so `instanceof` narrows automatically — no custom type guard needed:
 
 ```ts
-import type { LuneError } from "../lunejs/runtime/runtime.js";
-
-function isLuneError(e: unknown): e is LuneError {
-  return typeof e === "object" && e !== null && "code" in e;
-}
+import { LuneError } from "../lunejs/runtime/runtime.js";
 
 try {
   await api.FileModule.read("/nonexistent");
 } catch (e) {
-  if (isLuneError(e)) {
-    console.error(`[${e.code}] ${e.error}`);
+  if (e instanceof LuneError) {
+    console.error(`[${e.code}] ${e.message}`);
   }
 }
 ```
+
+See [Error Handling](./error-handling) for the full pattern including typed code branches.

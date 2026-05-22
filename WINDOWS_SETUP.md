@@ -164,7 +164,7 @@ Replace the MSVC and Windows Kits version numbers with whatever's installed on y
 
 ### Plugin exclusions
 
-Some plugins are unimplemented or partial on Windows — see each [plugin page](website/plugins/) for status. The demo's `lune.yml` carries a commented-out `plugins.disabled` block you can copy from.
+Some plugins are unimplemented or partial on Windows — see each [plugin page](website/plugins/) for status.
 
 ## Known setup limitations
 

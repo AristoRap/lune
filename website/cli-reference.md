@@ -202,13 +202,19 @@ Useful for fast feedback during development without going through a full compile
 
 ## `lune doctor`
 
-Verify your development environment.
+Verify your development environment and (optionally) the project's plugin registry.
 
 ```sh
-lune doctor
+lune doctor [flags]
 ```
 
-Checks for:
+**Flags:**
+
+| Flag        | Default | Description                                                                                             |
+| ----------- | ------- | ------------------------------------------------------------------------------------------------------- |
+| `--plugins` | `false` | After the environment checks, also list the live plugin registration set (built-ins + `Lune.use` calls) |
+
+**Environment checks:**
 
 | Check           | What it verifies                                    |
 | --------------- | --------------------------------------------------- |
@@ -219,6 +225,12 @@ Checks for:
 | `frontend deps` | `node_modules` directory exists in the frontend dir |
 | `app entry`     | The configured Crystal entry file exists            |
 
+**Plugin checks (always shown):**
+
+The built-in registry is summarised with platform availability and soft-dep gaps. ✓ marks active, ✗ marks platform-filtered. A `soft dep <id> not active` annotation appears when a dependent's optional dep isn't in the active set.
+
+With `--plugins`, the doctor compiles your app entry with `-Dlune_inspect`, short-circuits `Lune.run` after the registry is populated, and lists the live set — the same shape the running app would see, including any `Lune.use(MyPlugin.new)` calls your code makes. This catches "I registered it but the app doesn't see it" mismatches early.
+
 **Example output:**
 
 ```
@@ -228,6 +240,13 @@ Checks for:
   ✓  shards            ok
   ✓  frontend deps     ok
   ✓  app entry         src/main.cr
+
+  Plugins
+    ✓  events           Events
+    ✓  stream           Stream
+    ✗  file_watch       FileWatch  (not available on win32)
+    ✓  tray             Tray
+    …
 ```
 
 ---

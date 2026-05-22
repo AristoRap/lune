@@ -227,4 +227,4 @@ lune.Events.on("results", (data) => renderResults(data));
 await lune.Events.emit("search", { query: input.value });
 ```
 
-Under the hood, `app.events.emit` calls `window.__lune.crystalEmit` (Crystal→JS); `lune.Events.emit` calls the `__lune.jsEmit` WebView binding (JS→Crystal). See the [Events](./events) guide for the full API.
+Under the hood, `app.events.emit` calls `window.__lune.crystalEmit` (Crystal→JS); `lune.Events.emit` calls the `Events.emit` WebView binding (JS→Crystal), which is just an ordinary `@[Lune::Bind]` method on the `Events` plugin like any other. See the [Events](./events) guide for the full API.

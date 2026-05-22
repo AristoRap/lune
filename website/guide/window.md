@@ -133,7 +133,7 @@ The ContextMenu plugin owns this — set `opts.context_menu.block_default = true
 opts.context_menu.block_default = true
 ```
 
-> To show a **native** context menu on right-click instead, use [`setContextMenu`](./runtime#context-menus) from JavaScript — `setContextMenu` intercepts `contextmenu` automatically, so `block_default` is not needed alongside it.
+> To show a **native** context menu on right-click instead, see the [ContextMenu plugin](../plugins/context-menu) — its `set` call intercepts `contextmenu` automatically, so `block_default` is only needed if you want the browser menu blocked even where you haven't set a native one.
 
 ---
 
@@ -256,178 +256,13 @@ After the user resizes and moves the window, the next launch will reopen it at e
 
 ## File drop
 
-Lune provides a complete drag-and-drop file API: CSS-based drop zones for per-element highlighting, a Crystal callback, and JS helpers for subscribing to drops.
-
-Enable the `file_drop` plugin in `lune.yml` to activate native drop handling. Options in `opts.file_drop` configure its behaviour.
-
-```crystal
-opts.file_drop do |fd|
-  fd.zone    = "--lune-drop-target"
-  fd.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
-    puts "Dropped #{paths.size} file(s)"
-  }
-end
-```
-
-### `file_drop.disable_webview_drop`
-
-**Type:** `Bool` — **Default:** `false`
-
-Disables the WebView's built-in drag handling globally, without enabling the `file_drop` plugin. Prevents files from accidentally opening or navigating inside the WebView.
-
----
-
-### `file_drop.zone` / `file_drop.value`
-
-**Type:** `String` — **Defaults:** `""` / `"drop"`
-
-Mark specific elements as drop targets using a CSS custom property. Set `zone` to a CSS custom property name; any element with that property set **inline** and equal to `value` gets the class `lune-drop-target-active` while a file is dragged over it.
-
-> **Inline style required.** The property must be set as an inline style (`style="--lune-drop-target: drop"`), not via a CSS class. Zone detection reads `el.style` directly to avoid matching child elements that would otherwise inherit the value.
-
-```crystal
-opts.file_drop do |fd|
-  fd.zone  = "--lune-drop-target"
-  fd.value = "drop"   # default — can be omitted
-end
-```
-
-```html
-<div class="upload-area" style="--lune-drop-target: drop">Drop files here</div>
-```
-
-```css
-.upload-area.lune-drop-target-active {
-  border: 2px dashed #007aff;
-  background: rgba(0, 122, 255, 0.08);
-}
-```
-
-Requires the `file_drop` plugin to be active. The `lune-drop-target-active` class is added and removed in real time as the pointer moves.
-
----
-
-### `file_drop.on_drop`
-
-**Type:** `((Int32, Int32, Array(String)) -> Nil)?` — **Default:** `nil`
-
-Crystal-side callback fired when the user drops files. Receives the drop position in logical pixels and an array of absolute file paths. Requires the `file_drop` plugin to be active in `lune.yml`.
-
-```crystal
-opts.file_drop do |fd|
-  fd.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
-    puts "Dropped #{paths.size} file(s) at (#{x}, #{y})"
-    app.events.emit("fileDrop", {"x" => x, "y" => y, "paths" => paths})
-  }
-end
-```
-
----
-
-### JS helpers — `lune.FileDrop.on` / `lune.FileDrop.off`
-
-Convenience wrappers around the event bus for subscribing to file drops from the frontend.
-
-```js
-import { lune } from "../lunejs/runtime/runtime.js";
-
-lune.FileDrop.on((x, y, paths) => {
-  console.log("Dropped at", x, y, paths);
-});
-
-// later — unsubscribe
-lune.FileDrop.off();
-```
-
-TypeScript signature:
-
-```ts
-lune.FileDrop.on(cb: (x: number, y: number, paths: string[]) => void): void;
-lune.FileDrop.off(): void;
-```
-
----
-
-### Full file drop example
-
-```crystal
-Lune.run(app, assets: "frontend/dist") do |opts|
-  opts.file_drop do |fd|
-    fd.zone    = "--lune-drop-target"
-    fd.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
-      puts "Dropped: #{paths.inspect}"
-    }
-  end
-end
-```
-
-```html
-<div class="drop-area" style="--lune-drop-target: drop">Drop files here</div>
-```
-
-```css
-.drop-area {
-  border: 2px dashed transparent;
-  transition: border-color 0.15s;
-}
-
-.drop-area.lune-drop-target-active {
-  border-color: #007aff;
-}
-```
-
-```js
-import { lune } from "../lunejs/runtime/runtime.js";
-
-lune.FileDrop.on((x, y, paths) => {
-  paths.forEach((p) => console.log("File:", p));
-});
-```
+Files dropped on the window are surfaced through the `file_drop` plugin — configure `opts.file_drop { |fd| … }` with the CSS drop-zone property and an optional Crystal callback. See the [FileDrop plugin](../plugins/file-drop) page for the full options table, JS API, and CSS examples.
 
 ---
 
 ## Tray
 
-Tray events are emitted automatically on the event bus — no `opts.tray` block required. See [Runtime Functions](./runtime#system-tray) for the full JS API.
-
-By default the event name is `"trayEvent"`. Both tray icon clicks (`"click"`) and menu item selections (item `id`) are emitted under the same event name.
-
-```js
-import { lune } from "../lunejs/runtime/runtime.js";
-
-lune.Events.on("trayEvent", (payload) => {
-  if (payload === "click") console.log("icon clicked");
-  else console.log("menu item:", payload);
-});
-```
-
-### `tray.event`
-
-**Type:** `String` — **Default:** `"trayEvent"`
-
-The event bus name for tray activity. Override it if you want a different name or separate click vs menu events via two names.
-
-```crystal
-opts.tray do |t|
-  t.event = "myTray"
-end
-```
-
----
-
-### `tray.on_click` _(advanced override)_
-
-**Type:** `(-> Nil)?` — **Default:** `nil`
-
-When set, replaces the default `app.events.emit` for tray icon clicks entirely. Use when you need Crystal-side side-effects beyond event emission.
-
----
-
-### `tray.on_menu_click` _(advanced override)_
-
-**Type:** `(String -> Nil)?` — **Default:** `nil`
-
-When set, replaces the default `app.events.emit` for menu item selection entirely. Receives the item's `id`.
+Tray icon, menu, and click events are owned by the `tray` plugin — configure `opts.tray { |t| … }` for click model, event name, and Crystal-side overrides. See the [Tray plugin](../plugins/tray) page for the full options table and JS API. For the menubar-app pattern (hidden dock icon, window anchored under the tray icon) see the [Menubar Apps](./menubar) guide.
 
 ---
 
@@ -623,26 +458,7 @@ opts.menu AppMenu.new(app)
 
 ### Window drag zones _(macOS only)_
 
-Set `drag.zone` to a CSS custom property name and any element with that property set to `drag.value` becomes a handle for dragging the window. Essential when using a custom title bar without the native one.
-
-```crystal
-opts.window_drag do |d|
-  d.zone  = "--lune-draggable"
-  d.value = "drag"   # default — can be omitted
-end
-```
-
-> **Inline style required.** The property must be set as `style="--lune-draggable: true"`, not via a CSS class, so that detection does not match child elements that inherit the value.
-
-Mark any element as a drag handle using an inline style:
-
-```html
-<div style="--lune-draggable: true">...</div>
-```
-
-Drag detection walks up the DOM tree, so marking a container makes all its children draggable too.
-
-> **Platform support.** macOS only — `drag.zone` silently no-ops on Linux and Windows. Tracked on the [roadmap](https://github.com/AristoRap/lune/blob/main/ROADMAP.md).
+CSS-marked elements that initiate a native window drag are handled by the `window_drag` plugin — configure `opts.window_drag { |d| d.zone = "--lune-draggable" }` and tag DOM elements with `style="--lune-draggable: true"`. See the [WindowDrag plugin](../plugins/window-drag) page for the full setup, including how detection walks up the DOM and the platform-availability matrix.
 
 ---
 

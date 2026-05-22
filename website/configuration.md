@@ -332,7 +332,7 @@ See [Plugins](./plugins/) for the full list of plugin names and the JS namespace
 
 A plugin whose `platforms` list excludes the current OS is auto-filtered from the registry — no manual `disabled` entry needed. Its JS namespace still appears in `runtime.js`, but every method returns `Promise.reject(new LuneError("UNAVAILABLE_ON_PLATFORM", "…"))` so cross-platform imports keep working. Catch the error (or branch on `lune.System.environment().os`) to fall back gracefully. The `runtime.d.ts` interface preserves the full signature, so the same TypeScript code type-checks on every platform.
 
-If `enabled:` explicitly names a plugin that's auto-filtered on the current OS, the registry emits a single `INFO` log line so you know the cap was recognised but couldn't be activated. Default-active caps skip silently — a shared `lune.yml` won't produce noise across platforms.
+If `enabled:` explicitly names a plugin that's auto-filtered on the current OS, the registry emits a single `INFO` log line so you know the plugin was recognised but couldn't be activated. Default-active plugins skip silently — a shared `lune.yml` won't produce noise across platforms.
 
 Any unknown name in `enabled` or `disabled` logs a warning at startup and is ignored.
 

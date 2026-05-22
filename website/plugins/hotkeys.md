@@ -1,6 +1,20 @@
 ﻿# Hotkeys
 
-System-wide keyboard shortcuts that fire even when the app window is not focused.
+> System-wide keyboard shortcuts that fire even when the app window is not focused.
+
+|                  |                         |
+| ---------------- | ----------------------- |
+| **Config key**   | `hotkeys`               |
+| **JS namespace** | `Hotkeys`               |
+| **Core**         | No                      |
+| **Phases**       | Bindable                |
+| **Hard deps**    | —                       |
+| **Soft deps**    | `events`                |
+| **Platforms**    | macOS · Linux · Windows |
+
+Soft-depends on `events` — hotkey events are delivered via the event bus. If `events` is excluded, hotkey events are silently dropped.
+
+---
 
 ## Enabling
 
@@ -12,7 +26,7 @@ plugins:
     - hotkeys
 ```
 
-Soft-depends on `events` — hotkey events are delivered via the event bus. If `events` is excluded, hotkey events are silently dropped.
+---
 
 ## Registering shortcuts
 
@@ -28,6 +42,8 @@ await lune.Hotkeys.unregister("Ctrl+Shift+K");
 ```
 
 Shortcuts are released automatically when the app quits. You do not need to unregister them manually on exit.
+
+---
 
 ## Listening for triggers
 
@@ -54,6 +70,8 @@ lune.Hotkeys.on((data) => {
 });
 ```
 
+---
+
 ## Accelerator format
 
 Accelerators are `+`-separated modifier and key names, case-insensitive:
@@ -74,6 +92,8 @@ await lune.Hotkeys.register("Ctrl+Shift+F5"); // modifier + function key
 await lune.Hotkeys.register("Alt+Left"); // modifier + arrow
 ```
 
+---
+
 ## Full example
 
 ```js
@@ -90,13 +110,27 @@ async function setupHotkeys() {
 }
 ```
 
+---
+
 ## Notes
 
 - Shortcuts that conflict with another app's system-wide hotkeys (e.g. OS shortcuts) will silently fail to register. A `warn` log entry is emitted when registration fails.
 - Registered hotkeys are global to the session — they fire regardless of which app has focus.
+
+---
 
 ## Platform notes
 
 - **macOS** — Verified. Uses Carbon `RegisterEventHotKey`; no Accessibility permission required.
 - **Linux** — Untested. Uses `XGrabKey` on the root window via a background X11 connection.
 - **Windows** — Verified. Uses `RegisterHotKey` on a dedicated WM_HOTKEY pump thread; `Cmd+…` and `Win+…` both map to the Windows key modifier.
+
+---
+
+## Disabling
+
+```yaml
+plugins:
+  disabled:
+    - hotkeys
+```

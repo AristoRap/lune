@@ -29,7 +29,7 @@ end
 Optionally set a custom icon from JavaScript once the app has mounted:
 
 ```js
-import { Tray } from "../lune.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
 // Falls back to ● if not called
 await lune.Tray.setIcon("/absolute/path/to/icon.png");
@@ -99,7 +99,7 @@ end
 Set a context menu with `lune.Tray.setMenu`. With no `toggle_window_on` set, both clicks open the menu (rule 3 above):
 
 ```js
-import { Tray, Events, System } from "../lune.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
 lune.Tray.setMenu([
   { id: "show", label: "Open Window" },
@@ -132,7 +132,7 @@ opts.tray.on_click = -> {
 ```
 
 ```js
-import { Tray } from "../lune.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
 // e.g. from a global keyboard shortcut
 await lune.Tray.popupMenu();
@@ -147,7 +147,7 @@ If no menu has been set, it's a no-op.
 When you're managing visibility yourself (custom `on_click`, menu items, etc.):
 
 ```js
-import { Window } from "../lune.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
 await lune.Window.show();
 await lune.Window.hide();
