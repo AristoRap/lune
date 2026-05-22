@@ -15,7 +15,7 @@ require "./lune/messaging/events"
 require "./lune/messaging/stream"
 require "./lune/capability"
 require "./lune/capabilities/*"
-require "./lune/runtime"
+require "./lune/generator"
 require "./lune/mixins/bindable"
 require "./lune/app"
 require "./lune/platform/window_state"
@@ -67,7 +67,7 @@ module Lune
     registry = Capabilities::Registry.new(Pointer(Void).null, Options.new)
     stubs = App.new
     resolved = registry.validate_resolve_install(config.capabilities, stubs)
-    Runtime::Generator.write_js(
+    Generator.write_js(
       app.bindings + stubs.bindings.select(&.internal?),
       lunejs_dir,
       resolved.capabilities,

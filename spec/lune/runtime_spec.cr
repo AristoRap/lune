@@ -22,16 +22,16 @@ private def drag_out_setup
   {app.bindings, [cap] of Lune::Capability}
 end
 
-describe Lune::Runtime do
+describe Lune::Generator do
   it "generates runtime transport code" do
-    js = Lune::Runtime::Generator.generate_runtime_js([] of Lune::Binding)
+    js = Lune::Generator.generate_runtime_js([] of Lune::Binding)
 
     js.includes?("__lune").should be_true
     js.includes?("export const __lune").should be_true
   end
 
   it "exports LuneError class that extends Error" do
-    js = Lune::Runtime::Generator.generate_runtime_js([] of Lune::Binding)
+    js = Lune::Generator.generate_runtime_js([] of Lune::Binding)
 
     js.includes?("export class LuneError extends Error").should be_true
     js.includes?("this.name = \"LuneError\"").should be_true
@@ -39,21 +39,21 @@ describe Lune::Runtime do
   end
 
   it "wraps __lune.call to convert plain error envelopes to LuneError instances" do
-    js = Lune::Runtime::Generator.generate_runtime_js([] of Lune::Binding)
+    js = Lune::Generator.generate_runtime_js([] of Lune::Binding)
 
     js.includes?(".catch(").should be_true
     js.includes?("new LuneError(").should be_true
   end
 
   it "declares LuneError as a class in runtime.d.ts" do
-    dts = Lune::Runtime::Generator.generate_runtime_dts([] of Lune::Binding)
+    dts = Lune::Generator.generate_runtime_dts([] of Lune::Binding)
 
     dts.includes?("export declare class LuneError extends Error").should be_true
     dts.includes?("readonly code: string").should be_true
   end
 
   it "exports Events namespace with on, once, off helpers" do
-    js = Lune::Runtime::Generator.generate_runtime_js([] of Lune::Binding, events_caps)
+    js = Lune::Generator.generate_runtime_js([] of Lune::Binding, events_caps)
 
     js.includes?("export const Events").should be_true
     js.includes?("on(name, cb)").should be_true
@@ -64,20 +64,20 @@ describe Lune::Runtime do
   end
 
   it "exports emit for JS-to-Crystal events" do
-    js = Lune::Runtime::Generator.generate_runtime_js([] of Lune::Binding, events_caps)
+    js = Lune::Generator.generate_runtime_js([] of Lune::Binding, events_caps)
 
     js.includes?("emit(name, data)").should be_true
     js.includes?("__lune.jsEmit").should be_true
   end
 
   it "declares emit in runtime.d.ts" do
-    dts = Lune::Runtime::Generator.generate_runtime_dts([] of Lune::Binding, events_caps)
+    dts = Lune::Generator.generate_runtime_dts([] of Lune::Binding, events_caps)
 
     dts.includes?("emit(name: string").should be_true
   end
 
   it "exports System namespace with quit, openUrl, environment" do
-    js = Lune::Runtime::Generator.generate_runtime_js(runtime_bindings)
+    js = Lune::Generator.generate_runtime_js(runtime_bindings)
 
     js.includes?("export const System").should be_true
     js.includes?("quit()").should be_true
@@ -89,7 +89,7 @@ describe Lune::Runtime do
   end
 
   it "generates runtime.d.ts with typed namespace interfaces" do
-    dts = Lune::Runtime::Generator.generate_runtime_dts(runtime_bindings, events_caps)
+    dts = Lune::Generator.generate_runtime_dts(runtime_bindings, events_caps)
 
     dts.includes?("LuneEnvironment").should be_true
     dts.includes?("export interface System").should be_true
@@ -104,7 +104,7 @@ describe Lune::Runtime do
 
   it "exports DragOut namespace with start binding (paths JSON-stringified)" do
     bindings, caps = drag_out_setup
-    js = Lune::Runtime::Generator.generate_runtime_js(bindings, caps)
+    js = Lune::Generator.generate_runtime_js(bindings, caps)
 
     js.includes?("export const DragOut").should be_true
     js.includes?("start(paths)").should be_true
@@ -114,7 +114,7 @@ describe Lune::Runtime do
 
   it "declares DragOut interface in runtime.d.ts" do
     bindings, caps = drag_out_setup
-    dts = Lune::Runtime::Generator.generate_runtime_dts(bindings, caps)
+    dts = Lune::Generator.generate_runtime_dts(bindings, caps)
 
     dts.includes?("export interface DragOut").should be_true
     dts.includes?("start(paths: string[])").should be_true
@@ -123,7 +123,7 @@ describe Lune::Runtime do
 
   describe "platform-unavailable stubs" do
     it "emits a rejecting JS stub for a filtered-out capability" do
-      js = Lune::Runtime::Generator.generate_runtime_js(
+      js = Lune::Generator.generate_runtime_js(
         [] of Lune::Binding,
         [] of Lune::Capability,
         [Lune::Capabilities::DragOut.new] of Lune::Capability,
@@ -137,7 +137,7 @@ describe Lune::Runtime do
     end
 
     it "emits a same-shape d.ts interface for a filtered-out capability" do
-      dts = Lune::Runtime::Generator.generate_runtime_dts(
+      dts = Lune::Generator.generate_runtime_dts(
         [] of Lune::Binding,
         [] of Lune::Capability,
         [Lune::Capabilities::DragOut.new] of Lune::Capability,
@@ -152,7 +152,7 @@ describe Lune::Runtime do
       # Belt-and-braces: if someone accidentally passes the same cap in both
       # buckets, the live block wins and the stub is dropped.
       bindings, caps = drag_out_setup
-      js = Lune::Runtime::Generator.generate_runtime_js(
+      js = Lune::Generator.generate_runtime_js(
         bindings,
         caps,
         [Lune::Capabilities::DragOut.new] of Lune::Capability,
@@ -183,7 +183,7 @@ describe Lune::Runtime do
       ),
     ]
 
-    dts = Lune::Runtime::Generator.generate_app_dts(bindings)
+    dts = Lune::Generator.generate_app_dts(bindings)
 
     dts.includes?("export interface alpha").should be_true
     dts.includes?("export interface counter").should be_true
@@ -208,7 +208,7 @@ describe Lune::Runtime do
       ),
     ]
 
-    dts = Lune::Runtime::Generator.generate_app_dts(bindings)
+    dts = Lune::Generator.generate_app_dts(bindings)
 
     dts.includes?("arg0: Record<string, any>").should be_true
   end
@@ -229,7 +229,7 @@ describe Lune::Runtime do
         ),
       ]
 
-      Lune::Runtime::Generator.write_js(bindings, lunejs_dir)
+      Lune::Generator.write_js(bindings, lunejs_dir)
 
       File.exists?(File.join(lunejs_dir, "runtime", "runtime.d.ts")).should be_true
       File.exists?(File.join(lunejs_dir, "app", "App.d.ts")).should be_true
@@ -258,7 +258,7 @@ describe Lune::Runtime do
       ),
     ]
 
-    js = Lune::Runtime::Generator.generate_app_js(bindings)
+    js = Lune::Generator.generate_app_js(bindings)
 
     js.includes?("import { __lune }").should be_true
     js.includes?("return __lune.call(").should be_true
@@ -291,7 +291,7 @@ describe Lune::Runtime do
       ),
     ]
 
-    js = Lune::Runtime::Generator.generate_app_js(bindings)
+    js = Lune::Generator.generate_app_js(bindings)
 
     js.includes?("export const api").should be_true
     js.includes?("export default api").should be_true
@@ -300,7 +300,7 @@ describe Lune::Runtime do
   end
 
   it "generates app API code even with no bindings" do
-    js = Lune::Runtime::Generator.generate_app_js([] of Lune::Binding)
+    js = Lune::Generator.generate_app_js([] of Lune::Binding)
 
     js.includes?("export const api").should be_true
     js.includes?("export default api").should be_true
@@ -330,7 +330,7 @@ describe Lune::Runtime do
 
     with_tempdir do |tmpdir|
       Dir.cd(tmpdir) do
-        Lune::Runtime::Generator.write_js(bindings, "frontend/lunejs")
+        Lune::Generator.write_js(bindings, "frontend/lunejs")
 
         app_path = File.join("frontend", "lunejs", "app", "App.js")
         runtime_path = File.join("frontend", "lunejs", "runtime", "runtime.js")
@@ -366,7 +366,7 @@ describe Lune::Runtime do
         ),
       ]
 
-      Lune::Runtime::Generator.write_js(bindings, lunejs_dir)
+      Lune::Generator.write_js(bindings, lunejs_dir)
 
       app_path = File.join(lunejs_dir, "app", "App.js")
       runtime_path = File.join(lunejs_dir, "runtime", "runtime.js")
@@ -381,7 +381,7 @@ describe Lune::Runtime do
     with_tempdir do |tmpdir|
       lunejs_dir = File.join(tmpdir, "lunejs")
 
-      Lune::Runtime::Generator.write_js([
+      Lune::Generator.write_js([
         Lune::Binding.new(
           namespace: "alpha",
           method: "ping",
@@ -398,7 +398,7 @@ describe Lune::Runtime do
 
       sleep 100.milliseconds
 
-      Lune::Runtime::Generator.write_js([
+      Lune::Generator.write_js([
         Lune::Binding.new(
           namespace: "alpha",
           method: "ping",
@@ -419,7 +419,7 @@ describe Lune::Runtime do
     with_tempdir do |tmpdir|
       lunejs_dir = File.join(tmpdir, "lunejs")
 
-      Lune::Runtime::Generator.write_js([
+      Lune::Generator.write_js([
         Lune::Binding.new(
           namespace: "alpha",
           method: "ping",
@@ -436,7 +436,7 @@ describe Lune::Runtime do
 
       sleep 100.milliseconds
 
-      Lune::Runtime::Generator.write_js([
+      Lune::Generator.write_js([
         Lune::Binding.new(
           namespace: "alpha",
           method: "ping",

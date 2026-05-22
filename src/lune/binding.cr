@@ -43,12 +43,12 @@ module Lune
     end
 
     def dts_return_type
-      Lune::Runtime::Generator.crystal_to_ts(@return_type)
+      Lune::Generator.crystal_to_ts(@return_type)
     end
 
     def dts_params
       resolved_arg_names.each_with_index.map { |name, i|
-        ts = @ts_args[i]? || Lune::Runtime::Generator.crystal_to_ts(@args[i])
+        ts = @ts_args[i]? || Lune::Generator.crystal_to_ts(@args[i])
         "#{name}: #{ts}"
       }.join(", ")
     end

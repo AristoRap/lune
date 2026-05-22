@@ -95,7 +95,7 @@ describe Lune::Capabilities::Hotkeys do
       cap = Lune::Capabilities::Hotkeys.new
       app = Lune::App.new
       app.install(cap)
-      js = Lune::Runtime::Generator.generate_runtime_js(app.bindings, [cap] of Lune::Capability)
+      js = Lune::Generator.generate_runtime_js(app.bindings, [cap] of Lune::Capability)
       js.scan(/\bregister\(accelerator\)/).size.should eq(1)
       js.scan(/\bunregister\(accelerator\)/).size.should eq(1)
       cap.js_helpers.should_not contain("register(")
@@ -115,7 +115,7 @@ describe Lune::Capabilities::Hotkeys do
       cap = Lune::Capabilities::Hotkeys.new
       app = Lune::App.new
       app.install(cap)
-      dts = Lune::Runtime::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Capability)
+      dts = Lune::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Capability)
       dts.scan(/\bregister\(accelerator: string\)/).size.should eq(1)
       dts.scan(/\bunregister\(accelerator: string\)/).size.should eq(1)
       cap.dts_helpers.should_not contain("register(")
@@ -126,7 +126,7 @@ describe Lune::Capabilities::Hotkeys do
       cap = Lune::Capabilities::Hotkeys.new
       app = Lune::App.new
       app.install(cap)
-      dts = Lune::Runtime::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Capability)
+      dts = Lune::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Capability)
       dts.should contain("Promise<void>")
     end
 

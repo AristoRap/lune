@@ -92,7 +92,7 @@ describe Lune::Capabilities::Windows do
       cap = Lune::Capabilities::Windows.new
       app = Lune::App.new
       app.install(cap)
-      dts = Lune::Runtime::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Capability)
+      dts = Lune::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Capability)
       dts.should match(/open\(.+?\):\s*Promise<string>/)
     end
 
@@ -100,7 +100,7 @@ describe Lune::Capabilities::Windows do
       cap = Lune::Capabilities::Windows.new
       app = Lune::App.new
       app.install(cap)
-      dts = Lune::Runtime::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Capability)
+      dts = Lune::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Capability)
       dts.should contain("list(): Promise<string[]>")
     end
   end

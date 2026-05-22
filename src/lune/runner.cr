@@ -188,7 +188,7 @@ module Lune
           next unless cap.is_a?(Lune::Capability::BindPhase)
           cap.install(Lune::Capability::BindCtx.new(all_stubs, cap))
         end
-        Lune::Runtime::Generator.write_js(
+        Lune::Generator.write_js(
           @app.bindings + all_stubs.bindings.select(&.internal?),
           @lunejs_dir,
           registry.all,
