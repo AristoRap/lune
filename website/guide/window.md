@@ -125,17 +125,15 @@ opts.devtools = {{ flag?(:lune_dev) }}
 
 ---
 
-### `disable_context_menu`
+### Block the default context menu
 
-**Type:** `Bool` — **Default:** `false`
-
-When `true`, suppresses the browser's built-in right-click context menu (the one with "Inspect Element", "Copy Image", etc.). Use this when you want full control over right-click behaviour in your app.
+The ContextMenu plugin owns this — set `opts.context_menu.block_default = true` to suppress the browser's built-in right-click menu (the one with "Inspect Element", "Copy Image", etc.). Use when you want full control over right-click behaviour in your app.
 
 ```crystal
-opts.disable_context_menu = true
+opts.context_menu.block_default = true
 ```
 
-> To show a **native** context menu on right-click instead, use [`setContextMenu`](./runtime#context-menus) from JavaScript — no Crystal option required.`setContextMenu` intercepts `contextmenu` automatically, so `disable_context_menu` is not needed alongside it.
+> To show a **native** context menu on right-click instead, use [`setContextMenu`](./runtime#context-menus) from JavaScript — `setContextMenu` intercepts `contextmenu` automatically, so `block_default` is not needed alongside it.
 
 ---
 
@@ -628,18 +626,18 @@ opts.menu AppMenu.new(app)
 Set `drag.zone` to a CSS custom property name and any element with that property set to `drag.value` becomes a handle for dragging the window. Essential when using a custom title bar without the native one.
 
 ```crystal
-opts.drag do |d|
+opts.window_drag do |d|
   d.zone  = "--lune-draggable"
   d.value = "drag"   # default — can be omitted
 end
 ```
 
-> **Inline style required.** The property must be set as `style="--lune-draggable: drag"`, not via a CSS class, so that detection does not match child elements that inherit the value.
+> **Inline style required.** The property must be set as `style="--lune-draggable: true"`, not via a CSS class, so that detection does not match child elements that inherit the value.
 
 Mark any element as a drag handle using an inline style:
 
 ```html
-<div style="--lune-draggable: drag">...</div>
+<div style="--lune-draggable: true">...</div>
 ```
 
 Drag detection walks up the DOM tree, so marking a container makes all its children draggable too.
@@ -750,7 +748,7 @@ Keeps the window above all other windows, including those from other apps. Usefu
 Lune.run(app, assets: "frontend/dist") do |opts|
   opts.title = "My App"
 
-  opts.drag do |d|
+  opts.window_drag do |d|
     d.zone = "--lune-draggable"
   end
 
@@ -801,8 +799,8 @@ Lune.run(app) do |opts|
   opts.min_width           = 900
   opts.min_height          = 600
   opts.resizable           = true
-  opts.disable_context_menu = true
-  opts.devtools               = {{ flag?(:lune_dev) }}
+  opts.context_menu.block_default = true
+  opts.devtools                   = {{ flag?(:lune_dev) }}
 
   opts.file_drop do |fd|
     fd.zone    = "--lune-drop-target"
@@ -811,7 +809,7 @@ Lune.run(app) do |opts|
     }
   end
 
-  opts.drag do |d|
+  opts.window_drag do |d|
     d.zone = "--lune-draggable"
   end
 

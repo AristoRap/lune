@@ -138,30 +138,26 @@ describe Lune::Options do
   end
 end
 
-describe Lune::Options::FileDrop do
+describe Lune::Plugins::FileDrop::Config do
   describe "defaults" do
     it "disable_webview_drop is false" do
-      Lune::Options::FileDrop.new.disable_webview_drop.should be_false
+      Lune::Plugins::FileDrop::Config.new.disable_webview_drop.should be_false
     end
 
     it "zone defaults to empty string" do
-      Lune::Options::FileDrop.new.zone.should be_empty
+      Lune::Plugins::FileDrop::Config.new.zone.should be_empty
     end
 
     it "value defaults to drop" do
-      Lune::Options::FileDrop.new.value.should eq("drop")
+      Lune::Plugins::FileDrop::Config.new.value.should eq("drop")
     end
 
     it "has no on_drop callback" do
-      Lune::Options::FileDrop.new.on_drop.should be_nil
+      Lune::Plugins::FileDrop::Config.new.on_drop.should be_nil
     end
   end
 
   describe "via opts.file_drop block" do
-    it "is accessible from Options" do
-      Lune::Options.new.file_drop.should be_a(Lune::Options::FileDrop)
-    end
-
     it "mutations via block are retained" do
       opts = Lune::Options.new
       opts.file_drop do |fd|
@@ -188,54 +184,40 @@ describe Lune::Options::FileDrop do
   end
 end
 
-describe Lune::Options::Drag do
+describe Lune::Plugins::WindowDrag::Config do
   describe "defaults" do
     it "zone defaults to empty string" do
-      Lune::Options::Drag.new.zone.should be_empty
-    end
-
-    it "value defaults to drag" do
-      Lune::Options::Drag.new.value.should eq("drag")
+      Lune::Plugins::WindowDrag::Config.new.zone.should be_empty
     end
   end
 
-  describe "via opts.drag block" do
-    it "is accessible from Options" do
-      Lune::Options.new.drag.should be_a(Lune::Options::Drag)
-    end
-
+  describe "via opts.window_drag block" do
     it "mutations via block are retained" do
       opts = Lune::Options.new
-      opts.drag do |d|
+      opts.window_drag do |d|
         d.zone = "--lune-draggable"
-        d.value = "drag"
       end
-      opts.drag.zone.should eq("--lune-draggable")
-      opts.drag.value.should eq("drag")
+      opts.window_drag.zone.should eq("--lune-draggable")
     end
   end
 end
 
-describe Lune::Options::Tray do
+describe Lune::Plugins::Tray::Config do
   describe "defaults" do
     it "event defaults to trayEvent" do
-      Lune::Options::Tray.new.event.should eq("trayEvent")
+      Lune::Plugins::Tray::Config.new.event.should eq("trayEvent")
     end
 
     it "has no on_click override" do
-      Lune::Options::Tray.new.on_click.should be_nil
+      Lune::Plugins::Tray::Config.new.on_click.should be_nil
     end
 
     it "has no on_menu_click override" do
-      Lune::Options::Tray.new.on_menu_click.should be_nil
+      Lune::Plugins::Tray::Config.new.on_menu_click.should be_nil
     end
   end
 
   describe "via opts.tray block" do
-    it "is accessible from Options" do
-      Lune::Options.new.tray.should be_a(Lune::Options::Tray)
-    end
-
     it "custom event name is retained" do
       opts = Lune::Options.new
       opts.tray do |t|
@@ -253,17 +235,5 @@ describe Lune::Options::Tray do
       opts.tray.on_click.not_nil!.call
       clicked.should be_true
     end
-  end
-end
-
-describe "disable_context_menu on Options" do
-  it "defaults to false" do
-    Lune::Options.new.disable_context_menu.should be_false
-  end
-
-  it "can be enabled" do
-    opts = Lune::Options.new
-    opts.disable_context_menu = true
-    opts.disable_context_menu.should be_true
   end
 end

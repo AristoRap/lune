@@ -11,7 +11,7 @@
 | **Hard deps**    | —                                |
 | **Platforms**    | macOS (Linux/Windows: planned)   |
 
-Lets you tag DOM elements with a CSS custom property (e.g. `style="--lune-draggable: drag"`) and have mousedown on them initiate a native window drag. Essential when using a custom title bar without the OS chrome.
+Lets you tag DOM elements with a CSS custom property (e.g. `style="--lune-draggable: true"`) and have mousedown on them initiate a native window drag. Essential when using a custom title bar without the OS chrome.
 
 ---
 
@@ -19,22 +19,21 @@ Lets you tag DOM elements with a CSS custom property (e.g. `style="--lune-dragga
 
 ```crystal
 Lune.run(app) do |opts|
-  opts.drag do |d|
-    d.zone  = "--lune-draggable"  # CSS custom property name
-    d.value = "drag"               # expected value (default — can be omitted)
+  opts.window_drag do |d|
+    d.zone = "--lune-draggable"
   end
 end
 ```
 
-| Option  | Type     | Description                                          |
-| ------- | -------- | ---------------------------------------------------- |
-| `zone`  | `String` | CSS custom property name that marks drag handles     |
-| `value` | `String` | Expected value of the property (default: `"drag"`)   |
+| Option | Type     | Description                                      |
+| ------ | -------- | ------------------------------------------------ |
+| `zone` | `String` | CSS custom property name that marks drag handles |
 
-Mark an element as a drag handle with an inline style:
+Mark an element as a drag handle with an inline style. Any non-empty value
+on the configured property activates the drag — write `true` for clarity:
 
 ```html
-<div style="--lune-draggable: drag">Title bar</div>
+<div style="--lune-draggable: true">Title bar</div>
 ```
 
 > Inline style required. Detection reads `style.getPropertyValue` directly and walks up the DOM, so marking a container makes all children draggable too.

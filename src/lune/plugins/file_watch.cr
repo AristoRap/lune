@@ -12,19 +12,21 @@ module Lune
         DESCRIPTOR
       end
 
-      @watcher = Lune::Native::FileWatch.new
-      @debounce = 50.milliseconds
-      @last_fired = {} of String => Time::Instant
-
-      def setup(ctx : SetupCtx) : Nil
-        @debounce = ctx.options.file_watch.debounce
+      config do
+        # Minimum time between emitted events for the same path. Suppresses
+        # OS-level noise (editors write temp files, rename, delete) so the
+        # frontend receives one logical event per save. Defaults to 50ms.
+        property debounce : Time::Span = 50.milliseconds
       end
+
+      @watcher = Lune::Native::FileWatch.new
+      @last_fired = {} of String => Time::Instant
 
       # Hook the macro-generated install to also kick off the native watcher
       # pump, which delivers `(path, kind)` callbacks into `app.events`.
       def install(app : Lune::App) : Nil
         previous_def
-        debounce = @debounce
+        debounce = @config.debounce
         last_fired = @last_fired
         @watcher.start do |path, kind|
           now = Time.instant

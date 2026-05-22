@@ -54,7 +54,7 @@ Lune.run(app, assets: "frontend/dist") do |opts|
   # opts.on_window_ready = ->(_handle : Void*) {
   #   puts "Window open, about to navigate"
   # }
-  # opts.disable_context_menu = true
+  # opts.context_menu.block_default = true
   opts.devtools = {{ flag?(:lune_dev) }}
 
   # opts.on_navigate = ->(url : String) {
@@ -77,7 +77,7 @@ Lune.run(app, assets: "frontend/dist") do |opts|
   #   t.toggle_window_on = [:left_click] # popover-style: left-click drops the window
   # end
 
-  opts.drag do |d|
+  opts.window_drag do |d|
     d.zone = "--lune-draggable"
   end
 

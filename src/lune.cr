@@ -47,26 +47,16 @@ module Lune
     @@registered_plugins
   end
 
-  def self.clear_registered_plugins! : Nil
-    @@registered_plugins.clear
-    @@registered_ids.clear
+  # Direct read access for spec helpers that need to snapshot / restore the
+  # registration set. Not part of the public API — production code uses
+  # `Lune.use` (write) and `Lune.registered_plugins` (read) and nothing else.
+  protected def self.registered_ids : Set(Symbol)
+    @@registered_ids
   end
 
-  # Snapshot the current registration set, replace it with `plugins` for the
-  # duration of the block, then restore. Spec helper — production code never
-  # needs this. Always restores in `ensure`, including on exceptions.
-  def self.with_plugins(*plugins : Lune::Plugin, &)
-    saved = @@registered_plugins.dup
-    saved_ids = @@registered_ids.dup
-    @@registered_plugins.clear
-    @@registered_ids.clear
-    plugins.each { |p| use(p) }
-    begin
-      yield
-    ensure
-      @@registered_plugins = saved
-      @@registered_ids = saved_ids
-    end
+  protected def self.replace_registration!(plugins : Array(Lune::Plugin), ids : Set(Symbol)) : Nil
+    @@registered_plugins = plugins
+    @@registered_ids = ids
   end
 
   # Default frontend directory name (matches the lune.yml default).

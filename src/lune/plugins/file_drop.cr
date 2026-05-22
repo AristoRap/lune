@@ -11,18 +11,31 @@ module Lune
         DESCRIPTOR
       end
 
-      @options : Lune::Options::FileDrop = Lune::Options::FileDrop.new
+      config do
+        # Disables the webview's built-in drag handling globally. Prevents
+        # files from accidentally opening or navigating in the webview. Enable
+        # the `file_drop` plugin in lune.yml to receive drops in your app.
+        property disable_webview_drop : Bool = false
 
-      def setup(ctx : SetupCtx) : Nil
-        @options = ctx.options.file_drop
+        # CSS custom property that marks an element as a drop zone (e.g.
+        # `"--lune-drop-target"`). Elements with this property set to `value`
+        # receive the class `lune-drop-target-active` while a file is dragged
+        # over them.
+        property zone : String = ""
+
+        # CSS value that activates drop zone highlighting. Defaults to `"drop"`.
+        property value : String = "drop"
+
+        # Crystal-side callback fired on drop. Receives `(x, y, paths)`.
+        property on_drop : ((Int32, Int32, Array(String)) -> Nil)? = nil
       end
 
       def configured? : Bool
-        !@options.zone.empty? || !@options.on_drop.nil? || @options.disable_webview_drop
+        !@config.zone.empty? || !@config.on_drop.nil? || @config.disable_webview_drop
       end
 
       def init_webview(ctx : WebviewCtx) : Nil
-        drop = @options
+        drop = @config
         wv = ctx.wv
         handle = ctx.handle
         app = ctx.app
@@ -42,7 +55,7 @@ module Lune
           # macOS: fire both dragPos and dropCheck directly from the ObjC
           # overlay via evaluateJavaScript: — bypasses Crystal's wv.dispatch
           # so the drop event isn't queued behind pending dragPos updates.
-          drag_pos_fn   = use_drop_zones ? "window.#{bm}.dragPos" : nil
+          drag_pos_fn = use_drop_zones ? "window.#{bm}.dragPos" : nil
           drop_check_fn = use_drop_zones ? "window.#{bm}.dropCheck" : nil
         {% else %}
           if use_drop_zones
@@ -58,7 +71,7 @@ module Lune
       end
 
       def init_js : String?
-        drop = @options
+        drop = @config
         use_drop_zones = !drop.zone.empty?
         drop_prop = use_drop_zones ? drop.zone : nil
         drop_val = use_drop_zones ? drop.value : nil

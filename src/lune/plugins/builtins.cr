@@ -28,7 +28,6 @@ module Lune
       Lune.use(EditShortcuts.new)
       Lune.use(Navigation.new)
       Lune.use(WindowDrag.new)
-      Lune.use(ContextMenuBlocker.new)
     end
   end
 end

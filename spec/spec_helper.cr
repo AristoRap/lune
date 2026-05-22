@@ -67,3 +67,35 @@ def in_project_with(lune_yml : String, & : ->)
     Dir.cd(dir) { yield }
   end
 end
+
+# Spec-only helpers that mutate `Lune.registered_plugins`. Kept here so the
+# production module stays write-once via `Lune.use`; specs that need to swap
+# the registry around a block reach for these.
+module Lune
+  # Snapshot the current registration set, replace it with `plugins` for the
+  # duration of the block, then restore — including on exceptions. The
+  # zero-arg overload runs the block against an empty registry.
+  def self.with_plugins(*plugins : Lune::Plugin, &)
+    swap_registered(plugins.to_a) { yield }
+  end
+
+  def self.with_plugins(&)
+    swap_registered([] of Lune::Plugin) { yield }
+  end
+
+  def self.clear_registered_plugins! : Nil
+    replace_registration!([] of Lune::Plugin, ids: Set(Symbol).new)
+  end
+
+  private def self.swap_registered(plugins : Array(Lune::Plugin), &)
+    saved_plugins = registered_plugins.dup
+    saved_ids = registered_ids.dup
+    replace_registration!([] of Lune::Plugin, ids: Set(Symbol).new)
+    plugins.each { |p| use(p) }
+    begin
+      yield
+    ensure
+      replace_registration!(saved_plugins, saved_ids)
+    end
+  end
+end

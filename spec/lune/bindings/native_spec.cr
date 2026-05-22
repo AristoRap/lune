@@ -2,10 +2,17 @@ require "../../spec_helper"
 
 private def install_all(handle, on_tray_click = nil, on_menu_click = nil)
   app = Lune::App.new
-  window_cap = Lune::Plugins::Window.new
-  window_cap.setup(Lune::Plugin::SetupCtx.new(Lune::Options.new, handle))
-  app.install(window_cap)
-  app.install(Lune::Plugins::Tray.new(on_tray_click: on_tray_click, on_menu_click: on_menu_click))
+  window_plugin = Lune::Plugins::Window.new
+  window_plugin.setup(Lune::Plugin::SetupCtx.new(Lune::Options.new, handle))
+  app.install(window_plugin)
+
+  tray_plugin = Lune::Plugins::Tray.new
+  tray_opts = Lune::Options.new
+  tray_opts.tray.on_click = on_tray_click if on_tray_click
+  tray_opts.tray.on_menu_click = on_menu_click if on_menu_click
+  tray_plugin.setup(Lune::Plugin::SetupCtx.new(tray_opts, handle))
+  app.install(tray_plugin)
+
   app.install(Lune::Plugins::Dialogs.new)
   app.install(Lune::Plugins::Notifications.new)
   app.install(Lune::Plugins::Screen.new)
@@ -245,7 +252,10 @@ describe "Lune::Plugins (native)" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
-      app.install(Lune::Plugins::Tray.new(on_menu_click: menu_cb))
+      plugin = Lune::Plugins::Tray.new
+      plugin.config.on_menu_click = menu_cb
+      plugin.setup(Lune::Plugin::SetupCtx.new(Lune::Options.new, Pointer(Void).null))
+      app.install(plugin)
       bridge.register_bindings(app.bindings)
 
       json = %([{"id":"open","label":"Open"},{"id":"---","label":""},{"id":"quit","label":"Quit"}])
@@ -273,12 +283,15 @@ describe "Lune::Plugins (native)" do
     end
 
     it "configured? is true with custom event name" do
-      Lune::Plugins::Tray.new(event_name: "myTray").configured?.should be_true
+      plugin = Lune::Plugins::Tray.new
+      plugin.config.event = "myTray"
+      plugin.configured?.should be_true
     end
 
     it "configured? is true with explicit on_menu_click override" do
-      cb = ->(id : String) { nil }
-      Lune::Plugins::Tray.new(on_menu_click: cb).configured?.should be_true
+      plugin = Lune::Plugins::Tray.new
+      plugin.config.on_menu_click = ->(id : String) { nil }
+      plugin.configured?.should be_true
     end
   end
 

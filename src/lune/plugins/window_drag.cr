@@ -2,7 +2,8 @@ module Lune
   module Plugins
     # macOS-only: lets the user tag DOM elements (via a CSS custom property,
     # e.g. `style="--lune-drag-zone: yes"`) such that mousedown on them drags
-    # the OS window. Configure via `opts.drag.zone` / `opts.drag.value`.
+    # the OS window. Configure via `opts.window_drag.zone` /
+    # `opts.window_drag.value`.
     class WindowDrag < Lune::Plugin
       include Lune::Bindable
       include Plugin::WebviewInject
@@ -13,18 +14,23 @@ module Lune
         DESCRIPTOR
       end
 
-      @css_var = ""
-      @css_val = ""
+      config do
+        # CSS custom property name that marks an element as a window drag
+        # handle. When non-empty, any element with this property set to a
+        # truthy value can be used to drag the window. Example:
+        # `"--lune-draggable"`. The presence of the property is what
+        # activates — the value itself is ignored beyond being non-empty.
+        property zone : String = ""
+      end
+
       @handle : Pointer(Void) = Pointer(Void).null
 
       def setup(ctx : SetupCtx) : Nil
-        @css_var = ctx.options.drag.zone
-        @css_val = ctx.options.drag.value
         @handle = ctx.handle
       end
 
       def init_webview(ctx : WebviewCtx) : Nil
-        return if @css_var.empty?
+        return if @config.zone.empty?
         {% if flag?(:darwin) %}
           Native::Window.setup_drag_monitor
         {% end %}
@@ -41,7 +47,7 @@ module Lune
       end
 
       def init_js : String?
-        return nil if @css_var.empty?
+        return nil if @config.zone.empty?
         {% if flag?(:darwin) %}
           start_key = "#{binding_namespace.gsub("::", ".")}.start"
           <<-JS
@@ -49,7 +55,7 @@ module Lune
             document.addEventListener('mousedown', function(e) {
               var el = e.target;
               while (el) {
-                if (el.style && el.style.getPropertyValue(#{@css_var.inspect}).trim() === #{@css_val.inspect}) {
+                if (el.style && el.style.getPropertyValue(#{@config.zone.inspect}).trim() !== "") {
                   window[#{start_key.inspect}]();
                   return;
                 }

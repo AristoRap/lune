@@ -127,6 +127,50 @@ module Lune
     def setup(ctx : SetupCtx) : Nil
     end
 
+    # Declares a plugin's typed config. Inside the block, write `property`
+    # declarations as you would in any class. The macro:
+    #
+    #   1. Generates a nested `Config` class with those properties.
+    #   2. Adds `@config : Config = Config.new` and `getter config : Config`
+    #      to the plugin so the plugin reads its own settings off `@config`.
+    #   3. Reopens `Lune::Options` with a typed accessor whose name is the
+    #      plugin's simple class name underscored — `Tray` → `opts.tray`,
+    #      `WindowDrag` → `opts.window_drag`. Both `opts.tray.icon = …` and
+    #      `opts.tray { |t| t.icon = … }` work; both return / yield the
+    #      same `Config` instance that the plugin reads in `setup`.
+    #
+    # The accessor walks `Lune.registered_plugins` at call time, so the plugin
+    # must be registered via `Lune.use(...)` (or via the load-time
+    # `register_builtins!` for first-party plugins) before any `opts.<id>`
+    # access. Direct mutations on the returned config persist on the plugin
+    # instance — `setup(ctx)` later observes whatever the user assigned in
+    # the `Lune.run` block.
+    macro config(&block)
+      class Config
+        {{ block.body }}
+
+        def initialize
+        end
+      end
+
+      @config : Config = Config.new
+      getter config : Config
+
+      {% accessor = @type.name.split("::").last.underscore %}
+
+      class ::Lune::Options
+        def {{ accessor.id }} : {{ @type }}::Config
+          plugin = ::Lune.registered_plugins.find { |p| p.is_a?({{ @type }}) }
+          raise "plugin :{{ accessor.id }} referenced before Lune.use" unless plugin
+          plugin.as({{ @type }}).config
+        end
+
+        def {{ accessor.id }}(& : {{ @type }}::Config ->) : Nil
+          yield {{ accessor.id }}
+        end
+      end
+    end
+
     def configured? : Bool
       false
     end

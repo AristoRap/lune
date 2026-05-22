@@ -48,7 +48,6 @@ export default defineConfig({
             items: [
               { text: 'Clipboard', link: '/plugins/clipboard' },
               { text: 'Context Menu', link: '/plugins/context-menu' },
-              { text: 'Context Menu Blocker', link: '/plugins/context-menu-blocker' },
               { text: 'Deep Link', link: '/plugins/deep-link' },
               { text: 'Dialogs', link: '/plugins/dialogs' },
               { text: 'Drag Out', link: '/plugins/drag-out' },

@@ -9,6 +9,13 @@ module Lune
         DESCRIPTOR
       end
 
+      config do
+        # When true, suppresses the browser's default right-click menu. Replaces
+        # the standalone `ContextMenuBlocker` plugin and the top-level
+        # `opts.disable_context_menu` flag — both removed.
+        property block_default : Bool = false
+      end
+
       @handle : Void* = Pointer(Void).null
 
       def setup(ctx : SetupCtx) : Nil
@@ -26,6 +33,7 @@ module Lune
       def init_js : String?
         bm = BRIDGE_MARKER
         show_key = "#{binding_namespace.gsub("::", ".")}.show"
+        block_line = @config.block_default ? "document.addEventListener('contextmenu',function(e){e.preventDefault();});" : ""
         <<-JS
         (function(){
           window.#{bm} = window.#{bm} || {};
@@ -38,6 +46,7 @@ module Lune
             e.preventDefault();
             window[#{show_key.inspect}](e.clientX, e.clientY, JSON.stringify(_ctx_items));
           });
+          #{block_line}
         })();
         JS
       end

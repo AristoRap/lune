@@ -137,12 +137,13 @@ describe Lune::Plugin do
       plugin.@handle.should eq(sentinel)
     end
 
-    it "Tray picks up event_name from options" do
+    it "Tray reads its config through the opts.tray accessor on the registered instance" do
       plugin = Lune::Plugins::Tray.new
-      opts = Lune::Options.new
-      opts.tray { |t| t.event = "myTrayEvent" }
-      plugin.setup(Lune::Plugin::SetupCtx.new(opts, Pointer(Void).null))
-      plugin.@event_name.should eq("myTrayEvent")
+      Lune.with_plugins(plugin) do
+        opts = Lune::Options.new
+        opts.tray { |t| t.event = "myTrayEvent" }
+        plugin.config.event.should eq("myTrayEvent")
+      end
     end
   end
 end

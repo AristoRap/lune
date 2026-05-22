@@ -401,7 +401,11 @@ describe "Lune::Plugins" do
       app = Lune::App.new
       app.bridge = bridge
       clicked = 0
-      app.install(Lune::Plugins::Tray.new(on_tray_click: -> { clicked += 1; nil }))
+
+      plugin = Lune::Plugins::Tray.new
+      plugin.config.on_click = -> { clicked += 1; nil }
+      plugin.setup(Lune::Plugin::SetupCtx.new(Lune::Options.new, Pointer(Void).null))
+      app.install(plugin)
       bridge.register_bindings(app.bindings)
 
       fake.invoke("Lune.Plugins.Tray.show", "seq-tray-5", [JSON::Any.new("")])
@@ -417,9 +421,8 @@ describe "Lune::Plugins" do
       app.bridge = bridge
 
       plugin = Lune::Plugins::Tray.new
-      opts = Lune::Options.new
-      opts.tray.auto_show = true
-      plugin.setup(Lune::Plugin::SetupCtx.new(opts, Pointer(Void).null))
+      plugin.config.auto_show = true
+      plugin.setup(Lune::Plugin::SetupCtx.new(Lune::Options.new, Pointer(Void).null))
       app.install(plugin)
 
       Lune::Native::TrayMock.calls.should contain(:show)

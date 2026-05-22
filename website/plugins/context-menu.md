@@ -30,6 +30,22 @@ Or omit `plugins:` entirely to enable everything.
 
 ---
 
+## Crystal options
+
+```crystal
+Lune.run(app) do |opts|
+  opts.context_menu.block_default = true
+end
+```
+
+| Option          | Type   | Default | Description                                                                                                                                                                                                                          |
+| --------------- | ------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `block_default` | `Bool` | `false` | When `true`, suppresses the browser's default right-click menu via a single `preventDefault` listener. Useful when you want a blanket block plus a custom native menu in specific places, or just no browser menu and no native one. |
+
+> When you call `lune.ContextMenu.set(...)` from JS, the menu replaces the browser's default automatically — `block_default` is only needed for "no browser menu, no native menu" or "block by default, native only where I `set` it".
+
+---
+
 ## JavaScript API
 
 ```js

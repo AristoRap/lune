@@ -13,14 +13,38 @@ module Lune
         DESCRIPTOR
       end
 
-      def initialize(
-        @event_name : String = "trayEvent",
-        @on_tray_click : (-> Nil)? = nil,
-        @on_right_click : (-> Nil)? = nil,
-        @on_menu_click : (String -> Nil)? = nil,
-      )
-        @toggle_window_on = [] of Symbol
-        @auto_show = false
+      config do
+        # Event name emitted via the event bus on tray icon click and menu item
+        # selection. Defaults to `"trayEvent"`. Ignored when `on_click` /
+        # `on_menu_click` are set explicitly.
+        property event : String = "trayEvent"
+
+        # Optional override: called on left-click of the tray icon. When set,
+        # takes precedence over every default behavior (toggle, menu, emit).
+        property on_click : (-> Nil)? = nil
+
+        # Optional override: called on right-click (or Ctrl-click) of the tray
+        # icon. When set, takes precedence over every default behavior.
+        property on_right_click : (-> Nil)? = nil
+
+        # Optional override: called when a tray context menu item is selected.
+        # Receives the item id. When set, takes precedence over the default
+        # event emission.
+        property on_menu_click : (String -> Nil)? = nil
+
+        # Click directions that toggle the app window (positioned below the
+        # tray icon on macOS). Listed clicks override the menu/emit default;
+        # user `on_click` / `on_right_click` overrides still win.
+        # Valid values: `:left_click`, `:right_click`.
+        property toggle_window_on : Array(Symbol) = [] of Symbol
+
+        # When true, the tray icon is shown automatically at app start without
+        # requiring a JS `lune.Tray.show("")` call. Auto-enabled by
+        # `mac.menubar_mode`.
+        property auto_show : Bool = false
+      end
+
+      def initialize
         @handle = Pointer(Void).null
         @width = 0
         @height = 0
@@ -28,19 +52,13 @@ module Lune
       end
 
       def setup(ctx : SetupCtx) : Nil
-        @event_name = ctx.options.tray.event
-        @on_tray_click = ctx.options.tray.on_click
-        @on_right_click = ctx.options.tray.on_right_click
-        @on_menu_click = ctx.options.tray.on_menu_click
-        @toggle_window_on = ctx.options.tray.toggle_window_on
-        @auto_show = ctx.options.tray.auto_show
         @handle = ctx.handle
         @width = ctx.options.width
         @height = ctx.options.height
       end
 
       def configured? : Bool
-        !@on_tray_click.nil? || !@on_menu_click.nil? || @event_name != "trayEvent"
+        !@config.on_click.nil? || !@config.on_menu_click.nil? || @config.event != "trayEvent"
       end
 
       # Resolve a click handler for one direction. Priority:
@@ -94,7 +112,7 @@ module Lune
       end
 
       private def window_toggle_for(direction : Symbol) : (-> Nil)?
-        return nil unless @toggle_window_on.includes?(direction)
+        return nil unless @config.toggle_window_on.includes?(direction)
         Tray.build_window_toggle(@handle, @width, @height)
       end
 
@@ -102,18 +120,18 @@ module Lune
       # Memoized so multiple show / set_menu calls share the same closures.
       private def on_tray_click_handler : -> Nil
         @on_tray_click_handler ||= Tray.build_click_default(
-          @on_tray_click, @app.events, @event_name, "left_click",
+          @config.on_click, @app.events, @config.event, "left_click",
           window_toggle_for(:left_click), -> { @has_menu })
       end
 
       private def on_right_click_handler : -> Nil
         @on_right_click_handler ||= Tray.build_click_default(
-          @on_right_click, @app.events, @event_name, "right_click",
+          @config.on_right_click, @app.events, @config.event, "right_click",
           window_toggle_for(:right_click), -> { @has_menu })
       end
 
       private def on_menu_click_handler : String -> Nil
-        @on_menu_click_handler ||= @on_menu_click || ->(id : String) { @app.events.emit(@event_name, id); nil }
+        @on_menu_click_handler ||= @config.on_menu_click || ->(id : String) { @app.events.emit(@config.event, id); nil }
       end
 
       # Hook the macro-generated install: run the binding registration, then
@@ -122,7 +140,7 @@ module Lune
       # `Tray.show` binding uses, so behavior is consistent boot vs on-demand.
       def install(app : Lune::App) : Nil
         previous_def
-        if @auto_show
+        if @config.auto_show
           Lune::Native::Tray.show("", on_tray_click_handler)
           Lune::Native::Tray.set_right_click_cb(on_right_click_handler)
         end

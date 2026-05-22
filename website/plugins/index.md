@@ -59,7 +59,6 @@ Two plugins are marked **core**: `events` and `stream`. They are enabled by defa
 | [Stream](./stream)                               | `stream`               | `Stream`        | **Yes** | WebviewInject                     | —         | —         | all                            |
 | [Clipboard](./clipboard)                         | `clipboard`            | `Clipboard`     | No      | Bindable                          | —         | —         | all (image: no Win32)          |
 | [ContextMenu](./context-menu)                    | `context_menu`         | `ContextMenu`   | No      | Bindable · WebviewInject          | `events`  | —         | macOS (Windows/Linux: planned) |
-| [ContextMenuBlocker](./context-menu-blocker)     | `context_menu_blocker` | —               | No      | WebviewInject                     | —         | —         | all                            |
 | [DeepLink](./deep-link)                          | `deep_link`            | `DeepLink`      | No      | Bindable                          | `events`  | —         | macOS · Linux · Windows²       |
 | [Dialogs](./dialogs)                             | `dialogs`              | `Dialogs`       | No      | Bindable                          | —         | —         | all                            |
 | [DragOut](./drag-out)                            | `drag_out`             | `DragOut`       | No      | Bindable                          | —         | —         | macOS                          |
