@@ -92,9 +92,9 @@ Lune.run(app, assets: "frontend/dist") do |opts|
     m.edit_menu
 
     m.submenu "View" do |view| # block style: inline, no state needed
-      view.item("Zoom In") { app.eval("document.body.style.zoom = (Math.round((parseFloat(document.body.style.zoom || '1') + 0.1) * 10) / 10).toString()") }
-      view.item("Zoom Out") { app.eval("document.body.style.zoom = (Math.round((Math.max(0.5, parseFloat(document.body.style.zoom || '1') - 0.1)) * 10) / 10).toString()") }
-      view.item("Actual Size", shortcut: "cmd+0") { app.eval("document.body.style.zoom = '1'") }
+      view.item("Zoom In") { app.events.emit("zoom-in") }
+      view.item("Zoom Out") { app.events.emit("zoom-out") }
+      view.item("Actual Size", shortcut: "cmd+0") { app.events.emit("zoom-reset") }
     end
   end
 end

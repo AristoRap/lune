@@ -38,6 +38,14 @@ onMounted(async () => {
     clockPaused.value = v;
   };
   Events.on("clockPaused", pausedH);
+
+  const setZoom = (z) => {
+    document.body.style.zoom = String(z);
+  };
+  const currentZoom = () => parseFloat(document.body.style.zoom || "1");
+  Events.on("zoom-in", () => setZoom(Math.round((currentZoom() + 0.1) * 10) / 10));
+  Events.on("zoom-out", () => setZoom(Math.round(Math.max(0.5, currentZoom() - 0.1) * 10) / 10));
+  Events.on("zoom-reset", () => setZoom(1));
 });
 </script>
 
