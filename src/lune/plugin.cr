@@ -21,7 +21,7 @@ module Lune
       deps : Array(Symbol) = [] of Symbol,                  # hard: auto-disabled if dep missing
       soft_deps : Array(Symbol) = [] of Symbol,             # optional: degrades gracefully
       core : Bool = false,                                  # true = cannot be excluded via config
-      platforms : Array(Symbol) = [:darwin, :linux, :win32] # OSes where the cap can run; filtered out elsewhere
+      platforms : Array(Symbol) = [:darwin, :linux, :win32] # OSes where the plugin can run; filtered out elsewhere
 
     # -------------------------------------------------------------------------
     # Context structs — passed to each lifecycle phase instead of raw args.
@@ -30,8 +30,9 @@ module Lune
     struct SetupCtx
       getter options : Options
       getter handle : Pointer(Void)
+      getter on_quit : -> Nil
 
-      def initialize(@options : Options, @handle : Pointer(Void))
+      def initialize(@options : Options, @handle : Pointer(Void), @on_quit : -> Nil = -> { })
       end
     end
 

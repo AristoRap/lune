@@ -15,6 +15,7 @@ require "./lune/bus/stream"
 require "./lune/plugin"
 require "./lune/mixins/bindable"
 require "./lune/plugins/*"
+require "./lune/plugins/builtins"
 require "./lune/generator"
 require "./lune/app"
 require "./lune/platform/window_state"
@@ -24,6 +25,49 @@ require "./lune/runner"
 
 module Lune
   VERSION = "0.12.0"
+
+  # Module-level registration so third-party shards can publish plugins the
+  # same way built-ins do: `Lune.use(MyPlugin.new)` before `Lune.run`. The
+  # built-ins themselves call `Lune.use` from `src/lune/plugins/builtins.cr`
+  # at require time, so by the time user code runs the array already holds
+  # them. `Plugins::Registry` consumes this array — no hardcoded list.
+  @@registered_plugins = [] of Lune::Plugin
+  @@registered_ids = Set(Symbol).new
+
+  def self.use(plugin : Lune::Plugin) : Nil
+    id = plugin.descriptor.id
+    if @@registered_ids.includes?(id)
+      raise ArgumentError.new("Plugin #{id.inspect} already registered (descriptor IDs must be unique)")
+    end
+    @@registered_ids << id
+    @@registered_plugins << plugin
+  end
+
+  def self.registered_plugins : Array(Lune::Plugin)
+    @@registered_plugins
+  end
+
+  def self.clear_registered_plugins! : Nil
+    @@registered_plugins.clear
+    @@registered_ids.clear
+  end
+
+  # Snapshot the current registration set, replace it with `plugins` for the
+  # duration of the block, then restore. Spec helper — production code never
+  # needs this. Always restores in `ensure`, including on exceptions.
+  def self.with_plugins(*plugins : Lune::Plugin, &)
+    saved = @@registered_plugins.dup
+    saved_ids = @@registered_ids.dup
+    @@registered_plugins.clear
+    @@registered_ids.clear
+    plugins.each { |p| use(p) }
+    begin
+      yield
+    ensure
+      @@registered_plugins = saved
+      @@registered_ids = saved_ids
+    end
+  end
 
   # Default frontend directory name (matches the lune.yml default).
   DEFAULT_FRONTEND_DIR = "frontend"

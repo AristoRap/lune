@@ -47,9 +47,9 @@ describe Lune::Plugins::Windows do
 
   describe "install" do
     it "registers open, close, and list bindings" do
-      cap = Lune::Plugins::Windows.new
+      plugin = Lune::Plugins::Windows.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       ids = app.bindings.map(&.id)
       ids.should contain("Lune.Plugins.Windows.open")
       ids.should contain("Lune.Plugins.Windows.close")
@@ -57,9 +57,9 @@ describe Lune::Plugins::Windows do
     end
 
     it "list returns empty array when no extra windows are open" do
-      cap = Lune::Plugins::Windows.new
+      plugin = Lune::Plugins::Windows.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       list_b = app.bindings.find { |b| b.id == "Lune.Plugins.Windows.list" }.not_nil!
       result = list_b.callback.call([] of JSON::Any)
       result.as_a.should be_empty
@@ -68,8 +68,8 @@ describe Lune::Plugins::Windows do
 
   describe "shutdown" do
     it "can be called with no windows open" do
-      cap = Lune::Plugins::Windows.new
-      cap.shutdown
+      plugin = Lune::Plugins::Windows.new
+      plugin.shutdown
     end
   end
 
@@ -89,18 +89,18 @@ describe Lune::Plugins::Windows do
 
   describe "runtime.d.ts signatures" do
     it "emits open(...) returning Promise<string>" do
-      cap = Lune::Plugins::Windows.new
+      plugin = Lune::Plugins::Windows.new
       app = Lune::App.new
-      app.install(cap)
-      dts = Lune::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Plugin)
+      app.install(plugin)
+      dts = Lune::Generator.generate_runtime_dts(app.bindings, [plugin] of Lune::Plugin)
       dts.should match(/open\(.+?\):\s*Promise<string>/)
     end
 
     it "emits list() as Promise<string[]>" do
-      cap = Lune::Plugins::Windows.new
+      plugin = Lune::Plugins::Windows.new
       app = Lune::App.new
-      app.install(cap)
-      dts = Lune::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Plugin)
+      app.install(plugin)
+      dts = Lune::Generator.generate_runtime_dts(app.bindings, [plugin] of Lune::Plugin)
       dts.should contain("list(): Promise<string[]>")
     end
   end

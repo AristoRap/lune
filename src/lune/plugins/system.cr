@@ -23,13 +23,18 @@ module Lune
       }
 
       def initialize(
-        @on_quit : -> Nil,
+        @on_quit : -> Nil = -> { },
         @on_open_url : String -> Nil = DEFAULT_OPEN_URL,
         @devtools : Bool = false,
       )
       end
 
+      # Runtime deps arrive via SetupCtx so the plugin can be default-
+      # constructed from `Lune.use(System.new)`. `on_quit` defaults to an
+      # empty proc so direct construction in specs works without going
+      # through `Registry`.
       def setup(ctx : SetupCtx) : Nil
+        @on_quit = ctx.on_quit
         @devtools = ctx.options.devtools
       end
 

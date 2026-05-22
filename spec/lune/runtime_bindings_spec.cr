@@ -416,11 +416,11 @@ describe "Lune::Plugins" do
       app = Lune::App.new
       app.bridge = bridge
 
-      cap = Lune::Plugins::Tray.new
+      plugin = Lune::Plugins::Tray.new
       opts = Lune::Options.new
       opts.tray.auto_show = true
-      cap.setup(Lune::Plugin::SetupCtx.new(opts, Pointer(Void).null))
-      app.install(cap)
+      plugin.setup(Lune::Plugin::SetupCtx.new(opts, Pointer(Void).null))
+      app.install(plugin)
 
       Lune::Native::TrayMock.calls.should contain(:show)
     end
@@ -429,9 +429,9 @@ describe "Lune::Plugins" do
       fake, bridge = make_bridge
       app = Lune::App.new
 
-      cap = Lune::Plugins::Tray.new
-      cap.setup(Lune::Plugin::SetupCtx.new(Lune::Options.new, Pointer(Void).null))
-      app.install(cap)
+      plugin = Lune::Plugins::Tray.new
+      plugin.setup(Lune::Plugin::SetupCtx.new(Lune::Options.new, Pointer(Void).null))
+      app.install(plugin)
 
       Lune::Native::TrayMock.calls.should_not contain(:show)
     end
@@ -459,7 +459,7 @@ describe "Lune::Plugins" do
   describe "Registry" do
     it "registers all cross-platform plugin bindings" do
       app = Lune::App.new
-      Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |cap| app.install(cap) }
+      Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |plugin| app.install(plugin) }
 
       ids = app.bindings.map(&.id)
 
@@ -486,7 +486,7 @@ describe "Lune::Plugins" do
 
     it "registers platform-gated bindings only on supported platforms" do
       app = Lune::App.new
-      Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |cap| app.install(cap) }
+      Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |plugin| app.install(plugin) }
       ids = app.bindings.map(&.id)
 
       case Lune::Plugins::CURRENT_PLATFORM
@@ -516,14 +516,14 @@ describe "Lune::Plugins" do
 
     it "marks every plugin binding as internal" do
       app = Lune::App.new
-      Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |cap| app.install(cap) }
+      Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |plugin| app.install(plugin) }
 
       app.bindings.all?(&.internal?).should be_true
     end
 
     it "registers the correct number of bindings for the current platform" do
       app = Lune::App.new
-      Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |cap| app.install(cap) }
+      Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |plugin| app.install(plugin) }
 
       # Per-platform totals — bump these when you add/remove a binding on any
       # plugin. Decreases when a plugin is platform-gated out.
@@ -552,16 +552,16 @@ describe "Lune::Plugins" do
 
     it "includes a plugin when its name is in the include list" do
       registry = Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigPlugins.new(enabled: ["system"])
-      active = registry.active(caps)
+      plugins = Lune::ConfigPlugins.new(enabled: ["system"])
+      active = registry.active(plugins)
       active.map(&.name).should contain("system")
       active.size.should eq(1)
     end
 
     it "does not match binding names — only plugin names are valid" do
       registry = Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigPlugins.new(enabled: ["quit"])
-      active = registry.active(caps)
+      plugins = Lune::ConfigPlugins.new(enabled: ["quit"])
+      active = registry.active(plugins)
       active.should be_empty
     end
 
@@ -573,56 +573,56 @@ describe "Lune::Plugins" do
 
     it "silently ignores nonexistent plugin names in include" do
       registry = Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigPlugins.new(enabled: ["system", "nonexistent"])
-      active = registry.active(caps)
+      plugins = Lune::ConfigPlugins.new(enabled: ["system", "nonexistent"])
+      active = registry.active(plugins)
       active.map(&.name).should eq(["system"])
     end
 
     it "excludes a plugin by plugin name" do
       registry = Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigPlugins.new(disabled: ["clipboard"])
-      active = registry.active(caps)
+      plugins = Lune::ConfigPlugins.new(disabled: ["clipboard"])
+      active = registry.active(plugins)
       active.map(&.name).should_not contain("clipboard")
       active.map(&.name).should contain("system")
     end
 
     it "does not match binding names in exclude — only plugin names" do
       registry = Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigPlugins.new(disabled: ["clipboardRead"])
-      active = registry.active(caps)
+      plugins = Lune::ConfigPlugins.new(disabled: ["clipboardRead"])
+      active = registry.active(plugins)
       active.map(&.name).should contain("clipboard")
     end
 
     it "applies include before exclude" do
       registry = Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigPlugins.new(enabled: ["system", "clipboard"], disabled: ["clipboard"])
-      active = registry.active(caps)
+      plugins = Lune::ConfigPlugins.new(enabled: ["system", "clipboard"], disabled: ["clipboard"])
+      active = registry.active(plugins)
       active.map(&.name).should contain("system")
       active.map(&.name).should_not contain("clipboard")
     end
 
     it "treats include [\"*\"] as all plugins" do
       registry = Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigPlugins.new(enabled: ["*"])
-      registry.active(caps).size.should eq(registry.all.size)
+      plugins = Lune::ConfigPlugins.new(enabled: ["*"])
+      registry.active(plugins).size.should eq(registry.all.size)
     end
 
     it "treats include [\"all\"] as all plugins" do
       registry = Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigPlugins.new(enabled: ["all"])
-      registry.active(caps).size.should eq(registry.all.size)
+      plugins = Lune::ConfigPlugins.new(enabled: ["all"])
+      registry.active(plugins).size.should eq(registry.all.size)
     end
 
     it "treats exclude [\"*\"] as no plugins" do
       registry = Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigPlugins.new(disabled: ["*"])
-      registry.active(caps).should be_empty
+      plugins = Lune::ConfigPlugins.new(disabled: ["*"])
+      registry.active(plugins).should be_empty
     end
 
     it "includes core plugins by name even when they have no bindings" do
       registry = Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigPlugins.new(enabled: ["events"])
-      active = registry.active(caps)
+      plugins = Lune::ConfigPlugins.new(enabled: ["events"])
+      active = registry.active(plugins)
       active.map(&.name).should contain("events")
     end
   end

@@ -43,9 +43,9 @@ describe Lune::Plugins::FileWatch do
 
   describe "install" do
     it "registers watch and unwatch bindings" do
-      cap = Lune::Plugins::FileWatch.new
+      plugin = Lune::Plugins::FileWatch.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       ids = app.bindings.map(&.id)
       ids.should contain("Lune.Plugins.FileWatch.watch")
       ids.should contain("Lune.Plugins.FileWatch.unwatch")

@@ -20,10 +20,10 @@ module Lune
         ctx = Lune::Plugin::WebviewCtx.new(wv, handle, app, ids)
         bm = Lune::Plugin::BRIDGE_MARKER
 
-        @plugins.each do |cap|
-          wv.init("window[#{cap.sentinel_key.inspect}] = true;")
-          cap.init_webview(ctx) if cap.is_a?(Lune::Plugin::WebviewInject)
-          if js = cap.init_js
+        @plugins.each do |plugin|
+          wv.init("window[#{plugin.sentinel_key.inspect}] = true;")
+          plugin.init_webview(ctx) if plugin.is_a?(Lune::Plugin::WebviewInject)
+          if js = plugin.init_js
             wv.init(js)
           end
         end
@@ -68,45 +68,24 @@ module Lune
         options : Lune::Options,
         on_quit : -> Nil = -> { },
       )
-        all_caps = [
-          Plugins::Events.new,
-          Plugins::Stream.new,
-          Plugins::FileDrop.new,
-          Plugins::System.new(on_quit),
-          Plugins::Filesystem.new,
-          Plugins::Clipboard.new,
-          Plugins::Window.new,
-          Plugins::Dialogs.new,
-          Plugins::Tray.new,
-          Plugins::Notifications.new,
-          Plugins::Screen.new,
-          Plugins::ContextMenu.new,
-          Plugins::DragOut.new,
-          Plugins::DeepLink.new,
-          Plugins::FileWatch.new,
-          Plugins::Shell.new,
-          Plugins::Hotkeys.new,
-          Plugins::Sqlite.new,
-          Plugins::Kv.new,
-          Plugins::Windows.new,
-          Plugins::EditShortcuts.new,
-          Plugins::Navigation.new,
-          Plugins::WindowDrag.new,
-          Plugins::ContextMenuBlocker.new,
-        ] of Lune::Plugin
+        # Registry consumes whatever's registered via `Lune.use` — built-ins
+        # call `use` from `src/lune/plugins/builtins.cr` at require time, so
+        # by the time we get here they're already in the array (alongside any
+        # third-party plugins user code registered before `Lune.run`).
+        all_plugins = Lune.registered_plugins
 
-        # Names of every cap regardless of platform — used by validate() to
+        # Names of every plugin regardless of platform — used by validate() to
         # distinguish a typo ("unknown") from a platform skip ("known but n/a").
-        @known_names = Set(String).new(all_caps.map(&.name))
+        @known_names = Set(String).new(all_plugins.map(&.name))
 
         # @all is the platform-available subset. Single source of truth for what
         # can actually run here. Caps filtered out at this step never get setup
         # and never participate in resolve / generator output.
-        @all = all_caps.select { |cap| cap.descriptor.platforms.includes?(CURRENT_PLATFORM) }
-        @platform_filtered = all_caps - @all
+        @all = all_plugins.select { |plugin| plugin.descriptor.platforms.includes?(CURRENT_PLATFORM) }
+        @platform_filtered = all_plugins - @all
 
-        setup_ctx = Lune::Plugin::SetupCtx.new(options, handle)
-        @all.each { |cap| cap.setup(setup_ctx) }
+        setup_ctx = Lune::Plugin::SetupCtx.new(options, handle, on_quit)
+        @all.each { |plugin| plugin.setup(setup_ctx) }
       end
 
       def platform_filtered : Array(Lune::Plugin)
@@ -122,10 +101,10 @@ module Lune
       def resolve(config : ConfigPlugins) : ResolvedSet
         warnings = [] of String
 
-        # If the user explicitly listed caps via `enabled:` and any of those are
+        # If the user explicitly listed plugins via `enabled:` and any of those are
         # known plugins that simply don't run on this platform, log it as
         # info — they asked for it, we owe them an ack that it was skipped.
-        # Default-enabled caps are silently filtered (no noise for lune.yml
+        # Default-enabled plugins are silently filtered (no noise for lune.yml
         # files shared across platforms).
         if (req = config.enabled) && !req.empty? && !req.any? { |s| WILDCARD.includes?(s) }
           available_names = Set(String).new(@all.map(&.name))
@@ -144,11 +123,11 @@ module Lune
         changed = true
         while changed
           changed = false
-          active.reject! do |cap|
-            missing = cap.descriptor.deps.find { |dep| !active_ids.includes?(dep) }
+          active.reject! do |plugin|
+            missing = plugin.descriptor.deps.find { |dep| !active_ids.includes?(dep) }
             if missing
-              warnings << "#{cap.descriptor.label} disabled — requires #{missing} (not active)"
-              active_ids.delete(cap.descriptor.id)
+              warnings << "#{plugin.descriptor.label} disabled — requires #{missing} (not active)"
+              active_ids.delete(plugin.descriptor.id)
               changed = true
               true
             else
@@ -158,10 +137,10 @@ module Lune
         end
 
         # Step 3: soft dep warnings (plugin stays active but dep is absent)
-        active.each do |cap|
-          cap.descriptor.soft_deps.each do |dep|
+        active.each do |plugin|
+          plugin.descriptor.soft_deps.each do |dep|
             unless active_ids.includes?(dep)
-              warnings << "#{cap.descriptor.label} — soft dependency #{dep} is not active"
+              warnings << "#{plugin.descriptor.label} — soft dependency #{dep} is not active"
             end
           end
         end
@@ -193,7 +172,7 @@ module Lune
         apply_config(@all, config)
       end
 
-      # Validate → resolve → log warnings → install BindPhase caps into `target`.
+      # Validate → resolve → log warnings → install BindPhase plugins into `target`.
       # Both the runtime path and build-mode path do this exact sequence; keep
       # them in lockstep so a new step (e.g. another phase) lands in one place.
       def validate_resolve_install(config : ConfigPlugins, target : Lune::App) : ResolvedSet
@@ -204,34 +183,34 @@ module Lune
         resolved
       end
 
-      private def apply_config(caps : Array(Lune::Plugin), config : ConfigPlugins) : Array(Lune::Plugin)
+      private def apply_config(plugins : Array(Lune::Plugin), config : ConfigPlugins) : Array(Lune::Plugin)
         en = config.enabled
         di = config.disabled
 
         result = if en && !en.empty? && !en.any? { |s| WILDCARD.includes?(s) }
-                   caps.select { |cap| en.includes?(cap.name) }
+                   plugins.select { |plugin| en.includes?(plugin.name) }
                  else
-                   caps.dup
+                   plugins.dup
                  end
 
         if di && !di.empty?
           if di.any? { |s| WILDCARD.includes?(s) }
             result = [] of Lune::Plugin
           else
-            result = result.reject { |cap| di.includes?(cap.name) }
+            result = result.reject { |plugin| di.includes?(plugin.name) }
           end
         end
 
         result
       end
 
-      private def topological_sort(caps : Array(Lune::Plugin)) : Array(Lune::Plugin)
-        id_to_cap = caps.each_with_object({} of Symbol => Lune::Plugin) do |cap, h|
-          h[cap.descriptor.id] = cap
+      private def topological_sort(plugins : Array(Lune::Plugin)) : Array(Lune::Plugin)
+        id_to_cap = plugins.each_with_object({} of Symbol => Lune::Plugin) do |plugin, h|
+          h[plugin.descriptor.id] = plugin
         end
         visited = Set(Symbol).new
         sorted = [] of Lune::Plugin
-        caps.each { |cap| topo_visit(cap.descriptor.id, id_to_cap, visited, sorted) }
+        plugins.each { |plugin| topo_visit(plugin.descriptor.id, id_to_cap, visited, sorted) }
 
         sorted
       end
@@ -239,10 +218,10 @@ module Lune
       private def topo_visit(id : Symbol, index : Hash(Symbol, Lune::Plugin), visited : Set(Symbol), result : Array(Lune::Plugin)) : Nil
         return if visited.includes?(id)
         visited << id
-        cap = index[id]?
-        return unless cap
-        cap.descriptor.deps.each { |dep| topo_visit(dep, index, visited, result) }
-        result << cap
+        plugin = index[id]?
+        return unless plugin
+        plugin.descriptor.deps.each { |dep| topo_visit(dep, index, visited, result) }
+        result << plugin
       end
     end
   end

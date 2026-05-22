@@ -11,6 +11,8 @@
 
 ### Added
 
+- **`Lune.use(plugin)` — public registration entry point.** Third-party shards publish a `class MyPlugin < Lune::Plugin` and the consuming app calls `Lune.use(MyPlugin.new)` before `Lune.run`. Built-ins go through the same path: `src/lune/plugins/builtins.cr` calls `Lune.use(Events.new)`, `Lune.use(Tray.new)`, … at require time, so by the time `Lune.run` fires the registry holds first-party and third-party plugins side by side. `Lune.registered_plugins` exposes the list; `Lune.with_plugins(*ps) { … }` is a spec helper that snapshots / replaces / restores the registry around a block. `Plugins::Registry#initialize` consumes `Lune.registered_plugins` instead of a hardcoded array. Descriptor `id` uniqueness is checked at `use` time — duplicate registration raises `ArgumentError`.
+- **`Plugin::SetupCtx#on_quit`** lets plugins receive the runtime quit callback through the same context object that already carried `options` and `handle`, replacing the bespoke `Plugins::System.new(on_quit)` constructor argument. Every built-in is now default-constructible (`Plugins::System.new`, `Plugins::Tray.new`, …) which is the precondition for `Lune.use(X.new)` and for the Phase 4 config DSL.
 - **Four runtime behaviors are now disable-able via `lune.yml`** — `edit_shortcuts` (cmd/ctrl+A/C/V/X/Z/Y → execCommand), `navigation` (drives `opts.on_navigate`), `window_drag` (darwin-only, wires `opts.drag.zone`), `context_menu_blocker` (gates `opts.disable_context_menu`). Previously injected unconditionally from the runner; now first-class plugins you can opt out of via `plugins.disabled`.
 
 ### Changed

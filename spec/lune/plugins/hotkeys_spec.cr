@@ -55,27 +55,27 @@ describe Lune::Plugins::Hotkeys do
 
   describe "install" do
     it "registers register and unregister bindings" do
-      cap = Lune::Plugins::Hotkeys.new
+      plugin = Lune::Plugins::Hotkeys.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       ids = app.bindings.map(&.id)
       ids.should contain("Lune.Plugins.Hotkeys.register")
       ids.should contain("Lune.Plugins.Hotkeys.unregister")
     end
 
     it "sets up the native hotkey callback without raising" do
-      cap = Lune::Plugins::Hotkeys.new
+      plugin = Lune::Plugins::Hotkeys.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       Lune::Native::HotkeysMock.simulate("Ctrl+K")
     end
 
     it "emits a hotkey event to the frontend when a hotkey fires" do
       fake, bridge = make_hotkeys_bridge
-      cap = Lune::Plugins::Hotkeys.new
+      plugin = Lune::Plugins::Hotkeys.new
       app = Lune::App.new
       app.bridge = bridge
-      app.install(cap)
+      app.install(plugin)
 
       before = fake.dispatch_count
       Lune::Native::HotkeysMock.simulate("Ctrl+Shift+Space")
@@ -83,23 +83,23 @@ describe Lune::Plugins::Hotkeys do
     end
 
     it "does not emit when no bridge is set" do
-      cap = Lune::Plugins::Hotkeys.new
+      plugin = Lune::Plugins::Hotkeys.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       Lune::Native::HotkeysMock.simulate("Ctrl+K")
     end
   end
 
   describe "js_helpers" do
     it "exposes register and unregister via bindings (not duplicated in helpers)" do
-      cap = Lune::Plugins::Hotkeys.new
+      plugin = Lune::Plugins::Hotkeys.new
       app = Lune::App.new
-      app.install(cap)
-      js = Lune::Generator.generate_runtime_js(app.bindings, [cap] of Lune::Plugin)
+      app.install(plugin)
+      js = Lune::Generator.generate_runtime_js(app.bindings, [plugin] of Lune::Plugin)
       js.scan(/\bregister\(accelerator\)/).size.should eq(1)
       js.scan(/\bunregister\(accelerator\)/).size.should eq(1)
-      cap.js_helpers.should_not contain("register(")
-      cap.js_helpers.should_not contain("unregister(")
+      plugin.js_helpers.should_not contain("register(")
+      plugin.js_helpers.should_not contain("unregister(")
     end
 
     it "exposes on, once, and off" do
@@ -112,21 +112,21 @@ describe Lune::Plugins::Hotkeys do
 
   describe "dts_helpers" do
     it "declares register and unregister via bindings (not duplicated in helpers)" do
-      cap = Lune::Plugins::Hotkeys.new
+      plugin = Lune::Plugins::Hotkeys.new
       app = Lune::App.new
-      app.install(cap)
-      dts = Lune::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Plugin)
+      app.install(plugin)
+      dts = Lune::Generator.generate_runtime_dts(app.bindings, [plugin] of Lune::Plugin)
       dts.scan(/\bregister\(accelerator: string\)/).size.should eq(1)
       dts.scan(/\bunregister\(accelerator: string\)/).size.should eq(1)
-      cap.dts_helpers.should_not contain("register(")
-      cap.dts_helpers.should_not contain("unregister(")
+      plugin.dts_helpers.should_not contain("register(")
+      plugin.dts_helpers.should_not contain("unregister(")
     end
 
     it "includes Promise<void> return types in the generated runtime" do
-      cap = Lune::Plugins::Hotkeys.new
+      plugin = Lune::Plugins::Hotkeys.new
       app = Lune::App.new
-      app.install(cap)
-      dts = Lune::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Plugin)
+      app.install(plugin)
+      dts = Lune::Generator.generate_runtime_dts(app.bindings, [plugin] of Lune::Plugin)
       dts.should contain("Promise<void>")
     end
 
@@ -140,11 +140,11 @@ describe Lune::Plugins::Hotkeys do
 
   describe "shutdown" do
     it "unregisters all hotkeys" do
-      cap = Lune::Plugins::Hotkeys.new
+      plugin = Lune::Plugins::Hotkeys.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       Lune::Native::Hotkeys.register("Ctrl+K")
-      cap.shutdown
+      plugin.shutdown
       Lune::Native::HotkeysMock.registered.should be_empty
     end
   end

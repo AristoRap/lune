@@ -3,23 +3,23 @@ require "file_utils"
 
 private def runtime_bindings
   app = Lune::App.new
-  Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |cap| app.install(cap) }
+  Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |plugin| app.install(plugin) }
   app.bindings.select(&.internal?)
 end
 
-private def events_caps
+private def events_plugins
   [Lune::Plugins::Events.new] of Lune::Plugin
 end
 
-private def drag_out_caps
+private def drag_out_plugins
   [Lune::Plugins::DragOut.new] of Lune::Plugin
 end
 
 private def drag_out_setup
-  cap = Lune::Plugins::DragOut.new
+  plugin = Lune::Plugins::DragOut.new
   app = Lune::App.new
-  app.install(cap)
-  {app.bindings, [cap] of Lune::Plugin}
+  app.install(plugin)
+  {app.bindings, [plugin] of Lune::Plugin}
 end
 
 describe Lune::Generator do
@@ -53,7 +53,7 @@ describe Lune::Generator do
   end
 
   it "exports Events namespace with on, once, off helpers" do
-    js = Lune::Generator.generate_runtime_js([] of Lune::Binding, events_caps)
+    js = Lune::Generator.generate_runtime_js([] of Lune::Binding, events_plugins)
 
     js.includes?("export const Lune").should be_true
     js.includes?("Events:").should be_true
@@ -66,11 +66,11 @@ describe Lune::Generator do
 
   it "exports emit as a regular @[Bind] method on Events" do
     # emit moved from js_helpers into a real binding (Events.emit). Plugin
-    # bindings are passed explicitly to the generator alongside the cap.
+    # bindings are passed explicitly to the generator alongside the plugin.
     events = Lune::Plugins::Events.new
     app = Lune::App.new
     app.install(events)
-    js = Lune::Generator.generate_runtime_js(app.bindings.select(&.internal?), events_caps)
+    js = Lune::Generator.generate_runtime_js(app.bindings.select(&.internal?), events_plugins)
 
     js.includes?("emit(name, data)").should be_true
     js.includes?(%("Lune.Plugins.Events.emit")).should be_true
@@ -80,7 +80,7 @@ describe Lune::Generator do
     events = Lune::Plugins::Events.new
     app = Lune::App.new
     app.install(events)
-    dts = Lune::Generator.generate_runtime_dts(app.bindings.select(&.internal?), events_caps)
+    dts = Lune::Generator.generate_runtime_dts(app.bindings.select(&.internal?), events_plugins)
 
     dts.includes?("emit(name: string").should be_true
   end
@@ -99,7 +99,7 @@ describe Lune::Generator do
   end
 
   it "generates runtime.d.ts with typed namespace interfaces" do
-    dts = Lune::Generator.generate_runtime_dts(runtime_bindings, events_caps)
+    dts = Lune::Generator.generate_runtime_dts(runtime_bindings, events_plugins)
 
     dts.includes?("LuneEnvironment").should be_true
     dts.includes?("export declare const Lune").should be_true
@@ -114,8 +114,8 @@ describe Lune::Generator do
   end
 
   it "exports DragOut namespace with start binding (paths JSON-stringified)" do
-    bindings, caps = drag_out_setup
-    js = Lune::Generator.generate_runtime_js(bindings, caps)
+    bindings, plugins = drag_out_setup
+    js = Lune::Generator.generate_runtime_js(bindings, plugins)
 
     js.includes?("export const Lune").should be_true
     js.includes?("DragOut:").should be_true
@@ -125,8 +125,8 @@ describe Lune::Generator do
   end
 
   it "declares DragOut interface in runtime.d.ts" do
-    bindings, caps = drag_out_setup
-    dts = Lune::Generator.generate_runtime_dts(bindings, caps)
+    bindings, plugins = drag_out_setup
+    dts = Lune::Generator.generate_runtime_dts(bindings, plugins)
 
     dts.includes?("DragOut: {").should be_true
     dts.includes?("start(paths: string[])").should be_true
@@ -159,12 +159,12 @@ describe Lune::Generator do
     end
 
     it "does not duplicate a namespace when both live and unavailable lists name it" do
-      # Belt-and-braces: if someone accidentally passes the same cap in both
+      # Belt-and-braces: if someone accidentally passes the same plugin in both
       # buckets, the live block wins and the stub is dropped.
-      bindings, caps = drag_out_setup
+      bindings, plugins = drag_out_setup
       js = Lune::Generator.generate_runtime_js(
         bindings,
-        caps,
+        plugins,
         [Lune::Plugins::DragOut.new] of Lune::Plugin,
       )
       js.scan(/DragOut: \{/).size.should eq(1)

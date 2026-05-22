@@ -25,9 +25,9 @@ module Lune
     def self.generate_runtime_js(
       bindings : Array(Lune::Binding),
       plugins : Array(Lune::Plugin) = [] of Lune::Plugin,
-      unavailable_caps : Array(Lune::Plugin) = [] of Lune::Plugin,
+      unavailable_plugins : Array(Lune::Plugin) = [] of Lune::Plugin,
     ) : String
-      tree = build_tree(bindings, plugins, unavailable_caps,
+      tree = build_tree(bindings, plugins, unavailable_plugins,
         helper_fn: ->(p : Lune::Plugin) { p.js_helpers },
         unavailable_fn: ->(p : Lune::Plugin) { p.unavailable_js_stub(Lune::Plugins::CURRENT_PLATFORM) })
       hash = tree.as(Hash)
@@ -63,9 +63,9 @@ module Lune
     def self.generate_runtime_dts(
       bindings : Array(Lune::Binding),
       plugins : Array(Lune::Plugin) = [] of Lune::Plugin,
-      unavailable_caps : Array(Lune::Plugin) = [] of Lune::Plugin,
+      unavailable_plugins : Array(Lune::Plugin) = [] of Lune::Plugin,
     ) : String
-      tree = build_tree(bindings, plugins, unavailable_caps, dts: true,
+      tree = build_tree(bindings, plugins, unavailable_plugins, dts: true,
         helper_fn: ->(p : Lune::Plugin) { p.dts_helpers },
         unavailable_fn: ->(p : Lune::Plugin) { p.unavailable_dts_stub })
       hash = tree.as(Hash)
@@ -265,7 +265,7 @@ module Lune
       bindings : Array(Binding),
       lunejs_dir : String,
       plugins : Array(Lune::Plugin) = [] of Lune::Plugin,
-      unavailable_caps : Array(Lune::Plugin) = [] of Lune::Plugin,
+      unavailable_plugins : Array(Lune::Plugin) = [] of Lune::Plugin,
     ) : Nil
       user_bindings = bindings.reject(&.internal?)
       runtime_bindings = bindings.select(&.internal?)
@@ -278,8 +278,8 @@ module Lune
       FileUtils.mkdir_p(File.dirname(app_path))
       FileUtils.mkdir_p(File.dirname(runtime_path))
 
-      runtime_changed = write_if_changed(runtime_path, generate_runtime_js(runtime_bindings, plugins, unavailable_caps))
-      write_if_changed(runtime_dts_path, generate_runtime_dts(runtime_bindings, plugins, unavailable_caps))
+      runtime_changed = write_if_changed(runtime_path, generate_runtime_js(runtime_bindings, plugins, unavailable_plugins))
+      write_if_changed(runtime_dts_path, generate_runtime_dts(runtime_bindings, plugins, unavailable_plugins))
 
       app_changed = write_if_changed(app_path, generate_app_js(user_bindings))
       write_if_changed(app_dts_path, generate_app_dts(user_bindings))

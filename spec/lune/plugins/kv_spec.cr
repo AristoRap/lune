@@ -43,9 +43,9 @@ describe Lune::Plugins::Kv do
 
   describe "install" do
     it "registers get, set, delete, has, keys, and clear bindings" do
-      cap = Lune::Plugins::Kv.new
+      plugin = Lune::Plugins::Kv.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       ids = app.bindings.map(&.id)
       ids.should contain("Lune.Plugins.Kv.get")
       ids.should contain("Lune.Plugins.Kv.set")
@@ -56,18 +56,18 @@ describe Lune::Plugins::Kv do
     end
 
     it "get returns nil for unknown key" do
-      cap = Lune::Plugins::Kv.new
+      plugin = Lune::Plugins::Kv.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       get_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.get" }.not_nil!
       result = get_b.callback.call([JSON::Any.new("missing")])
       result.raw.should be_nil
     end
 
     it "set then get returns the stored value" do
-      cap = Lune::Plugins::Kv.new
+      plugin = Lune::Plugins::Kv.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       set_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.set" }.not_nil!
       get_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.get" }.not_nil!
       set_b.callback.call([JSON::Any.new("name"), JSON::Any.new("alice")])
@@ -76,9 +76,9 @@ describe Lune::Plugins::Kv do
     end
 
     it "set accepts non-string values" do
-      cap = Lune::Plugins::Kv.new
+      plugin = Lune::Plugins::Kv.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       set_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.set" }.not_nil!
       get_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.get" }.not_nil!
       set_b.callback.call([JSON::Any.new("count"), JSON::Any.new(42_i64)])
@@ -87,17 +87,17 @@ describe Lune::Plugins::Kv do
     end
 
     it "has returns false for missing key" do
-      cap = Lune::Plugins::Kv.new
+      plugin = Lune::Plugins::Kv.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       has_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.has" }.not_nil!
       has_b.callback.call([JSON::Any.new("nope")]).as_bool.should be_false
     end
 
     it "has returns true after set" do
-      cap = Lune::Plugins::Kv.new
+      plugin = Lune::Plugins::Kv.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       set_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.set" }.not_nil!
       has_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.has" }.not_nil!
       set_b.callback.call([JSON::Any.new("x"), JSON::Any.new("y")])
@@ -105,9 +105,9 @@ describe Lune::Plugins::Kv do
     end
 
     it "keys returns all set keys" do
-      cap = Lune::Plugins::Kv.new
+      plugin = Lune::Plugins::Kv.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       set_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.set" }.not_nil!
       keys_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.keys" }.not_nil!
       set_b.callback.call([JSON::Any.new("a"), JSON::Any.new("1")])
@@ -118,9 +118,9 @@ describe Lune::Plugins::Kv do
     end
 
     it "delete removes a key" do
-      cap = Lune::Plugins::Kv.new
+      plugin = Lune::Plugins::Kv.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       set_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.set" }.not_nil!
       del_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.delete" }.not_nil!
       has_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.has" }.not_nil!
@@ -130,9 +130,9 @@ describe Lune::Plugins::Kv do
     end
 
     it "clear empties the store" do
-      cap = Lune::Plugins::Kv.new
+      plugin = Lune::Plugins::Kv.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       set_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.set" }.not_nil!
       clear_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.clear" }.not_nil!
       keys_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.keys" }.not_nil!
@@ -159,18 +159,18 @@ describe Lune::Plugins::Kv do
 
   describe "runtime.d.ts signatures" do
     it "emits keys() as Promise<string[]>" do
-      cap = Lune::Plugins::Kv.new
+      plugin = Lune::Plugins::Kv.new
       app = Lune::App.new
-      app.install(cap)
-      dts = Lune::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Plugin)
+      app.install(plugin)
+      dts = Lune::Generator.generate_runtime_dts(app.bindings, [plugin] of Lune::Plugin)
       dts.should contain("keys(): Promise<string[]>")
     end
 
     it "emits has(key) as Promise<boolean>" do
-      cap = Lune::Plugins::Kv.new
+      plugin = Lune::Plugins::Kv.new
       app = Lune::App.new
-      app.install(cap)
-      dts = Lune::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Plugin)
+      app.install(plugin)
+      dts = Lune::Generator.generate_runtime_dts(app.bindings, [plugin] of Lune::Plugin)
       dts.should contain("has(key: string): Promise<boolean>")
     end
   end

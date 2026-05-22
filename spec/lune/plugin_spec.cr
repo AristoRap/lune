@@ -76,9 +76,9 @@ describe Lune::Plugin do
     end
 
     it "ContextMenu includes Bindable and exposes init_js" do
-      cap = Lune::Plugins::ContextMenu.new
-      cap.is_a?(Lune::Bindable).should be_true
-      cap.init_js.should_not be_nil
+      plugin = Lune::Plugins::ContextMenu.new
+      plugin.is_a?(Lune::Bindable).should be_true
+      plugin.init_js.should_not be_nil
     end
   end
 
@@ -131,18 +131,18 @@ describe Lune::Plugin do
     end
 
     it "Window picks up handle from setup" do
-      cap = Lune::Plugins::Window.new
+      plugin = Lune::Plugins::Window.new
       sentinel = Pointer(Void).new(0xdeadbeef_u64)
-      cap.setup(Lune::Plugin::SetupCtx.new(Lune::Options.new, sentinel))
-      cap.@handle.should eq(sentinel)
+      plugin.setup(Lune::Plugin::SetupCtx.new(Lune::Options.new, sentinel))
+      plugin.@handle.should eq(sentinel)
     end
 
     it "Tray picks up event_name from options" do
-      cap = Lune::Plugins::Tray.new
+      plugin = Lune::Plugins::Tray.new
       opts = Lune::Options.new
       opts.tray { |t| t.event = "myTrayEvent" }
-      cap.setup(Lune::Plugin::SetupCtx.new(opts, Pointer(Void).null))
-      cap.@event_name.should eq("myTrayEvent")
+      plugin.setup(Lune::Plugin::SetupCtx.new(opts, Pointer(Void).null))
+      plugin.@event_name.should eq("myTrayEvent")
     end
   end
 end
@@ -194,7 +194,7 @@ describe Lune::Plugins::Registry do
 
     it "emits a warning for each cascade-disabled plugin" do
       resolved = make_registry.resolve(config_disabled("events"))
-      # Use caps that are present on every platform (default platforms list)
+      # Use plugins that are present on every platform (default platforms list)
       # so the cascade-disable step actually runs on them. FileDrop / FileWatch
       # are platform-filtered out on Win32 before the cascade step, so they
       # never produce a cascade warning there.
@@ -283,10 +283,10 @@ describe Lune::Plugins::Registry do
       Lune::Plugins::Tray.new.descriptor.platforms.should eq([:darwin, :linux, :win32])
     end
 
-    it "drops platform-unsupported caps from registry.all" do
+    it "drops platform-unsupported plugins from registry.all" do
       r = make_registry
-      r.all.each do |cap|
-        cap.descriptor.platforms.should contain(Lune::Plugins::CURRENT_PLATFORM)
+      r.all.each do |plugin|
+        plugin.descriptor.platforms.should contain(Lune::Plugins::CURRENT_PLATFORM)
       end
     end
 

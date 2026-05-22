@@ -43,9 +43,9 @@ describe Lune::Plugins::Sqlite do
 
   describe "install" do
     it "registers open, close, exec, and query bindings" do
-      cap = Lune::Plugins::Sqlite.new
+      plugin = Lune::Plugins::Sqlite.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       ids = app.bindings.map(&.id)
       ids.should contain("Lune.Plugins.Sqlite.open")
       ids.should contain("Lune.Plugins.Sqlite.close")
@@ -54,18 +54,18 @@ describe Lune::Plugins::Sqlite do
     end
 
     it "open returns a 16-char hex db id for :memory:" do
-      cap = Lune::Plugins::Sqlite.new
+      plugin = Lune::Plugins::Sqlite.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.open" }.not_nil!
       result = b.callback.call([JSON::Any.new(":memory:")])
       result.as_s.size.should eq(16)
     end
 
     it "close on a valid db_id returns nil" do
-      cap = Lune::Plugins::Sqlite.new
+      plugin = Lune::Plugins::Sqlite.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       open_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.open" }.not_nil!
       close_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.close" }.not_nil!
       id = open_b.callback.call([JSON::Any.new(":memory:")]).as_s
@@ -74,18 +74,18 @@ describe Lune::Plugins::Sqlite do
     end
 
     it "close on unknown db_id does nothing" do
-      cap = Lune::Plugins::Sqlite.new
+      plugin = Lune::Plugins::Sqlite.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       close_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.close" }.not_nil!
       result = close_b.callback.call([JSON::Any.new("nonexistent")])
       result.raw.should be_nil
     end
 
     it "exec creates a table and returns changes=0, lastInsertId=0" do
-      cap = Lune::Plugins::Sqlite.new
+      plugin = Lune::Plugins::Sqlite.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       open_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.open" }.not_nil!
       exec_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.exec" }.not_nil!
       id = open_b.callback.call([JSON::Any.new(":memory:")]).as_s
@@ -99,9 +99,9 @@ describe Lune::Plugins::Sqlite do
     end
 
     it "exec insert returns rows_affected and lastInsertId" do
-      cap = Lune::Plugins::Sqlite.new
+      plugin = Lune::Plugins::Sqlite.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       open_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.open" }.not_nil!
       exec_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.exec" }.not_nil!
       id = open_b.callback.call([JSON::Any.new(":memory:")]).as_s
@@ -120,9 +120,9 @@ describe Lune::Plugins::Sqlite do
     end
 
     it "exec raises sqlite_not_open for unknown db_id" do
-      cap = Lune::Plugins::Sqlite.new
+      plugin = Lune::Plugins::Sqlite.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       exec_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.exec" }.not_nil!
       expect_raises(Lune::Error, "No open database") do
         exec_b.callback.call([
@@ -134,9 +134,9 @@ describe Lune::Plugins::Sqlite do
     end
 
     it "exec raises sqlite_error for bad SQL" do
-      cap = Lune::Plugins::Sqlite.new
+      plugin = Lune::Plugins::Sqlite.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       open_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.open" }.not_nil!
       exec_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.exec" }.not_nil!
       id = open_b.callback.call([JSON::Any.new(":memory:")]).as_s
@@ -151,9 +151,9 @@ describe Lune::Plugins::Sqlite do
     end
 
     it "query returns rows as array of hashes" do
-      cap = Lune::Plugins::Sqlite.new
+      plugin = Lune::Plugins::Sqlite.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       open_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.open" }.not_nil!
       exec_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.exec" }.not_nil!
       query_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.query" }.not_nil!
@@ -186,9 +186,9 @@ describe Lune::Plugins::Sqlite do
     end
 
     it "query with params uses ? placeholders" do
-      cap = Lune::Plugins::Sqlite.new
+      plugin = Lune::Plugins::Sqlite.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       open_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.open" }.not_nil!
       exec_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.exec" }.not_nil!
       query_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.query" }.not_nil!
@@ -212,9 +212,9 @@ describe Lune::Plugins::Sqlite do
     end
 
     it "query returns empty array for no rows" do
-      cap = Lune::Plugins::Sqlite.new
+      plugin = Lune::Plugins::Sqlite.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       open_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.open" }.not_nil!
       exec_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.exec" }.not_nil!
       query_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.query" }.not_nil!
@@ -233,9 +233,9 @@ describe Lune::Plugins::Sqlite do
     end
 
     it "query raises sqlite_not_open for unknown db_id" do
-      cap = Lune::Plugins::Sqlite.new
+      plugin = Lune::Plugins::Sqlite.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       query_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.query" }.not_nil!
       err = expect_raises(Lune::Error) do
         query_b.callback.call([
@@ -250,13 +250,13 @@ describe Lune::Plugins::Sqlite do
 
   describe "shutdown" do
     it "closes all open databases" do
-      cap = Lune::Plugins::Sqlite.new
+      plugin = Lune::Plugins::Sqlite.new
       app = Lune::App.new
-      app.install(cap)
+      app.install(plugin)
       open_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.open" }.not_nil!
       open_b.callback.call([JSON::Any.new(":memory:")])
       open_b.callback.call([JSON::Any.new(":memory:")])
-      cap.shutdown
+      plugin.shutdown
       # After shutdown, internal map is cleared — subsequent open works fine
       id = open_b.callback.call([JSON::Any.new(":memory:")]).as_s
       id.size.should eq(16)
@@ -279,10 +279,10 @@ describe Lune::Plugins::Sqlite do
 
   describe "runtime.d.ts signatures" do
     it "emits open(path) as Promise<string>" do
-      cap = Lune::Plugins::Sqlite.new
+      plugin = Lune::Plugins::Sqlite.new
       app = Lune::App.new
-      app.install(cap)
-      dts = Lune::Generator.generate_runtime_dts(app.bindings, [cap] of Lune::Plugin)
+      app.install(plugin)
+      dts = Lune::Generator.generate_runtime_dts(app.bindings, [plugin] of Lune::Plugin)
       dts.should contain("open(path: string): Promise<string>")
     end
   end
