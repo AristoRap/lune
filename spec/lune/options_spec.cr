@@ -184,20 +184,20 @@ describe Lune::Plugins::FileDrop::Config do
   end
 end
 
-describe Lune::Plugins::WindowDrag::Config do
+describe Lune::Plugins::Window::Config do
   describe "defaults" do
-    it "zone defaults to empty string" do
-      Lune::Plugins::WindowDrag::Config.new.zone.should be_empty
+    it "drag_zone defaults to empty string" do
+      Lune::Plugins::Window::Config.new.drag_zone.should be_empty
     end
   end
 
-  describe "via opts.window_drag block" do
+  describe "via opts.window block" do
     it "mutations via block are retained" do
       opts = Lune::Options.new
-      opts.window_drag do |d|
-        d.zone = "--lune-draggable"
+      opts.window do |w|
+        w.drag_zone = "--lune-draggable"
       end
-      opts.window_drag.zone.should eq("--lune-draggable")
+      opts.window.drag_zone.should eq("--lune-draggable")
     end
   end
 end

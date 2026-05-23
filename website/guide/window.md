@@ -458,7 +458,7 @@ opts.menu AppMenu.new(app)
 
 ### Window drag zones _(macOS only)_
 
-CSS-marked elements that initiate a native window drag are handled by the `window_drag` plugin — configure `opts.window_drag { |d| d.zone = "--lune-draggable" }` and tag DOM elements with `style="--lune-draggable: true"`. See the [WindowDrag plugin](../plugins/window-drag) page for the full setup, including how detection walks up the DOM and the platform-availability matrix.
+CSS-marked elements that initiate a native window drag are handled by the `window` plugin — configure `opts.window.drag_zone = "--lune-draggable"` and tag DOM elements with `style="--lune-draggable: true"`. See the [Window plugin](../plugins/window#window-drag-macos-only) page for the full setup, including how detection walks up the DOM and the platform-availability matrix.
 
 ---
 
@@ -564,9 +564,7 @@ Keeps the window above all other windows, including those from other apps. Usefu
 Lune.run(app, assets: "frontend/dist") do |opts|
   opts.title = "My App"
 
-  opts.window_drag do |d|
-    d.zone = "--lune-draggable"
-  end
+  opts.window.drag_zone = "--lune-draggable"
 
   opts.mac do |m|
     m.full_size_content   = true
@@ -625,9 +623,7 @@ Lune.run(app) do |opts|
     }
   end
 
-  opts.window_drag do |d|
-    d.zone = "--lune-draggable"
-  end
+  opts.window.drag_zone = "--lune-draggable"
 
   opts.menu do |m|
     m.app_menu

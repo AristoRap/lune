@@ -495,19 +495,19 @@ describe "Lune::Plugins" do
       case Lune::Plugins::CURRENT_PLATFORM
       when :darwin
         ids.should contain("Lune.Plugins.DragOut.start")
-        ids.should contain("Lune.Plugins.WindowDrag.start")
+        ids.should contain("Lune.Plugins.Window.start_drag")
         ids.should contain("Lune.Plugins.Tray.show")
         ids.should contain("Lune.Plugins.Tray.set_menu")
         ids.should contain("Lune.Plugins.Tray.popup_menu")
         ids.should contain("Lune.Plugins.FileWatch.watch")
       when :linux
         ids.should_not contain("Lune.Plugins.DragOut.start")
-        ids.should_not contain("Lune.Plugins.WindowDrag.start")
+        ids.should_not contain("Lune.Plugins.Window.start_drag")
         ids.should contain("Lune.Plugins.Tray.show")
         ids.should contain("Lune.Plugins.FileWatch.watch")
       when :win32
         ids.should_not contain("Lune.Plugins.DragOut.start")
-        ids.should_not contain("Lune.Plugins.WindowDrag.start")
+        ids.should_not contain("Lune.Plugins.Window.start_drag")
         # Tray ships fully on Win32 — show/hide/clicks via Shell_NotifyIconW,
         # menus via CreatePopupMenu + TrackPopupMenu, icons via LoadImageW.
         ids.should contain("Lune.Plugins.Tray.show")
@@ -530,11 +530,13 @@ describe "Lune::Plugins" do
 
       # Per-platform totals — bump these when you add/remove a binding on any
       # plugin. Decreases when a plugin is platform-gated out.
-      # Baseline now includes Events.emit, Navigation.changed (both cross-
-      # platform) and WindowDrag.start (darwin-only).
-      #   darwin = 63 baseline (was 60 + Events.emit + Navigation.changed + WindowDrag.start)
-      #   linux  = 63 - DragOut(1) - WindowDrag(1)             = 61
-      #   win32  = 63 - DragOut(1) - WindowDrag(1) - FileWatch(2) = 59
+      # Baseline includes Events.emit, Navigation.changed (both cross-
+      # platform) and Window.start_drag (darwin-only, defined inside an
+      # {% if flag?(:darwin) %} block on the Window plugin so it doesn't
+      # register on linux/win32).
+      #   darwin = 63 baseline (was 60 + Events.emit + Navigation.changed + Window.start_drag)
+      #   linux  = 63 - DragOut(1) - Window.start_drag(1)                   = 61
+      #   win32  = 63 - DragOut(1) - Window.start_drag(1) - FileWatch(2)    = 59
       expected = case Lune::Plugins::CURRENT_PLATFORM
                  when :darwin then 63
                  when :linux  then 61

@@ -66,7 +66,6 @@ export default defineConfig({
               { text: 'System', link: '/plugins/system' },
               { text: 'Tray', link: '/plugins/tray' },
               { text: 'Window', link: '/plugins/window' },
-              { text: 'Window Drag', link: '/plugins/window-drag' },
               { text: 'Windows', link: '/plugins/windows' },
             ],
           },

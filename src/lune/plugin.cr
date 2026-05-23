@@ -154,7 +154,7 @@ module Lune
     #      to the plugin so the plugin reads its own settings off `@config`.
     #   3. Reopens `Lune::Options` with a typed accessor whose name is the
     #      plugin's simple class name underscored — `Tray` → `opts.tray`,
-    #      `WindowDrag` → `opts.window_drag`. Both `opts.tray.icon = …` and
+    #      `FileDrop` → `opts.file_drop`. Both `opts.tray.icon = …` and
     #      `opts.tray { |t| t.icon = … }` work; both return / yield the
     #      same `Config` instance that the plugin reads in `setup`.
     #
