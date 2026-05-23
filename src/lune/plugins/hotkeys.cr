@@ -4,18 +4,18 @@ module Lune
       include Lune::Bindable
       include Plugin::Lifecycle
 
-      DESCRIPTOR = Descriptor.new(id: :hotkeys, label: "Hotkeys", soft_deps: [:events])
+      DESCRIPTOR = Descriptor.new(id: :hotkeys, label: "Hotkeys", soft_deps: [:event])
 
       def descriptor : Descriptor
         DESCRIPTOR
       end
 
       # Hook the macro-generated install to also start the native pump that
-      # delivers hotkey events back to JS via `app.events`.
+      # delivers hotkey events back to JS via `app.event`.
       def install(app : Lune::App) : Nil
         previous_def
         Native::Hotkeys.init do |accelerator|
-          app.events.emit("hotkey", {"key" => accelerator})
+          app.event.emit("hotkey", {"key" => accelerator})
         end
       end
 

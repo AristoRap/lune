@@ -5,7 +5,7 @@ module Lune
 
       # macOS + Linux. Win32 needs `OleInitialize` + `RegisterDragDrop` plus a
       # WebView2 drop-suppression hook (see ROADMAP).
-      DESCRIPTOR = Descriptor.new(id: :file_drop, label: "FileDrop", deps: [:events], platforms: [:darwin, :linux])
+      DESCRIPTOR = Descriptor.new(id: :file_drop, label: "FileDrop", deps: [:event], platforms: [:darwin, :linux])
 
       def descriptor : Descriptor
         DESCRIPTOR
@@ -128,7 +128,7 @@ module Lune
       private def drop_global(wv : Webview::Webview, app : Lune::App, user_callback : ((Int32, Int32, Array(String)) -> Nil)?, bm : String) : (Int32, Int32, Array(String)) -> Nil
         ->(x : Int32, y : Int32, paths : Array(String)) {
           user_callback.try(&.call(x, y, paths))
-          app.events.emit("file_drop", {"x" => x, "y" => y, "paths" => paths})
+          app.event.emit("file_drop", {"x" => x, "y" => y, "paths" => paths})
         }
       end
 

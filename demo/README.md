@@ -31,14 +31,14 @@ frontend/
     ├── assets/images/    (logos)
     ├── composables/      (useLuneEvent — on/off with auto-cleanup)
     ├── components/       (Titlebar, Sidebar, Statusbar, Starfield, Icon…)
-    ├── views/            (Welcome, Bindings, Events, System, …)
+    ├── views/            (Welcome, Bindings, Event, System, …)
     └── styles/           (tokens, base, components)
 ```
 
 ## What's demonstrated
 
 - `@[Lune::Bind]` — calling Crystal methods from JavaScript
-- Bidirectional event bus — `app.events.emit` / `app.events.on` (Crystal↔JS)
+- Bidirectional event bus — `app.event.emit` / `app.event.on` (Crystal↔JS)
 - Runtime functions — `quit`, `environment`, `clipboardRead/Write`, `notify`, `screenInfo`
 - Window controls — `minimize`, `maximize`, `center`, `setTitle`, `setSize`
 - File dialogs — `openFile`, `openFiles`, `openDir`, `saveFile`

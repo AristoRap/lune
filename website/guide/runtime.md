@@ -7,7 +7,7 @@ import { lune } from "../lunejs/runtime/runtime.js";
 
 await lune.System.quit();
 const text = await lune.Clipboard.read();
-lune.Events.on("myEvent", (data) => console.log(data));
+lune.Event.on("myEvent", (data) => console.log(data));
 ```
 
 All bridge methods return a `Promise`. TypeScript declarations are in `runtime.d.ts`. You can also import the default export which bundles every namespace:

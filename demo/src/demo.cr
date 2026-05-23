@@ -33,7 +33,7 @@ class Demo
   def process_files(paths : Array(String)) : Nil
     paths.each_with_index do |path, i|
       sleep 0.4.seconds
-      @app.events.emit("fileProgress", {
+      @app.event.emit("fileProgress", {
         "done"  => i + 1,
         "total" => paths.size,
         "name"  => File.basename(path),

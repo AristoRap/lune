@@ -483,7 +483,7 @@ describe "Lune::Plugins" do
       ids.should contain("Lune.Plugins.Dialogs.open_file")
       ids.should contain("Lune.Plugins.System.notify")
       ids.should contain("Lune.Plugins.System.screen_info")
-      ids.should contain("Lune.Plugins.Events.emit")
+      ids.should contain("Lune.Plugins.Event.emit")
       ids.should contain("Lune.Plugins.Navigation.changed")
     end
 
@@ -530,11 +530,11 @@ describe "Lune::Plugins" do
 
       # Per-platform totals — bump these when you add/remove a binding on any
       # plugin. Decreases when a plugin is platform-gated out.
-      # Baseline includes Events.emit, Navigation.changed (both cross-
+      # Baseline includes Event.emit, Navigation.changed (both cross-
       # platform) and Window.start_drag (darwin-only, defined inside an
       # {% if flag?(:darwin) %} block on the Window plugin so it doesn't
       # register on linux/win32).
-      #   darwin = 63 baseline (was 60 + Events.emit + Navigation.changed + Window.start_drag)
+      #   darwin = 63 baseline (was 60 + Event.emit + Navigation.changed + Window.start_drag)
       #   linux  = 63 - DragOut(1) - Window.start_drag(1)                   = 61
       #   win32  = 63 - DragOut(1) - Window.start_drag(1) - FileWatch(2)    = 59
       expected = case Lune::Plugins::CURRENT_PLATFORM
@@ -626,9 +626,9 @@ describe "Lune::Plugins" do
 
     it "includes core plugins by name even when they have no bindings" do
       registry = Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new)
-      plugins = Lune::Config::Plugins.new(enabled: ["events"])
+      plugins = Lune::Config::Plugins.new(enabled: ["event"])
       active = registry.active(plugins)
-      active.map(&.name).should contain("events")
+      active.map(&.name).should contain("event")
     end
   end
 end

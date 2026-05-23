@@ -8,12 +8,12 @@
 | **JS namespace** | `ContextMenu`                                           |
 | **Core**         | No                                                      |
 | **Phases**       | Bindable · WebviewInject                                |
-| **Hard deps**    | `events`                                                |
+| **Hard deps**    | `event`                                                 |
 | **Platforms**    | macOS · Windows (partial — see notes) · Linux (planned) |
 
-ContextMenu lets you declare a menu that appears on right-click. Items are identified by string IDs; selection fires a `context_menu` event back through Events.
+ContextMenu lets you declare a menu that appears on right-click. Items are identified by string IDs; selection fires a `context_menu` event back through Event.
 
-Disabling `events` automatically disables this plugin.
+Disabling `event` automatically disables this plugin.
 
 ---
 
@@ -23,7 +23,7 @@ Disabling `events` automatically disables this plugin.
 plugins:
   enabled:
     - context_menu
-    - events # required
+    - event # required
 ```
 
 Or omit `plugins:` entirely to enable everything.
@@ -87,7 +87,7 @@ interface ContextMenuItem {
 ## Notes
 
 - `lune.ContextMenu.set` and `lune.ContextMenu.clear` are synchronous — they update a JS-side registry that intercepts the `contextmenu` DOM event.
-- The native menu is shown by a Crystal binding call; the selected item ID is emitted back as a `context_menu` event on Events.
+- The native menu is shown by a Crystal binding call; the selected item ID is emitted back as a `context_menu` event on Event.
 - Only one context menu set is active at a time. Call `set` again to update the items.
 - To show different menus on different elements, call `set` in a `contextmenu` event listener on the target before it propagates.
 

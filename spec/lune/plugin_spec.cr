@@ -6,13 +6,13 @@ describe Lune::Plugin do
       d = Lune::Plugin::Descriptor.new(
         id: :my_cap,
         label: "MyCap",
-        deps: [:events],
+        deps: [:event],
         soft_deps: [:stream],
         core: true,
       )
       d.id.should eq(:my_cap)
       d.label.should eq("MyCap")
-      d.deps.should eq([:events])
+      d.deps.should eq([:event])
       d.soft_deps.should eq([:stream])
       d.core.should be_true
     end
@@ -38,7 +38,7 @@ describe Lune::Plugin do
   describe "name derives from descriptor.id" do
     it "converts symbol to string" do
       Lune::Plugins::Clipboard.new.name.should eq("clipboard")
-      Lune::Plugins::Events.new.name.should eq("events")
+      Lune::Plugins::Event.new.name.should eq("event")
       Lune::Plugins::ContextMenu.new.name.should eq("context_menu")
       Lune::Plugins::DragOut.new.name.should eq("drag_out")
       Lune::Plugins::DeepLink.new.name.should eq("deep_link")
@@ -55,12 +55,12 @@ describe Lune::Plugin do
       Lune::Plugins::Filesystem.new.is_a?(Lune::Bindable).should be_true
     end
 
-    it "Events includes Bindable (emit is a @[Bind] method, not hand-bound)" do
-      Lune::Plugins::Events.new.is_a?(Lune::Bindable).should be_true
+    it "Event includes Bindable (emit is a @[Bind] method, not hand-bound)" do
+      Lune::Plugins::Event.new.is_a?(Lune::Bindable).should be_true
     end
 
-    it "Events does not include WebviewInject (no longer hand-binds via wv.bind)" do
-      Lune::Plugins::Events.new.is_a?(Lune::Plugin::WebviewInject).should be_false
+    it "Event does not include WebviewInject (no longer hand-binds via wv.bind)" do
+      Lune::Plugins::Event.new.is_a?(Lune::Plugin::WebviewInject).should be_false
     end
 
     it "Channel includes WebviewInject" do
@@ -83,8 +83,8 @@ describe Lune::Plugin do
   end
 
   describe "descriptor fields per plugin" do
-    it "Events is core with no deps" do
-      d = Lune::Plugins::Events::DESCRIPTOR
+    it "Event is core with no deps" do
+      d = Lune::Plugins::Event::DESCRIPTOR
       d.core.should be_true
       d.deps.should be_empty
     end
@@ -95,20 +95,20 @@ describe Lune::Plugin do
       d.deps.should be_empty
     end
 
-    it "ContextMenu declares events as a hard dep" do
-      Lune::Plugins::ContextMenu::DESCRIPTOR.deps.should contain(:events)
+    it "ContextMenu declares event as a hard dep" do
+      Lune::Plugins::ContextMenu::DESCRIPTOR.deps.should contain(:event)
     end
 
-    it "FileDrop declares events as a hard dep" do
-      Lune::Plugins::FileDrop::DESCRIPTOR.deps.should contain(:events)
+    it "FileDrop declares event as a hard dep" do
+      Lune::Plugins::FileDrop::DESCRIPTOR.deps.should contain(:event)
     end
 
-    it "DeepLink declares events as a hard dep" do
-      Lune::Plugins::DeepLink::DESCRIPTOR.deps.should contain(:events)
+    it "DeepLink declares event as a hard dep" do
+      Lune::Plugins::DeepLink::DESCRIPTOR.deps.should contain(:event)
     end
 
-    it "Tray declares events as a soft dep" do
-      Lune::Plugins::Tray::DESCRIPTOR.soft_deps.should contain(:events)
+    it "Tray declares event as a soft dep" do
+      Lune::Plugins::Tray::DESCRIPTOR.soft_deps.should contain(:event)
       Lune::Plugins::Tray::DESCRIPTOR.deps.should be_empty
     end
   end
@@ -186,7 +186,7 @@ describe Lune::Plugins::Registry do
     end
 
     it "cascade-disables a plugin when its hard dep is excluded" do
-      resolved = make_registry.resolve(config_disabled("events"))
+      resolved = make_registry.resolve(config_disabled("event"))
       names = resolved.plugins.map(&.name)
       names.should_not contain("context_menu")
       names.should_not contain("file_drop")
@@ -194,7 +194,7 @@ describe Lune::Plugins::Registry do
     end
 
     it "emits a warning for each cascade-disabled plugin" do
-      resolved = make_registry.resolve(config_disabled("events"))
+      resolved = make_registry.resolve(config_disabled("event"))
       # Use plugins that are present on every platform (default platforms list)
       # so the cascade-disable step actually runs on them. FileDrop / FileWatch
       # are platform-filtered out on Win32 before the cascade step, so they
@@ -204,21 +204,21 @@ describe Lune::Plugins::Registry do
     end
 
     it "keeps a soft-dep plugin active when its soft dep is excluded" do
-      resolved = make_registry.resolve(config_disabled("events"))
+      resolved = make_registry.resolve(config_disabled("event"))
       resolved.plugins.map(&.name).should contain("tray")
     end
 
     it "emits a soft-dep warning when soft dep is absent" do
-      resolved = make_registry.resolve(config_disabled("events"))
-      resolved.warnings.any? { |w| w.includes?("Tray") && w.includes?("events") }.should be_true
+      resolved = make_registry.resolve(config_disabled("event"))
+      resolved.warnings.any? { |w| w.includes?("Tray") && w.includes?("event") }.should be_true
     end
 
     it "places deps before dependents in the sorted result" do
       resolved = make_registry.resolve(empty_config)
       names = resolved.plugins.map(&.name)
-      events_pos = names.index("events").not_nil!
+      event_pos = names.index("event").not_nil!
       context_menu_pos = names.index("context_menu").not_nil!
-      events_pos.should be < context_menu_pos
+      event_pos.should be < context_menu_pos
     end
 
     it "active_ids returns a set of symbols for the resolved plugins" do
@@ -251,7 +251,7 @@ describe Lune::Plugins::Registry do
       backend = CaptureBackend.new
       logger = Log.new("lune.spec.vri", backend, :debug)
       with_logger(logger) do
-        make_registry.validate_resolve_install(config_disabled("events"), Lune::App.new)
+        make_registry.validate_resolve_install(config_disabled("event"), Lune::App.new)
       end
       backend.entries.any? { |e| e.message.includes?("ContextMenu") }.should be_true
     end

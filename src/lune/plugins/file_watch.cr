@@ -6,7 +6,7 @@ module Lune
 
       # macOS (kqueue) + Linux (inotify). Win32 needs `ReadDirectoryChangesW`
       # plumbing (see ROADMAP).
-      DESCRIPTOR = Descriptor.new(id: :file_watch, label: "FileWatch", deps: [:events], platforms: [:darwin, :linux])
+      DESCRIPTOR = Descriptor.new(id: :file_watch, label: "FileWatch", deps: [:event], platforms: [:darwin, :linux])
 
       def descriptor : Descriptor
         DESCRIPTOR
@@ -23,7 +23,7 @@ module Lune
       @last_fired = {} of String => Time::Instant
 
       # Hook the macro-generated install to also kick off the native watcher
-      # pump, which delivers `(path, kind)` callbacks into `app.events`.
+      # pump, which delivers `(path, kind)` callbacks into `app.event`.
       def install(app : Lune::App) : Nil
         previous_def
         debounce = @config.debounce
@@ -32,7 +32,7 @@ module Lune
           now = Time.instant
           next if (prev = last_fired[path]?) && (now - prev) < debounce
           last_fired[path] = now
-          app.events.emit("file_watch", {"path" => path, "kind" => kind})
+          app.event.emit("file_watch", {"path" => path, "kind" => kind})
         end
       end
 

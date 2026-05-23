@@ -28,10 +28,10 @@ module Lune
           end
         end
 
-        unless ids.includes?(:events)
-          # No-op helpers for code that may call window.__lune.on/off/crystalEmit
-          # when the Events plugin is excluded. The Events.emit binding itself
-          # isn't here either; user code that imports `runtime.Events.emit`
+        unless ids.includes?(:event)
+          # Stub helpers for code that may call window.__lune.on/off/crystalEmit
+          # when the Event plugin is excluded. The Event.emit binding itself
+          # isn't here either; user code that imports `runtime.Event.emit`
           # would get a ReferenceError from the generated runtime.js — which is
           # the right shape because they've opted the plugin out.
           wv.init("(function(){window.#{bm}=window.#{bm}||{};var n=function(){};window.#{bm}.crystalEmit=n;window.#{bm}.on=n;window.#{bm}.off=n;})();")

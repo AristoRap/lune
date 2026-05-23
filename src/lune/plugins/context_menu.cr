@@ -3,7 +3,7 @@ module Lune
     class ContextMenu < Lune::Plugin
       include Lune::Bindable
 
-      DESCRIPTOR = Descriptor.new(id: :context_menu, label: "ContextMenu", deps: [:events])
+      DESCRIPTOR = Descriptor.new(id: :context_menu, label: "ContextMenu", deps: [:event])
 
       def descriptor : Descriptor
         DESCRIPTOR
@@ -26,7 +26,7 @@ module Lune
       @[Lune::BindOverride(arg_names: ["x", "y", "itemsJson"])]
       def show(x : Float64, y : Float64, items_json : String) : Nil
         Lune::Native::Menu.show_context_menu(@handle, x.to_f32, y.to_f32, items_json) do |id|
-          @app.events.emit("context_menu", {"id" => id})
+          @app.event.emit("context_menu", {"id" => id})
         end
       end
 

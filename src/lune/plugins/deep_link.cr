@@ -1,7 +1,7 @@
 module Lune
   module Plugins
     class DeepLink < Lune::Plugin
-      DESCRIPTOR = Descriptor.new(id: :deep_link, label: "DeepLink", deps: [:events])
+      DESCRIPTOR = Descriptor.new(id: :deep_link, label: "DeepLink", deps: [:event])
 
       def descriptor : Descriptor
         DESCRIPTOR
@@ -28,13 +28,13 @@ module Lune
 
           # We're the primary — listen for forwards from future invocations.
           Lune::DeepLinkIPC.listen(@app_title) do |incoming|
-            app.events.emit("deep_link", {"url" => incoming})
+            app.event.emit("deep_link", {"url" => incoming})
           end
         {% end %}
 
         {% if flag?(:lune_native_test_mock) || flag?(:darwin) %}
           Native::DeepLink.install do |url|
-            app.events.emit("deep_link", {"url" => url})
+            app.event.emit("deep_link", {"url" => url})
           end
         {% elsif flag?(:linux) || flag?(:win32) %}
           # Cold-start delivery: OS launches the app with a URL on the
@@ -42,7 +42,7 @@ module Lune
           # or registry); the URL lands in ARGV. Same path on Linux and
           # Windows.
           if url = url_from_argv
-            app.events.emit("deep_link", {"url" => url})
+            app.event.emit("deep_link", {"url" => url})
           end
         {% end %}
       end

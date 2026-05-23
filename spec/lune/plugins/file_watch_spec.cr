@@ -8,8 +8,8 @@ describe Lune::Plugins::FileWatch do
       d.label.should eq("FileWatch")
     end
 
-    it "declares events as a hard dep" do
-      Lune::Plugins::FileWatch::DESCRIPTOR.deps.should contain(:events)
+    it "declares event as a hard dep" do
+      Lune::Plugins::FileWatch::DESCRIPTOR.deps.should contain(:event)
     end
 
     it "is not core" do
@@ -72,9 +72,9 @@ describe Lune::Plugins::FileWatch do
   end
 
   describe "registry integration" do
-    it "cascade-disables when events is excluded" do
+    it "cascade-disables when event is excluded" do
       r = Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new, -> { })
-      resolved = r.resolve(Lune::Config::Plugins.new(enabled: nil, disabled: ["events"]))
+      resolved = r.resolve(Lune::Config::Plugins.new(enabled: nil, disabled: ["event"]))
       resolved.plugins.map(&.name).should_not contain("file_watch")
     end
   end

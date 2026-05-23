@@ -8,7 +8,7 @@ import Statusbar from "./components/Statusbar.vue";
 import Toast from "./components/Toast.vue";
 import { flatNav } from "./nav.js";
 import { lune } from "./lune.js";
-const { System, Events } = lune;
+const { System, Event } = lune;
 
 const route = useRoute();
 const router = useRouter();
@@ -33,20 +33,20 @@ onMounted(async () => {
   const tickH = (ts) => {
     clock.value = new Date(ts).toLocaleTimeString();
   };
-  Events.on("tick", tickH);
+  Event.on("tick", tickH);
 
   const pausedH = (v) => {
     clockPaused.value = v;
   };
-  Events.on("clockPaused", pausedH);
+  Event.on("clockPaused", pausedH);
 
   const setZoom = (z) => {
     document.body.style.zoom = String(z);
   };
   const currentZoom = () => parseFloat(document.body.style.zoom || "1");
-  Events.on("zoom-in", () => setZoom(Math.round((currentZoom() + 0.1) * 10) / 10));
-  Events.on("zoom-out", () => setZoom(Math.round(Math.max(0.5, currentZoom() - 0.1) * 10) / 10));
-  Events.on("zoom-reset", () => setZoom(1));
+  Event.on("zoom-in", () => setZoom(Math.round((currentZoom() + 0.1) * 10) / 10));
+  Event.on("zoom-out", () => setZoom(Math.round(Math.max(0.5, currentZoom() - 0.1) * 10) / 10));
+  Event.on("zoom-reset", () => setZoom(1));
 });
 </script>
 

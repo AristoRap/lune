@@ -31,7 +31,7 @@ describe LuneCLI::Commands::Doctor do
   describe "built_in? on Lune::Plugin" do
     it "is true for plugins under Lune::Plugins" do
       Lune::Plugins::Tray.new.built_in?.should be_true
-      Lune::Plugins::Events.new.built_in?.should be_true
+      Lune::Plugins::Event.new.built_in?.should be_true
     end
 
     it "is false for user-defined plugins outside that namespace" do

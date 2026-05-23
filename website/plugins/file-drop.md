@@ -8,12 +8,12 @@
 | **JS namespace** | `FileDrop`                       |
 | **Core**         | No                               |
 | **Phases**       | WebviewInject                    |
-| **Hard deps**    | `events`                         |
+| **Hard deps**    | `event`                          |
 | **Platforms**    | macOS · Linux (Windows: planned) |
 
 FileDrop intercepts native OS file-drop events and delivers them to JavaScript as `{ x, y, paths }` events on the event bus.
 
-Disabling `events` automatically disables this plugin.
+Disabling `event` automatically disables this plugin.
 
 ---
 
@@ -23,7 +23,7 @@ Disabling `events` automatically disables this plugin.
 plugins:
   enabled:
     - file_drop
-    - events # required
+    - event # required
 ```
 
 Or omit `plugins:` entirely.

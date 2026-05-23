@@ -17,7 +17,7 @@ module MyCustomPlugin
     DESCRIPTOR = Descriptor.new(
       id: :counter,
       label: "Counter",
-      soft_deps: [:events], # emits change events when the bus is around
+      soft_deps: [:event], # emits change events when the bus is around
     )
 
     def descriptor : Descriptor
@@ -72,7 +72,7 @@ module MyCustomPlugin
     end
 
     private def emit_changed : Nil
-      @app.events.emit("counter:changed", {"value" => @value})
+      @app.event.emit("counter:changed", {"value" => @value})
     end
   end
 end

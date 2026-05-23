@@ -64,7 +64,7 @@ class MyMqtt < Lune::Plugin
   DESCRIPTOR = Descriptor.new(
     id:        :my_mqtt,
     label:     "MyMqtt",
-    soft_deps: [:events],          # optional — degrades gracefully if absent
+    soft_deps: [:event],           # optional — degrades gracefully if absent
     deps:      [] of Symbol,       # required — plugin disables itself if missing
     platforms: [:darwin, :linux, :win32],
   )
@@ -134,7 +134,7 @@ Third-party plugins sit at the **top level** of `runtime.js`, alongside `Lune` a
 | `core`      | `Bool`          | `false`                     | `true` blocks the plugin from being excluded via `lune.yml`.            |
 | `platforms` | `Array(Symbol)` | `[:darwin, :linux, :win32]` | OSes where the plugin runs. Filtered out elsewhere at registry build.   |
 
-Use `soft_deps` for cross-plugin behavior you'd like but don't require (`Tray` soft-deps on `events` so menu clicks emit on the bus when present, falls back to direct callbacks when absent). Use `deps` only when your plugin genuinely can't function without the other.
+Use `soft_deps` for cross-plugin behavior you'd like but don't require (`Tray` soft-deps on `event` so menu clicks emit on the bus when present, falls back to direct callbacks when absent). Use `deps` only when your plugin genuinely can't function without the other.
 
 ---
 
@@ -204,14 +204,14 @@ end
 
 ### `include Plugin::WebviewInject` → `init_webview(ctx : WebviewCtx)`
 
-Include this when you need the webview itself (`wv.bind`, `wv.dispatch`, `wv.eval`). For boot-time JS injection, prefer `init_js` over `wv.init` directly. `WebviewCtx` carries `wv`, `handle`, `app`, and the active plugin-id set so you can check `ctx.dep_active?(:events)`.
+Include this when you need the webview itself (`wv.bind`, `wv.dispatch`, `wv.eval`). For boot-time JS injection, prefer `init_js` over `wv.init` directly. `WebviewCtx` carries `wv`, `handle`, `app`, and the active plugin-id set so you can check `ctx.dep_active?(:event)`.
 
 ```crystal
 include Plugin::WebviewInject
 
 def init_webview(ctx : WebviewCtx) : Nil
-  return unless ctx.dep_active?(:events)
-  ctx.app.events.on("my-event") { |data| handle(data) }
+  return unless ctx.dep_active?(:event)
+  ctx.app.event.on("my-event") { |data| handle(data) }
 end
 ```
 
@@ -304,7 +304,7 @@ end
 
 ### `js_helpers` and `dts_helpers`
 
-For methods that don't need a Crystal call (pure JS sugar like `Events.on`, `Events.off`), return the JS body from `js_helpers` and the matching `.d.ts` signatures from `dts_helpers`. They're stitched into the same namespace object the generated bindings live in.
+For methods that don't need a Crystal call (pure JS sugar like `Event.on`, `Event.off`), return the JS body from `js_helpers` and the matching `.d.ts` signatures from `dts_helpers`. They're stitched into the same namespace object the generated bindings live in.
 
 ```crystal
 def js_helpers : String
@@ -365,7 +365,7 @@ From `set_main_context` you can find a sibling plugin by id:
 include Plugin::MainContextAware
 
 def set_main_context(ctx : MainCtx) : Nil
-  if events = ctx.find(:events)
+  if event = ctx.find(:event)
     @app = ctx.app
   end
 end
@@ -428,5 +428,5 @@ Before tagging your first version:
 ## See also
 
 - [Bindings](./bindings) — `@[Lune::Bind]`, `@[Lune::BindOverride]`, type mapping.
-- [Events](./events) — the cross-plugin event bus.
+- [Event](./event) — the cross-plugin event bus.
 - [How it works](./how-it-works) — runtime architecture and thread model.

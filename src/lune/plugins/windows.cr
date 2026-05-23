@@ -58,7 +58,7 @@ module Lune
             @windows.delete(id)
             @bridges.delete(id)
             app.remove_bridge(bridge)
-            app.events.emit("window_closed", {"id" => id})
+            app.event.emit("window_closed", {"id" => id})
           end
 
           wv2.navigate(url) if url
@@ -94,7 +94,7 @@ module Lune
           end
 
           done.receive
-          app.events.emit("window_closed", {"id" => id})
+          app.event.emit("window_closed", {"id" => id})
         end
       end
 

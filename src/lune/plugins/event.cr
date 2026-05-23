@@ -1,20 +1,20 @@
 module Lune
   module Plugins
-    class Events < Lune::Plugin
+    class Event < Lune::Plugin
       include Lune::Bindable
 
-      DESCRIPTOR = Descriptor.new(id: :events, label: "Events", core: true)
+      DESCRIPTOR = Descriptor.new(id: :event, label: "Event", core: true)
 
       def descriptor : Descriptor
         DESCRIPTOR
       end
 
-      # JS-→-Crystal event dispatch. Generated stub on `runtime.Lune.Plugins.Events.emit`
+      # JS-→-Crystal event dispatch. Generated stub on `runtime.Lune.Plugins.Event.emit`
       # routes directly here; no hand-binding, no helper layer.
       @[Lune::Bind]
       @[Lune::BindOverride(arg_names: ["name", "data"], ts_args: ["string", "unknown"] of String?, ts_return_type: "Promise<void>")]
       def emit(name : String, data : JSON::Any) : Nil
-        @app.events.dispatch(name, data)
+        @app.event.dispatch(name, data)
       end
 
       def init_js : String?

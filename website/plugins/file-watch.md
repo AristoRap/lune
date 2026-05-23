@@ -8,12 +8,12 @@
 | **JS namespace** | `FileWatch`                      |
 | **Core**         | No                               |
 | **Phases**       | Bindable · Lifecycle             |
-| **Hard deps**    | `events`                         |
+| **Hard deps**    | `event`                          |
 | **Platforms**    | macOS (kqueue) · Linux (inotify) |
 
 Backed by **kqueue** (`EVFILT_VNODE`) on macOS and **inotify** on Linux — no polling, no extra dependencies. The watcher runs on a dedicated OS thread and never stalls the UI. All watches are released automatically on window close.
 
-Disabling `events` automatically disables this plugin.
+Disabling `event` automatically disables this plugin.
 
 ---
 
@@ -23,7 +23,7 @@ Disabling `events` automatically disables this plugin.
 plugins:
   enabled:
     - file_watch
-    - events # required
+    - event # required
 ```
 
 Or omit `plugins:` entirely.

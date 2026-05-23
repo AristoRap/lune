@@ -62,7 +62,7 @@ export default api;
 
 ## runtime.d.ts — runtime types
 
-The runtime declarations export a single nested `Lune` object plus a short alias `lune = Lune.Plugins`, so every built-in lives at `lune.<Plugin>.<method>` (e.g. `lune.System.quit`, `lune.Events.on`, `lune.Filesystem.homeDir`). Third-party plugins published via `Lune.use` are top-level named exports alongside `Lune` and `LuneError` — not nested under `lune`.
+The runtime declarations export a single nested `Lune` object plus a short alias `lune = Lune.Plugins`, so every built-in lives at `lune.<Plugin>.<method>` (e.g. `lune.System.quit`, `lune.Event.on`, `lune.Filesystem.homeDir`). Third-party plugins published via `Lune.use` are top-level named exports alongside `Lune` and `LuneError` — not nested under `lune`.
 
 The exact shape is generated per project from the registered plugin set, so the snippet below is illustrative:
 
@@ -84,7 +84,7 @@ export const Lune: {
       openUrl(url: string): Promise<void>;
       environment(): Promise<LuneEnvironment>;
     };
-    Events: {
+    Event: {
       on(name: string, cb: (data: unknown) => void): void;
       once(name: string, cb: (data: unknown) => void): void;
       off(name: string, cb?: (data: unknown) => void): void;
@@ -162,7 +162,7 @@ interface ProgressEvent {
   total: number;
 }
 
-lune.Events.on("progress", (data) => {
+lune.Event.on("progress", (data) => {
   const { done, total } = data as ProgressEvent;
   updateProgressBar(done / total);
 });

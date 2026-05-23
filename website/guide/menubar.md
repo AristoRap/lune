@@ -107,7 +107,7 @@ lune.Tray.setMenu([
   { id: "quit", label: "Quit" },
 ]);
 
-lune.Events.on("trayEvent", (id) => {
+lune.Event.on("trayEvent", (id) => {
   if (id === "show") lune.Window.show();
   if (id === "quit") lune.System.quit();
 });

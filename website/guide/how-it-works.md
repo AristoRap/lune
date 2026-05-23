@@ -16,8 +16,7 @@ Lune connects a Crystal backend to a web frontend running inside a native WebVie
 │  │   import api from '../lunejs/app/App.js'          │  │
 │  │   await api.MyModule.doSomething(args)  ──────────┼──┼──┐
 │  └───────────────────────────────────────────────────┘  │  │
-│                    ↕ events (bidirectional)             │  │
-│  app.events.emit() · app.events.on()  ↔  emit() · on()  │  │ binding call
+│                ↕ events (bidirectional)                 │  │ binding call
 │  ┌────────────────────────────────────────────────────┐ │  │
 │  │  Crystal App                                       │ │  │
 │  │                                                    │ │  │
@@ -66,7 +65,7 @@ Lune writes four files into `frontend/lunejs/`:
 
 - `app/App.js` — one stub function per user binding, grouped by namespace
 - `app/App.d.ts` — TypeScript declarations with exact types derived from Crystal signatures
-- `runtime/runtime.js` — built-in functions (`lune.System.quit`, `lune.System.openUrl`, `lune.Events.on`, `lune.Events.emit`, …)
+- `runtime/runtime.js` — built-in functions (`lune.System.quit`, `lune.System.openUrl`, `lune.Event.on`, `lune.Event.emit`, …)
 - `runtime/runtime.d.ts` — TypeScript declarations for runtime functions
 
 This happens automatically on `lune dev` startup and during `lune build` (before Vite runs).
@@ -112,7 +111,7 @@ Lune balances three constraints: the native UI toolkits (AppKit / GTK / WebView2
 
 ### The webview thread
 
-The thread that runs the WebView event loop — i.e. that's blocked inside `wv.run`. Sync binding callbacks and `app.events.on` handlers fire on this thread.
+The thread that runs the WebView event loop — i.e. that's blocked inside `wv.run`. Sync binding callbacks and `app.event.on` handlers fire on this thread.
 
 | Platform     | Webview thread is…                                                                                        |
 | ------------ | --------------------------------------------------------------------------------------------------------- |
@@ -127,7 +126,7 @@ On Unix, this means the main thread is permanently occupied by Cocoa/GTK once `w
 | ---------------------------------------- | --------------------------------------------------------- | -------------------------------------------------------- |
 | Sync binding callbacks (`@[Lune::Bind]`) | Webview thread                                            | Keep fast — blocks the UI while running                  |
 | `async: true` binding callbacks          | `lune-async` `Parallel` pool (`System.cpu_count` threads) | Full scheduler: `sleep`, channels, blocking IO all work  |
-| `app.events.on` handlers                 | Webview thread                                            | Same as sync bindings; offload heavy work to `app.async` |
+| `app.event.on` handlers                  | Webview thread                                            | Same as sync bindings; offload heavy work to `app.async` |
 | `app.async { }` tasks                    | `lune-tasks` `Parallel` pool (`System.cpu_count` threads) | Use for timers, pollers, anything long-running           |
 
 ### Dedicated `Isolated` threads (one OS thread each, opt-in by plugin)
@@ -145,7 +144,7 @@ On Unix, this means the main thread is permanently occupied by Cocoa/GTK once `w
 
 ### Rules of thumb
 
-- **Never block in a sync binding or `app.events.on` handler.** It freezes the UI for the duration. Move work to `app.async { … }` or mark the binding `async: true`.
+- **Never block in a sync binding or `app.event.on` handler.** It freezes the UI for the duration. Move work to `app.async { … }` or mark the binding `async: true`.
 - **`spawn` is unreliable** across platforms — works on Windows where the main thread isn't busy, doesn't on Unix where it's parked in Cocoa/GTK. Use `app.async` for portability.
 - **`Fiber::ExecutionContext::Isolated` is the right primitive for plugins** that own an OS resource (a poll loop, an accept loop, a message pump) and need to stay responsive even when the rest of the app is blocked.
 - **Main-thread-only native calls** (NSStatusItem, GTK widget creation, etc.) are handled inside Lune's `Native::*` modules — plugins don't have to think about marshaling.
@@ -201,21 +200,21 @@ When using `Lune.run` with `assets:`, the macro internally creates a `Runner` an
 
 ## Event system
 
-The event bus is bidirectional. Crystal pushes to JS via `app.events.emit`; JS pushes to Crystal via `lune.Events.emit` from `runtime.js`. Both sides share the same event name namespace and use symmetric `on`, `once`, `off` APIs.
+The event bus is bidirectional. Crystal pushes to JS via `app.event.emit`; JS pushes to Crystal via `lune.Event.emit` from `runtime.js`. Both sides share the same event name namespace and use symmetric `on`, `once`, `off` APIs.
 
 ```crystal
 # Crystal → JS
 app.async do
   loop do
-    app.events.emit("tick", Time.utc.to_s)
+    app.event.emit("tick", Time.utc.to_s)
     sleep 1.second
   end
 end
 
 # Crystal listening for JS events — dispatch heavy work to app.async
-app.events.on("search") do |data|
+app.event.on("search") do |data|
   query = data["query"].as_s
-  app.async { app.events.emit("results", run_search(query).map(&.to_h)) }
+  app.async { app.event.emit("results", run_search(query).map(&.to_h)) }
 end
 ```
 
@@ -223,8 +222,8 @@ end
 // JS → Crystal
 import { lune } from "../lunejs/runtime/runtime.js";
 
-lune.Events.on("results", (data) => renderResults(data));
-await lune.Events.emit("search", { query: input.value });
+lune.Event.on("results", (data) => renderResults(data));
+await lune.Event.emit("search", { query: input.value });
 ```
 
-Under the hood, `app.events.emit` calls `window.__lune.crystalEmit` (Crystal→JS); `lune.Events.emit` calls the `Events.emit` WebView binding (JS→Crystal), which is just an ordinary `@[Lune::Bind]` method on the `Events` plugin like any other. See the [Events](./events) guide for the full API.
+Under the hood, `app.event.emit` calls `window.__lune.crystalEmit` (Crystal→JS); `lune.Event.emit` calls the `Event.emit` WebView binding (JS→Crystal), which is just an ordinary `@[Lune::Bind]` method on the `Event` plugin like any other. See the [Event](./event) guide for the full API.

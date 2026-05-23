@@ -11,7 +11,7 @@
 | **Hard deps**    | —                                       |
 | **Platforms**    | macOS · Linux · Windows                 |
 
-Stream uses a local WebSocket server for ordered, low-latency data delivery. Use it for sustained flows — price ticks, log lines, LLM tokens, sensor data — where firing a new `evaluateJavaScript` call per message would saturate the event loop. For discrete, low-frequency signals see [Events](./events).
+Stream uses a local WebSocket server for ordered, low-latency data delivery. Use it for sustained flows — price ticks, log lines, LLM tokens, sensor data — where firing a new `evaluateJavaScript` call per message would saturate the event loop. For discrete, low-frequency signals see [Event](./event).
 
 ---
 
@@ -155,12 +155,12 @@ end
 
 ---
 
-## Events vs Stream
+## Event vs Stream
 
-|              | Events                            | Stream                             |
+|              | Event                             | Stream                             |
 | ------------ | --------------------------------- | ---------------------------------- |
 | Transport    | `evaluateJavaScript` per call     | WebSocket frames                   |
-| JS → Crystal | `await Events.emit(...)`          | `lune.Stream.send(...)` (no await) |
+| JS → Crystal | `await Event.emit(...)`           | `lune.Stream.send(...)` (no await) |
 | Throughput   | Low–medium                        | High (batched WS frames)           |
 | Ordering     | Best-effort                       | Guaranteed per-connection          |
 | Best for     | UI signals, one-off notifications | Tickers, log tails, token streams  |

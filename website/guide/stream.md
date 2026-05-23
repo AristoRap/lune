@@ -45,14 +45,14 @@ end
 
 ---
 
-## Events vs Stream
+## Event vs Stream
 
-Use Events for discrete, low-frequency signals; use Stream for sustained data flows.
+Use Event for discrete, low-frequency signals; use Stream for sustained data flows.
 
-|              | Events                            | Stream                             |
+|              | Event                             | Stream                             |
 | ------------ | --------------------------------- | ---------------------------------- |
 | Transport    | `evaluateJavaScript` per call     | WebSocket frames                   |
-| JS → Crystal | `await Events.emit(...)`          | `lune.Stream.send(...)` (no await) |
+| JS → Crystal | `await Event.emit(...)`           | `lune.Stream.send(...)` (no await) |
 | Throughput   | Low–medium                        | High (batched WS frames)           |
 | Ordering     | Best-effort                       | Guaranteed per-connection          |
 | Best for     | UI signals, one-off notifications | Tickers, log tails, token streams  |

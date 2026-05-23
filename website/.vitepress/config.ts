@@ -25,7 +25,7 @@ export default defineConfig({
           { text: 'Bindings', link: '/guide/bindings' },
           { text: 'Authoring Plugins', link: '/guide/authoring-plugins' },
           { text: 'Error Handling', link: '/guide/error-handling' },
-          { text: 'Events', link: '/guide/events' },
+          { text: 'Event', link: '/guide/event' },
           { text: 'Stream', link: '/guide/stream' },
           { text: 'TypeScript', link: '/guide/typescript' },
           { text: 'Window', link: '/guide/window' },
@@ -40,7 +40,7 @@ export default defineConfig({
           {
             text: 'Core',
             items: [
-              { text: 'Events', link: '/plugins/events' },
+              { text: 'Event', link: '/plugins/event' },
               { text: 'Stream', link: '/plugins/stream' },
             ],
           },

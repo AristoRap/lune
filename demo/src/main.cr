@@ -11,8 +11,8 @@ app = Lune::App.new
 app.install(Demo.new)
 
 # ping → pong relay
-app.events.on("ping") do |data|
-  app.events.emit("pong", data)
+app.event.on("ping") do |data|
+  app.event.emit("pong", data)
 end
 
 # Class-based style: state and callbacks live inside the menu class.
@@ -20,7 +20,7 @@ file_menu = FileMenu.new(app)
 
 app.async("clock") do
   loop do
-    app.events.emit("tick", Time.utc.to_rfc3339) unless file_menu.clock_paused
+    app.event.emit("tick", Time.utc.to_rfc3339) unless file_menu.clock_paused
     sleep 1.second
   end
 end
@@ -64,7 +64,7 @@ Lune.run(app, assets: "frontend/dist") do |opts|
 
   # opts.on_navigate = ->(url : String) {
   #   Lune.logger.info { "on_navigate ← #{url}" }
-  #   app.events.emit("nav-received", url)
+  #   app.event.emit("nav-received", url)
   # }
 
   opts.mac do |m|
@@ -103,9 +103,9 @@ Lune.run(app, assets: "frontend/dist") do |opts|
     m.edit_menu
 
     m.submenu "View" do |view| # block style: inline, no state needed
-      view.item("Zoom In") { app.events.emit("zoom-in") }
-      view.item("Zoom Out") { app.events.emit("zoom-out") }
-      view.item("Actual Size", shortcut: "cmd+0") { app.events.emit("zoom-reset") }
+      view.item("Zoom In") { app.event.emit("zoom-in") }
+      view.item("Zoom Out") { app.event.emit("zoom-out") }
+      view.item("Actual Size", shortcut: "cmd+0") { app.event.emit("zoom-reset") }
     end
   end
 end

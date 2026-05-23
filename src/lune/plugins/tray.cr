@@ -7,7 +7,7 @@ module Lune
       # clicks via Shell_NotifyIconW, menus via CreatePopupMenu + TrackPopupMenu,
       # icons via LoadImageW (.ico required — PNG falls back to IDI_APPLICATION
       # with a logger.warn). See website/plugins/tray.md.
-      DESCRIPTOR = Descriptor.new(id: :tray, label: "Tray", soft_deps: [:events], platforms: [:darwin, :linux, :win32])
+      DESCRIPTOR = Descriptor.new(id: :tray, label: "Tray", soft_deps: [:event], platforms: [:darwin, :linux, :win32])
 
       def descriptor : Descriptor
         DESCRIPTOR
@@ -68,7 +68,7 @@ module Lune
       #   4. else → emit `trayEvent` with the given payload
       def self.build_click_default(
         user_override : (-> Nil)?,
-        events : Lune::Events,
+        event_bus : Lune::Event,
         event_name : String,
         payload : String,
         toggle_window : (-> Nil)? = nil,
@@ -82,7 +82,7 @@ module Lune
           elsif has_menu.call
             Lune::Native::Tray.popup_menu
           else
-            events.emit(event_name, payload)
+            event_bus.emit(event_name, payload)
           end
           nil
         }
@@ -120,18 +120,18 @@ module Lune
       # Memoized so multiple show / set_menu calls share the same closures.
       private def on_tray_click_handler : -> Nil
         @on_tray_click_handler ||= Tray.build_click_default(
-          @config.on_click, @app.events, @config.event, "left_click",
+          @config.on_click, @app.event, @config.event, "left_click",
           window_toggle_for(:left_click), -> { @has_menu })
       end
 
       private def on_right_click_handler : -> Nil
         @on_right_click_handler ||= Tray.build_click_default(
-          @config.on_right_click, @app.events, @config.event, "right_click",
+          @config.on_right_click, @app.event, @config.event, "right_click",
           window_toggle_for(:right_click), -> { @has_menu })
       end
 
       private def on_menu_click_handler : String -> Nil
-        @on_menu_click_handler ||= @config.on_menu_click || ->(id : String) { @app.events.emit(@config.event, id); nil }
+        @on_menu_click_handler ||= @config.on_menu_click || ->(id : String) { @app.event.emit(@config.event, id); nil }
       end
 
       # Hook the macro-generated install: run the binding registration, then

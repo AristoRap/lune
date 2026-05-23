@@ -2,7 +2,7 @@
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import SectionHead from "../components/SectionHead.vue";
 import { lune } from "../lune.js";
-const { Windows, Events } = lune;
+const { Windows, Event } = lune;
 
 const openWindows = ref([]);
 const log = ref([]);
@@ -53,8 +53,8 @@ const onWindowClosed = (data) => {
   }
 };
 
-onMounted(() => Events.on("window_closed", onWindowClosed));
-onBeforeUnmount(() => Events.off("window_closed", onWindowClosed));
+onMounted(() => Event.on("window_closed", onWindowClosed));
+onBeforeUnmount(() => Event.off("window_closed", onWindowClosed));
 </script>
 
 <template>

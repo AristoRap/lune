@@ -2,7 +2,7 @@
 import { nextTick, ref, useTemplateRef } from "vue";
 import SectionHead from "../components/SectionHead.vue";
 import { api, lune } from "../lune.js";
-const { Dialogs, Events } = lune;
+const { Dialogs, Event } = lune;
 import { useLuneEvent } from "../composables/useLuneEvent.js";
 
 const clock = ref("—");
@@ -60,7 +60,7 @@ async function sendPing() {
     ms: 0,
   });
   scrollRoundsToBottom();
-  await Events.emit("ping", pingValue.value);
+  await Event.emit("ping", pingValue.value);
 }
 
 function fmtVal(v) {
@@ -78,10 +78,10 @@ async function pickAndProcess() {
 </script>
 
 <template>
-  <SectionHead eyebrow="Bidirectional" title="Events">
+  <SectionHead eyebrow="Bidirectional" title="Event">
     <template #desc>
       A small bus connects Crystal and JS. Crystal calls
-      <code>app.events.emit</code>; JavaScript calls <code>emit()</code>. Either
+      <code>app.event.emit</code>; JavaScript calls <code>emit()</code>. Either
       side can subscribe with <code>on()</code>.
     </template>
   </SectionHead>

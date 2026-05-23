@@ -50,7 +50,7 @@ Shortcuts are released automatically when the app quits. You do not need to unre
 Hotkey events arrive via the event bus under the `"hotkey"` event name. `data.key` is the accelerator string exactly as registered:
 
 ```js
-lune.Events.on("hotkey", (data) => {
+lune.Event.on("hotkey", (data) => {
   switch (data.key) {
     case "Ctrl+Shift+K":
       openSearch();
@@ -62,7 +62,7 @@ lune.Events.on("hotkey", (data) => {
 });
 ```
 
-Or use the `lune.Hotkeys.on` convenience wrapper (identical to `lune.Events.on("hotkey", ...)`):
+Or use the `lune.Hotkeys.on` convenience wrapper (identical to `lune.Event.on("hotkey", ...)`):
 
 ```js
 lune.Hotkeys.on((data) => {

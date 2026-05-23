@@ -116,7 +116,7 @@ describe Lune::App do
     end
   end
 
-  describe "#events" do
+  describe "#event" do
     describe "#emit" do
       it "emits an event through the bridge" do
         app = Lune::App.new
@@ -124,7 +124,7 @@ describe Lune::App do
 
         app.bridge = bridge
 
-        app.events.emit("ready", {status: "ok"})
+        app.event.emit("ready", {status: "ok"})
 
         bridge.last_eval.should contain("window.__lune.crystalEmit")
         bridge.last_eval.should contain("ready")
@@ -137,7 +137,7 @@ describe Lune::App do
 
         app.bridge = bridge
 
-        app.events.emit("ready")
+        app.event.emit("ready")
 
         bridge.last_eval.should contain("null")
       end
@@ -148,8 +148,8 @@ describe Lune::App do
         app = Lune::App.new
         received = [] of JSON::Any
 
-        app.events.on("ping") { |data| received << data }
-        app.events.dispatch("ping", JSON::Any.new("hello"))
+        app.event.on("ping") { |data| received << data }
+        app.event.dispatch("ping", JSON::Any.new("hello"))
 
         received.size.should eq(1)
         received.first.as_s.should eq("hello")
@@ -159,9 +159,9 @@ describe Lune::App do
         app = Lune::App.new
         count = 0
 
-        app.events.on("ping") { |_| count += 1 }
-        app.events.on("ping") { |_| count += 1 }
-        app.events.dispatch("ping", JSON::Any.new(nil))
+        app.event.on("ping") { |_| count += 1 }
+        app.event.on("ping") { |_| count += 1 }
+        app.event.dispatch("ping", JSON::Any.new(nil))
 
         count.should eq(2)
       end
@@ -170,8 +170,8 @@ describe Lune::App do
         app = Lune::App.new
         fired = false
 
-        app.events.on("ping") { |_| fired = true }
-        app.events.dispatch("pong", JSON::Any.new(nil))
+        app.event.on("ping") { |_| fired = true }
+        app.event.dispatch("pong", JSON::Any.new(nil))
 
         fired.should be_false
       end
@@ -180,10 +180,10 @@ describe Lune::App do
         app = Lune::App.new
         count = 0
 
-        app.events.on("tick") { |_| count += 1 }
-        app.events.dispatch("tick", JSON::Any.new(nil))
-        app.events.dispatch("tick", JSON::Any.new(nil))
-        app.events.dispatch("tick", JSON::Any.new(nil))
+        app.event.on("tick") { |_| count += 1 }
+        app.event.dispatch("tick", JSON::Any.new(nil))
+        app.event.dispatch("tick", JSON::Any.new(nil))
+        app.event.dispatch("tick", JSON::Any.new(nil))
 
         count.should eq(3)
       end
@@ -194,9 +194,9 @@ describe Lune::App do
         app = Lune::App.new
         count = 0
 
-        app.events.once("ping") { |_| count += 1 }
-        app.events.dispatch("ping", JSON::Any.new(nil))
-        app.events.dispatch("ping", JSON::Any.new(nil))
+        app.event.once("ping") { |_| count += 1 }
+        app.event.dispatch("ping", JSON::Any.new(nil))
+        app.event.dispatch("ping", JSON::Any.new(nil))
 
         count.should eq(1)
       end
@@ -205,8 +205,8 @@ describe Lune::App do
         app = Lune::App.new
         received = [] of JSON::Any
 
-        app.events.once("ping") { |data| received << data }
-        app.events.dispatch("ping", JSON::Any.new("only-once"))
+        app.event.once("ping") { |data| received << data }
+        app.event.dispatch("ping", JSON::Any.new("only-once"))
 
         received.first.as_s.should eq("only-once")
       end
@@ -217,9 +217,9 @@ describe Lune::App do
         app = Lune::App.new
         count = 0
 
-        app.events.on("ping") { |_| count += 1 }
-        app.events.off("ping")
-        app.events.dispatch("ping", JSON::Any.new(nil))
+        app.event.on("ping") { |_| count += 1 }
+        app.event.off("ping")
+        app.event.dispatch("ping", JSON::Any.new(nil))
 
         count.should eq(0)
       end
@@ -228,31 +228,31 @@ describe Lune::App do
         app = Lune::App.new
         count = 0
 
-        app.events.once("ping") { |_| count += 1 }
-        app.events.off("ping")
-        app.events.dispatch("ping", JSON::Any.new(nil))
+        app.event.once("ping") { |_| count += 1 }
+        app.event.off("ping")
+        app.event.dispatch("ping", JSON::Any.new(nil))
 
         count.should eq(0)
       end
 
       it "does nothing for an event with no handlers" do
         app = Lune::App.new
-        app.events.off("nonexistent") # must not raise
+        app.event.off("nonexistent") # must not raise
       end
     end
 
     describe "#dispatch" do
       it "does nothing when no handlers are registered" do
         app = Lune::App.new
-        app.events.dispatch("ping", JSON::Any.new(nil)) # must not raise
+        app.event.dispatch("ping", JSON::Any.new(nil)) # must not raise
       end
 
       it "passes raw JSON::Any to handlers" do
         app = Lune::App.new
         received = nil
 
-        app.events.on("data") { |d| received = d }
-        app.events.dispatch("data", JSON.parse(%({"x": 1})))
+        app.event.on("data") { |d| received = d }
+        app.event.dispatch("data", JSON.parse(%({"x": 1})))
 
         received.not_nil!["x"].as_i.should eq(1)
       end
@@ -411,7 +411,7 @@ describe Lune::App do
 
     it "silently drops emit when bridge is not yet set" do
       app = Lune::App.new
-      app.events.emit("ready") # must not raise
+      app.event.emit("ready") # must not raise
     end
 
     it "silently drops emit after bridge is closed" do
@@ -420,7 +420,7 @@ describe Lune::App do
       app.bridge = bridge
       bridge.close!
 
-      app.events.emit("after-close") # must not raise or dispatch
+      app.event.emit("after-close") # must not raise or dispatch
       bridge.last_eval.should eq("")
     end
 

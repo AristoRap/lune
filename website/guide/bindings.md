@@ -132,13 +132,13 @@ class ProcessModule
   def run(paths : Array(String)) : Nil
     paths.each_with_index do |path, i|
       do_work(path)
-      @app.events.emit("progress", {"done" => i + 1, "total" => paths.size})
+      @app.event.emit("progress", {"done" => i + 1, "total" => paths.size})
     end
   end
 end
 ```
 
-No constructor argument needed — `@app` is set by the framework at install time. The full event bus API is available via `@app.events`: `@app.events.emit`, `@app.events.on`, `@app.events.once`, and `@app.events.off` — all usable anywhere in the class, including background fibers spawned from a binding. See the [Events](./events) guide for the complete API.
+No constructor argument needed — `@app` is set by the framework at install time. The full event bus API is available via `@app.event`: `@app.event.emit`, `@app.event.on`, `@app.event.once`, and `@app.event.off` — all usable anywhere in the class, including background fibers spawned from a binding. See the [Event](./event) guide for the complete API.
 
 ---
 
@@ -170,7 +170,7 @@ Use `app.async` instead:
 ```crystal
 app.async do
   loop do
-    app.events.emit("tick", Time.utc.to_rfc3339)
+    app.event.emit("tick", Time.utc.to_rfc3339)
     sleep 1.second
   end
 end

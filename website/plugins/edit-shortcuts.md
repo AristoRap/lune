@@ -19,15 +19,15 @@ A passive plugin — injects a single `keydown` listener that maps the standard 
 
 Adds a top-level `keydown` listener:
 
-| Shortcut                 | Action       |
-| ------------------------ | ------------ |
-| `cmd/ctrl + A`           | `selectAll`  |
-| `cmd/ctrl + C`           | `copy`       |
-| `cmd/ctrl + V`           | `paste`      |
-| `cmd/ctrl + X`           | `cut`        |
-| `cmd/ctrl + Z`           | `undo`       |
-| `cmd/ctrl + shift + Z`   | `redo`       |
-| `cmd/ctrl + Y`           | `redo`       |
+| Shortcut               | Action      |
+| ---------------------- | ----------- |
+| `cmd/ctrl + A`         | `selectAll` |
+| `cmd/ctrl + C`         | `copy`      |
+| `cmd/ctrl + V`         | `paste`     |
+| `cmd/ctrl + X`         | `cut`       |
+| `cmd/ctrl + Z`         | `undo`      |
+| `cmd/ctrl + shift + Z` | `redo`      |
+| `cmd/ctrl + Y`         | `redo`      |
 
 The listener calls `e.preventDefault()` then `document.execCommand(...)`. Any other key combination falls through to the page.
 

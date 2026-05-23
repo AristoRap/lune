@@ -11,7 +11,7 @@
 | **Hard deps**    | —                    |
 | **Platforms**    | all                  |
 
-The Windows plugin lets you open additional native windows from JavaScript. Each new window gets its own `WKWebView` (macOS) or equivalent, shares all active plugin bindings with the main window, and participates in `app.events.emit` broadcasts. Use it for settings panels, secondary views, or any multi-window layout.
+The Windows plugin lets you open additional native windows from JavaScript. Each new window gets its own `WKWebView` (macOS) or equivalent, shares all active plugin bindings with the main window, and participates in `app.event.emit` broadcasts. Use it for settings panels, secondary views, or any multi-window layout.
 
 ---
 
@@ -91,7 +91,7 @@ When a secondary window is closed — either via `lune.Windows.close(id)` or by 
 ```js
 import { lune } from "../lunejs/runtime/runtime.js";
 
-lune.Events.on("window_closed", (data) => {
+lune.Event.on("window_closed", (data) => {
   console.log("window closed:", data.id);
 });
 ```
@@ -105,7 +105,7 @@ lune.Events.on("window_closed", (data) => {
 Secondary windows are fully capable — every plugin active in the main window works identically in a secondary window:
 
 - **Bindings** (`Sqlite`, `Filesystem`, `Clipboard`, etc.) — all JS APIs work normally.
-- **Event bus** — `lune.Events.on` / `lune.Events.emit` work; Crystal's `app.events.emit` broadcasts to all open windows simultaneously.
+- **Event bus** — `lune.Event.on` / `lune.Event.emit` work; Crystal's `app.event.emit` broadcasts to all open windows simultaneously.
 - **Stream** — the WebSocket stream connects as an additional client to the main window's existing server. No second server is started.
 - **FileDrop** — drag-and-drop targets work per window.
 - **Context menu, hotkeys, and all other plugins** — active in secondary windows automatically.

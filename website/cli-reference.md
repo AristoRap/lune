@@ -242,7 +242,7 @@ With `--plugins`, the doctor compiles your app entry with `-Dlune_inspect`, shor
   ✓  app entry         src/main.cr
 
   Plugins
-    ✓  events           Events
+    ✓  event            Event
     ✓  stream           Stream
     ✗  file_watch       FileWatch  (not available on win32)
     ✓  tray             Tray

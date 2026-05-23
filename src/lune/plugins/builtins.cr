@@ -1,7 +1,7 @@
 module Lune
   module Plugins
     # Registers every built-in plugin via `Lune.use` at require time. Order
-    # mirrors the dependency graph (Events / Stream first so plugins that
+    # mirrors the dependency graph (Event / Stream first so plugins that
     # soft-depend on them resolve cleanly) but isn't load-bearing — `Registry`
     # runs a topological sort before install.
     #
@@ -10,7 +10,7 @@ module Lune
     # rejects third-party plugins from squatting on the framework namespace.
     def self.register_builtins! : Nil
       builtins = [
-        Events.new, Stream.new, FileDrop.new, System.new, Filesystem.new,
+        Event.new, Stream.new, FileDrop.new, System.new, Filesystem.new,
         Clipboard.new, Window.new, Dialogs.new, Tray.new,
         ContextMenu.new, DragOut.new, DeepLink.new, FileWatch.new,
         Shell.new, Hotkeys.new, Sqlite.new, Kv.new, Windows.new,

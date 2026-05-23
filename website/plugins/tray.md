@@ -2,21 +2,21 @@
 
 > System tray icon with an optional dropdown menu.
 
-|                  |                                                                     |
-| ---------------- | ------------------------------------------------------------------- |
-| **Config key**   | `tray`                                                              |
-| **JS namespace** | `Tray`                                                              |
-| **Core**         | No                                                                  |
-| **Phases**       | Bindable                                                            |
-| **Hard deps**    | —                                                                   |
-| **Soft deps**    | `events` (menu item clicks emitted as events when events is active) |
-| **Platforms**    | macOS · Linux¹ · Windows²                                           |
+|                  |                                                                   |
+| ---------------- | ----------------------------------------------------------------- |
+| **Config key**   | `tray`                                                            |
+| **JS namespace** | `Tray`                                                            |
+| **Core**         | No                                                                |
+| **Phases**       | Bindable                                                          |
+| **Hard deps**    | —                                                                 |
+| **Soft deps**    | `event` (menu item clicks emitted as events when event is active) |
+| **Platforms**    | macOS · Linux¹ · Windows²                                         |
 
 ¹ Requires XWayland on Wayland compositors.
 
 ² Windows: `lune.Tray.setIcon` requires a `.ico` path (PNG / SVG fall back to the default Windows app icon with a logger warning). See [Windows notes](#windows-notes) below.
 
-Tray has a soft dependency on `events`. When events is active, tray icon clicks and menu item selections emit events automatically. When events is absent, use the Crystal-side callbacks in the `opts.tray` block instead.
+Tray has a soft dependency on `event`. When event is active, tray icon clicks and menu item selections emit events automatically. When event is absent, use the Crystal-side callbacks in the `opts.tray` block instead.
 
 ---
 
@@ -48,7 +48,7 @@ Lune.run(app) do |opts|
     t.on_right_click = -> { puts "right clicked" }
     t.on_menu_click  = ->(id : String) { puts "menu: #{id}" }
 
-    # Optional: override the event name used when emitting via events.
+    # Optional: override the event name used when emitting via event.
     t.event = "myTrayEvent"  # default: "trayEvent"
 
     # Optional: show the tray icon at boot without a JS `lune.Tray.show("")` call.
@@ -60,7 +60,7 @@ end
 
 | Option             | Type            | Default           | Description                                                  |
 | ------------------ | --------------- | ----------------- | ------------------------------------------------------------ |
-| `event`            | `String`        | `"trayEvent"`     | Event name emitted via Events on click / menu select         |
+| `event`            | `String`        | `"trayEvent"`     | Event name emitted via Event on click / menu select          |
 | `on_click`         | `-> Nil`        | —                 | Crystal callback for left-click (full takeover)              |
 | `on_right_click`   | `-> Nil`        | —                 | Crystal callback for right-click (full takeover)             |
 | `on_menu_click`    | `String -> Nil` | emit menu item id | Crystal callback for menu item selection                     |
@@ -86,8 +86,8 @@ await lune.Tray.setMenu([
   { id: "quit", label: "Quit" },
 ]);
 
-// Listen for tray events (requires events)
-lune.Events.on("trayEvent", (payload) => {
+// Listen for tray events (requires event)
+lune.Event.on("trayEvent", (payload) => {
   if (payload === "left_click") console.log("plain left click");
   if (payload === "right_click") console.log("plain right click");
   if (payload === "show") lune.Window.show();
@@ -125,7 +125,7 @@ interface TrayMenuItem {
 
 ## Events
 
-When `events` is active (the default), tray interactions emit on the bus:
+When `event` is active (the default), tray interactions emit on the bus:
 
 | Trigger                              | Payload                             |
 | ------------------------------------ | ----------------------------------- |
@@ -137,7 +137,7 @@ Event name defaults to `"trayEvent"`. Override with `opts.tray.event`:
 
 ```crystal
 opts.tray do |t|
-  t.event = "app-tray"  # lune.Events.on("app-tray", ...) in JS
+  t.event = "app-tray"  # lune.Event.on("app-tray", ...) in JS
 end
 ```
 

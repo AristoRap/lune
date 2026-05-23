@@ -7,8 +7,8 @@ private def runtime_bindings
   app.bindings.select(&.internal?)
 end
 
-private def events_plugins
-  [Lune::Plugins::Events.new] of Lune::Plugin
+private def event_plugins
+  [Lune::Plugins::Event.new] of Lune::Plugin
 end
 
 private def drag_out_plugins
@@ -52,11 +52,11 @@ describe Lune::Generator do
     dts.includes?("readonly code: string").should be_true
   end
 
-  it "exports Events namespace with on, once, off helpers" do
-    js = Lune::Generator.generate_runtime_js([] of Lune::Binding, events_plugins)
+  it "exports Event namespace with on, once, off helpers" do
+    js = Lune::Generator.generate_runtime_js([] of Lune::Binding, event_plugins)
 
     js.includes?("export const Lune").should be_true
-    js.includes?("Events:").should be_true
+    js.includes?("Event:").should be_true
     js.includes?("on(name, cb)").should be_true
     js.includes?("once(name, cb)").should be_true
     js.includes?("off(name, cb)").should be_true
@@ -64,23 +64,23 @@ describe Lune::Generator do
     js.includes?("window.__lune.off").should be_true
   end
 
-  it "exports emit as a regular @[Bind] method on Events" do
-    # emit moved from js_helpers into a real binding (Events.emit). Plugin
+  it "exports emit as a regular @[Bind] method on Event" do
+    # emit moved from js_helpers into a real binding (Event.emit). Plugin
     # bindings are passed explicitly to the generator alongside the plugin.
-    events = Lune::Plugins::Events.new
+    event = Lune::Plugins::Event.new
     app = Lune::App.new
-    app.install(events)
-    js = Lune::Generator.generate_runtime_js(app.bindings.select(&.internal?), events_plugins)
+    app.install(event)
+    js = Lune::Generator.generate_runtime_js(app.bindings.select(&.internal?), event_plugins)
 
     js.includes?("emit(name, data)").should be_true
-    js.includes?(%("Lune.Plugins.Events.emit")).should be_true
+    js.includes?(%("Lune.Plugins.Event.emit")).should be_true
   end
 
   it "declares emit in runtime.d.ts" do
-    events = Lune::Plugins::Events.new
+    event = Lune::Plugins::Event.new
     app = Lune::App.new
-    app.install(events)
-    dts = Lune::Generator.generate_runtime_dts(app.bindings.select(&.internal?), events_plugins)
+    app.install(event)
+    dts = Lune::Generator.generate_runtime_dts(app.bindings.select(&.internal?), event_plugins)
 
     dts.includes?("emit(name: string").should be_true
   end
@@ -99,12 +99,12 @@ describe Lune::Generator do
   end
 
   it "generates runtime.d.ts with typed namespace interfaces" do
-    dts = Lune::Generator.generate_runtime_dts(runtime_bindings, events_plugins)
+    dts = Lune::Generator.generate_runtime_dts(runtime_bindings, event_plugins)
 
     dts.includes?("LuneEnvironment").should be_true
     dts.includes?("export declare const Lune").should be_true
     dts.includes?("System: {").should be_true
-    dts.includes?("Events: {").should be_true
+    dts.includes?("Event: {").should be_true
     dts.includes?("quit()").should be_true
     dts.includes?("openUrl(").should be_true
     dts.includes?("environment()").should be_true

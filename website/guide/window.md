@@ -164,7 +164,7 @@ Called once when the page's `load` event fires — i.e. the DOM is fully ready. 
 ```crystal
 opts.on_load = -> {
   puts "Frontend ready"
-  app.events.emit("init", { "version" => "1.0.0" })
+  app.event.emit("init", { "version" => "1.0.0" })
 }
 ```
 
@@ -352,7 +352,7 @@ The block receives the new checked state as a `Bool`. The visual checkmark is to
 ```crystal
 m.submenu "View" do |view|
   view.checkbox "Show Sidebar", checked: true, shortcut: "cmd+\\" do |on|
-    app.events.emit("sidebar", on)
+    app.event.emit("sidebar", on)
   end
 end
 ```
@@ -599,7 +599,7 @@ class FileMenu < Lune::Options::Menu::Group
     @clock_paused = !@clock_paused
     @pause_item.not_nil!.label = @clock_paused ? "Resume Clock" : "Pause Clock"
     @app.update_menu
-    @app.events.emit("clockPaused", @clock_paused)
+    @app.event.emit("clockPaused", @clock_paused)
   end
 end
 
@@ -619,7 +619,7 @@ Lune.run(app) do |opts|
   opts.file_drop do |fd|
     fd.zone    = "--lune-drop-target"
     fd.on_drop = ->(x : Int32, y : Int32, paths : Array(String)) {
-      app.events.emit("file_drop", {"x" => x, "y" => y, "paths" => paths})
+      app.event.emit("file_drop", {"x" => x, "y" => y, "paths" => paths})
     }
   end
 
@@ -642,8 +642,8 @@ Lune.run(app) do |opts|
     m.hide_title        = true
   end
 
-  opts.on_window_ready = ->(_handle : Void*) { app.events.emit("windowReady", nil) }
-  opts.on_load         = -> { app.events.emit("ready", nil) }
+  opts.on_window_ready = ->(_handle : Void*) { app.event.emit("windowReady", nil) }
+  opts.on_load         = -> { app.event.emit("ready", nil) }
   opts.on_navigate     = ->(url : String) { puts "navigated: #{url}" }
   opts.on_close        = -> { puts "closed" }
 end

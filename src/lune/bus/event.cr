@@ -2,7 +2,7 @@ module Lune
   # Crystal ↔ JS event bus. Subscribers (registered via `#on` / `#once`) fire on
   # `#dispatch`; `#emit` pushes a Crystal-side event into every connected
   # webview via `__lune.crystalEmit`.
-  class Events
+  class Event
     include Subscribable
 
     def initialize(@bridge_fn : -> Bridge?, @extra_bridges : Array(Bridge))
