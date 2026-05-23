@@ -9,9 +9,9 @@
 | **Core**         | No                               |
 | **Phases**       | Bindable · Lifecycle             |
 | **Hard deps**    | `event`                          |
-| **Platforms**    | macOS (kqueue) · Linux (inotify) |
+| **Platforms**    | macOS (kqueue) · Linux (inotify) · Windows (ReadDirectoryChangesW) |
 
-Backed by **kqueue** (`EVFILT_VNODE`) on macOS and **inotify** on Linux — no polling, no extra dependencies. The watcher runs on a dedicated OS thread and never stalls the UI. All watches are released automatically on window close.
+Backed by **kqueue** (`EVFILT_VNODE`) on macOS, **inotify** on Linux, and **ReadDirectoryChangesW + IOCP** on Windows — no polling, no extra dependencies. The watcher runs on a dedicated OS thread and never stalls the UI. All watches are released automatically on window close.
 
 Disabling `event` automatically disables this plugin.
 
@@ -62,7 +62,7 @@ lune.FileWatch.unwatch("/tmp/config.json");
 | `path` | `string`                                            | The absolute path passed to `watch()` |
 | `kind` | `"modified" \| "created" \| "deleted" \| "renamed"` | Type of change                        |
 
-On macOS, `kind` maps from kqueue vnode flags (`NOTE_WRITE`/`NOTE_ATTRIB` → `"modified"`, `NOTE_DELETE` → `"deleted"`, `NOTE_RENAME` → `"renamed"`).
+On macOS, `kind` maps from kqueue vnode flags (`NOTE_WRITE`/`NOTE_ATTRIB` → `"modified"`, `NOTE_DELETE` → `"deleted"`, `NOTE_RENAME` → `"renamed"`). On Windows, `FILE_ACTION_ADDED` → `"created"`, `FILE_ACTION_REMOVED` → `"deleted"`, `FILE_ACTION_MODIFIED` → `"modified"`, both rename actions → `"renamed"`.
 
 ---
 
@@ -92,12 +92,6 @@ end
 
 ---
 
-## Windows behaviour
-
-The plugin is auto-filtered from the registry on Windows (Win32 needs `ReadDirectoryChangesW` plumbing — tracked in [ROADMAP.md](https://github.com/AristoRap/lune/blob/main/ROADMAP.md)). The runtime still exports a `FileWatch` namespace on Windows so cross-platform imports keep working, but the methods don't do real work: `watch(path)` / `unwatch(path)` reject with `LuneError("UNAVAILABLE_ON_PLATFORM", …)`, and `on` / `once` / `off` are a one-time `console.warn` + no-op. Catch the rejection or guard with `lune.System.environment().os`.
-
----
-
 ## Disabling
 
 ```yaml
@@ -106,12 +100,10 @@ plugins:
     - file_watch
 ```
 
-On Windows you don't need to disable it manually — the platform filter handles it. The `disabled:` entry is only useful on macOS / Linux.
-
 ---
 
 ## Platform notes
 
 - **macOS** — Verified. Backed by kqueue `EVFILT_VNODE`.
 - **Linux** — Untested. Backed by inotify.
-- **Windows** — Not implemented. Needs `ReadDirectoryChangesW`. Auto-filtered by plugin registry on Windows.
+- **Windows** — Verified. Backed by `ReadDirectoryChangesW` + IOCP, one HANDLE per watched path (parent dir when the path is a file, the dir itself otherwise). Buffer-overflow events (kernel returns 0 bytes) are dropped silently, matching macOS/Linux's best-effort posture.

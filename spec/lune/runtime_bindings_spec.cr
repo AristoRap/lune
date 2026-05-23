@@ -514,7 +514,8 @@ describe "Lune::Plugins" do
         ids.should contain("Lune.Plugins.Tray.show")
         ids.should contain("Lune.Plugins.Tray.hide")
         ids.should contain("Lune.Plugins.Tray.set_menu")
-        ids.should_not contain("Lune.Plugins.FileWatch.watch")
+        # FileWatch ships on Win32 via ReadDirectoryChangesW + IOCP.
+        ids.should contain("Lune.Plugins.FileWatch.watch")
       end
     end
 
@@ -537,11 +538,11 @@ describe "Lune::Plugins" do
       # {% if flag?(:darwin) || flag?(:win32) %} on the Window plugin).
       #   darwin = 63 baseline (Event.emit + Navigation.changed + Window.start_drag)
       #   linux  = 63 - DragOut(1) - Window.start_drag(1)  = 61
-      #   win32  = 63 - DragOut(1) - FileWatch(2)          = 60
+      #   win32  = 63 - DragOut(1)                         = 62
       expected = case Lune::Plugins::CURRENT_PLATFORM
                  when :darwin then 63
                  when :linux  then 61
-                 when :win32  then 60
+                 when :win32  then 62
                  else              63
                  end
 
