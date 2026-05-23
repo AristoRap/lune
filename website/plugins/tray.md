@@ -25,7 +25,7 @@ Tray has a soft dependency on `event`. When event is active, tray icon clicks an
 Per click direction (left or right), the first rule that matches wins:
 
 1. **User override set** (`on_click` / `on_right_click`) — fires the callback. Full takeover.
-2. **Click listed in `toggle_window_on`** — toggles the window (positioned under the tray icon on macOS).
+2. **Click listed in `toggle_window_on`** — toggles the window (positioned relative to the tray icon on macOS + Windows).
 3. **A menu is set** — pops it up.
 4. **Otherwise** — emits `trayEvent` with payload `"left_click"` or `"right_click"`.
 
@@ -40,7 +40,8 @@ Configure the tray in the `Lune.run` block:
 ```crystal
 Lune.run(app) do |opts|
   opts.tray do |t|
-    # Optional: which clicks toggle the window under the tray icon (macOS).
+    # Optional: which clicks toggle the window relative to the tray icon
+    # (macOS positions below the menu-bar icon, Windows above the taskbar icon).
     t.toggle_window_on = [:left_click]
 
     # Optional: custom Crystal callbacks (override every default for that click).
@@ -178,7 +179,7 @@ opts.tray.on_right_click = -> { Lune::Native::Tray.popup_menu; nil }
 Tray ships fully on Windows via `Shell_NotifyIconW` + `CreatePopupMenu` + `LoadImageW`. Three behavioural differences from macOS / Linux to be aware of:
 
 - **`lune.Tray.setIcon` requires a `.ico` file.** Pass a path ending in `.ico`; PNG / SVG / JPEG fall back to the default Windows app icon (`IDI_APPLICATION`) and emit a `logger.warn`. Convert your icon at build time — the bundled `assets/lune-logo.ico` is a multi-resolution example (16/32/48/64/128/256 px embedded as PNG entries) generated from `assets/lune-logo.png`.
-- **`opts.tray.toggle_window_on` is currently a no-op on Windows.** The macOS implementation positions the window directly under the tray icon using the icon's screen rect; on Windows that requires `Shell_NotifyIconGetRect` plumbing that isn't wired yet. The click handler still fires — it just doesn't move or show the window. Tracked in [ROADMAP.md](https://github.com/AristoRap/lune/blob/main/ROADMAP.md). Until then, wire `opts.tray.on_click = -> { ... }` manually if you want click-to-toggle behaviour on Windows.
+- **`opts.tray.toggle_window_on` positions the window above the taskbar icon** via `Shell_NotifyIconGetRect`. Returns nil when the icon is in the overflow flyout, in which case the window still shows / hides but isn't repositioned.
 - **Native context menus render at the cursor position**, not anchored to the tray icon (this matches Win32 convention — `TrackPopupMenu` takes screen coordinates and Lune passes `GetCursorPos`). The Win32 menu also uses the system's classic submenu style, not the rounded "Mica" popovers you see in some Windows 11 apps — those require Acrylic / DirectComposition work that isn't in scope.
 
 ---
@@ -187,7 +188,7 @@ Tray ships fully on Windows via `Shell_NotifyIconW` + `CreatePopupMenu` + `LoadI
 
 - **macOS** — Verified.
 - **Linux** — Untested. Requires XWayland on Wayland compositors.
-- **Windows** — Verified with caveats. Core functionality (icon, menu, click, right-click) works via `Shell_NotifyIconW`. `setIcon` requires `.ico` (PNG/SVG fall back to default with warning); `toggle_window_on` is a no-op (needs `Shell_NotifyIconGetRect`); native menus render at cursor position rather than anchored to icon.
+- **Windows** — Verified with caveats. Core functionality (icon, menu, click, right-click) works via `Shell_NotifyIconW`. `setIcon` requires `.ico` (PNG/SVG fall back to default with warning); `toggle_window_on` positions the window above the taskbar icon via `Shell_NotifyIconGetRect`; native menus render at cursor position rather than anchored to icon.
 
 ---
 

@@ -56,15 +56,15 @@ describe Lune::Plugins::Window do
       Lune::Plugins::Window.new.init_js.should be_nil
     end
 
-    {% if flag?(:darwin) %}
-      it "returns a listener script when drag_zone is set on darwin" do
+    {% if flag?(:darwin) || flag?(:win32) %}
+      it "returns a listener script when drag_zone is set (darwin/win32)" do
         plugin = Lune::Plugins::Window.new
         plugin.config.drag_zone = "--lune-draggable"
         plugin.init_js.not_nil!.should contain("mousedown")
         plugin.init_js.not_nil!.should contain("--lune-draggable")
       end
     {% else %}
-      it "returns nil even when drag_zone is set on non-darwin" do
+      it "returns nil even when drag_zone is set on Linux" do
         plugin = Lune::Plugins::Window.new
         plugin.config.drag_zone = "--lune-draggable"
         plugin.init_js.should be_nil

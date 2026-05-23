@@ -4,9 +4,9 @@ module Lune
       include Lune::Bindable
       include Plugin::Lifecycle
 
-      # macOS (kqueue) + Linux (inotify). Win32 needs `ReadDirectoryChangesW`
-      # plumbing (see ROADMAP).
-      DESCRIPTOR = Descriptor.new(id: :file_watch, label: "FileWatch", deps: [:event], platforms: [:darwin, :linux])
+      # macOS (kqueue) + Linux (inotify) + Windows (ReadDirectoryChangesW
+      # via IOCP).
+      DESCRIPTOR = Descriptor.new(id: :file_watch, label: "FileWatch", deps: [:event], platforms: [:darwin, :linux, :win32])
 
       def descriptor : Descriptor
         DESCRIPTOR

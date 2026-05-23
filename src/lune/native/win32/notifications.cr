@@ -5,6 +5,18 @@
       # the entire path is a shellout, gated on platform here so that the
       # plugin's dispatch in Lune::Native::Notifications.show stays uniform.
       module Notifications
+        # MSDN AUMID grammar: 1-129 chars, ASCII alphanumerics + "." + "\",
+        # where backslash separates up to 4 parts of ≤50 chars each. We only
+        # emit a single part (no company.product split), so just strip
+        # whitespace/punctuation and clamp to 50 chars. Empty → "Lune".
+        private def self.aumid_from(name : String) : String
+          clean = name.gsub(/[^A-Za-z0-9.]/, "")
+          clean = clean[0, 50]
+          clean.empty? ? "Lune" : clean
+        end
+
+        AUMID = aumid_from(Lune::APP_NAME)
+
         def self.show(title : String, body : String)
           # Title/body travel via env vars so we don't have to escape them
           # into the command line; PowerShell's SecurityElement.Escape handles
@@ -18,15 +30,20 @@
           # Without this, Windows silently drops the toast even when the WinRT
           # call returns success.
           #
+          # AUMID + DisplayName come from `lune.yml`'s `name:` (via
+          # Lune::APP_NAME, baked at compile time by the CLI). `name:` is the
+          # human-readable form, AUMID is the sanitized ASCII subkey.
+          #
           # Two separate WinRT projections need explicit loading: loading the
           # Windows.UI.Notifications type alone doesn't make Windows.Data.Xml.Dom
           # available, and New-Object on XmlDocument fails with TypeNotFound.
           script = <<-PS
-            $aumid = "Lune"
+            $aumid = "#{AUMID}"
+            $displayName = $env:LUNE_TOAST_DISPLAY_NAME
             $aumidKey = "HKCU:\\SOFTWARE\\Classes\\AppUserModelId\\$aumid"
             if (-not (Test-Path $aumidKey)) {
                 New-Item -Path $aumidKey -Force | Out-Null
-                Set-ItemProperty -Path $aumidKey -Name "DisplayName" -Value $aumid -Type String
+                Set-ItemProperty -Path $aumidKey -Name "DisplayName" -Value $displayName -Type String
             }
 
             [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType=WindowsRuntime] | Out-Null
@@ -39,8 +56,9 @@
             [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($aumid).Show($toast)
           PS
           env = {
-            "LUNE_TOAST_TITLE" => title,
-            "LUNE_TOAST_BODY"  => body,
+            "LUNE_TOAST_TITLE"        => title,
+            "LUNE_TOAST_BODY"         => body,
+            "LUNE_TOAST_DISPLAY_NAME" => Lune::APP_NAME,
           }
           stderr_buf = IO::Memory.new
           stdout_buf = IO::Memory.new

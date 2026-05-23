@@ -41,10 +41,10 @@ The `demo/` directory in this repo is a Vue 3 showcase that exercises every Lune
 
 ## Platform support
 
-| Platform | Dev | Build | Notes                                                                                                                                                                  |
-| -------- | --- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| macOS    | ✅  | ✅    | Native AppKit                                                                                                                                                          |
-| Linux    | ✅  | ✅    | GTK + WebKit2GTK                                                                                                                                                       |
+| Platform | Dev | Build | Notes                                                                                                                                                             |
+| -------- | --- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| macOS    | ✅  | ✅    | Native AppKit                                                                                                                                                     |
+| Linux    | ✅  | ✅    | GTK + WebKit2GTK                                                                                                                                                  |
 | Windows  | 🟡  | 🟡    | Win32 + WebView2; runnable with a one-line Crystal stdlib patch until Crystal 1.21 ships. Several plugins still gapped — see [WINDOWS_SETUP.md](WINDOWS_SETUP.md) |
 
 ### Windows

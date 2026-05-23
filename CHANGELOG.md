@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.14.0] - 2026-05-23
+
+### Added
+
+- **`Lune::APP_NAME`** — display name baked into the binary at compile time from `lune.yml`'s `name:` (CLI sets `LUNE_APP_NAME`). Defaults to the app entry's basename, or `"Lune"` when built outside the CLI.
+
+### Fixed
+
+- **Win32 window drag** — `opts.window.drag_zone` now drives a native drag on Windows. Previously a no-op outside macOS.
+- **Win32 tray `toggle_window_on`** — left- / right-click now toggles the main window, positioned above the taskbar icon. Previously a no-op outside macOS.
+- **Win32 `Window.hide` / `show` / `visible?`** — actually drive the window's visibility (were silent no-ops).
+- **Win32 toast AUMID** — derived from `lune.yml`'s `name:` so each app gets its own registry subkey and `DisplayName`. Previously hardcoded to `"Lune"`.
+- **Win32 `file_watch`** — backed by `ReadDirectoryChangesW` + IOCP; emits the same `modified` / `created` / `deleted` / `renamed` events as macOS and Linux. Plugin descriptor flipped from `[:darwin, :linux]` to all three.
+- **`edit_shortcuts` no longer breaks Ctrl/Cmd+V in inputs** — the `keydown` interceptor now skips `INPUT` / `TEXTAREA` / `contenteditable` targets and defers to the browser's native handler. `document.execCommand('paste')` is blocked in WebView2/Chromium, so the previous intercept turned paste into a silent no-op inside text fields.
+- **Win32 `Clipboard.readImage` / `writeImage`** — PNG ↔ `CF_DIB` via a PowerShell + `System.Drawing.Bitmap` shellout. Bindings flipped to `async: true` so the call doesn't block the webview's Isolated fiber.
+
 ## [0.13.0] - 2026-05-23
 
 ### Breaking

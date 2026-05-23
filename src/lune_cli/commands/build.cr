@@ -95,9 +95,15 @@ module LuneCLI
           end
         {% end %}
 
+        # Bake `lune.yml`'s `name:` into the binary as Lune::APP_NAME via
+        # `{{ env("LUNE_APP_NAME") }}` at compile time. Defaults to the app
+        # entry's basename when `name:` is unset.
+        build_env = ENV.to_h.merge({Lune::ENV_APP_NAME => config.name || binary_name_for(app_entry)})
+
         app_status = Process.run(
           "crystal",
           crystal_args,
+          env: build_env,
           input: Process::Redirect::Inherit,
           output: Process::Redirect::Inherit,
           error: Process::Redirect::Inherit

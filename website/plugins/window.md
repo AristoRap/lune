@@ -9,7 +9,7 @@
 | **Core**         | No                                         |
 | **Phases**       | Bindable · WebviewInject                   |
 | **Hard deps**    | —                                          |
-| **Platforms**    | macOS · Linux · Windows (drag: macOS only) |
+| **Platforms**    | macOS · Linux · Windows (drag: macOS + Windows) |
 
 The Window plugin exposes runtime window controls to JavaScript — minimize, maximize, center, resize, retitle — and a CSS-driven drag listener for custom title bars. For initial window size, title, and macOS chrome options, see [Window Configuration](../guide/window).
 
@@ -40,7 +40,7 @@ await lune.Window.setSize(1440, 900);
 
 ---
 
-## Window drag _(macOS only)_
+## Window drag _(macOS + Windows)_
 
 Tag DOM elements with a CSS custom property and mousedown on them initiates a native window drag. Essential when using a custom title bar without the OS chrome.
 
@@ -77,7 +77,7 @@ When `drag_zone` is empty (the default), no mousedown listener is installed and 
 
 - **macOS** — Verified. Programmatic controls + drag both work.
 - **Linux** — Untested. Programmatic controls only — `drag_zone` has no effect (drag needs `_NET_WM_MOVERESIZE`; tracked in [ROADMAP.md](https://github.com/AristoRap/lune/blob/main/ROADMAP.md)).
-- **Windows** — Verified for programmatic controls; `drag_zone` is a no-op (needs `WM_NCLBUTTONDOWN` + `HTCAPTION`; tracked in [ROADMAP.md](https://github.com/AristoRap/lune/blob/main/ROADMAP.md)). Window state opt-in via `remember_frame = true` (live `GetWindowRect` tracker since HWND is destroyed before save). Chrome opts are macOS-only.
+- **Windows** — Verified. Programmatic controls + `drag_zone` (mousedown → `ReleaseCapture` + `SendMessage(WM_NCLBUTTONDOWN, HTCAPTION, 0)`). Window state opt-in via `remember_frame = true` (live `GetWindowRect` tracker since HWND is destroyed before save). Chrome opts are macOS-only.
 
 ---
 

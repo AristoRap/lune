@@ -9,7 +9,7 @@
 | **Core**         | No                                                  |
 | **Phases**       | Bindable                                            |
 | **Hard deps**    | —                                                   |
-| **Platforms**    | macOS · Linux · Windows (image: macOS · Linux only) |
+| **Platforms**    | macOS · Linux · Windows                             |
 
 ---
 
@@ -61,7 +61,7 @@ await lune.Clipboard.writeImage(dataUrl);
 
 - **macOS** — Verified. Text via `pbpaste`/`pbcopy`; HTML and image via native APIs.
 - **Linux** — Untested. Text via `xclip`; HTML and image via native APIs.
-- **Windows** — Verified (text + HTML); image Not implemented. Text/HTML go through Win32 `CF_UNICODETEXT` / `CF_HTML`. Image needs PNG ↔ `CF_DIB` conversion — tracked in [ROADMAP.md](https://github.com/AristoRap/lune/blob/main/ROADMAP.md).
+- **Windows** — Verified. Text/HTML go through Win32 `CF_UNICODETEXT` / `CF_HTML`. Image read/write shells out to PowerShell + `System.Windows.Forms.Clipboard` + `System.Drawing.Bitmap` for PNG ↔ `CF_DIB` conversion (~200 ms per call); the binding is `async` so it doesn't block the webview thread.
 
 ---
 

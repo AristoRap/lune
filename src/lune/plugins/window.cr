@@ -6,10 +6,12 @@ module Lune
     #
     # Drag is configured via `opts.window.drag_zone = "--lune-draggable"`.
     # When empty (the default), no drag listener is injected and the
-    # `start_drag` binding is unused. The native drag itself is macOS-only;
-    # the listener and binding are compiled out on non-darwin via
-    # `{% if flag?(:darwin) %}` so non-darwin builds skip both the
-    # mousedown injection and the runtime binding.
+    # `start_drag` binding is unused. Drag is implemented on macOS
+    # (NSWindow performWindowDrag) and Windows (ReleaseCapture +
+    # WM_NCLBUTTONDOWN/HTCAPTION); Linux still needs `_NET_WM_MOVERESIZE`.
+    # The listener and binding are compiled out on Linux via
+    # `{% if flag?(:darwin) || flag?(:win32) %}` so Linux builds skip both
+    # the mousedown injection and the runtime binding.
     class Window < Lune::Plugin
       include Lune::Bindable
       include Plugin::WebviewInject
@@ -43,7 +45,7 @@ module Lune
 
       def init_js : String?
         return nil if @config.drag_zone.empty?
-        {% if flag?(:darwin) %}
+        {% if flag?(:darwin) || flag?(:win32) %}
           start_key = "#{binding_namespace.gsub("::", ".")}.start_drag"
           <<-JS
           (function(){
@@ -99,11 +101,11 @@ module Lune
         Lune::Native::Window.set_size(@handle, width, height)
       end
 
-      # Native window-drag start. macOS-only — defined inside an
-      # `{% if flag?(:darwin) %}` block so the `@[Lune::Bind]` macro only
-      # registers it on darwin, keeping the per-platform binding count
-      # identical to before this plugin was merged with WindowDrag.
-      {% if flag?(:darwin) %}
+      # Native window-drag start. macOS + Windows — Linux still no-ops.
+      # Guarded so the `@[Lune::Bind]` macro only registers the binding on
+      # platforms that actually drive a drag, keeping Linux's binding count
+      # identical to before drag landed there.
+      {% if flag?(:darwin) || flag?(:win32) %}
         @[Lune::Bind]
         def start_drag : Nil
           Lune::Native::Window.start_window_drag(@handle)

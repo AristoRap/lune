@@ -75,7 +75,7 @@ end
 
 - **macOS** — `NSUserNotificationCenter`. The app must be running; there is no persistence.
 - **Linux** — `libnotify`. Requires `libnotify-dev` at build time.
-- **Windows** — PowerShell + WinRT (`Windows.UI.Notifications` + `Windows.Data.Xml.Dom`). The AUMID `Lune` is auto-registered at `HKCU\Software\Classes\AppUserModelId\Lune` on first call so toasts surface and persist in Action Center.
+- **Windows** — PowerShell + WinRT (`Windows.UI.Notifications` + `Windows.Data.Xml.Dom`). The AUMID is derived from `lune.yml`'s `name:` (sanitized to ASCII alphanumerics + `.`, clamped to 50 chars; `"Lune"` fallback) and auto-registered at `HKCU\Software\Classes\AppUserModelId\<AUMID>` on first call so toasts surface and persist in Action Center.
 
 ---
 

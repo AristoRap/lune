@@ -114,7 +114,19 @@
           h_balloon_icon : Void*
         end
 
+        # Win7+. Looks up an icon by (hWnd, uID) or guidItem and writes its
+        # screen-coords RECT into `icon_location`. Returns S_OK (0) on success;
+        # any non-zero HRESULT means the icon couldn't be located (e.g. hidden
+        # in the overflow flyout) and we fall back to "no rect available".
+        struct NotifyIconIdentifier
+          cb_size : UInt32
+          h_wnd : Void*
+          u_id : UInt32
+          guid_item : UInt8[16]
+        end
+
         fun shell_notify_icon_w = Shell_NotifyIconW(message : UInt32, data : NotifyIconDataW*) : LibC::Int
+        fun shell_notify_icon_get_rect = Shell_NotifyIconGetRect(identifier : NotifyIconIdentifier*, icon_location : LibUser32::Rect*) : Int32
       end
 
       module Tray
@@ -193,8 +205,23 @@
           op.reply.receive
         end
 
+        # Returns the tray icon's screen-pixel rect as {x, y, w, h}, or nil
+        # when the icon isn't currently visible (not registered, or hidden in
+        # the overflow flyout). Uses Shell_NotifyIconGetRect (Win7+).
         def self.button_screen_rect : {Int32, Int32, Int32, Int32}?
-          nil
+          return nil unless @@win32_visible && !@@win32_hwnd.null?
+          ident = LibShell32Tray::NotifyIconIdentifier.new
+          ident.cb_size = sizeof(LibShell32Tray::NotifyIconIdentifier).to_u32
+          ident.h_wnd = @@win32_hwnd
+          ident.u_id = TRAY_ICON_ID
+          rect = LibUser32::Rect.new
+          hr = LibShell32Tray.shell_notify_icon_get_rect(pointerof(ident), pointerof(rect))
+          return nil unless hr == 0
+          x = rect.left.to_i32
+          y = rect.top.to_i32
+          w = (rect.right - rect.left).to_i32
+          h = (rect.bottom - rect.top).to_i32
+          {x, y, w, h}
         end
 
         def self.set_right_click_cb(cb : (-> Nil)?)

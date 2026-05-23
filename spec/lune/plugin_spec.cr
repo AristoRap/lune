@@ -196,9 +196,9 @@ describe Lune::Plugins::Registry do
     it "emits a warning for each cascade-disabled plugin" do
       resolved = make_registry.resolve(config_disabled("event"))
       # Use plugins that are present on every platform (default platforms list)
-      # so the cascade-disable step actually runs on them. FileDrop / FileWatch
-      # are platform-filtered out on Win32 before the cascade step, so they
-      # never produce a cascade warning there.
+      # so the cascade-disable step actually runs on them. FileDrop is
+      # platform-filtered out on Win32 before the cascade step, so it never
+      # produces a cascade warning there.
       resolved.warnings.any? { |w| w.includes?("ContextMenu") }.should be_true
       resolved.warnings.any? { |w| w.includes?("DeepLink") }.should be_true
     end
@@ -275,8 +275,8 @@ describe Lune::Plugins::Registry do
       Lune::Plugins::DragOut.new.descriptor.platforms.should eq([:darwin])
     end
 
-    it "FileWatch and FileDrop declare darwin + linux (no win32)" do
-      Lune::Plugins::FileWatch.new.descriptor.platforms.should eq([:darwin, :linux])
+    it "FileWatch declares cross-platform support; FileDrop stays darwin + linux" do
+      Lune::Plugins::FileWatch.new.descriptor.platforms.should eq([:darwin, :linux, :win32])
       Lune::Plugins::FileDrop.new.descriptor.platforms.should eq([:darwin, :linux])
     end
 
