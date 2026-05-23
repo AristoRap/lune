@@ -16,6 +16,7 @@
         SW_HIDE       = 0
         SW_SHOWNORMAL = 1
         SW_MAXIMIZE   = 3
+        SW_SHOW       = 5
         SW_MINIMIZE   = 6
         SW_RESTORE    = 9
 
@@ -34,6 +35,8 @@
         GWLP_WNDPROC = -4
 
         fun is_window = IsWindow(hwnd : Void*) : LibC::Int
+        fun is_window_visible = IsWindowVisible(hwnd : Void*) : LibC::Int
+        fun set_foreground_window = SetForegroundWindow(hwnd : Void*) : LibC::Int
         fun get_window_rect = GetWindowRect(hwnd : Void*, rect : Rect*) : LibC::Int
         fun move_window = MoveWindow(hwnd : Void*, x : LibC::Int, y : LibC::Int, w : LibC::Int, h : LibC::Int, repaint : LibC::Int) : LibC::Int
         fun set_window_text_w = SetWindowTextW(hwnd : Void*, text : UInt16*) : LibC::Int
@@ -149,11 +152,18 @@
         def self.set_content_protection(handle : Void*, enabled : Bool); end
         def self.set_always_on_top(handle : Void*, enabled : Bool); end
         def self.set_activation_policy_accessory; end
-        def self.hide(handle : Void*); end
-        def self.show(handle : Void*); end
+
+        def self.hide(handle : Void*)
+          LibUser32.show_window(handle, LibUser32::SW_HIDE)
+        end
+
+        def self.show(handle : Void*)
+          LibUser32.show_window(handle, LibUser32::SW_SHOW)
+          LibUser32.set_foreground_window(handle)
+        end
 
         def self.visible?(handle : Void*) : Bool
-          true
+          LibUser32.is_window_visible(handle) != 0
         end
 
         def self.auto_hide_on_resign_key(handle : Void*); end

@@ -88,13 +88,16 @@ module Lune
         }
       end
 
-      # Builds the macOS "toggle window below tray icon" lambda used when a
+      # Builds the "toggle window relative to tray icon" lambda used when a
       # click direction is listed in `toggle_window_on`. Returns nil if the
-      # handle isn't set yet (plugin not in a runtime).
+      # handle isn't set yet (plugin not in a runtime). macOS positions the
+      # window below the menu-bar icon; Windows positions it above the
+      # taskbar icon — same math (`y = tray_y - height`) works for both
+      # because the OS coordinate origin and tray location flip together.
       def self.build_window_toggle(handle : Pointer(Void), width : Int32, height : Int32) : (-> Nil)?
         return nil if handle.null?
         -> {
-          {% if flag?(:darwin) %}
+          {% if flag?(:darwin) || flag?(:win32) %}
             if Lune::Native::Window.visible?(handle)
               Lune::Native::Window.hide(handle)
             else

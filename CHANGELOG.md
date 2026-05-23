@@ -5,6 +5,8 @@
 ### Fixed
 
 - **Win32 window drag** — `opts.window.drag_zone` now drives a native drag on Windows. Previously a no-op outside macOS.
+- **Win32 tray `toggle_window_on`** — left- / right-click now toggles the main window, positioned above the taskbar icon. Previously a no-op outside macOS.
+- **Win32 `Window.hide` / `show` / `visible?`** — actually drive the window's visibility (were silent no-ops).
 
 ## [0.13.0] - 2026-05-23
 
