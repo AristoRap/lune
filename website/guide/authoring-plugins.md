@@ -302,6 +302,41 @@ end
 
 **Re-entry contract**: `init_js` may be evaluated more than once if your plugin runs in multiple windows. Keep the JS idempotent — guard with `window.__lune.myPluginReady` or similar so multiple injections don't double-register listeners.
 
+### Named TypeScript types via `@[Lune::TsType]`
+
+Most return types map cleanly to anonymous TS shapes — `NamedTuple(width: Int32, height: Int32)` becomes `{ width: number; height: number }`, a Crystal enum becomes a `"value" | "value"` string union. When you'd rather hand the frontend a named interface (so users can `import type { CounterState } from ".../runtime.js"` and pass the shape across functions), annotate the struct with `@[Lune::TsType]`:
+
+```crystal
+@[Lune::TsType]
+struct CounterState
+  include JSON::Serializable
+  getter value : Int32
+  getter step : Int32
+  getter at_default : Bool
+
+  def initialize(@value, @step, @at_default)
+  end
+end
+
+class Counter < Lune::Plugin
+  include Lune::Bindable
+  # …
+
+  @[Lune::Bind]
+  def state : CounterState
+    CounterState.new(@value, @step, @value == @start_at)
+  end
+end
+```
+
+The generator picks the type up the moment any `@[Lune::Bind]` method returns it, emits `export interface CounterState { value: number; step: number; at_default: boolean }` at the top of `runtime.d.ts`, and sets the binding's TS signature to `state(): Promise<CounterState>`. Field types flow through the same Crystal-to-TS mapping as binding args — nested generics, `NamedTuple` fields, enum fields all resolve recursively.
+
+Limits in this pass: only return-position types are scanned (arg-position TsTypes still need an explicit `@[Lune::BindOverride(ts_args: [...])]`), the simple class name is used (so two TsTypes with the same basename across modules would collide — name them distinctly), and cyclic types aren't detected. None of these are blockers for the common case of "I want my binding's return to have a name."
+
+If you need an inline shape with no named interface (e.g. to widen a Crystal `String` to a TS literal union), keep using `@[Lune::BindOverride(ts_return_type: ...)]` — `BindOverride` still wins over the auto-derived `TsType` reference.
+
+---
+
 ### `js_helpers` and `dts_helpers`
 
 For methods that don't need a Crystal call (pure JS sugar like `Event.on`, `Event.off`), return the JS body from `js_helpers` and the matching `.d.ts` signatures from `dts_helpers`. They're stitched into the same namespace object the generated bindings live in.

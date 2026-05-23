@@ -120,6 +120,25 @@ module Lune
     @@registered_accessors = accessors
   end
 
+  # TsType registry: structs / records / classes annotated with
+  # `@[Lune::TsType]` and referenced by a `@[Lune::Bind]` return type land here
+  # via the `Bindable` macro. `Lune::Generator.generate_runtime_dts` reads from
+  # this hash and emits one `export interface <Name> { ... }` per entry at the
+  # top of `runtime.d.ts`, so plugin authors can hand the frontend named types
+  # instead of inlined anonymous shapes. Field types are stored as raw Crystal
+  # strings (`"Int32"`, `"Array(String)"`, …) and rendered via `crystal_to_ts`
+  # at emit time — keeps the registry purely structural and lets the same TS
+  # mapping rules apply uniformly to fields and binding signatures.
+  @@registered_ts_types = {} of String => Array(Tuple(String, String))
+
+  def self.register_ts_type(name : String, fields : Array(Tuple(String, String))) : Nil
+    @@registered_ts_types[name] = fields
+  end
+
+  def self.registered_ts_types : Hash(String, Array(Tuple(String, String)))
+    @@registered_ts_types
+  end
+
   # Default frontend directory name (matches the lune.yml default).
   DEFAULT_FRONTEND_DIR = "frontend"
 

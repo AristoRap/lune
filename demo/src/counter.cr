@@ -10,6 +10,25 @@ require "lune"
 # (third-party plugins don't live under the `lune.*` alias, that one's
 # reserved for first-party `Lune::Plugins::*`).
 module MyCustomPlugin
+  # `@[Lune::TsType]` marks a Crystal struct as a TypeScript surface type.
+  # The Lune generator picks it up via the `Bindable` macro the moment any
+  # `@[Lune::Bind]` method returns this struct, and emits a matching
+  # `export interface CounterState { ... }` into `runtime.d.ts`. Frontend
+  # code can `import type { CounterState } from "../lunejs/runtime/runtime.js"`
+  # and get a real name on the wire shape instead of an anonymous object
+  # literal. Field types flow through the same `crystal_to_ts` mapping as
+  # binding signatures, so generics and primitives stay in sync.
+  @[Lune::TsType]
+  struct CounterState
+    include JSON::Serializable
+    getter value : Int32
+    getter step : Int32
+    getter at_default : Bool
+
+    def initialize(@value, @step, @at_default)
+    end
+  end
+
   class Counter < Lune::Plugin
     include Lune::Bindable
     include Lune::Plugin::Lifecycle
@@ -44,6 +63,14 @@ module MyCustomPlugin
     @[Lune::Bind]
     def value : Int32
       @value
+    end
+
+    # Returns the full counter state as a TsType-annotated struct. The JS
+    # signature is `Counter.state(): Promise<CounterState>` — a named
+    # interface, not an anonymous shape.
+    @[Lune::Bind]
+    def state : CounterState
+      CounterState.new(@value, @config.step, @value == @config.start_at)
     end
 
     @[Lune::Bind]
