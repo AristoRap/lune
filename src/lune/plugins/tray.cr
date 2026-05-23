@@ -169,7 +169,7 @@ module Lune
       end
 
       @[Lune::Bind]
-      @[Lune::BindOverride(arg_names: ["items"], arg_transforms: ["JSON.stringify(items || [])"] of String?, ts_args: ["TrayMenuItem[]"] of String?)]
+      @[Lune::BindOverride(arg_names: ["items"], arg_transforms: ["JSON.stringify(items || [])"] of String?, ts_args: ["{ id: string; label: string }[]"] of String?)]
       def set_menu(items_json : String) : Nil
         items = begin
           raw = Array(Hash(String, JSON::Any)).from_json(items_json)
@@ -205,7 +205,7 @@ module Lune
           hide(): Promise<void>;
           setIcon(path: string): Promise<void>;
           popupMenu(): Promise<void>;
-          setMenu(items: TrayMenuItem[]): Promise<void>;
+          setMenu(items: { id: string; label: string }[]): Promise<void>;
         DTS
       end
     end

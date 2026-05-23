@@ -73,13 +73,17 @@ lune.ContextMenu.clear();
 | `clear`    | `clear()`      | Remove all items (disables right-click menu) |
 | `onSelect` | `onSelect(cb)` | Persistent listener for item selection       |
 
-### `ContextMenuItem`
+### Menu item shape
+
+`set` takes an array of `{ id?: string; label?: string; enabled?: boolean; separator?: boolean }`. The shape is inlined in `runtime.d.ts` — Lune doesn't ship a named `ContextMenuItem` interface. All fields are optional; use `separator: true` for a divider.
 
 ```ts
-interface ContextMenuItem {
-  id: string;
-  label: string;
-}
+lune.ContextMenu.set([
+  { id: "copy", label: "Copy" },
+  { id: "paste", label: "Paste", enabled: false },
+  { separator: true },
+  { id: "delete", label: "Delete" },
+]);
 ```
 
 ---

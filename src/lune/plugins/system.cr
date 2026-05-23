@@ -48,8 +48,13 @@ module Lune
         @on_open_url.call(url)
       end
 
+      # `os` is widened to a string-literal union via BindOverride because the
+      # Crystal signature only constrains it to `String` — the runtime returns
+      # one of `"darwin"`, `"linux"`, `"windows"` (and `"unknown"` is impossible
+      # in practice; the {% if %} chain covers every supported flag), so the
+      # narrower TS type is accurate and lets callers use exhaustive switch.
       @[Lune::Bind]
-      @[Lune::BindOverride(ts_return_type: "Promise<LuneEnvironment>")]
+      @[Lune::BindOverride(ts_return_type: %(Promise<{ os: "darwin" | "linux" | "windows"; arch: string; devtools: boolean }>))]
       def environment : NamedTuple(os: String, arch: String, devtools: Bool)
         os = {% if flag?(:darwin) %}
                "darwin"
@@ -69,7 +74,6 @@ module Lune
       end
 
       @[Lune::Bind]
-      @[Lune::BindOverride(ts_return_type: "Promise<ScreenInfo>")]
       def screen_info : NamedTuple(width: Int32, height: Int32, scale: Float64)
         Lune::Native::Screen.info
       end

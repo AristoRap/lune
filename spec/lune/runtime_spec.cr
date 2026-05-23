@@ -101,7 +101,6 @@ describe Lune::Generator do
   it "generates runtime.d.ts with typed namespace interfaces" do
     dts = Lune::Generator.generate_runtime_dts(runtime_bindings, event_plugins)
 
-    dts.includes?("LuneEnvironment").should be_true
     dts.includes?("export declare const Lune").should be_true
     dts.includes?("System: {").should be_true
     dts.includes?("Event: {").should be_true
@@ -111,6 +110,22 @@ describe Lune::Generator do
     dts.includes?("on(name: string").should be_true
     dts.includes?("once(name: string").should be_true
     dts.includes?("off(name: string").should be_true
+  end
+
+  it "inlines structural shapes instead of carrying hand-written interfaces" do
+    dts = Lune::Generator.generate_runtime_dts(runtime_bindings, event_plugins)
+
+    # No named-type carryovers in the d.ts header — every shape is either
+    # derived from the Crystal type or inlined into the binding's ts_return_type.
+    dts.includes?("LuneEnvironment").should be_false
+    dts.includes?("ScreenInfo").should be_false
+    dts.includes?("TrayMenuItem").should be_false
+    dts.includes?("ContextMenuItem").should be_false
+
+    # environment() keeps the os string-literal union via an inlined BindOverride
+    dts.includes?(%(os: "darwin" | "linux" | "windows")).should be_true
+    # screen_info() is auto-derived from its NamedTuple return type
+    dts.includes?("width: number; height: number; scale: number").should be_true
   end
 
   it "exports DragOut namespace with start binding (paths JSON-stringified)" do

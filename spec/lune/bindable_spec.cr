@@ -24,6 +24,22 @@ private class MathModule
   end
 end
 
+private enum DemoStatus
+  Pending
+  Running
+  Done
+  TwoWords
+end
+
+private class StatusModule
+  include Lune::Bindable
+
+  @[Lune::Bind]
+  def current : DemoStatus
+    DemoStatus::Pending
+  end
+end
+
 describe "Lune::Bindable + App bindings" do
   it "deserializes a JSON::Serializable struct arg and returns the correct result" do
     fake = FakeWebview.new
@@ -110,5 +126,13 @@ describe "Lune::Bindable + App bindings" do
     app.install(MathModule.new)
 
     app.bindings.empty?.should eq(false)
+  end
+
+  it "derives a TS string union from an enum return type" do
+    app = Lune::App.new
+    app.install(StatusModule.new)
+
+    b = app.bindings.first
+    b.to_dts_sig.should eq(%(  current(): Promise<"pending" | "running" | "done" | "two_words">;))
   end
 end

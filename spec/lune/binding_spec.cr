@@ -151,5 +151,31 @@ describe Lune::Binding do
       Lune::Generator.crystal_to_ts("UInt32").should eq("number")
       Lune::Generator.crystal_to_ts("UInt64").should eq("number")
     end
+
+    it "maps parameterized NamedTuple to a structural TS object" do
+      Lune::Generator.crystal_to_ts("NamedTuple(width: Int32, height: Int32, scale: Float64)")
+        .should eq("{ width: number; height: number; scale: number }")
+    end
+
+    it "maps single-field NamedTuple" do
+      Lune::Generator.crystal_to_ts("NamedTuple(name: String)")
+        .should eq("{ name: string }")
+    end
+
+    it "recurses through NamedTuple field types" do
+      Lune::Generator.crystal_to_ts("NamedTuple(point: Tuple(Int32, Int32), label: String)")
+        .should eq("{ point: [number, number]; label: string }")
+      Lune::Generator.crystal_to_ts("NamedTuple(tags: Array(String), counts: Hash(String, Int32))")
+        .should eq("{ tags: string[]; counts: Record<string, number> }")
+    end
+
+    it "tolerates whitespace inside NamedTuple field specs" do
+      Lune::Generator.crystal_to_ts("NamedTuple( width : Int32 , height : Int32 )")
+        .should eq("{ width: number; height: number }")
+    end
+
+    it "falls back to Record<string, any> for bare NamedTuple (no params)" do
+      Lune::Generator.crystal_to_ts("NamedTuple").should eq("Record<string, any>")
+    end
   end
 end

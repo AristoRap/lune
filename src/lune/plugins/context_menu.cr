@@ -62,7 +62,7 @@ module Lune
 
       def dts_helpers : String
         <<-DTS
-          set(items: ContextMenuItem[]): void;
+          set(items: { id?: string; label?: string; enabled?: boolean; separator?: boolean }[]): void;
           clear(): void;
           onSelect(cb: (id: string) => void): void;
         DTS

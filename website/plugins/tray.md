@@ -112,13 +112,16 @@ await lune.Tray.hide();
 | `setMenu`   | `setMenu(items)` | `Promise<void>` | Set the dropdown menu items      |
 | `popupMenu` | `popupMenu()`    | `Promise<void>` | Open the menu (no-op if not set) |
 
-### `TrayMenuItem`
+### Menu item shape
+
+`setMenu` takes an array of `{ id: string; label: string }`. The shape is inlined in `runtime.d.ts` — Lune doesn't ship a named `TrayMenuItem` interface. Use `"---"` as the `id` for a separator.
 
 ```ts
-interface TrayMenuItem {
-  id: string; // unique id, use "---" for a separator
-  label: string;
-}
+await lune.Tray.setMenu([
+  { id: "show", label: "Show window" },
+  { id: "---", label: "" }, // separator
+  { id: "quit", label: "Quit" },
+]);
 ```
 
 ---

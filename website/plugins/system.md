@@ -37,33 +37,22 @@ console.log(`${width}×${height} @ ${scale}x`);
 await lune.System.notify("Build complete", "Your app compiled successfully.");
 ```
 
-| Method        | Signature             | Returns                    |
-| ------------- | --------------------- | -------------------------- |
-| `quit`        | `quit()`              | `Promise<void>`            |
-| `openUrl`     | `openUrl(url)`        | `Promise<void>`            |
-| `environment` | `environment()`       | `Promise<LuneEnvironment>` |
-| `screenInfo`  | `screenInfo()`        | `Promise<ScreenInfo>`      |
-| `notify`      | `notify(title, body)` | `Promise<void>`            |
+| Method        | Signature             | Returns                                                                              |
+| ------------- | --------------------- | ------------------------------------------------------------------------------------ |
+| `quit`        | `quit()`              | `Promise<void>`                                                                      |
+| `openUrl`     | `openUrl(url)`        | `Promise<void>`                                                                      |
+| `environment` | `environment()`       | `Promise<{ os: "darwin" \| "linux" \| "windows"; arch: string; devtools: boolean }>` |
+| `screenInfo`  | `screenInfo()`        | `Promise<{ width: number; height: number; scale: number }>`                          |
+| `notify`      | `notify(title, body)` | `Promise<void>`                                                                      |
 
-### `LuneEnvironment`
-
-```ts
-interface LuneEnvironment {
-  os: "darwin" | "linux" | "windows";
-  arch: "arm64" | "x86_64";
-  devtools: boolean;
-}
-```
-
-### `ScreenInfo`
+Return types are inlined structurally — `runtime.d.ts` no longer ships named `LuneEnvironment` / `ScreenInfo` interfaces. If you need a name, alias the inferred return type at the call site:
 
 ```ts
-interface ScreenInfo {
-  width: number; // physical pixels
-  height: number; // physical pixels
-  scale: number; // device pixel ratio (e.g. 2.0 on Retina)
-}
+type LuneEnvironment = Awaited<ReturnType<typeof lune.System.environment>>;
+type ScreenInfo = Awaited<ReturnType<typeof lune.System.screenInfo>>;
 ```
+
+`screenInfo` fields are physical pixels (`width`, `height`) and the device pixel ratio (`scale` — e.g. `2.0` on Retina). `environment.arch` is `"arm64"` on aarch64, `"x86_64"` elsewhere.
 
 ---
 

@@ -37,6 +37,13 @@ module Lune
               {% if bind_ann = m.annotation(Lune::Bind) %}
                 {% override_ann = m.annotation(Lune::BindOverride) %}
                 {% async = bind_ann[:async] && bind_ann[:async].id == "true" ? true : false %}
+                # Auto-derive a TS string union from an enum return type unless
+                # the author already set ts_return_type explicitly. Crystal's
+                # default `Enum#to_json` lowercases + underscores the member
+                # name, so the TS union must match (`Pending` → `"pending"`,
+                # `TwoWords` → `"two_words"`).
+                {% return_resolved = m.return_type.resolve? %}
+                {% enum_return_union = (return_resolved && return_resolved.ancestors.includes?(Enum)) ? return_resolved.constants.map { |c| "\"" + c.stringify.underscore + "\"" }.join(" | ") : nil %}
                 app.register(Lune::Binding.new(
                   namespace: {{ @type.name.stringify }},
                   method: {{ m.name.stringify }},
@@ -47,7 +54,11 @@ module Lune
                   arg_names: {% if override_ann && override_ann[:arg_names] %}{{ override_ann[:arg_names] }}{% else %}{{ m.args.map(&.name.stringify) }} of String{% end %},
                   {% if override_ann && override_ann[:arg_transforms] %}arg_transforms: {{ override_ann[:arg_transforms] }},{% end %}
                   {% if override_ann && override_ann[:ts_args] %}ts_args: {{ override_ann[:ts_args] }},{% end %}
-                  {% if override_ann && override_ann[:ts_return_type] %}ts_return_type: {{ override_ann[:ts_return_type] }},{% end %}
+                  {% if override_ann && override_ann[:ts_return_type] %}
+                    ts_return_type: {{ override_ann[:ts_return_type] }},
+                  {% elsif enum_return_union %}
+                    ts_return_type: %(Promise<{{ enum_return_union.id }}>),
+                  {% end %}
                   callback: ->(__args : Array(JSON::Any)) : JSON::Any {
                     raise ArgumentError.new("expected {{ m.args.size }} arg(s), got #{__args.size}") unless __args.size == {{ m.args.size }}
                     {% for arg, i in m.args %}

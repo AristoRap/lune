@@ -67,14 +67,9 @@ The runtime declarations export a single nested `Lune` object plus a short alias
 The exact shape is generated per project from the registered plugin set, so the snippet below is illustrative:
 
 ```ts
-export class LuneError extends Error {
+export declare class LuneError extends Error {
   readonly code: string;
-}
-
-export interface LuneEnvironment {
-  os: "darwin" | "linux" | "windows";
-  arch: string;
-  devtools: boolean;
+  constructor(code: string, message: string);
 }
 
 export const Lune: {
@@ -82,7 +77,11 @@ export const Lune: {
     System: {
       quit(): Promise<void>;
       openUrl(url: string): Promise<void>;
-      environment(): Promise<LuneEnvironment>;
+      environment(): Promise<{
+        os: "darwin" | "linux" | "windows";
+        arch: string;
+        devtools: boolean;
+      }>;
     };
     Event: {
       on(name: string, cb: (data: unknown) => void): void;
@@ -100,6 +99,18 @@ export const Lune: {
   };
 };
 export const lune: typeof Lune.Plugins;
+```
+
+Return types are emitted **structurally** — Lune doesn't ship named interfaces like `LuneEnvironment` or `ScreenInfo` alongside the runtime. The generator derives the shape from the Crystal signature:
+
+- `NamedTuple(width: Int32, height: Int32, scale: Float64)` → `{ width: number; height: number; scale: number }`
+- A Crystal `enum` return type → a TS string-literal union (e.g. `enum Status; Pending; Running; Done; end` → `"pending" | "running" | "done"`, matching Crystal's default `Enum#to_json`)
+- Anything else (`JSON::Serializable` structs, classes) → `Record<string, any>` unless overridden with `@[Lune::BindOverride(ts_return_type: ...)]`
+
+If you want a named type for an inlined shape, alias the inferred return type:
+
+```ts
+type LuneEnvironment = Awaited<ReturnType<typeof lune.System.environment>>;
 ```
 
 For the full per-plugin signature list see the [Plugins](../plugins/) reference — each page documents its JS surface, which is what shows up in `runtime.d.ts`.
@@ -143,7 +154,7 @@ import type { LuneError } from "../lunejs/runtime/runtime.js";
 // Fully typed — autocomplete works here
 const result = await api.FileModule.read("/tmp/hello.txt");
 
-// environment() returns LuneEnvironment
+// environment() returns the structurally-typed object
 const env = await lune.System.environment();
 if (env.os === "darwin") {
   // macOS-specific code
