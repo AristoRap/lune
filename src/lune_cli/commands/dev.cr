@@ -89,7 +89,15 @@ module LuneCLI
         # Merge LUNE_DEV_URL into the current environment rather than replacing
         # it entirely. Passing only a single-key Hash to Process.run drops PATH,
         # HOME, CRYSTAL_PATH, and everything else the child process needs.
-        env = ENV.to_h.merge({Lune::ENV_DEV_URL => dev_url, Lune::ENV_FRONTEND_DIR => frontend_dir})
+        # LUNE_APP_NAME is consumed at compile time by Lune::APP_NAME =
+        # {{ env(...) }}; falls back to the app entry basename when `name:`
+        # is unset in lune.yml.
+        app_name = config.name || File.basename(app_entry, File.extname(app_entry))
+        env = ENV.to_h.merge({
+          Lune::ENV_DEV_URL      => dev_url,
+          Lune::ENV_FRONTEND_DIR => frontend_dir,
+          Lune::ENV_APP_NAME     => app_name,
+        })
         # Propagate --debug (set on the CLI's root command) into the spawned
         # user-app binary via LUNE_LOG; the binary's own Lune.default_logger
         # reads it on startup.

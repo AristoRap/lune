@@ -148,6 +148,14 @@ module Lune
   # Environment variables written by the CLI and read by the compiled app.
   ENV_DEV_URL      = "LUNE_DEV_URL"
   ENV_FRONTEND_DIR = "LUNE_FRONTEND_DIR"
+  ENV_APP_NAME     = "LUNE_APP_NAME"
+
+  # Display name for the running app, baked at compile time from `lune.yml`'s
+  # `name:` (forwarded by the CLI via `LUNE_APP_NAME`). Falls back to "Lune"
+  # when the binary is built outside the CLI or `name:` is unset. Win32 uses
+  # it to derive the toast-notification AUMID; other platforms may pick it up
+  # for window titles / log prefixes as needed.
+  APP_NAME = {{ env("LUNE_APP_NAME") || "Lune" }}
 
   # Navigation priority (first match wins):
   #   1. html:   — inline HTML string (useful for tests and simple apps)

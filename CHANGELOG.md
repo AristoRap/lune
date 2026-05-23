@@ -2,11 +2,16 @@
 
 ## [Unreleased]
 
+### Added
+
+- **`Lune::APP_NAME`** — display name baked into the binary at compile time from `lune.yml`'s `name:` (CLI sets `LUNE_APP_NAME`). Defaults to the app entry's basename, or `"Lune"` when built outside the CLI.
+
 ### Fixed
 
 - **Win32 window drag** — `opts.window.drag_zone` now drives a native drag on Windows. Previously a no-op outside macOS.
 - **Win32 tray `toggle_window_on`** — left- / right-click now toggles the main window, positioned above the taskbar icon. Previously a no-op outside macOS.
 - **Win32 `Window.hide` / `show` / `visible?`** — actually drive the window's visibility (were silent no-ops).
+- **Win32 toast AUMID** — derived from `lune.yml`'s `name:` so each app gets its own registry subkey and `DisplayName`. Previously hardcoded to `"Lune"`.
 
 ## [0.13.0] - 2026-05-23
 
