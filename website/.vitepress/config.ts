@@ -59,7 +59,6 @@ export default defineConfig({
               { text: 'Filesystem', link: '/plugins/filesystem' },
               { text: 'Navigation', link: '/plugins/navigation' },
               { text: 'Notifications', link: '/plugins/notifications' },
-              { text: 'Screen', link: '/plugins/screen' },
               { text: 'KV', link: '/plugins/kv' },
               { text: 'Shell', link: '/plugins/shell' },
               { text: 'SQLite', link: '/plugins/sqlite' },

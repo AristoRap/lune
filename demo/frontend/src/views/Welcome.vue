@@ -4,7 +4,7 @@ import luneSrc from "../assets/images/lune.svg";
 import vueSrc from "../assets/images/vue.svg";
 import Icon from "../components/Icon.vue";
 import { lune } from "../lune.js";
-const { System, Screen } = lune;
+const { System } = lune;
 
 const env = ref(null);
 const screen = ref(null);
@@ -12,7 +12,7 @@ const screen = ref(null);
 onMounted(async () => {
   try {
     env.value = await System.environment();
-    screen.value = await Screen.info();
+    screen.value = await System.screenInfo();
   } catch (_) {
     /* unavailable in static preview */
   }

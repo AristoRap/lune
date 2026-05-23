@@ -22,7 +22,7 @@ describe "Lune::Binding (internal: true — plugin surface)" do
     it "uses <Namespace>.<method> — same shape as user bindings" do
       make_internal(namespace: "Lune::Plugins::System", method: "quit").id.should eq("Lune.Plugins.System.quit")
       make_internal(namespace: "Lune::Plugins::Clipboard", method: "read").id.should eq("Lune.Plugins.Clipboard.read")
-      make_internal(namespace: "Lune::Plugins::Screen", method: "info").id.should eq("Lune.Plugins.Screen.info")
+      make_internal(namespace: "Lune::Plugins::System", method: "screen_info").id.should eq("Lune.Plugins.System.screen_info")
     end
   end
 
@@ -71,8 +71,8 @@ describe "Lune::Binding (internal: true — plugin surface)" do
     end
 
     it "uses ts_return_type with explicit Promise when needed" do
-      sig = make_internal(namespace: "Lune::Plugins::Screen", method: "info", return_type: "String", ts_return_type: "Promise<ScreenInfo>").to_dts_sig
-      sig.should eq("  info(): Promise<ScreenInfo>;")
+      sig = make_internal(namespace: "Lune::Plugins::System", method: "screen_info", return_type: "String", ts_return_type: "Promise<ScreenInfo>").to_dts_sig
+      sig.should eq("  screenInfo(): Promise<ScreenInfo>;")
     end
 
     it "includes named params in the signature" do

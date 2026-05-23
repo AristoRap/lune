@@ -52,20 +52,26 @@ module Lune
       @[Lune::BindOverride(ts_return_type: "Promise<LuneEnvironment>")]
       def environment : NamedTuple(os: String, arch: String, devtools: Bool)
         os = {% if flag?(:darwin) %}
-          "darwin"
-        {% elsif flag?(:linux) %}
-          "linux"
-        {% elsif flag?(:win32) %}
-          "windows"
-        {% else %}
-          "unknown"
-        {% end %}
+               "darwin"
+             {% elsif flag?(:linux) %}
+               "linux"
+             {% elsif flag?(:win32) %}
+               "windows"
+             {% else %}
+               "unknown"
+             {% end %}
         arch = {% if flag?(:aarch64) %}
-          "arm64"
-        {% else %}
-          "x86_64"
-        {% end %}
+                 "arm64"
+               {% else %}
+                 "x86_64"
+               {% end %}
         {os: os, arch: arch, devtools: @devtools}
+      end
+
+      @[Lune::Bind]
+      @[Lune::BindOverride(ts_return_type: "Promise<ScreenInfo>")]
+      def screen_info : NamedTuple(width: Int32, height: Int32, scale: Float64)
+        Lune::Native::Screen.info
       end
     end
   end

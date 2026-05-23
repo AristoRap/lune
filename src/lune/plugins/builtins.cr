@@ -12,7 +12,7 @@ module Lune
       builtins = [
         Events.new, Stream.new, FileDrop.new, System.new, Filesystem.new,
         Clipboard.new, Window.new, Dialogs.new, Tray.new, Notifications.new,
-        Screen.new, ContextMenu.new, DragOut.new, DeepLink.new, FileWatch.new,
+        ContextMenu.new, DragOut.new, DeepLink.new, FileWatch.new,
         Shell.new, Hotkeys.new, Sqlite.new, Kv.new, Windows.new,
         EditShortcuts.new, Navigation.new,
       ] of ::Lune::Plugin

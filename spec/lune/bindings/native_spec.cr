@@ -15,7 +15,7 @@ private def install_all(handle, on_tray_click = nil, on_menu_click = nil)
 
   app.install(Lune::Plugins::Dialogs.new)
   app.install(Lune::Plugins::Notifications.new)
-  app.install(Lune::Plugins::Screen.new)
+  app.install(Lune::Plugins::System.new)
   app.bindings
 end
 
@@ -55,7 +55,7 @@ describe "Lune::Plugins (native)" do
       ids.should contain("Lune.Plugins.Tray.set_icon")
       ids.should contain("Lune.Plugins.Tray.set_menu")
       ids.should contain("Lune.Plugins.Notifications.notify")
-      ids.should contain("Lune.Plugins.Screen.info")
+      ids.should contain("Lune.Plugins.System.screen_info")
     end
 
     it "marks all bindings as internal" do
@@ -319,30 +319,30 @@ describe "Lune::Plugins (native)" do
     end
   end
 
-  describe Lune::Plugins::Screen do
-    it "screen.info binding returns width, height, and scale" do
+  describe Lune::Plugins::System do
+    it "System.screen_info binding returns width, height, and scale" do
       Lune::Native::ScreenMock.stub_info(2560, 1440, 2.0)
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
-      app.install(Lune::Plugins::Screen.new)
+      app.install(Lune::Plugins::System.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("Lune.Plugins.Screen.info", "seq12", [] of JSON::Any)
+      wv.invoke("Lune.Plugins.System.screen_info", "seq12", [] of JSON::Any)
       resolved = wv.resolve_calls.find { |r| r[0] == "seq12" }.not_nil![2]
       resolved.should contain("2560")
       resolved.should contain("1440")
       resolved.should contain("2.0")
     end
 
-    it "screen.info binding calls Screen.info" do
+    it "System.screen_info binding calls Native::Screen.info" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
-      app.install(Lune::Plugins::Screen.new)
+      app.install(Lune::Plugins::System.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("Lune.Plugins.Screen.info", "seq13", [] of JSON::Any)
+      wv.invoke("Lune.Plugins.System.screen_info", "seq13", [] of JSON::Any)
       Lune::Native::ScreenMock.calls.should contain(:info)
     end
   end
