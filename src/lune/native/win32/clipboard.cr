@@ -157,12 +157,70 @@
           end
         end
 
+        # PNG ↔ CF_DIB conversion via PowerShell + System.Drawing.Bitmap.
+        # Same shellout pattern as Native::Notifications: the WIC / direct-
+        # CF_DIB path would need a few hundred lines of COM bindings, and
+        # image clipboard ops are infrequent enough that the ~200 ms cost is
+        # acceptable. The plugin's bindings are marked `async: true` so the
+        # call doesn't block the webview's Isolated fiber.
         def self.read_image : String
-          raise NotImplementedError.new("Lune::Native::Clipboard.read_image is not implemented on Windows yet (v0.10.0 backlog)")
+          script = <<-PS
+            Add-Type -AssemblyName System.Windows.Forms | Out-Null
+            Add-Type -AssemblyName System.Drawing | Out-Null
+            $img = [System.Windows.Forms.Clipboard]::GetImage()
+            if ($img -eq $null) { Write-Output ""; exit 0 }
+            $ms = New-Object System.IO.MemoryStream
+            $img.Save($ms, [System.Drawing.Imaging.ImageFormat]::Png)
+            [System.Convert]::ToBase64String($ms.ToArray())
+          PS
+          stdout = IO::Memory.new
+          stderr = IO::Memory.new
+          status = Process.run("powershell",
+            ["-NoProfile", "-Sta", "-WindowStyle", "Hidden", "-Command", script],
+            input: Process::Redirect::Close,
+            output: stdout,
+            error: stderr)
+          unless status.success?
+            Lune.logger.warn { "Clipboard.read_image: powershell exited #{status.exit_code? || -1}: #{stderr.to_s.strip}" }
+            return ""
+          end
+          b64 = stdout.to_s.strip
+          b64.empty? ? "" : "data:image/png;base64,#{b64}"
         end
 
         def self.write_image(data_url : String) : Nil
-          raise NotImplementedError.new("Lune::Native::Clipboard.write_image is not implemented on Windows yet (v0.10.0 backlog)")
+          b64 = strip_data_url_prefix(data_url)
+          return if b64.empty?
+          script = <<-PS
+            Add-Type -AssemblyName System.Windows.Forms | Out-Null
+            Add-Type -AssemblyName System.Drawing | Out-Null
+            $bytes = [System.Convert]::FromBase64String($env:LUNE_CLIPBOARD_IMAGE_B64)
+            $ms = New-Object System.IO.MemoryStream(,$bytes)
+            $img = [System.Drawing.Image]::FromStream($ms)
+            [System.Windows.Forms.Clipboard]::SetImage($img)
+          PS
+          stderr = IO::Memory.new
+          status = Process.run("powershell",
+            ["-NoProfile", "-Sta", "-WindowStyle", "Hidden", "-Command", script],
+            env: {"LUNE_CLIPBOARD_IMAGE_B64" => b64},
+            input: Process::Redirect::Close,
+            output: Process::Redirect::Close,
+            error: stderr)
+          unless status.success?
+            Lune.logger.warn { "Clipboard.write_image: powershell exited #{status.exit_code? || -1}: #{stderr.to_s.strip}" }
+          end
+          nil
+        end
+
+        # "data:image/png;base64,XXXX" → "XXXX". Pass-through if the caller
+        # already gave us raw base64.
+        private def self.strip_data_url_prefix(s : String) : String
+          if s.starts_with?("data:")
+            comma = s.index(',')
+            comma ? s[(comma + 1)..] : ""
+          else
+            s
+          end
         end
       end
     end

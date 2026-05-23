@@ -52,24 +52,8 @@ module Lune
       DEFAULT_READ_HTML  = -> { Lune::Native::Clipboard.read_html }
       DEFAULT_WRITE_HTML = ->(html : String) { Lune::Native::Clipboard.write_html(html); nil }
 
-      # Image clipboard needs PNG ↔ CF_DIB conversion on Win32 (Crystal stdlib has
-      # no PNG decoder). Until that's wired up, surface a typed Lune::Error so JS
-      # callers see LuneError("UNAVAILABLE_ON_PLATFORM") and can `.catch` it the
-      # same way they handle platform-gated plugins.
-      DEFAULT_READ_IMAGE = -> {
-        {% if flag?(:win32) %}
-          raise Lune::Error.new("UNAVAILABLE_ON_PLATFORM", "Clipboard.readImage is not available on win32 (PNG ↔ CF_DIB conversion not yet implemented)")
-        {% else %}
-          Lune::Native::Clipboard.read_image
-        {% end %}
-      }
-      DEFAULT_WRITE_IMAGE = ->(data_url : String) {
-        {% if flag?(:win32) %}
-          raise Lune::Error.new("UNAVAILABLE_ON_PLATFORM", "Clipboard.writeImage is not available on win32 (PNG ↔ CF_DIB conversion not yet implemented)")
-        {% else %}
-          Lune::Native::Clipboard.write_image(data_url); nil
-        {% end %}
-      }
+      DEFAULT_READ_IMAGE = -> { Lune::Native::Clipboard.read_image }
+      DEFAULT_WRITE_IMAGE = ->(data_url : String) { Lune::Native::Clipboard.write_image(data_url); nil }
 
       def initialize(
         @on_read : -> String = DEFAULT_READ,
@@ -91,7 +75,11 @@ module Lune
         @on_read_html.call
       end
 
-      @[Lune::Bind]
+      # async because Win32 image read shells out to PowerShell (Process.run
+      # uses Channel internally and would raise Concurrency-disabled if called
+      # from the webview Isolated thread). Darwin/Linux pay one extra fiber
+      # hop, which is well below image-clipboard latency anyway.
+      @[Lune::Bind(async: true)]
       def read_image : String
         @on_read_image.call
       end
@@ -106,7 +94,9 @@ module Lune
         @on_write_html.call(html)
       end
 
-      @[Lune::Bind]
+      # async for the same reason as `read_image` — Win32 path shells out to
+      # PowerShell (System.Windows.Forms.Clipboard.SetImage).
+      @[Lune::Bind(async: true)]
       @[Lune::BindOverride(arg_names: ["dataUrl"])]
       def write_image(data_url : String) : Nil
         @on_write_image.call(data_url)
