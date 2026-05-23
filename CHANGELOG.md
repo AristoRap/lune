@@ -13,6 +13,7 @@
 - **Win32 `Window.hide` / `show` / `visible?`** — actually drive the window's visibility (were silent no-ops).
 - **Win32 toast AUMID** — derived from `lune.yml`'s `name:` so each app gets its own registry subkey and `DisplayName`. Previously hardcoded to `"Lune"`.
 - **Win32 `file_watch`** — backed by `ReadDirectoryChangesW` + IOCP; emits the same `modified` / `created` / `deleted` / `renamed` events as macOS and Linux. Plugin descriptor flipped from `[:darwin, :linux]` to all three.
+- **`edit_shortcuts` no longer breaks Ctrl/Cmd+V in inputs** — the `keydown` interceptor now skips `INPUT` / `TEXTAREA` / `contenteditable` targets and defers to the browser's native handler. `document.execCommand('paste')` is blocked in WebView2/Chromium, so the previous intercept turned paste into a silent no-op inside text fields.
 
 ## [0.13.0] - 2026-05-23
 
