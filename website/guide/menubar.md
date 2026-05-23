@@ -138,7 +138,7 @@ import { lune } from "../lunejs/runtime/runtime.js";
 await lune.Tray.popupMenu();
 ```
 
-If no menu has been set, it's a no-op.
+If no menu has been set, the call returns without doing anything.
 
 ---
 

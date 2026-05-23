@@ -400,7 +400,7 @@ app.set_menu do |m|
 end
 ```
 
-Both `app.update_menu` and `app.set_menu` are no-ops on non-macOS platforms.
+Both `app.update_menu` and `app.set_menu` return without doing anything on non-macOS platforms.
 
 #### Class-based menus
 

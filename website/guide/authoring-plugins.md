@@ -190,7 +190,7 @@ Phases are opt-in via modules. Include only the ones you need; the compiler enfo
 
 ### `setup(ctx : SetupCtx)`
 
-Always available — the default is a no-op. Called once per Lune run, before any binding install and before `init_webview` fires. The `SetupCtx` carries:
+Always available — the default does nothing. Called once per Lune run, before any binding install and before `init_webview` fires. The `SetupCtx` carries:
 
 - `ctx.options` — the populated `Lune::Options` instance, including your `@config`.
 - `ctx.handle : Void*` — the native window handle.

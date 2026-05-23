@@ -34,9 +34,9 @@
 
 ### Fixed
 
-- **`App#eval` raises a typed `Lune::BridgeNotReadyError`** instead of a generic `NilAssertionError` when called before the runner wires the bridge (e.g. from a plugin `install` hook or an `App#async` task that races startup). **`App#close!` is now an idempotent no-op** when the bridge has not been wired yet — useful when a SIGINT during init triggers the shutdown path before bridge attach.
+- **`App#eval` raises a typed `Lune::BridgeNotReadyError`** instead of a generic `NilAssertionError` when called before the runner wires the bridge (e.g. from a plugin `install` hook or an `App#async` task that races startup). **`App#close!` now returns early** when the bridge has not been wired yet — useful when a SIGINT during init triggers the shutdown path before bridge attach.
 - **Win32 Shell builtins** — `Shell.spawn` / `Shell.run` fall back to `cmd /c` on `File::NotFoundError`, so `echo`, `dir`, `npm.cmd`, etc. work directly. Helper: `Lune::Plugins::Shell.with_win32_cmd_fallback`.
-- **Win32 toast notifications** — `Notifications.notify` registers the AUMID at `HKCU\Software\Classes\AppUserModelId\Lune` on first call; toasts actually display instead of being silently dropped.
+- **Win32 toast notifications** — `System.notify` registers the AUMID at `HKCU\Software\Classes\AppUserModelId\Lune` on first call; toasts actually display instead of being silently dropped.
 - **Win32 `lune build` blank window** — `Assets::Server` now binds + listens from the same `::spawn` on the default context (mirroring Stream's Win32 pattern) so IOCP accept completions reach the listen fiber. POSIX path unchanged.
 - **Win32 secondary-window close** — `Native::Window.close` posts `WM_CLOSE` via `PostMessageW`, and `Native::Window.on_close` subclasses the child HWND via `SetWindowLongPtrW(GWLP_WNDPROC, …)` to trap `WM_DESTROY` and run the cleanup block before forwarding to the previous WNDPROC. `Windows.close(id)` actually closes the window, and the user clicking the X now fires `window_closed` to the main window.
 - **`opts.on_navigate` fires on SPA routing** — `history.pushState` / `replaceState` are shimmed so React Router, Vue Router (HTML5 mode), Next client transitions, etc. trigger the callback. Same-URL fires are deduped so vue-router hash mode (which calls both pushState and mutates `location.hash`) doesn't double-fire.
