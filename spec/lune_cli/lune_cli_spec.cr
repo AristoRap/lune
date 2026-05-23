@@ -30,9 +30,14 @@ private class RecordingDoctorCommand < LuneCLI::Commands::Doctor
   getter captured_frontend_dir : String = ""
   getter captured_app_entry : String = ""
 
-  def run(frontend_dir : String, app_entry : String, install_hint : String = LuneCLI::DEFAULT_INSTALL_CMD, output : IO = STDOUT) : Bool
-    @captured_frontend_dir = frontend_dir
-    @captured_app_entry = app_entry
+  def run(
+    config : LuneCLI::Config,
+    plugins_config : Lune::Config::Plugins = Lune::Config::Plugins.new,
+    inspect_plugins : Bool = false,
+    output : IO = STDOUT,
+  ) : Bool
+    @captured_frontend_dir = config.frontend.dir
+    @captured_app_entry = config.app_entry
     true
   end
 end
@@ -94,18 +99,27 @@ describe LuneCLI do
   describe "dev command" do
     it "returns nil when both paths exist" do
       cmd = LuneCLI::Commands::Dev.new
-      cmd.validate_paths(frontend_dir: "spec", app_entry: "spec/fixtures/main.cr").should be_nil
+      config = LuneCLI::Config.new
+      config.app_entry = "spec/fixtures/main.cr"
+      config.frontend.dir = "spec"
+      cmd.validate_paths(config).should be_nil
     end
 
     it "rejects a missing app entry" do
       cmd = LuneCLI::Commands::Dev.new
-      cmd.validate_paths(frontend_dir: "spec", app_entry: "missing_main.cr")
+      config = LuneCLI::Config.new
+      config.app_entry = "missing_main.cr"
+      config.frontend.dir = "spec"
+      cmd.validate_paths(config)
         .should eq("App entry file not found: missing_main.cr")
     end
 
     it "rejects a missing frontend dir" do
       cmd = LuneCLI::Commands::Dev.new
-      cmd.validate_paths(frontend_dir: "missing_frontend", app_entry: "spec/fixtures/main.cr")
+      config = LuneCLI::Config.new
+      config.app_entry = "spec/fixtures/main.cr"
+      config.frontend.dir = "missing_frontend"
+      cmd.validate_paths(config)
         .should eq("Frontend directory not found: missing_frontend")
     end
 
@@ -128,12 +142,12 @@ describe LuneCLI do
         held = Lune::SingleInstance.acquire(slug, lock_dir)
         held.should_not be_nil
 
-        result = cmd.run(
-          frontend_dir: "frontend",
-          app_entry: "spec/fixtures/main.cr",
-          dev_url: "http://localhost:5173",
-          lock_dir: lock_dir
-        )
+        config = LuneCLI::Config.new
+        config.app_entry = "spec/fixtures/main.cr"
+        config.frontend.dir = "frontend"
+        config.frontend.dev.url = "http://localhost:5173"
+
+        result = cmd.run(config, lock_dir: lock_dir)
         result.should be_false
 
         held.try(&.close)
@@ -178,13 +192,19 @@ describe LuneCLI do
 
     it "rejects a missing frontend dir" do
       cmd = LuneCLI::Commands::Build.new
-      cmd.validate_paths(frontend_dir: "missing_frontend", app_entry: "spec/fixtures/main.cr")
+      config = LuneCLI::Config.new
+      config.app_entry = "spec/fixtures/main.cr"
+      config.frontend.dir = "missing_frontend"
+      cmd.validate_paths(config)
         .should eq("Frontend directory not found: missing_frontend")
     end
 
     it "rejects a missing app entry" do
       cmd = LuneCLI::Commands::Build.new
-      cmd.validate_paths(frontend_dir: "spec", app_entry: "missing_main.cr")
+      config = LuneCLI::Config.new
+      config.app_entry = "missing_main.cr"
+      config.frontend.dir = "spec"
+      cmd.validate_paths(config)
         .should eq("App entry file not found: missing_main.cr")
     end
 
@@ -540,7 +560,10 @@ describe LuneCLI do
         held = Lune::SingleInstance.acquire(slug, lock_dir)
         held.should_not be_nil
 
-        result = cmd.run(app_entry: "src/main.cr", lock_dir: lock_dir)
+        config = LuneCLI::Config.new
+        config.app_entry = "src/main.cr"
+
+        result = cmd.run(config, lock_dir: lock_dir)
         result.should be_false
 
         held.try(&.close)
@@ -558,7 +581,10 @@ describe LuneCLI do
     it "reports frontend deps as failing when node_modules is absent" do
       with_tempdir do |dir|
         cmd = LuneCLI::Commands::Doctor.new
-        result = cmd.run(frontend_dir: dir, app_entry: "spec/fixtures/main.cr", output: IO::Memory.new)
+        config = LuneCLI::Config.new
+        config.app_entry = "spec/fixtures/main.cr"
+        config.frontend.dir = dir
+        result = cmd.run(config, output: IO::Memory.new)
         result.should be_false
       end
     end
@@ -567,7 +593,10 @@ describe LuneCLI do
       with_tempdir do |dir|
         Dir.mkdir_p(File.join(dir, "node_modules"))
         cmd = LuneCLI::Commands::Doctor.new
-        result = cmd.run(frontend_dir: dir, app_entry: File.join(dir, "nonexistent.cr"), output: IO::Memory.new)
+        config = LuneCLI::Config.new
+        config.app_entry = File.join(dir, "nonexistent.cr")
+        config.frontend.dir = dir
+        result = cmd.run(config, output: IO::Memory.new)
         result.should be_false
       end
     end

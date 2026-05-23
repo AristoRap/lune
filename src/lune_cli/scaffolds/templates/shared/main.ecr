@@ -1,5 +1,12 @@
 require "lune"
 
+# Third-party plugins are published as Crystal shards. Add them to shard.yml,
+# `require` them here, and call `Lune.use(MyPlugin.new)` before `Lune.run`.
+# Built-in plugins (events, tray, clipboard, …) are registered automatically.
+#
+# require "lune_mqtt"
+# Lune.use(LuneMqtt::Plugin.new)
+
 class Welcome
   include Lune::Bindable
 

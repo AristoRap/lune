@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from "vue";
-import { DeepLink } from "../lune.js";
+import { lune } from "../lune.js";
+const { DeepLink } = lune;
 
 const toasts = ref([]);
 let nextId = 0;

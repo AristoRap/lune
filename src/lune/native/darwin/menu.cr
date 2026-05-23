@@ -1,10 +1,10 @@
 {% if flag?(:darwin) && !flag?(:lune_native_test_mock) %}
-  {% system("cd '#{__DIR__}/../../../../ext/native/macos' && clang -c menu.m -o menu.o -fobjc-arc 2>/dev/null") %}
+  {% system("cd '#{__DIR__}/../../../../ext/native/darwin' && clang -c menu.m -o menu.o -fobjc-arc 2>/dev/null") %}
 
   module Lune
     module Native
       @[Link(framework: "AppKit")]
-      @[Link(ldflags: "#{__DIR__}/../../../../ext/native/macos/menu.o")]
+      @[Link(ldflags: "#{__DIR__}/../../../../ext/native/darwin/menu.o")]
       lib LibNativeMenu
         fun setup_default_menu(app_name : LibC::Char*) : Void
         fun lune_set_menu(

@@ -1,7 +1,8 @@
 <script setup>
 import { ref, onUnmounted } from "vue";
 import SectionHead from "../components/SectionHead.vue";
-import { Hotkeys, Events } from "../lune.js";
+import { lune } from "../lune.js";
+const { Hotkeys, Event } = lune;
 
 const keyInput = ref("");
 const registered = ref([]);
@@ -13,8 +14,8 @@ const handler = (data) => {
   if (log.value.length > 50) log.value.pop();
 };
 
-Events.on("hotkey", handler);
-onUnmounted(() => Events.off("hotkey", handler));
+Event.on("hotkey", handler);
+onUnmounted(() => Event.off("hotkey", handler));
 
 async function register() {
   const k = keyInput.value.trim();

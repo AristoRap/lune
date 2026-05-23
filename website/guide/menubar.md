@@ -29,10 +29,10 @@ end
 Optionally set a custom icon from JavaScript once the app has mounted:
 
 ```js
-import { Tray } from "../lune.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
 // Falls back to ● if not called
-await Tray.setIcon("/absolute/path/to/icon.png");
+await lune.Tray.setIcon("/absolute/path/to/icon.png");
 ```
 
 ---
@@ -96,20 +96,20 @@ end
 
 ## Context menu
 
-Set a context menu with `Tray.setMenu`. With no `toggle_window_on` set, both clicks open the menu (rule 3 above):
+Set a context menu with `lune.Tray.setMenu`. With no `toggle_window_on` set, both clicks open the menu (rule 3 above):
 
 ```js
-import { Tray, Events, System } from "../lune.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
-Tray.setMenu([
+lune.Tray.setMenu([
   { id: "show", label: "Open Window" },
   { id: "---", label: "" },
   { id: "quit", label: "Quit" },
 ]);
 
-Events.on("trayEvent", (id) => {
-  if (id === "show") Window.show();
-  if (id === "quit") System.quit();
+lune.Event.on("trayEvent", (id) => {
+  if (id === "show") lune.Window.show();
+  if (id === "quit") lune.System.quit();
 });
 ```
 
@@ -121,7 +121,7 @@ If you want left-click to toggle the window and right-click to show the menu, ad
 
 ## Programmatic menu popup
 
-Need to open the menu from your own click handler, a keyboard shortcut, or anywhere else? `Tray.popupMenu()` opens whatever menu was last set.
+Need to open the menu from your own click handler, a keyboard shortcut, or anywhere else? `lune.Tray.popupMenu()` opens whatever menu was last set.
 
 ```crystal
 opts.tray.on_click = -> {
@@ -132,13 +132,13 @@ opts.tray.on_click = -> {
 ```
 
 ```js
-import { Tray } from "../lune.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
 // e.g. from a global keyboard shortcut
-await Tray.popupMenu();
+await lune.Tray.popupMenu();
 ```
 
-If no menu has been set, it's a no-op.
+If no menu has been set, the call returns without doing anything.
 
 ---
 
@@ -147,10 +147,10 @@ If no menu has been set, it's a no-op.
 When you're managing visibility yourself (custom `on_click`, menu items, etc.):
 
 ```js
-import { Window } from "../lune.js";
+import { lune } from "../lunejs/runtime/runtime.js";
 
-await Window.show();
-await Window.hide();
+await lune.Window.show();
+await lune.Window.hide();
 ```
 
 ---

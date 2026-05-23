@@ -1,7 +1,8 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import SectionHead from "../components/SectionHead.vue";
-import { Windows, Events } from "../lune.js";
+import { lune } from "../lune.js";
+const { Windows, Event } = lune;
 
 const openWindows = ref([]);
 const log = ref([]);
@@ -52,15 +53,15 @@ const onWindowClosed = (data) => {
   }
 };
 
-onMounted(() => Events.on("window_closed", onWindowClosed));
-onBeforeUnmount(() => Events.off("window_closed", onWindowClosed));
+onMounted(() => Event.on("window_closed", onWindowClosed));
+onBeforeUnmount(() => Event.off("window_closed", onWindowClosed));
 </script>
 
 <template>
   <SectionHead eyebrow="Native" title="Windows">
     <template #desc>
       Open additional native windows pointing to any URL. Each window shares
-      the same capability bindings as the main window.
+      the same plugin bindings as the main window.
     </template>
   </SectionHead>
 

@@ -1,10 +1,10 @@
 {% if flag?(:darwin) && !flag?(:lune_native_test_mock) %}
-  {% system("cd '#{__DIR__}/../../../../ext/native/macos' && clang -c screen.m -o screen.o -fobjc-arc 2>/dev/null") %}
+  {% system("cd '#{__DIR__}/../../../../ext/native/darwin' && clang -c screen.m -o screen.o -fobjc-arc 2>/dev/null") %}
 
   module Lune
     module Native
       @[Link(framework: "AppKit")]
-      @[Link(ldflags: "#{__DIR__}/../../../../ext/native/macos/screen.o")]
+      @[Link(ldflags: "#{__DIR__}/../../../../ext/native/darwin/screen.o")]
       lib LibNativeScreen
         fun screen_info(width : LibC::Int*, height : LibC::Int*, scale : LibC::Double*) : Void
       end

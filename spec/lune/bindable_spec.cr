@@ -24,6 +24,42 @@ private class MathModule
   end
 end
 
+private enum DemoStatus
+  Pending
+  Running
+  Done
+  TwoWords
+end
+
+private class StatusModule
+  include Lune::Bindable
+
+  @[Lune::Bind]
+  def current : DemoStatus
+    DemoStatus::Pending
+  end
+end
+
+@[Lune::TsType]
+private struct DemoCounterState
+  include JSON::Serializable
+  getter value : Int32
+  getter step : Int32
+  getter labels : Array(String)
+
+  def initialize(@value, @step, @labels)
+  end
+end
+
+private class TsTypeModule
+  include Lune::Bindable
+
+  @[Lune::Bind]
+  def state : DemoCounterState
+    DemoCounterState.new(0, 1, ["a"])
+  end
+end
+
 describe "Lune::Bindable + App bindings" do
   it "deserializes a JSON::Serializable struct arg and returns the correct result" do
     fake = FakeWebview.new
@@ -110,5 +146,45 @@ describe "Lune::Bindable + App bindings" do
     app.install(MathModule.new)
 
     app.bindings.empty?.should eq(false)
+  end
+
+  it "derives a TS string union from an enum return type" do
+    app = Lune::App.new
+    app.install(StatusModule.new)
+
+    b = app.bindings.first
+    b.to_dts_sig.should eq(%(  current(): Promise<"pending" | "running" | "done" | "two_words">;))
+  end
+
+  describe "@[Lune::TsType] return type" do
+    it "wires ts_return_type to Promise<TypeName> by simple name" do
+      app = Lune::App.new
+      app.install(TsTypeModule.new)
+
+      b = app.bindings.first
+      b.to_dts_sig.should eq("  state(): Promise<DemoCounterState>;")
+    end
+
+    it "registers the type's fields with Lune.register_ts_type" do
+      app = Lune::App.new
+      app.install(TsTypeModule.new)
+
+      fields = Lune.registered_ts_types["DemoCounterState"]
+      fields.should eq([{"value", "Int32"}, {"step", "Int32"}, {"labels", "Array(String)"}])
+    end
+
+    it "emits an export interface block in the generated d.ts" do
+      app = Lune::App.new
+      app.install(TsTypeModule.new)
+
+      dts = Lune::Generator.generate_runtime_dts(app.bindings.select(&.internal?))
+      # Plain bindings (internal? == false on user classes) won't surface in
+      # runtime.d.ts, but the interface block is sourced from the registry and
+      # appears regardless. Assert on the interface, not on the binding sig.
+      dts.includes?("export interface DemoCounterState {").should be_true
+      dts.includes?("value: number;").should be_true
+      dts.includes?("step: number;").should be_true
+      dts.includes?("labels: string[];").should be_true
+    end
   end
 end

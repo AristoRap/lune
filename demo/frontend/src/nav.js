@@ -3,7 +3,7 @@
 
 import Welcome from "./views/Welcome.vue";
 import Bindings from "./views/Bindings.vue";
-import Events from "./views/Events.vue";
+import Event from "./views/Event.vue";
 import Stream from "./views/Stream.vue";
 import System from "./views/System.vue";
 import Clipboard from "./views/Clipboard.vue";
@@ -19,7 +19,8 @@ import Shell from "./views/Shell.vue";
 import Kv from "./views/Kv.vue";
 import Sqlite from "./views/Sqlite.vue";
 import Windows from "./views/Windows.vue";
-import Capabilities from "./views/Capabilities.vue";
+import Plugins from "./views/Plugins.vue";
+import Counter from "./views/Counter.vue";
 
 export const navGroups = [
   {
@@ -30,8 +31,9 @@ export const navGroups = [
     label: "Bridge",
     items: [
       { id: "bindings", label: "Bindings", icon: "code", view: Bindings },
-      { id: "events", label: "Events", icon: "bolt", view: Events },
+      { id: "event", label: "Event", icon: "bolt", view: Event },
       { id: "stream", label: "Stream", icon: "bolt", view: Stream },
+      { id: "counter", label: "Custom plugin", icon: "shield", view: Counter },
     ],
   },
   {
@@ -62,10 +64,10 @@ export const navGroups = [
       { id: "sqlite", label: "SQLite", icon: "database", view: Sqlite },
       { id: "windows", label: "Windows", icon: "window", view: Windows },
       {
-        id: "capabilities",
-        label: "Capabilities",
+        id: "plugins",
+        label: "Plugins",
         icon: "shield",
-        view: Capabilities,
+        view: Plugins,
       },
     ],
   },

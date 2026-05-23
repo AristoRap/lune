@@ -1,7 +1,8 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import SectionHead from "../components/SectionHead.vue";
-import { Kv } from "../lune.js";
+import { lune } from "../lune.js";
+const { Kv } = lune;
 
 const setKey = ref("theme");
 const setValue = ref("dark");

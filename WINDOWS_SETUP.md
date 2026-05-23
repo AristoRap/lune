@@ -162,9 +162,9 @@ C:\Users\aris\code\lune\bin\lune.exe dev
 
 Replace the MSVC and Windows Kits version numbers with whatever's installed on your machine (check `C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\` and `C:\Program Files (x86)\Windows Kits\10\lib\`).
 
-### Capability exclusions
+### Plugin exclusions
 
-Some capabilities are unimplemented or partial on Windows — see each [capability page](website/capabilities/) for status. The demo's `lune.yml` carries a commented-out exclude block you can copy from.
+Some plugins are unimplemented or partial on Windows — see each [plugin page](website/plugins/) for status.
 
 ## Known setup limitations
 
@@ -172,7 +172,7 @@ Some capabilities are unimplemented or partial on Windows — see each [capabili
 - **Crystal 1.21.0**: Step 3's stdlib patch becomes unnecessary once Crystal 1.21 ships ([crystal#16933](https://github.com/crystal-lang/crystal/pull/16933)). Drop the patch and re-upgrade Crystal at that point.
 - **Running Specs**: `crystal spec` hits the same `LibC::PidT` error. Until Crystal 1.21+, CI type-checks with `--no-codegen`.
 
-For per-capability status (what's verified, what's broken, what's not yet implemented) see the **Platform notes** section on each [capability page](website/capabilities/). For the path to parity see [`ROADMAP.md`](ROADMAP.md).
+For per-plugin status (what's verified, what's broken, what's not yet implemented) see the **Platform notes** section on each [plugin page](website/plugins/). For the path to parity see [`ROADMAP.md`](ROADMAP.md).
 
 ## Troubleshooting
 

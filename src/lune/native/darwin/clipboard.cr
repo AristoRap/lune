@@ -1,10 +1,10 @@
 {% if flag?(:darwin) && !flag?(:lune_native_test_mock) %}
-  {% system("cd '#{__DIR__}/../../../../ext/native/macos' && clang -c clipboard.m -o clipboard.o -fobjc-arc 2>/dev/null") %}
+  {% system("cd '#{__DIR__}/../../../../ext/native/darwin' && clang -c clipboard.m -o clipboard.o -fobjc-arc 2>/dev/null") %}
 
   module Lune
     module Native
       @[Link(framework: "AppKit")]
-      @[Link(ldflags: "#{__DIR__}/../../../../ext/native/macos/clipboard.o")]
+      @[Link(ldflags: "#{__DIR__}/../../../../ext/native/darwin/clipboard.o")]
       lib LibNativeClipboard
         fun clipboard_read_html(out : LibC::Char*, out_size : LibC::Int) : LibC::Int
         fun clipboard_write_html(html : LibC::Char*) : Void
@@ -17,11 +17,11 @@
         IMAGE_BUF_SIZE = 10 * 1024 * 1024 # 10 MB — covers base64 of most clipboard images
 
         def self.read : String
-          raise NotImplementedError.new("Lune::Native::Clipboard.read — use the capability's DEFAULT_READ on non-Windows platforms")
+          raise NotImplementedError.new("Lune::Native::Clipboard.read — use the plugin's DEFAULT_READ on non-Windows platforms")
         end
 
         def self.write(text : String) : Nil
-          raise NotImplementedError.new("Lune::Native::Clipboard.write — use the capability's DEFAULT_WRITE on non-Windows platforms")
+          raise NotImplementedError.new("Lune::Native::Clipboard.write — use the plugin's DEFAULT_WRITE on non-Windows platforms")
         end
 
         def self.read_html : String

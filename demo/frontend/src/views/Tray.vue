@@ -1,7 +1,8 @@
 <script setup>
 import { ref } from "vue";
 import SectionHead from "../components/SectionHead.vue";
-import { Tray, System, Dialogs } from "../lune.js";
+import { lune } from "../lune.js";
+const { Tray, System, Dialogs } = lune;
 import { useLuneEvent } from "../composables/useLuneEvent.js";
 
 const log = ref([]);

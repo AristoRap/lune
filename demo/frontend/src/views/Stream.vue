@@ -1,7 +1,8 @@
 <script setup>
 import { ref } from "vue";
 import SectionHead from "../components/SectionHead.vue";
-import { Stream } from "../lune.js";
+import { lune } from "../lune.js";
+const { Stream } = lune;
 
 // ------- live ticker (Crystal → JS) -------
 

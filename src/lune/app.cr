@@ -4,7 +4,7 @@ module Lune
     property bridge : Bridge?
     property title : String = ""
     property menu_options : Options::Menu = Options::Menu.new
-    getter events : Events
+    getter event : Event
     getter stream : Stream
 
     @async_pool : Fiber::ExecutionContext::Parallel? = nil
@@ -13,7 +13,7 @@ module Lune
       @bindings = [] of Binding
       @bridge = nil
       @extra_bridges = [] of Bridge
-      @events = Events.new(-> { @bridge }, @extra_bridges)
+      @event = Event.new(-> { @bridge }, @extra_bridges)
       @stream = Stream.new
     end
 

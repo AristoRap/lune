@@ -12,13 +12,13 @@ module LuneCLI
         )
 
         command.on_pre_run do |_cmd, _args|
-          if message = validate_paths(app_entry: config.app_entry, name: config.name)
+          if message = validate_paths(config)
             raise Argy::Error.new(message)
           end
         end
 
         command.on_run do |_cmd, _args|
-          unless run(app_entry: config.app_entry, name: config.name)
+          unless run(config)
             raise Argy::Error.new("run failed")
           end
         end
@@ -30,10 +30,10 @@ module LuneCLI
         Commands::Build.new.output_path_for(app_entry, name)
       end
 
-      def validate_paths(app_entry : String, name : String? = nil) : String?
-        return "App entry file not found: #{app_entry}" unless File.file?(app_entry)
+      def validate_paths(config : LuneCLI::Config) : String?
+        return "App entry file not found: #{config.app_entry}" unless File.file?(config.app_entry)
 
-        artifact_path = artifact_path_for(app_entry, name)
+        artifact_path = artifact_path_for(config.app_entry, config.name)
         {% if flag?(:darwin) %}
           return "Built app not found: #{artifact_path}. Run 'lune build' first." unless Dir.exists?(artifact_path)
         {% else %}
@@ -49,10 +49,12 @@ module LuneCLI
       end
 
       def run(
-        app_entry : String,
-        name : String? = nil,
+        config : LuneCLI::Config,
         lock_dir : String = File.join(Path.home, ".lune"),
       ) : Bool
+        app_entry = config.app_entry
+        name = config.name
+
         lock_file = Lune::SingleInstance.acquire(run_lock_slug(app_entry, name), lock_dir)
         unless lock_file
           Lune.logger.error { "Another instance is already running for #{app_entry}" }

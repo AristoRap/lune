@@ -3,7 +3,7 @@
     module Native
       # Win32 toast notifications via PowerShell + WinRT. No separate lib block —
       # the entire path is a shellout, gated on platform here so that the
-      # capability's dispatch in Lune::Native::Notifications.show stays uniform.
+      # plugin's dispatch in Lune::Native::Notifications.show stays uniform.
       module Notifications
         def self.show(title : String, body : String)
           # Title/body travel via env vars so we don't have to escape them

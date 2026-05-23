@@ -16,13 +16,13 @@ module LuneCLI
         )
 
         command.on_pre_run do |_cmd, _args|
-          if error = validate_paths(frontend_dir: config.frontend.dir, app_entry: config.app_entry)
+          if error = validate_paths(config)
             raise Argy::Error.new(error)
           end
         end
 
         command.on_run do |_cmd, _args|
-          unless run(frontend_dir: config.frontend.dir, app_entry: config.app_entry, dev_cmd: config.frontend.dev.cmd || DEFAULT_DEV_CMD, dev_url: config.frontend.dev.url)
+          unless run(config)
             raise Argy::Error.new("dev failed")
           end
         end
@@ -30,9 +30,9 @@ module LuneCLI
         command
       end
 
-      def validate_paths(frontend_dir : String, app_entry : String) : String?
-        return "Frontend directory not found: #{frontend_dir}" unless Dir.exists?(frontend_dir)
-        return "App entry file not found: #{app_entry}" unless File.file?(app_entry)
+      def validate_paths(config : LuneCLI::Config) : String?
+        return "Frontend directory not found: #{config.frontend.dir}" unless Dir.exists?(config.frontend.dir)
+        return "App entry file not found: #{config.app_entry}" unless File.file?(config.app_entry)
 
         nil
       end
@@ -43,13 +43,15 @@ module LuneCLI
       end
 
       def run(
-        frontend_dir : String,
-        app_entry : String,
-        dev_url : String,
-        dev_cmd : String = DEFAULT_DEV_CMD,
+        config : LuneCLI::Config,
         watcher : FileWatcher = FileWatcher.new,
         lock_dir : String = File.join(Path.home, ".lune"),
       ) : Bool
+        frontend_dir = config.frontend.dir
+        app_entry = config.app_entry
+        dev_cmd = config.frontend.dev.cmd || DEFAULT_DEV_CMD
+        dev_url = config.frontend.dev.url
+
         lock_file = Lune::SingleInstance.acquire(dev_lock_slug(app_entry), lock_dir)
         unless lock_file
           Lune.logger.error { "Another 'lune dev' is already running for #{app_entry}" }

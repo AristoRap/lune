@@ -4,17 +4,15 @@
 </script>
 
 <template>
-  <div id="titlebar" style="--lune-draggable: drag"></div>
+  <div id="titlebar" style="--lune-draggable: true"></div>
 </template>
 
 <style scoped>
 #titlebar {
   height: var(--titlebar-h);
-  background: linear-gradient(
-    180deg,
-    rgba(11, 13, 28, 0.85),
-    rgba(11, 13, 28, 0.45)
-  );
+  background: linear-gradient(180deg,
+      rgba(11, 13, 28, 0.85),
+      rgba(11, 13, 28, 0.45));
   border-bottom: 1px solid var(--border);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);

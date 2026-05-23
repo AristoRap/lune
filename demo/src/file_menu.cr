@@ -15,6 +15,6 @@ class FileMenu < Lune::Options::Menu::Group
     @clock_paused = !@clock_paused
     @pause_item.not_nil!.label = @clock_paused ? "Resume Clock" : "Pause Clock"
     @app.update_menu
-    @app.events.emit("clockPaused", @clock_paused)
+    @app.event.emit("clockPaused", @clock_paused)
   end
 end

@@ -2,19 +2,25 @@ require "../../spec_helper"
 
 private def install_all(handle, on_tray_click = nil, on_menu_click = nil)
   app = Lune::App.new
-  window_cap = Lune::Capabilities::Window.new
-  window_cap.setup(Lune::Capability::SetupCtx.new(Lune::Options.new, handle))
-  app.install(window_cap)
-  app.install(Lune::Capabilities::Tray.new(on_tray_click: on_tray_click, on_menu_click: on_menu_click))
-  app.install(Lune::Capabilities::Dialogs.new)
-  app.install(Lune::Capabilities::Notifications.new)
-  app.install(Lune::Capabilities::Screen.new)
+  window_plugin = Lune::Plugins::Window.new
+  window_plugin.setup(Lune::Plugin::SetupCtx.new(Lune::Options.new, handle))
+  app.install(window_plugin)
+
+  tray_plugin = Lune::Plugins::Tray.new
+  tray_opts = Lune::Options.new
+  tray_opts.tray.on_click = on_tray_click if on_tray_click
+  tray_opts.tray.on_menu_click = on_menu_click if on_menu_click
+  tray_plugin.setup(Lune::Plugin::SetupCtx.new(tray_opts, handle))
+  app.install(tray_plugin)
+
+  app.install(Lune::Plugins::Dialogs.new)
+  app.install(Lune::Plugins::System.new)
   app.bindings
 end
 
 handle = Pointer(Void).null
 
-describe "Lune::Capabilities (native)" do
+describe "Lune::Plugins (native)" do
   before_each do
     Lune::Native::WindowMock.reset
     Lune::Native::DialogsMock.reset
@@ -28,27 +34,27 @@ describe "Lune::Capabilities (native)" do
       install_all(handle).should be_a(Array(Lune::Binding))
     end
 
-    it "includes all expected capability names" do
-      names = install_all(handle).map(&.method)
-      names.should contain("window.minimize")
-      names.should contain("window.maximize")
-      names.should contain("window.center")
-      names.should contain("window.set_title")
-      names.should contain("window.set_size")
-      names.should contain("dialogs.open_file")
-      names.should contain("dialogs.open_dir")
-      names.should contain("dialogs.open_files")
-      names.should contain("dialogs.save_file")
-      names.should contain("dialogs.message_info")
-      names.should contain("dialogs.message_warning")
-      names.should contain("dialogs.message_error")
-      names.should contain("dialogs.message_question")
-      names.should contain("tray.show")
-      names.should contain("tray.hide")
-      names.should contain("tray.set_icon")
-      names.should contain("tray.set_menu")
-      names.should contain("notifications.notify")
-      names.should contain("screen.info")
+    it "includes all expected plugin bindings (by id)" do
+      ids = install_all(handle).map(&.id)
+      ids.should contain("Lune.Plugins.Window.minimize")
+      ids.should contain("Lune.Plugins.Window.maximize")
+      ids.should contain("Lune.Plugins.Window.center")
+      ids.should contain("Lune.Plugins.Window.set_title")
+      ids.should contain("Lune.Plugins.Window.set_size")
+      ids.should contain("Lune.Plugins.Dialogs.open_file")
+      ids.should contain("Lune.Plugins.Dialogs.open_dir")
+      ids.should contain("Lune.Plugins.Dialogs.open_files")
+      ids.should contain("Lune.Plugins.Dialogs.save_file")
+      ids.should contain("Lune.Plugins.Dialogs.message_info")
+      ids.should contain("Lune.Plugins.Dialogs.message_warning")
+      ids.should contain("Lune.Plugins.Dialogs.message_error")
+      ids.should contain("Lune.Plugins.Dialogs.message_question")
+      ids.should contain("Lune.Plugins.Tray.show")
+      ids.should contain("Lune.Plugins.Tray.hide")
+      ids.should contain("Lune.Plugins.Tray.set_icon")
+      ids.should contain("Lune.Plugins.Tray.set_menu")
+      ids.should contain("Lune.Plugins.System.notify")
+      ids.should contain("Lune.Plugins.System.screen_info")
     end
 
     it "marks all bindings as internal" do
@@ -56,17 +62,17 @@ describe "Lune::Capabilities (native)" do
     end
   end
 
-  describe Lune::Capabilities::Window do
+  describe Lune::Plugins::Window do
     it "minimize binding calls Window.minimize" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
-      window_cap = Lune::Capabilities::Window.new
-      window_cap.setup(Lune::Capability::SetupCtx.new(Lune::Options.new, handle))
+      window_cap = Lune::Plugins::Window.new
+      window_cap.setup(Lune::Plugin::SetupCtx.new(Lune::Options.new, handle))
       app.install(window_cap)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.window.minimize", "seq1", [] of JSON::Any)
+      wv.invoke("Lune.Plugins.Window.minimize", "seq1", [] of JSON::Any)
       Lune::Native::WindowMock.calls.should contain(:minimize)
     end
 
@@ -74,12 +80,12 @@ describe "Lune::Capabilities (native)" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
-      window_cap = Lune::Capabilities::Window.new
-      window_cap.setup(Lune::Capability::SetupCtx.new(Lune::Options.new, handle))
+      window_cap = Lune::Plugins::Window.new
+      window_cap.setup(Lune::Plugin::SetupCtx.new(Lune::Options.new, handle))
       app.install(window_cap)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.window.maximize", "seq2", [] of JSON::Any)
+      wv.invoke("Lune.Plugins.Window.maximize", "seq2", [] of JSON::Any)
       Lune::Native::WindowMock.calls.should contain(:maximize)
     end
 
@@ -87,12 +93,12 @@ describe "Lune::Capabilities (native)" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
-      window_cap = Lune::Capabilities::Window.new
-      window_cap.setup(Lune::Capability::SetupCtx.new(Lune::Options.new, handle))
+      window_cap = Lune::Plugins::Window.new
+      window_cap.setup(Lune::Plugin::SetupCtx.new(Lune::Options.new, handle))
       app.install(window_cap)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.window.set_title", "seq3", [JSON::Any.new("My App")])
+      wv.invoke("Lune.Plugins.Window.set_title", "seq3", [JSON::Any.new("My App")])
       Lune::Native::WindowMock.last_title.should eq("My App")
     end
 
@@ -100,12 +106,12 @@ describe "Lune::Capabilities (native)" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
-      window_cap = Lune::Capabilities::Window.new
-      window_cap.setup(Lune::Capability::SetupCtx.new(Lune::Options.new, handle))
+      window_cap = Lune::Plugins::Window.new
+      window_cap.setup(Lune::Plugin::SetupCtx.new(Lune::Options.new, handle))
       app.install(window_cap)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.window.set_size", "seq4", [JSON::Any.new(1920_i64), JSON::Any.new(1080_i64)])
+      wv.invoke("Lune.Plugins.Window.set_size", "seq4", [JSON::Any.new(1920_i64), JSON::Any.new(1080_i64)])
       Lune::Native::WindowMock.last_size.should eq({1920, 1080})
     end
 
@@ -113,26 +119,26 @@ describe "Lune::Capabilities (native)" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
-      window_cap = Lune::Capabilities::Window.new
-      window_cap.setup(Lune::Capability::SetupCtx.new(Lune::Options.new, handle))
+      window_cap = Lune::Plugins::Window.new
+      window_cap.setup(Lune::Plugin::SetupCtx.new(Lune::Options.new, handle))
       app.install(window_cap)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.window.center", "seq5", [] of JSON::Any)
+      wv.invoke("Lune.Plugins.Window.center", "seq5", [] of JSON::Any)
       Lune::Native::WindowMock.calls.should contain(:center)
     end
   end
 
-  describe Lune::Capabilities::Dialogs do
+  describe Lune::Plugins::Dialogs do
     it "open_file binding returns the selected path" do
       Lune::Native::DialogsMock.stub_open("/home/user/file.txt")
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
-      app.install(Lune::Capabilities::Dialogs.new)
+      app.install(Lune::Plugins::Dialogs.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.dialogs.open_file", "seq6", [JSON::Any.new("Pick")])
+      wv.invoke("Lune.Plugins.Dialogs.open_file", "seq6", [JSON::Any.new("Pick")])
       Lune::Native::DialogsMock.calls.map(&.method).should contain(:open_file)
       wv.resolve_calls.find { |r| r[0] == "seq6" }.not_nil![2].should contain("/home/user/file.txt")
     end
@@ -142,10 +148,10 @@ describe "Lune::Capabilities (native)" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
-      app.install(Lune::Capabilities::Dialogs.new)
+      app.install(Lune::Plugins::Dialogs.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.dialogs.save_file", "seq7", [JSON::Any.new("Save"), JSON::Any.new("data.csv")])
+      wv.invoke("Lune.Plugins.Dialogs.save_file", "seq7", [JSON::Any.new("Save"), JSON::Any.new("data.csv")])
       Lune::Native::DialogsMock.calls.map(&.method).should contain(:save_file)
       wv.resolve_calls.find { |r| r[0] == "seq7" }.not_nil![2].should contain("/home/user/out.csv")
     end
@@ -155,10 +161,10 @@ describe "Lune::Capabilities (native)" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
-      app.install(Lune::Capabilities::Dialogs.new)
+      app.install(Lune::Plugins::Dialogs.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.dialogs.open_dir", "seq8a", [JSON::Any.new("Pick folder")])
+      wv.invoke("Lune.Plugins.Dialogs.open_dir", "seq8a", [JSON::Any.new("Pick folder")])
       Lune::Native::DialogsMock.calls.map(&.method).should contain(:open_dir)
       wv.resolve_calls.find { |r| r[0] == "seq8a" }.not_nil![2].should contain("/home/user/docs")
     end
@@ -168,10 +174,10 @@ describe "Lune::Capabilities (native)" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
-      app.install(Lune::Capabilities::Dialogs.new)
+      app.install(Lune::Plugins::Dialogs.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.dialogs.open_files", "seq8b", [JSON::Any.new("Pick files")])
+      wv.invoke("Lune.Plugins.Dialogs.open_files", "seq8b", [JSON::Any.new("Pick files")])
       Lune::Native::DialogsMock.calls.map(&.method).should contain(:open_files)
       result = JSON.parse(wv.resolve_calls.find { |r| r[0] == "seq8b" }.not_nil![2])
       result.as_a.map(&.as_s).should eq(["/a/one.txt", "/b/two.txt"])
@@ -181,10 +187,10 @@ describe "Lune::Capabilities (native)" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
-      app.install(Lune::Capabilities::Dialogs.new)
+      app.install(Lune::Plugins::Dialogs.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.dialogs.message_info", "seq8c", [JSON::Any.new("Title"), JSON::Any.new("Hello")])
+      wv.invoke("Lune.Plugins.Dialogs.message_info", "seq8c", [JSON::Any.new("Title"), JSON::Any.new("Hello")])
       Lune::Native::DialogsMock.calls.map(&.method).should contain(:message)
       _, status, _ = wv.resolve_calls.find { |r| r[0] == "seq8c" }.not_nil!
       status.should eq(0)
@@ -195,25 +201,25 @@ describe "Lune::Capabilities (native)" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
-      app.install(Lune::Capabilities::Dialogs.new)
+      app.install(Lune::Plugins::Dialogs.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.dialogs.message_question", "seq8d", [JSON::Any.new("Confirm"), JSON::Any.new("Are you sure?")])
+      wv.invoke("Lune.Plugins.Dialogs.message_question", "seq8d", [JSON::Any.new("Confirm"), JSON::Any.new("Are you sure?")])
       result = wv.resolve_calls.find { |r| r[0] == "seq8d" }.not_nil!
       result[1].should eq(0)
       JSON.parse(result[2]).as_s.should eq("Yes")
     end
   end
 
-  describe Lune::Capabilities::Tray do
+  describe Lune::Plugins::Tray do
     it "tray.show binding calls Tray.show" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
-      app.install(Lune::Capabilities::Tray.new)
+      app.install(Lune::Plugins::Tray.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.tray.show", "seq8", [JSON::Any.new("/icon.png")])
+      wv.invoke("Lune.Plugins.Tray.show", "seq8", [JSON::Any.new("/icon.png")])
       Lune::Native::TrayMock.calls.should contain(:show)
     end
 
@@ -221,10 +227,10 @@ describe "Lune::Capabilities (native)" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
-      app.install(Lune::Capabilities::Tray.new)
+      app.install(Lune::Plugins::Tray.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.tray.hide", "seq9", [] of JSON::Any)
+      wv.invoke("Lune.Plugins.Tray.hide", "seq9", [] of JSON::Any)
       Lune::Native::TrayMock.calls.should contain(:hide)
     end
 
@@ -232,10 +238,10 @@ describe "Lune::Capabilities (native)" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
-      app.install(Lune::Capabilities::Tray.new)
+      app.install(Lune::Plugins::Tray.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.tray.set_icon", "seq10", [JSON::Any.new("/new.png")])
+      wv.invoke("Lune.Plugins.Tray.set_icon", "seq10", [JSON::Any.new("/new.png")])
       Lune::Native::TrayMock.calls.should contain(:set_icon)
     end
 
@@ -245,11 +251,14 @@ describe "Lune::Capabilities (native)" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
-      app.install(Lune::Capabilities::Tray.new(on_menu_click: menu_cb))
+      plugin = Lune::Plugins::Tray.new
+      plugin.config.on_menu_click = menu_cb
+      plugin.setup(Lune::Plugin::SetupCtx.new(Lune::Options.new, Pointer(Void).null))
+      app.install(plugin)
       bridge.register_bindings(app.bindings)
 
       json = %([{"id":"open","label":"Open"},{"id":"---","label":""},{"id":"quit","label":"Quit"}])
-      wv.invoke("__lune.tray.set_menu", "seq14", [JSON::Any.new(json)])
+      wv.invoke("Lune.Plugins.Tray.set_menu", "seq14", [JSON::Any.new(json)])
       Lune::Native::TrayMock.calls.should contain(:set_menu)
       Lune::Native::TrayMock.simulate_menu_click("open")
       clicked_id.should eq("open")
@@ -259,40 +268,43 @@ describe "Lune::Capabilities (native)" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
-      app.install(Lune::Capabilities::Tray.new)
+      app.install(Lune::Plugins::Tray.new)
       bridge.register_bindings(app.bindings)
 
       json = %([{"id":"quit","label":"Quit"}])
-      wv.invoke("__lune.tray.set_menu", "seq15", [JSON::Any.new(json)])
+      wv.invoke("Lune.Plugins.Tray.set_menu", "seq15", [JSON::Any.new(json)])
       Lune::Native::TrayMock.calls.should contain(:set_menu)
       Lune::Native::TrayMock.simulate_menu_click("quit")
     end
 
     it "configured? is false with all defaults" do
-      Lune::Capabilities::Tray.new.configured?.should be_false
+      Lune::Plugins::Tray.new.configured?.should be_false
     end
 
     it "configured? is true with custom event name" do
-      Lune::Capabilities::Tray.new(event_name: "myTray").configured?.should be_true
+      plugin = Lune::Plugins::Tray.new
+      plugin.config.event = "myTray"
+      plugin.configured?.should be_true
     end
 
     it "configured? is true with explicit on_menu_click override" do
-      cb = ->(id : String) { nil }
-      Lune::Capabilities::Tray.new(on_menu_click: cb).configured?.should be_true
+      plugin = Lune::Plugins::Tray.new
+      plugin.config.on_menu_click = ->(id : String) { nil }
+      plugin.configured?.should be_true
     end
   end
 
-  describe Lune::Capabilities::Notifications do
-    it "notifications.notify binding calls Notify.show" do
+  describe Lune::Plugins::System do
+    it "System.notify binding calls Native::Notifications.show" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
-      app.install(Lune::Capabilities::Notifications.new)
+      app.install(Lune::Plugins::System.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.notifications.notify", "seq11", [JSON::Any.new("Hello"), JSON::Any.new("World")])
+      wv.invoke("Lune.Plugins.System.notify", "seq11", [JSON::Any.new("Hello"), JSON::Any.new("World")])
 
-      # notifications.notify is async (its native impl shells out on Win32),
+      # System.notify is async (its native impl shells out on Win32),
       # so the callback runs on @async_pool. Wait for the resolve to land.
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -304,32 +316,30 @@ describe "Lune::Capabilities (native)" do
       Lune::Native::NotificationsMock.last_title.should eq("Hello")
       Lune::Native::NotificationsMock.last_body.should eq("World")
     end
-  end
 
-  describe Lune::Capabilities::Screen do
-    it "screen.info binding returns width, height, and scale" do
+    it "System.screen_info binding returns width, height, and scale" do
       Lune::Native::ScreenMock.stub_info(2560, 1440, 2.0)
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
-      app.install(Lune::Capabilities::Screen.new)
+      app.install(Lune::Plugins::System.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.screen.info", "seq12", [] of JSON::Any)
+      wv.invoke("Lune.Plugins.System.screen_info", "seq12", [] of JSON::Any)
       resolved = wv.resolve_calls.find { |r| r[0] == "seq12" }.not_nil![2]
       resolved.should contain("2560")
       resolved.should contain("1440")
       resolved.should contain("2.0")
     end
 
-    it "screen.info binding calls Screen.info" do
+    it "System.screen_info binding calls Native::Screen.info" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
-      app.install(Lune::Capabilities::Screen.new)
+      app.install(Lune::Plugins::System.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("__lune.screen.info", "seq13", [] of JSON::Any)
+      wv.invoke("Lune.Plugins.System.screen_info", "seq13", [] of JSON::Any)
       Lune::Native::ScreenMock.calls.should contain(:info)
     end
   end

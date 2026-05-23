@@ -1,13 +1,18 @@
 require "./demo"
 require "./file_menu"
+require "./counter"
 require "lune"
+
+# Register the custom Counter plugin alongside the built-ins. Third-party
+# shards would `Lune.use(MyPlugin.new)` from their own `main.cr` here.
+Lune.use(MyCustomPlugin::Counter.new)
 
 app = Lune::App.new
 app.install(Demo.new)
 
 # ping → pong relay
-app.events.on("ping") do |data|
-  app.events.emit("pong", data)
+app.event.on("ping") do |data|
+  app.event.emit("pong", data)
 end
 
 # Class-based style: state and callbacks live inside the menu class.
@@ -15,7 +20,7 @@ file_menu = FileMenu.new(app)
 
 app.async("clock") do
   loop do
-    app.events.emit("tick", Time.utc.to_rfc3339) unless file_menu.clock_paused
+    app.event.emit("tick", Time.utc.to_rfc3339) unless file_menu.clock_paused
     sleep 1.second
   end
 end
@@ -54,12 +59,12 @@ Lune.run(app, assets: "frontend/dist") do |opts|
   # opts.on_window_ready = ->(_handle : Void*) {
   #   puts "Window open, about to navigate"
   # }
-  # opts.disable_context_menu = true
+  # opts.context_menu.block_default = true
   opts.devtools = {{ flag?(:lune_dev) }}
 
   # opts.on_navigate = ->(url : String) {
   #   Lune.logger.info { "on_navigate ← #{url}" }
-  #   app.events.emit("nav-received", url)
+  #   app.event.emit("nav-received", url)
   # }
 
   opts.mac do |m|
@@ -77,9 +82,15 @@ Lune.run(app, assets: "frontend/dist") do |opts|
   #   t.toggle_window_on = [:left_click] # popover-style: left-click drops the window
   # end
 
-  opts.drag do |d|
-    d.zone = "--lune-draggable"
+  # Custom-plugin config sits on opts the same way built-in plugin config does.
+  # The `config do … end` macro on `Counter` reopens Lune::Options with this
+  # accessor; `start_at` is read in Counter#setup.
+  opts.counter do |c|
+    c.start_at = 100
+    c.step = 5
   end
+
+  opts.window.drag_zone = "--lune-draggable"
 
   opts.file_drop do |fd|
     fd.zone = "--lune-drop-target"
@@ -92,9 +103,9 @@ Lune.run(app, assets: "frontend/dist") do |opts|
     m.edit_menu
 
     m.submenu "View" do |view| # block style: inline, no state needed
-      view.item("Zoom In") { app.events.emit("zoom-in") }
-      view.item("Zoom Out") { app.events.emit("zoom-out") }
-      view.item("Actual Size", shortcut: "cmd+0") { app.events.emit("zoom-reset") }
+      view.item("Zoom In") { app.event.emit("zoom-in") }
+      view.item("Zoom Out") { app.event.emit("zoom-out") }
+      view.item("Actual Size", shortcut: "cmd+0") { app.event.emit("zoom-reset") }
     end
   end
 end

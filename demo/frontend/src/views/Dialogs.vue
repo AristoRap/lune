@@ -1,7 +1,8 @@
 <script setup>
 import { ref } from "vue";
 import SectionHead from "../components/SectionHead.vue";
-import { Dialogs } from "../lune.js";
+import { lune } from "../lune.js";
+const { Dialogs } = lune;
 
 const pickerOut = ref("");
 const dialogOut = ref("");

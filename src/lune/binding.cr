@@ -1,14 +1,11 @@
 module Lune
   # A registered call from JS to Crystal. One class for both user-class bindings
-  # (`api.MyClass.method` in `app.js`) and framework bindings (`Namespace.method`
-  # in `runtime.js`). The `internal?` flag selects between the two output shapes:
-  #
-  # - `internal: false` — user binding. Bridge id is `<namespace>.<method>`,
-  #   JS func name is `camelcase(method)`, JS stub formatted for `app.js`.
-  # - `internal: true`  — framework binding. Bridge id is `__lune.<method>`,
-  #   JS func name is the camelcased leaf (after the last `.` in `method`),
-  #   JS stub formatted for `runtime.js`. The TS return type can be overridden
-  #   via `ts_return_type` (bypasses the default `Promise<T>` wrap).
+  # (`api.MyClass.method` in `app.js`) and plugin bindings (`Namespace.method`
+  # in `runtime.js`). User and plugin bindings share the same id / js_func_name /
+  # stub shape; the `internal?` flag only decides which JS file the binding
+  # lands in (Generator emits user bindings to `app/App.js`, internal bindings
+  # to `plugins/<id>.js`). The TS return type can be overridden via
+  # `ts_return_type` (bypasses the default `Promise<T>` wrap).
   class Binding
     getter namespace, method, args, return_type, callback, async
 
@@ -30,18 +27,11 @@ module Lune
     end
 
     def id : String
-      if @internal
-        "#{Lune::Capability::BRIDGE_MARKER}.#{@method}"
-      else
-        @namespace.empty? ? @method : "#{@namespace.split("::").join(".")}.#{@method}"
-      end
+      @namespace.empty? ? @method : "#{@namespace.split("::").join(".")}.#{@method}"
     end
 
-    # User bindings camelcase the whole method name. Framework bindings carry a
-    # capability-prefixed path (`clipboard.read_html`) and only the leaf is the
-    # JS function name.
     def js_func_name : String
-      @internal ? @method.split(".").last.camelcase(lower: true) : @method.camelcase(lower: true)
+      @method.camelcase(lower: true)
     end
 
     def to_js_stub : String
@@ -49,11 +39,26 @@ module Lune
       params = names.join(", ")
       call_args = call_arg_exprs(names)
       call_tail = call_args.empty? ? "" : ", #{call_args.join(", ")}"
-      if @internal
-        "  #{js_func_name}(#{params}) { return __lune.call(#{id.inspect}#{call_tail}); },"
-      else
-        "  #{js_func_name}(#{params}) {\n    return __lune.call(#{id.inspect}#{call_tail});\n  },"
-      end
+      "  #{js_func_name}(#{params}) {\n    return __lune.call(#{id.inspect}#{call_tail});\n  },"
+    end
+
+    # JS-side runtime that every per-binding stub from `#to_js_stub` calls
+    # into: looks up the registered window function, awaits it, and rewraps
+    # typed Crystal errors as `LuneError`. One copy lives at the top of
+    # `runtime.js`; per-binding stubs reference it by name.
+    def self.js_runtime : String
+      <<-JS
+        export const __lune = {
+          call(name, ...args) {
+            return window[name](...args).catch(function(err) {
+              if (err !== null && typeof err === 'object' && typeof err.code === 'string') {
+                throw new LuneError(err.code, err.error);
+              }
+              throw err;
+            });
+          },
+        };
+        JS
     end
 
     def to_dts_sig : String

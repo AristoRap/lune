@@ -1,7 +1,8 @@
 <script setup>
 import { ref } from "vue";
 import SectionHead from "../components/SectionHead.vue";
-import { Window } from "../lune.js";
+import { lune } from "../lune.js";
+const { Window } = lune;
 
 const titleIn = ref("Lune Example");
 const widthIn = ref(1100);

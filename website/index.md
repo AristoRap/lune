@@ -22,8 +22,8 @@ features:
     details: The frontend is compiled into the Crystal binary at build time. Ship one file — no Electron, no Node runtime, no bundled Chromium.
   - title: Hot reload in dev
     details: lune dev starts your Vite dev server and Crystal backend together. Save a file and the frontend reloads instantly; change Crystal and it recompiles.
-  - title: macOS & Linux
-    details: Uses the native WebView on each platform — WKWebView on macOS, WebKitGTK on Linux. No extra runtime to install.
+  - title: macOS, Linux & Windows
+    details: Uses the native WebView on each platform — WKWebView on macOS, WebKitGTK on Linux, WebView2 on Windows. No extra runtime to install.
   - title: Familiar frontend tooling
     details: Works with any Vite-based frontend — Vanilla JS, Vue, React, Svelte. Templates for Vanilla and Vue ship out of the box.
 ---

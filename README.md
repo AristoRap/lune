@@ -37,7 +37,7 @@ lune dev
 
 Pre-built CLI binaries are on the [releases page](https://github.com/AristoRap/lune/releases). Or build from source: `make setup && make deploy`.
 
-The `demo/` directory in this repo is a Vue 3 showcase that exercises every Lune capability. Run it with `cd demo && lune dev`. See [Capabilities](https://aristorap.github.io/lune/capabilities/) for the full list of what's available.
+The `demo/` directory in this repo is a Vue 3 showcase that exercises every Lune plugin. Run it with `cd demo && lune dev`. See [Plugins](https://aristorap.github.io/lune/plugins/) for the full list of what's available.
 
 ## Platform support
 
@@ -45,13 +45,13 @@ The `demo/` directory in this repo is a Vue 3 showcase that exercises every Lune
 | -------- | --- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | macOS    | ✅  | ✅    | Native AppKit                                                                                                                                                          |
 | Linux    | ✅  | ✅    | GTK + WebKit2GTK                                                                                                                                                       |
-| Windows  | 🟡  | 🟡    | Win32 + WebView2; runnable with a one-line Crystal stdlib patch until Crystal 1.21 ships. Several capabilities still gapped — see [WINDOWS_SETUP.md](WINDOWS_SETUP.md) |
+| Windows  | 🟡  | 🟡    | Win32 + WebView2; runnable with a one-line Crystal stdlib patch until Crystal 1.21 ships. Several plugins still gapped — see [WINDOWS_SETUP.md](WINDOWS_SETUP.md) |
 
 ### Windows
 
 Lune runs on Windows today **with a one-line manual patch to Crystal's stdlib** (documented in [WINDOWS_SETUP.md](WINDOWS_SETUP.md)). The patch becomes unnecessary once Crystal 1.21.0 ships — [crystal#16933](https://github.com/crystal-lang/crystal/pull/16933) is merged on master and targets 1.21.
 
-With the patch applied, the demo runs end-to-end via `lune dev --debug`. For per-capability Windows status (verified, partial, not implemented), see the **Platform notes** section on each [capability page](website/capabilities/). [ROADMAP.md](ROADMAP.md) tracks the path to full parity.
+With the patch applied, the demo runs end-to-end via `lune dev --debug`. For per-plugin Windows status (verified, partial, not implemented), see the **Platform notes** section on each [plugin page](website/plugins/). [ROADMAP.md](ROADMAP.md) tracks the path to full parity.
 
 ## Development
 

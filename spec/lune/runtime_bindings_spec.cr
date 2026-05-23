@@ -11,12 +11,12 @@ private def install(app : Lune::App, *mods : Lune::Installable)
   app.bindings
 end
 
-describe "Lune::Capabilities" do
-  describe Lune::Capabilities::System do
+describe "Lune::Plugins" do
+  describe Lune::Plugins::System do
     it "does not pollute user bindings" do
       fake, bridge = make_bridge
       app = Lune::App.new
-      app.install(Lune::Capabilities::System.new(on_quit: -> { }))
+      app.install(Lune::Plugins::System.new(on_quit: -> { }))
       bridge.register_bindings(app.bindings)
       bridge.all_bindings.values.reject(&.internal?).should be_empty
     end
@@ -25,10 +25,10 @@ describe "Lune::Capabilities" do
       fake, bridge = make_bridge
       quit_called = false
       app = Lune::App.new
-      app.install(Lune::Capabilities::System.new(on_quit: -> { quit_called = true; nil }))
+      app.install(Lune::Plugins::System.new(on_quit: -> { quit_called = true; nil }))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.system.quit", "seq-1", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.System.quit", "seq-1", [] of JSON::Any)
       quit_called.should be_true
     end
 
@@ -36,13 +36,13 @@ describe "Lune::Capabilities" do
       fake, bridge = make_bridge
       opened_url = ""
       app = Lune::App.new
-      app.install(Lune::Capabilities::System.new(
+      app.install(Lune::Plugins::System.new(
         on_quit: -> { },
         on_open_url: ->(url : String) { opened_url = url; nil }
       ))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.system.open_url", "seq-2", [JSON::Any.new("https://example.com")])
+      fake.invoke("Lune.Plugins.System.open_url", "seq-2", [JSON::Any.new("https://example.com")])
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -58,10 +58,10 @@ describe "Lune::Capabilities" do
     it "returns environment with os, arch, and devtools fields" do
       fake, bridge = make_bridge
       app = Lune::App.new
-      app.install(Lune::Capabilities::System.new(on_quit: -> { }, devtools: true))
+      app.install(Lune::Plugins::System.new(on_quit: -> { }, devtools: true))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.system.environment", "seq-3", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.System.environment", "seq-3", [] of JSON::Any)
       _seq, status, result = fake.resolve_calls[0]
       status.should eq(0)
       env = JSON.parse(result)
@@ -73,10 +73,10 @@ describe "Lune::Capabilities" do
     it "reflects the devtools flag in environment" do
       fake, bridge = make_bridge
       app = Lune::App.new
-      app.install(Lune::Capabilities::System.new(on_quit: -> { }, devtools: false))
+      app.install(Lune::Plugins::System.new(on_quit: -> { }, devtools: false))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.system.environment", "seq-4", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.System.environment", "seq-4", [] of JSON::Any)
       env = JSON.parse(fake.resolve_calls[0][2])
       env["devtools"].as_bool.should be_false
     end
@@ -84,23 +84,23 @@ describe "Lune::Capabilities" do
     it "returns a known os value" do
       fake, bridge = make_bridge
       app = Lune::App.new
-      app.install(Lune::Capabilities::System.new(on_quit: -> { }))
+      app.install(Lune::Plugins::System.new(on_quit: -> { }))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.system.environment", "seq-5", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.System.environment", "seq-5", [] of JSON::Any)
       env = JSON.parse(fake.resolve_calls[0][2])
       ["darwin", "linux", "windows"].should contain(env["os"].as_s)
     end
   end
 
-  describe Lune::Capabilities::Filesystem do
+  describe Lune::Plugins::Filesystem do
     it "filesystem.home_dir resolves and matches Path.home" do
       fake, bridge = make_bridge
       app = Lune::App.new
-      app.install(Lune::Capabilities::Filesystem.new)
+      app.install(Lune::Plugins::Filesystem.new)
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.filesystem.home_dir", "seq-6", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.Filesystem.home_dir", "seq-6", [] of JSON::Any)
       _, _, result = fake.resolve_calls[0]
       JSON.parse(result).as_s.should eq(Path.home.to_s)
     end
@@ -108,10 +108,10 @@ describe "Lune::Capabilities" do
     it "filesystem.temp_dir resolves and matches Dir.tempdir" do
       fake, bridge = make_bridge
       app = Lune::App.new
-      app.install(Lune::Capabilities::Filesystem.new)
+      app.install(Lune::Plugins::Filesystem.new)
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.filesystem.temp_dir", "seq-7", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.Filesystem.temp_dir", "seq-7", [] of JSON::Any)
       _, _, result = fake.resolve_calls[0]
       JSON.parse(result).as_s.should eq(Dir.tempdir)
     end
@@ -119,10 +119,10 @@ describe "Lune::Capabilities" do
     it "filesystem.downloads_dir returns a path under the home directory" do
       fake, bridge = make_bridge
       app = Lune::App.new
-      app.install(Lune::Capabilities::Filesystem.new)
+      app.install(Lune::Plugins::Filesystem.new)
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.filesystem.downloads_dir", "seq-8", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.Filesystem.downloads_dir", "seq-8", [] of JSON::Any)
       _, _, result = fake.resolve_calls[0]
       JSON.parse(result).as_s.should start_with(Path.home.to_s)
     end
@@ -130,25 +130,25 @@ describe "Lune::Capabilities" do
     it "filesystem.app_data_dir returns a non-empty string" do
       fake, bridge = make_bridge
       app = Lune::App.new
-      app.install(Lune::Capabilities::Filesystem.new)
+      app.install(Lune::Plugins::Filesystem.new)
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.filesystem.app_data_dir", "seq-9", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.Filesystem.app_data_dir", "seq-9", [] of JSON::Any)
       _, _, result = fake.resolve_calls[0]
       JSON.parse(result).as_s.should_not be_empty
     end
   end
 
-  describe Lune::Capabilities::Clipboard do
+  describe Lune::Plugins::Clipboard do
     it "clipboard.read resolves with the value returned by on_read" do
       fake, bridge = make_bridge
       app = Lune::App.new
-      app.install(Lune::Capabilities::Clipboard.new(
+      app.install(Lune::Plugins::Clipboard.new(
         on_read: -> : String { "clipboard content" }
       ))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.clipboard.read", "seq-10", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.Clipboard.read", "seq-10", [] of JSON::Any)
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -165,12 +165,12 @@ describe "Lune::Capabilities" do
       fake, bridge = make_bridge
       written = ""
       app = Lune::App.new
-      app.install(Lune::Capabilities::Clipboard.new(
+      app.install(Lune::Plugins::Clipboard.new(
         on_write: ->(text : String) { written = text; nil }
       ))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.clipboard.write", "seq-11", [JSON::Any.new("hello clipboard")])
+      fake.invoke("Lune.Plugins.Clipboard.write", "seq-11", [JSON::Any.new("hello clipboard")])
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -186,12 +186,12 @@ describe "Lune::Capabilities" do
     it "clipboard.read_html resolves with HTML from on_read_html" do
       fake, bridge = make_bridge
       app = Lune::App.new
-      app.install(Lune::Capabilities::Clipboard.new(
+      app.install(Lune::Plugins::Clipboard.new(
         on_read_html: -> : String { "<b>hello</b>" }
       ))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.clipboard.read_html", "seq-20", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.Clipboard.read_html", "seq-20", [] of JSON::Any)
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -208,12 +208,12 @@ describe "Lune::Capabilities" do
       fake, bridge = make_bridge
       written = ""
       app = Lune::App.new
-      app.install(Lune::Capabilities::Clipboard.new(
+      app.install(Lune::Plugins::Clipboard.new(
         on_write_html: ->(html : String) { written = html; nil }
       ))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.clipboard.write_html", "seq-21", [JSON::Any.new("<p>hi</p>")])
+      fake.invoke("Lune.Plugins.Clipboard.write_html", "seq-21", [JSON::Any.new("<p>hi</p>")])
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -229,12 +229,12 @@ describe "Lune::Capabilities" do
     it "clipboard.read_image resolves with a data URL from on_read_image" do
       fake, bridge = make_bridge
       app = Lune::App.new
-      app.install(Lune::Capabilities::Clipboard.new(
+      app.install(Lune::Plugins::Clipboard.new(
         on_read_image: -> : String { "data:image/png;base64,abc123" }
       ))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.clipboard.read_image", "seq-22", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.Clipboard.read_image", "seq-22", [] of JSON::Any)
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -251,17 +251,17 @@ describe "Lune::Capabilities" do
       # Mirrors the Win32 default: callback raises Lune::Error with code
       # "UNAVAILABLE_ON_PLATFORM", bridge forwards it as a typed JS LuneError
       # (status 1, body has {code: ..., error: ...}). Catchable with .catch in
-      # user code the same way platform-gated capability rejections are.
+      # user code the same way platform-gated plugin rejections are.
       fake, bridge = make_bridge
       app = Lune::App.new
-      app.install(Lune::Capabilities::Clipboard.new(
+      app.install(Lune::Plugins::Clipboard.new(
         on_read_image: -> : String {
-          raise Lune::Error.new("UNAVAILABLE_ON_PLATFORM", "Clipboard.readImage is not available on win32")
+          raise Lune::Error.new("UNAVAILABLE_ON_PLATFORM", "Lune.Plugins.Clipboard.readImage is not available on win32")
         }
       ))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.clipboard.read_image", "seq-img-err", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.Clipboard.read_image", "seq-img-err", [] of JSON::Any)
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -273,19 +273,19 @@ describe "Lune::Capabilities" do
       status.should eq(1)
       payload = JSON.parse(result)
       payload["code"].as_s.should eq("UNAVAILABLE_ON_PLATFORM")
-      payload["error"].as_s.should contain("Clipboard.readImage")
+      payload["error"].as_s.should contain("Lune.Plugins.Clipboard.readImage")
     end
 
     it "clipboard.write_image calls on_write_image with the data URL and resolves" do
       fake, bridge = make_bridge
       written = ""
       app = Lune::App.new
-      app.install(Lune::Capabilities::Clipboard.new(
+      app.install(Lune::Plugins::Clipboard.new(
         on_write_image: ->(data_url : String) { written = data_url; nil }
       ))
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.clipboard.write_image", "seq-23", [JSON::Any.new("data:image/png;base64,abc123")])
+      fake.invoke("Lune.Plugins.Clipboard.write_image", "seq-23", [JSON::Any.new("data:image/png;base64,abc123")])
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -299,7 +299,7 @@ describe "Lune::Capabilities" do
     end
   end
 
-  describe Lune::Capabilities::ContextMenu do
+  describe Lune::Plugins::ContextMenu do
     before_each { Lune::Native::MenuMock.reset }
 
     it "context_menu.show calls show_context_menu with the given coordinates and JSON" do
@@ -307,11 +307,11 @@ describe "Lune::Capabilities" do
       app = Lune::App.new
       app.bridge = bridge
 
-      app.install(Lune::Capabilities::ContextMenu.new)
+      app.install(Lune::Plugins::ContextMenu.new)
       bridge.register_bindings(app.bindings)
 
       items_json = "[{\"id\":\"copy\",\"label\":\"Copy\"}]"
-      fake.invoke("__lune.context_menu.show", "seq-40", [
+      fake.invoke("Lune.Plugins.ContextMenu.show", "seq-40", [
         JSON::Any.new(15.0_f64),
         JSON::Any.new(25.0_f64),
         JSON::Any.new(items_json),
@@ -330,11 +330,11 @@ describe "Lune::Capabilities" do
 
       Lune::Native::MenuMock.stub_context_selection("copy")
 
-      app.install(Lune::Capabilities::ContextMenu.new)
+      app.install(Lune::Plugins::ContextMenu.new)
       bridge.register_bindings(app.bindings)
 
       items_json = "[{\"id\":\"copy\",\"label\":\"Copy\"}]"
-      fake.invoke("__lune.context_menu.show", "seq-41", [
+      fake.invoke("Lune.Plugins.ContextMenu.show", "seq-41", [
         JSON::Any.new(0.0_f64),
         JSON::Any.new(0.0_f64),
         JSON::Any.new(items_json),
@@ -346,7 +346,7 @@ describe "Lune::Capabilities" do
     end
   end
 
-  describe Lune::Capabilities::Tray do
+  describe Lune::Plugins::Tray do
     before_each do
       Lune::Native::TrayMock.reset
       Lune::Native::Tray.set_menu([] of {id: String, label: String})
@@ -355,10 +355,10 @@ describe "Lune::Capabilities" do
     it "tray.show registers a non-nil left-click callback" do
       fake, bridge = make_bridge
       app = Lune::App.new
-      app.install(Lune::Capabilities::Tray.new)
+      app.install(Lune::Plugins::Tray.new)
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.tray.show", "seq-tray-1", [JSON::Any.new("")])
+      fake.invoke("Lune.Plugins.Tray.show", "seq-tray-1", [JSON::Any.new("")])
 
       Lune::Native::TrayMock.calls.should contain(:show)
       Lune::Native::TrayMock.last_click_cb.should_not be_nil
@@ -368,10 +368,10 @@ describe "Lune::Capabilities" do
       fake, bridge = make_bridge
       app = Lune::App.new
       app.bridge = bridge
-      app.install(Lune::Capabilities::Tray.new)
+      app.install(Lune::Plugins::Tray.new)
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.tray.show", "seq-tray-2", [JSON::Any.new("")])
+      fake.invoke("Lune.Plugins.Tray.show", "seq-tray-2", [JSON::Any.new("")])
       Lune::Native::TrayMock.simulate_click
 
       fake.eval_calls.any?(&.includes?("left_click")).should be_true
@@ -380,10 +380,10 @@ describe "Lune::Capabilities" do
     it "tray.popup_menu invokes the native popup" do
       fake, bridge = make_bridge
       app = Lune::App.new
-      app.install(Lune::Capabilities::Tray.new)
+      app.install(Lune::Plugins::Tray.new)
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.tray.popup_menu", "seq-tray-3", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.Tray.popup_menu", "seq-tray-3", [] of JSON::Any)
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -401,10 +401,14 @@ describe "Lune::Capabilities" do
       app = Lune::App.new
       app.bridge = bridge
       clicked = 0
-      app.install(Lune::Capabilities::Tray.new(on_tray_click: -> { clicked += 1; nil }))
+
+      plugin = Lune::Plugins::Tray.new
+      plugin.config.on_click = -> { clicked += 1; nil }
+      plugin.setup(Lune::Plugin::SetupCtx.new(Lune::Options.new, Pointer(Void).null))
+      app.install(plugin)
       bridge.register_bindings(app.bindings)
 
-      fake.invoke("__lune.tray.show", "seq-tray-5", [JSON::Any.new("")])
+      fake.invoke("Lune.Plugins.Tray.show", "seq-tray-5", [JSON::Any.new("")])
       Lune::Native::TrayMock.simulate_click
 
       clicked.should eq(1)
@@ -416,11 +420,10 @@ describe "Lune::Capabilities" do
       app = Lune::App.new
       app.bridge = bridge
 
-      cap = Lune::Capabilities::Tray.new
-      opts = Lune::Options.new
-      opts.tray.auto_show = true
-      cap.setup(Lune::Capability::SetupCtx.new(opts, Pointer(Void).null))
-      app.install(cap)
+      plugin = Lune::Plugins::Tray.new
+      plugin.config.auto_show = true
+      plugin.setup(Lune::Plugin::SetupCtx.new(Lune::Options.new, Pointer(Void).null))
+      app.install(plugin)
 
       Lune::Native::TrayMock.calls.should contain(:show)
     end
@@ -429,25 +432,25 @@ describe "Lune::Capabilities" do
       fake, bridge = make_bridge
       app = Lune::App.new
 
-      cap = Lune::Capabilities::Tray.new
-      cap.setup(Lune::Capability::SetupCtx.new(Lune::Options.new, Pointer(Void).null))
-      app.install(cap)
+      plugin = Lune::Plugins::Tray.new
+      plugin.setup(Lune::Plugin::SetupCtx.new(Lune::Options.new, Pointer(Void).null))
+      app.install(plugin)
 
       Lune::Native::TrayMock.calls.should_not contain(:show)
     end
   end
 
-  describe Lune::Capabilities::DragOut do
+  describe Lune::Plugins::DragOut do
     before_each { Lune::Native::WindowMock.reset }
 
     it "drag_out.start calls start_drag_out with the given paths" do
       fake, bridge = make_bridge
       app = Lune::App.new
-      app.install(Lune::Capabilities::DragOut.new)
+      app.install(Lune::Plugins::DragOut.new)
       bridge.register_bindings(app.bindings)
 
       paths_json = "[\"/etc/hosts\",\"/etc/shells\"]"
-      fake.invoke("__lune.drag_out.start", "seq-50", [JSON::Any.new(paths_json)])
+      fake.invoke("Lune.Plugins.DragOut.start", "seq-50", [JSON::Any.new(paths_json)])
 
       _, status, _ = fake.resolve_calls[0]
       status.should eq(0)
@@ -457,79 +460,88 @@ describe "Lune::Capabilities" do
   end
 
   describe "Registry" do
-    it "registers all cross-platform capability bindings" do
+    it "registers all cross-platform plugin bindings" do
       app = Lune::App.new
-      Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |cap| app.install(cap) }
+      Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |plugin| app.install(plugin) }
 
-      methods = app.bindings.map(&.method)
+      ids = app.bindings.map(&.id)
 
       # These bindings exist on every platform — regressions here mean a
-      # cross-platform capability's `install` quietly dropped a binding.
-      methods.should contain("system.quit")
-      methods.should contain("system.environment")
-      methods.should contain("system.open_url")
-      methods.should contain("filesystem.home_dir")
-      methods.should contain("clipboard.read")
-      methods.should contain("clipboard.write")
-      methods.should contain("clipboard.read_html")
-      methods.should contain("clipboard.write_html")
-      methods.should contain("clipboard.read_image")
-      methods.should contain("clipboard.write_image")
-      methods.should contain("context_menu.show")
-      methods.should contain("window.minimize")
-      methods.should contain("dialogs.open_file")
-      methods.should contain("notifications.notify")
-      methods.should contain("screen.info")
+      # cross-platform plugin's `install` quietly dropped a binding.
+      ids.should contain("Lune.Plugins.System.quit")
+      ids.should contain("Lune.Plugins.System.environment")
+      ids.should contain("Lune.Plugins.System.open_url")
+      ids.should contain("Lune.Plugins.Filesystem.home_dir")
+      ids.should contain("Lune.Plugins.Clipboard.read")
+      ids.should contain("Lune.Plugins.Clipboard.write")
+      ids.should contain("Lune.Plugins.Clipboard.read_html")
+      ids.should contain("Lune.Plugins.Clipboard.write_html")
+      ids.should contain("Lune.Plugins.Clipboard.read_image")
+      ids.should contain("Lune.Plugins.Clipboard.write_image")
+      ids.should contain("Lune.Plugins.ContextMenu.show")
+      ids.should contain("Lune.Plugins.Window.minimize")
+      ids.should contain("Lune.Plugins.Dialogs.open_file")
+      ids.should contain("Lune.Plugins.System.notify")
+      ids.should contain("Lune.Plugins.System.screen_info")
+      ids.should contain("Lune.Plugins.Event.emit")
+      ids.should contain("Lune.Plugins.Navigation.changed")
     end
 
     it "registers platform-gated bindings only on supported platforms" do
       app = Lune::App.new
-      Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |cap| app.install(cap) }
-      methods = app.bindings.map(&.method)
+      Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |plugin| app.install(plugin) }
+      ids = app.bindings.map(&.id)
 
-      case Lune::Capabilities::CURRENT_PLATFORM
+      case Lune::Plugins::CURRENT_PLATFORM
       when :darwin
-        methods.should contain("drag_out.start")
-        methods.should contain("tray.show")
-        methods.should contain("tray.set_menu")
-        methods.should contain("tray.popup_menu")
-        methods.should contain("file_watch.watch")
+        ids.should contain("Lune.Plugins.DragOut.start")
+        ids.should contain("Lune.Plugins.Window.start_drag")
+        ids.should contain("Lune.Plugins.Tray.show")
+        ids.should contain("Lune.Plugins.Tray.set_menu")
+        ids.should contain("Lune.Plugins.Tray.popup_menu")
+        ids.should contain("Lune.Plugins.FileWatch.watch")
       when :linux
-        methods.should_not contain("drag_out.start")
-        methods.should contain("tray.show")
-        methods.should contain("file_watch.watch")
+        ids.should_not contain("Lune.Plugins.DragOut.start")
+        ids.should_not contain("Lune.Plugins.Window.start_drag")
+        ids.should contain("Lune.Plugins.Tray.show")
+        ids.should contain("Lune.Plugins.FileWatch.watch")
       when :win32
-        methods.should_not contain("drag_out.start")
+        ids.should_not contain("Lune.Plugins.DragOut.start")
+        ids.should_not contain("Lune.Plugins.Window.start_drag")
         # Tray ships fully on Win32 — show/hide/clicks via Shell_NotifyIconW,
         # menus via CreatePopupMenu + TrackPopupMenu, icons via LoadImageW.
-        methods.should contain("tray.show")
-        methods.should contain("tray.hide")
-        methods.should contain("tray.set_menu")
-        methods.should_not contain("file_watch.watch")
+        ids.should contain("Lune.Plugins.Tray.show")
+        ids.should contain("Lune.Plugins.Tray.hide")
+        ids.should contain("Lune.Plugins.Tray.set_menu")
+        ids.should_not contain("Lune.Plugins.FileWatch.watch")
       end
     end
 
-    it "marks every capability binding as internal" do
+    it "marks every plugin binding as internal" do
       app = Lune::App.new
-      Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |cap| app.install(cap) }
+      Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |plugin| app.install(plugin) }
 
       app.bindings.all?(&.internal?).should be_true
     end
 
     it "registers the correct number of bindings for the current platform" do
       app = Lune::App.new
-      Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |cap| app.install(cap) }
+      Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |plugin| app.install(plugin) }
 
       # Per-platform totals — bump these when you add/remove a binding on any
-      # capability. Decreases when a capability is platform-gated out.
-      #   darwin = 60 baseline
-      #   linux  = 60 - DragOut(1)                              = 59
-      #   win32  = 60 - DragOut(1) - FileWatch(2)               = 57
-      expected = case Lune::Capabilities::CURRENT_PLATFORM
-                 when :darwin then 60
-                 when :linux  then 59
-                 when :win32  then 57
-                 else              60
+      # plugin. Decreases when a plugin is platform-gated out.
+      # Baseline includes Event.emit, Navigation.changed (both cross-
+      # platform) and Window.start_drag (darwin-only, defined inside an
+      # {% if flag?(:darwin) %} block on the Window plugin so it doesn't
+      # register on linux/win32).
+      #   darwin = 63 baseline (was 60 + Event.emit + Navigation.changed + Window.start_drag)
+      #   linux  = 63 - DragOut(1) - Window.start_drag(1)                   = 61
+      #   win32  = 63 - DragOut(1) - Window.start_drag(1) - FileWatch(2)    = 59
+      expected = case Lune::Plugins::CURRENT_PLATFORM
+                 when :darwin then 63
+                 when :linux  then 61
+                 when :win32  then 59
+                 else              63
                  end
 
       app.bindings.size.should eq(expected)
@@ -537,86 +549,86 @@ describe "Lune::Capabilities" do
   end
 
   describe "Registry#active" do
-    it "returns all capabilities when config has no include or exclude" do
-      registry = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new)
-      active = registry.active(Lune::ConfigCapabilities.new)
+    it "returns all plugins when config has no include or exclude" do
+      registry = Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new)
+      active = registry.active(Lune::Config::Plugins.new)
       active.size.should eq(registry.all.size)
     end
 
-    it "includes a capability when its name is in the include list" do
-      registry = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigCapabilities.new(enabled: ["system"])
-      active = registry.active(caps)
+    it "includes a plugin when its name is in the include list" do
+      registry = Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new)
+      plugins = Lune::Config::Plugins.new(enabled: ["system"])
+      active = registry.active(plugins)
       active.map(&.name).should contain("system")
       active.size.should eq(1)
     end
 
-    it "does not match binding names — only capability names are valid" do
-      registry = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigCapabilities.new(enabled: ["quit"])
-      active = registry.active(caps)
+    it "does not match binding names — only plugin names are valid" do
+      registry = Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new)
+      plugins = Lune::Config::Plugins.new(enabled: ["quit"])
+      active = registry.active(plugins)
       active.should be_empty
     end
 
-    it "returns all capabilities when include list is empty (same as omitted)" do
-      registry = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new)
-      active = registry.active(Lune::ConfigCapabilities.new(enabled: [] of String))
+    it "returns all plugins when include list is empty (same as omitted)" do
+      registry = Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new)
+      active = registry.active(Lune::Config::Plugins.new(enabled: [] of String))
       active.size.should eq(registry.all.size)
     end
 
-    it "silently ignores nonexistent capability names in include" do
-      registry = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigCapabilities.new(enabled: ["system", "nonexistent"])
-      active = registry.active(caps)
+    it "silently ignores nonexistent plugin names in include" do
+      registry = Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new)
+      plugins = Lune::Config::Plugins.new(enabled: ["system", "nonexistent"])
+      active = registry.active(plugins)
       active.map(&.name).should eq(["system"])
     end
 
-    it "excludes a capability by capability name" do
-      registry = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigCapabilities.new(disabled: ["clipboard"])
-      active = registry.active(caps)
+    it "excludes a plugin by plugin name" do
+      registry = Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new)
+      plugins = Lune::Config::Plugins.new(disabled: ["clipboard"])
+      active = registry.active(plugins)
       active.map(&.name).should_not contain("clipboard")
       active.map(&.name).should contain("system")
     end
 
-    it "does not match binding names in exclude — only capability names" do
-      registry = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigCapabilities.new(disabled: ["clipboardRead"])
-      active = registry.active(caps)
+    it "does not match binding names in exclude — only plugin names" do
+      registry = Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new)
+      plugins = Lune::Config::Plugins.new(disabled: ["clipboardRead"])
+      active = registry.active(plugins)
       active.map(&.name).should contain("clipboard")
     end
 
     it "applies include before exclude" do
-      registry = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigCapabilities.new(enabled: ["system", "clipboard"], disabled: ["clipboard"])
-      active = registry.active(caps)
+      registry = Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new)
+      plugins = Lune::Config::Plugins.new(enabled: ["system", "clipboard"], disabled: ["clipboard"])
+      active = registry.active(plugins)
       active.map(&.name).should contain("system")
       active.map(&.name).should_not contain("clipboard")
     end
 
-    it "treats include [\"*\"] as all capabilities" do
-      registry = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigCapabilities.new(enabled: ["*"])
-      registry.active(caps).size.should eq(registry.all.size)
+    it "treats include [\"*\"] as all plugins" do
+      registry = Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new)
+      plugins = Lune::Config::Plugins.new(enabled: ["*"])
+      registry.active(plugins).size.should eq(registry.all.size)
     end
 
-    it "treats include [\"all\"] as all capabilities" do
-      registry = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigCapabilities.new(enabled: ["all"])
-      registry.active(caps).size.should eq(registry.all.size)
+    it "treats include [\"all\"] as all plugins" do
+      registry = Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new)
+      plugins = Lune::Config::Plugins.new(enabled: ["all"])
+      registry.active(plugins).size.should eq(registry.all.size)
     end
 
-    it "treats exclude [\"*\"] as no capabilities" do
-      registry = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigCapabilities.new(disabled: ["*"])
-      registry.active(caps).should be_empty
+    it "treats exclude [\"*\"] as no plugins" do
+      registry = Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new)
+      plugins = Lune::Config::Plugins.new(disabled: ["*"])
+      registry.active(plugins).should be_empty
     end
 
-    it "includes core capabilities by name even when they have no bindings" do
-      registry = Lune::Capabilities::Registry.new(Pointer(Void).null, Lune::Options.new)
-      caps = Lune::ConfigCapabilities.new(enabled: ["events"])
-      active = registry.active(caps)
-      active.map(&.name).should contain("events")
+    it "includes core plugins by name even when they have no bindings" do
+      registry = Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new)
+      plugins = Lune::Config::Plugins.new(enabled: ["event"])
+      active = registry.active(plugins)
+      active.map(&.name).should contain("event")
     end
   end
 end

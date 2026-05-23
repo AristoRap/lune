@@ -1,8 +1,3 @@
 require "./mac"
-require "./file_drop"
-require "./drag"
-require "./tray"
 require "./menu"
-require "./menu_shortcut"
-require "./file_watch"
 require "./base"

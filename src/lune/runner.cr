@@ -57,21 +57,21 @@ module Lune
         {% if flag?(:darwin) %}
           setup_mac_window_options(handle)
           # menubar_mode implies the tray icon must come up at boot — surface it
-          # via the generic `tray.auto_show` flag so the capability owns wiring.
+          # via the generic `tray.auto_show` flag so the plugin owns wiring.
           @options.tray.auto_show = true if @options.mac.menubar_mode
         {% end %}
 
-        registry = Capabilities::Registry.new(handle, @options, on_quit: -> { wv.dispatch { wv.terminate } })
-        resolved = registry.validate_resolve_install(@config.capabilities, @app)
+        registry = Plugins::Registry.new(handle, @options, on_quit: -> { wv.dispatch { wv.terminate } })
+        resolved = registry.validate_resolve_install(@config.plugins, @app)
 
         bridge = Bridge.new(wv)
         bridge.register_bindings(@app.bindings.reject(&.internal?))
         bridge.register_bindings(@app.bindings.select(&.internal?))
         @app.bridge = bridge
 
-        main_ctx = Lune::Capability::MainCtx.new(wv, @app, resolved, @app.bindings)
-        resolved.capabilities.each do |cap|
-          cap.set_main_context(main_ctx) if cap.is_a?(Lune::Capability::MainContextAware)
+        main_ctx = Lune::Plugin::MainCtx.new(wv, @app, resolved, @app.bindings)
+        resolved.plugins.each do |plugin|
+          plugin.set_main_context(main_ctx) if plugin.is_a?(Lune::Plugin::MainContextAware)
         end
 
         callback_window_ready_if_set(handle)
@@ -104,8 +104,8 @@ module Lune
 
         wv.run
 
-        resolved.capabilities.each do |cap|
-          cap.shutdown if cap.is_a?(Lune::Capability::Lifecycle)
+        resolved.plugins.each do |plugin|
+          plugin.shutdown if plugin.is_a?(Lune::Plugin::Lifecycle)
         end
 
         {% unless flag?(:win32) %}
@@ -146,7 +146,7 @@ module Lune
     {% if flag?(:darwin) %}
       # Menubar mode is purely a window-state preset: hide the dock icon, start
       # the window hidden, and auto-hide whenever it loses focus. Tray icon
-      # appearance and click behavior are handled by the Tray capability — see
+      # appearance and click behavior are handled by the Tray plugin — see
       # `opts.tray.auto_show` and `opts.tray.toggle_window_on`.
       private def setup_menubar_mode(handle : Pointer(Void)) : Nil
         Native::Window.set_activation_policy_accessory
@@ -170,8 +170,8 @@ module Lune
       wv : Webview::Webview,
       html : String?,
       url : String?,
-      registry : Capabilities::Registry,
-      resolved : Capabilities::ResolvedSet,
+      registry : Plugins::Registry,
+      resolved : Plugins::ResolvedSet,
     ) : Assets::Server?
       if h = html
         wv.html = h
@@ -179,13 +179,13 @@ module Lune
         wv.navigate(u)
       elsif dev_url = ENV[Lune::ENV_DEV_URL]?
         all_stubs = App.new
-        # `registry.all` is already platform-filtered, so every cap here has a
+        # `registry.all` is already platform-filtered, so every plugin here has a
         # working install path on the current OS — no NotImplementedError to
         # swallow. Caps that can't run on this platform are emitted as rejecting
         # JS stubs separately via `registry.platform_filtered` below.
-        registry.all.each do |cap|
-          next if resolved.active_ids.includes?(cap.descriptor.id)
-          cap.install(all_stubs)
+        registry.all.each do |plugin|
+          next if resolved.active_ids.includes?(plugin.descriptor.id)
+          plugin.install(all_stubs)
         end
         Lune::Generator.write_js(
           @app.bindings + all_stubs.bindings.select(&.internal?),
@@ -200,7 +200,10 @@ module Lune
         wv.navigate(s.url)
         return s
       else
-        raise "Lune.run: provide html:, url:, LUNE_DEV_URL, or assets:"
+        raise ConfigurationError.new(
+          "Lune.run has no navigation source",
+          hint: "Pass one of `html:`, `url:`, or `assets:` to `Lune.run`, or set LUNE_DEV_URL in the env (the CLI does this automatically in `lune dev`)."
+        )
       end
       nil
     end

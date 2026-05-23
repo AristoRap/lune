@@ -4,12 +4,12 @@ module LuneCLI
   struct Config
     include YAML::Serializable
 
-    getter name : String? = nil
-    getter app_entry : String = "src/main.cr"
-    getter icon : String? = nil
-    getter url_schemes : Array(String) = [] of String
-    getter frontend : Frontend = Frontend.new
-    getter mac : Mac = Mac.new
+    property name : String? = nil
+    property app_entry : String = "src/main.cr"
+    property icon : String? = nil
+    property url_schemes : Array(String) = [] of String
+    property frontend : Frontend = Frontend.new
+    property mac : Mac = Mac.new
 
     def initialize; end
 
@@ -35,18 +35,18 @@ module LuneCLI
     struct Frontend
       include YAML::Serializable
 
-      getter dir : String = Lune::DEFAULT_FRONTEND_DIR
-      getter install : String? = nil
-      getter build : String? = nil
-      getter dev : Dev = Dev.new
+      property dir : String = Lune::DEFAULT_FRONTEND_DIR
+      property install : String? = nil
+      property build : String? = nil
+      property dev : Dev = Dev.new
 
       def initialize; end
 
       struct Dev
         include YAML::Serializable
 
-        getter cmd : String? = nil
-        getter url : String = "http://localhost:5173"
+        property cmd : String? = nil
+        property url : String = "http://localhost:5173"
 
         def initialize; end
       end

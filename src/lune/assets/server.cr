@@ -35,7 +35,7 @@ module Lune
           # responds — that's the exact symptom we hit). So bind AND listen
           # from the same spawned fiber on the default context, signalling
           # the bound port back via a Channel. Same pattern as Stream's WS
-          # server in capabilities/stream.cr.
+          # server in plugins/stream.cr.
           port_ready = Channel(Int32).new(1)
           ::spawn(name: "lune-assets-listen") do
             addr = server.bind_tcp("127.0.0.1", 0)

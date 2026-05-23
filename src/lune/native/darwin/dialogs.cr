@@ -1,10 +1,10 @@
 {% if flag?(:darwin) && !flag?(:lune_native_test_mock) %}
-  {% system("cd '#{__DIR__}/../../../../ext/native/macos' && clang -c dialogs.m -o dialogs.o -fobjc-arc 2>/dev/null") %}
+  {% system("cd '#{__DIR__}/../../../../ext/native/darwin' && clang -c dialogs.m -o dialogs.o -fobjc-arc 2>/dev/null") %}
 
   module Lune
     module Native
       @[Link(framework: "AppKit")]
-      @[Link(ldflags: "#{__DIR__}/../../../../ext/native/macos/dialogs.o")]
+      @[Link(ldflags: "#{__DIR__}/../../../../ext/native/darwin/dialogs.o")]
       lib LibNativeDialogs
         fun open_file_dialog(title : LibC::Char*, out : LibC::Char*, out_size : LibC::Int) : LibC::Int
         fun open_dir_dialog(title : LibC::Char*, out : LibC::Char*, out_size : LibC::Int) : LibC::Int
@@ -48,7 +48,7 @@
         end
 
         # type code maps the dialog kind; matches the macOS/Linux native shim and
-        # the capability layer (see src/lune/capabilities/dialogs.cr):
+        # the plugin layer (see src/lune/plugins/dialogs.cr):
         #   0 = info, 1 = warning, 2 = error, 3 = question (yes/no).
         # info/warning/error are notification-style dialogs (single OK button,
         # icon distinguishes severity); question is the only variant that

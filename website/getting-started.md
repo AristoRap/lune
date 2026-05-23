@@ -29,6 +29,8 @@ sudo apt install libwebkit2gtk-4.1-dev
 sudo dnf install webkit2gtk4.1-devel
 ```
 
+**Windows only:** WebView2 is bundled with Windows 10/11. Until Crystal 1.21 ships, the Windows build path requires a one-line stdlib patch — see [WINDOWS_SETUP.md](https://github.com/AristoRap/lune/blob/main/WINDOWS_SETUP.md) for the exact command. Once patched, `lune dev` / `lune build` work end-to-end; per-plugin Windows status is on each [plugin page](./plugins/).
+
 ---
 
 ## Install the CLI
@@ -41,6 +43,8 @@ Pre-built binaries are attached to each [GitHub release](https://github.com/Aris
 | Linux x86_64          | `lune-linux-x86_64` |
 
 > **macOS Intel (x86_64):** No pre-built binary is available — the GitHub Actions Intel runner is currently unreliable. Build from source instead (see below).
+
+> **Windows:** No pre-built binary yet — build from source per [WINDOWS_SETUP.md](https://github.com/AristoRap/lune/blob/main/WINDOWS_SETUP.md), which covers the Crystal stdlib patch needed on 1.20.x.
 
 Download the binary for your platform, make it executable, and put it on your PATH:
 
@@ -172,7 +176,7 @@ This builds the frontend with Vite, then compiles the Crystal binary with the fr
 
 ## Demo app
 
-The repository ships with a full showcase in `demo/` — a Vue 3 app that exercises every Lune capability in one window. See [Capabilities](./capabilities/) for the full list of what's available.
+The repository ships with a full showcase in `demo/` — a Vue 3 app that exercises every Lune plugin in one window. See [Plugins](./plugins/) for the full list of what's available.
 
 Run it from the repo root:
 

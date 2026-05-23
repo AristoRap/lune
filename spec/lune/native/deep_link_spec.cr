@@ -33,7 +33,7 @@ describe Lune::Native::DeepLink do
   end
 end
 
-describe Lune::Capabilities::DeepLink do
+describe Lune::Plugins::DeepLink do
   before_each { Lune::Native::DeepLinkMock.reset }
 
   it "forwards native deep link events to the app bridge" do
@@ -42,7 +42,7 @@ describe Lune::Capabilities::DeepLink do
     app.bridge = bridge
 
     before = fake.dispatch_count
-    app.install(Lune::Capabilities::DeepLink.new)
+    app.install(Lune::Plugins::DeepLink.new)
     Lune::Native::DeepLinkMock.simulate("myapp://open/path")
     fake.dispatch_count.should be > before
   end

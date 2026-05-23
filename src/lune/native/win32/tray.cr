@@ -171,7 +171,7 @@
           # icon_path is loaded by the pump via LoadImageW(LR_LOADFROMFILE)
           # — empty / missing / non-.ico falls back to IDI_APPLICATION (the
           # shared Windows default app icon) and logs a warning. macOS has
-          # the same "empty → default" semantics (see ext/native/macos/tray.m).
+          # the same "empty → default" semantics (see ext/native/darwin/tray.m).
           ensure_win32_pump
           @@win32_on_click = on_click
           op = Win32Op.new(:show, Channel(Bool).new(1), icon_path: icon_path)

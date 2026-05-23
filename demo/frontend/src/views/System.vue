@@ -1,7 +1,8 @@
 <script setup>
 import { ref } from "vue";
 import SectionHead from "../components/SectionHead.vue";
-import { System, Screen, Notifications } from "../lune.js";
+import { lune } from "../lune.js";
+const { System } = lune;
 
 const envOut = ref("");
 const screenOut = ref("");
@@ -12,10 +13,10 @@ async function loadEnv() {
   envOut.value = JSON.stringify(await System.environment(), null, 2);
 }
 async function loadScreen() {
-  screenOut.value = JSON.stringify(await Screen.info(), null, 2);
+  screenOut.value = JSON.stringify(await System.screenInfo(), null, 2);
 }
 async function sendNotif() {
-  await Notifications.notify(notifTitle.value, notifBody.value);
+  await System.notify(notifTitle.value, notifBody.value);
 }
 </script>
 
@@ -31,13 +32,13 @@ async function sendNotif() {
     </div>
 
     <div class="card">
-      <span class="card-label">Screen.info()</span>
+      <span class="card-label">System.screenInfo()</span>
       <button @click="loadScreen">Get screen info</button>
       <pre class="result mono">{{ screenOut }}</pre>
     </div>
 
     <div class="card">
-      <span class="card-label">Notifications.notify(title, body)</span>
+      <span class="card-label">System.notify(title, body)</span>
       <div class="form-grid">
         <input v-model="notifTitle" type="text" placeholder="Title" />
         <input v-model="notifBody" type="text" placeholder="Body" />

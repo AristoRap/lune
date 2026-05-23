@@ -3,7 +3,7 @@
     module Native
       class FileWatch
         def start(&on_event : String, String -> Nil) : Nil
-          raise NotImplementedError.new("Lune::Native::FileWatch is not implemented on Windows yet (v0.10.0 backlog — will use ReadDirectoryChangesW). Exclude the `file_watch` capability in lune.yml to silence this.")
+          raise NotImplementedError.new("Lune::Native::FileWatch is not implemented on Windows yet (v0.10.0 backlog — will use ReadDirectoryChangesW). Exclude the `file_watch` plugin in lune.yml to silence this.")
         end
 
         def add_watch(path : String) : Nil

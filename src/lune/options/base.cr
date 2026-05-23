@@ -47,9 +47,6 @@ module Lune
     # Enable WebView devtools (right-click → Inspect). Use `{{ flag?(:lune_dev) }}` to auto-enable in dev.
     property devtools : Bool = false
 
-    # When true, suppresses the browser's default right-click context menu.
-    property disable_context_menu : Bool = false
-
     # When true, the window's last position and size are written to a JSON file
     # on close and restored on the next launch. Default `false` (opt-in) so
     # apps don't restore to off-screen coordinates if the user's monitor setup
@@ -72,24 +69,8 @@ module Lune
     # handle (NSWindow* on macOS, GtkWindow* on Linux, HWND on Windows).
     property on_window_ready : (Void* -> Nil)? = nil
 
-    getter file_drop : FileDrop = FileDrop.new
-    getter drag : Drag = Drag.new
-    getter tray : Tray = Tray.new
     getter mac : Mac = Mac.new
     getter menu : Menu = Menu.new
-    getter file_watch : FileWatch = FileWatch.new
-
-    def file_drop(& : FileDrop ->)
-      yield @file_drop
-    end
-
-    def drag(& : Drag ->)
-      yield @drag
-    end
-
-    def tray(& : Tray ->)
-      yield @tray
-    end
 
     def mac(& : Mac ->)
       yield @mac
@@ -101,10 +82,6 @@ module Lune
 
     def menu(m : Menu)
       @menu = m
-    end
-
-    def file_watch(& : FileWatch ->)
-      yield @file_watch
     end
 
     def initialize; end
