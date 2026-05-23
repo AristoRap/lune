@@ -1,6 +1,10 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import SectionHead from "../components/SectionHead.vue";
+import { lune } from "../lune.js";
+const { System } = lune;
+
+const DOCS_URL = "https://aristorap.github.io/lune/plugins/";
 
 // Availability is detected uniformly via window["lune.plugins.<cap>"] === true.
 // The runner injects this sentinel for every active plugin before calling init_webview,
@@ -9,14 +13,12 @@ const CAP_NS = "lune.plugins";
 
 const ALL = [
   // Bridge — callable bindings registered over the bridge
-  { cap: "system", group: "System", core: false, fns: ["quit", "openUrl", "environment"] },
+  { cap: "system", group: "System", core: false, fns: ["quit", "openUrl", "environment", "screenInfo", "notify"] },
   { cap: "filesystem", group: "Filesystem", core: false, fns: ["homeDir", "appDataDir", "downloadsDir", "tempDir"] },
   { cap: "clipboard", group: "Clipboard", core: false, fns: ["read", "write", "readHtml", "writeHtml", "readImage", "writeImage"] },
-  { cap: "window", group: "Window", core: false, fns: ["minimize", "maximize", "center", "setTitle", "setSize"] },
+  { cap: "window", group: "Window", core: false, fns: ["minimize", "maximize", "center", "hide", "show", "setTitle", "setSize", "startDrag"] },
   { cap: "dialogs", group: "Dialogs", core: false, fns: ["openFile", "openDir", "openFiles", "saveFile", "messageInfo", "messageWarning", "messageError", "messageQuestion"] },
-  { cap: "tray", group: "Tray", core: false, fns: ["show", "hide", "setIcon", "setMenu"] },
-  { cap: "notifications", group: "Notifications", core: false, fns: ["notify"] },
-  { cap: "screen", group: "Screen", core: false, fns: ["info"] },
+  { cap: "tray", group: "Tray", core: false, fns: ["show", "hide", "setIcon", "setMenu", "popupMenu"] },
   { cap: "context_menu", group: "Context Menu", core: false, fns: ["set", "clear", "onSelect"] },
   { cap: "drag_out", group: "Drag Out", core: false, fns: ["start"] },
   { cap: "file_watch", group: "File Watch", core: false, fns: ["watch", "unwatch", "on", "once", "off"] },
@@ -83,25 +85,16 @@ onMounted(() => {
     </div>
   </div>
 
-  <div class="config-block card">
-    <span class="card-label">lune.yml — restrict to specific plugins</span>
-    <pre class="mono">plugins:
-  enabled:
-    - lifecycle
-    - clipboard
-    - notifications
-
-# or disable a group while keeping everything else:
-plugins:
-  disabled:
-    - dialogs
-    - tray</pre>
+  <div class="docs-link card">
+    <span class="card-label">Plugin docs</span>
     <p class="hint">
-      <code>include</code>/<code>exclude</code> take <strong>plugin group names</strong> (e.g.
-      <code>lifecycle</code>, <code>clipboard</code>).
-      Individual function names like <code>quit</code> are not valid — they log a warning and are ignored.
-      Omit <code>plugins</code> entirely to allow everything (the default).
+      Full reference — config keys, JS namespaces, lifecycle phases, platform notes — lives in the website.
+      Use <code>lune.yml</code>'s <code>plugins:</code> block with <code>enabled</code> / <code>disabled</code> lists
+      to restrict which plugins this app loads.
     </p>
+    <button class="btn-link primary" @click="System.openUrl(DOCS_URL)">
+      Open plugin reference →
+    </button>
   </div>
 </template>
 
@@ -209,19 +202,12 @@ plugins:
   background: rgba(255, 255, 255, 0.18);
 }
 
-.config-block {
+.docs-link {
   margin-top: 0;
-}
-
-.config-block pre {
-  margin: 0.6rem 0 0.75rem;
-  padding: 0.85rem 1rem;
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 0.82em;
-  line-height: 1.6;
-  overflow-x: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  align-items: flex-start;
 }
 
 .hint {
