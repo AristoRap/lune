@@ -58,7 +58,6 @@ export default defineConfig({
               { text: 'Hotkeys', link: '/plugins/hotkeys' },
               { text: 'Filesystem', link: '/plugins/filesystem' },
               { text: 'Navigation', link: '/plugins/navigation' },
-              { text: 'Notifications', link: '/plugins/notifications' },
               { text: 'KV', link: '/plugins/kv' },
               { text: 'Shell', link: '/plugins/shell' },
               { text: 'SQLite', link: '/plugins/sqlite' },

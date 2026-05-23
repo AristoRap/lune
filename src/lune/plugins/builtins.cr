@@ -11,7 +11,7 @@ module Lune
     def self.register_builtins! : Nil
       builtins = [
         Events.new, Stream.new, FileDrop.new, System.new, Filesystem.new,
-        Clipboard.new, Window.new, Dialogs.new, Tray.new, Notifications.new,
+        Clipboard.new, Window.new, Dialogs.new, Tray.new,
         ContextMenu.new, DragOut.new, DeepLink.new, FileWatch.new,
         Shell.new, Hotkeys.new, Sqlite.new, Kv.new, Windows.new,
         EditShortcuts.new, Navigation.new,

@@ -481,7 +481,7 @@ describe "Lune::Plugins" do
       ids.should contain("Lune.Plugins.ContextMenu.show")
       ids.should contain("Lune.Plugins.Window.minimize")
       ids.should contain("Lune.Plugins.Dialogs.open_file")
-      ids.should contain("Lune.Plugins.Notifications.notify")
+      ids.should contain("Lune.Plugins.System.notify")
       ids.should contain("Lune.Plugins.System.screen_info")
       ids.should contain("Lune.Plugins.Events.emit")
       ids.should contain("Lune.Plugins.Navigation.changed")

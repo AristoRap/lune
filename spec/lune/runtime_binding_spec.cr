@@ -76,7 +76,7 @@ describe "Lune::Binding (internal: true — plugin surface)" do
     end
 
     it "includes named params in the signature" do
-      sig = make_internal(namespace: "Lune::Plugins::Notifications", method: "notify", args: ["String", "String"], return_type: "Nil", arg_names: ["title", "body"]).to_dts_sig
+      sig = make_internal(namespace: "Lune::Plugins::System", method: "notify", args: ["String", "String"], return_type: "Nil", arg_names: ["title", "body"]).to_dts_sig
       sig.should eq("  notify(title: string, body: string): Promise<void>;")
     end
   end

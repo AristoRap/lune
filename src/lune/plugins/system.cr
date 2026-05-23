@@ -73,6 +73,14 @@ module Lune
       def screen_info : NamedTuple(width: Int32, height: Int32, scale: Float64)
         Lune::Native::Screen.info
       end
+
+      # async because Native::Notifications.show shells out to PowerShell on
+      # Win32 (Process.run), which uses Channel internally and would raise
+      # Concurrency-disabled if called from the webview Isolated thread.
+      @[Lune::Bind(async: true)]
+      def notify(title : String, body : String) : Nil
+        Lune::Native::Notifications.show(title, body)
+      end
     end
   end
 end

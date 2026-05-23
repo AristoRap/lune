@@ -68,11 +68,10 @@ Two plugins are marked **core**: `events` and `stream`. They are enabled by defa
 | [Filesystem](./filesystem)        | `filesystem`     | `Filesystem`    | No      | Bindable                 | —         | —         | all                                 |
 | [Hotkeys](./hotkeys)              | `hotkeys`        | `Hotkeys`       | No      | Bindable                 | —         | `events`  | macOS · Linux · Windows             |
 | [Navigation](./navigation)        | `navigation`     | —               | No      | WebviewInject            | —         | —         | all                                 |
-| [Notifications](./notifications)  | `notifications`  | `Notifications` | No      | Bindable                 | —         | —         | all                                 |
 | [Kv](./kv)                        | `kv`             | `Kv`            | No      | Bindable · Lifecycle     | —         | —         | all                                 |
 | [Shell](./shell)                  | `shell`          | `Shell`         | No      | Bindable · Lifecycle     | `stream`  | —         | macOS · Linux · Windows³            |
 | [Sqlite](./sqlite)                | `sqlite`         | `Sqlite`        | No      | Bindable · Lifecycle     | —         | —         | all                                 |
-| [System](./system)                | `system`         | `System`        | No      | Bindable                 | —         | —         | all (includes `screenInfo`)         |
+| [System](./system)                | `system`         | `System`        | No      | Bindable                 | —         | —         | all (includes `screenInfo`, `notify`) |
 | [Tray](./tray)                    | `tray`           | `Tray`          | No      | Bindable                 | —         | `events`  | macOS · Linux¹ · Windows⁴           |
 | [Window](./window)                | `window`         | `Window`        | No      | Bindable · WebviewInject | —         | —         | all (chrome opts + drag_zone macOS) |
 | [Windows](./windows)              | `windows`        | `Windows`       | No      | Bindable · Lifecycle     | —         | —         | all                                 |

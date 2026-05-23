@@ -14,7 +14,6 @@ private def install_all(handle, on_tray_click = nil, on_menu_click = nil)
   app.install(tray_plugin)
 
   app.install(Lune::Plugins::Dialogs.new)
-  app.install(Lune::Plugins::Notifications.new)
   app.install(Lune::Plugins::System.new)
   app.bindings
 end
@@ -54,7 +53,7 @@ describe "Lune::Plugins (native)" do
       ids.should contain("Lune.Plugins.Tray.hide")
       ids.should contain("Lune.Plugins.Tray.set_icon")
       ids.should contain("Lune.Plugins.Tray.set_menu")
-      ids.should contain("Lune.Plugins.Notifications.notify")
+      ids.should contain("Lune.Plugins.System.notify")
       ids.should contain("Lune.Plugins.System.screen_info")
     end
 
@@ -295,17 +294,17 @@ describe "Lune::Plugins (native)" do
     end
   end
 
-  describe Lune::Plugins::Notifications do
-    it "notifications.notify binding calls Notify.show" do
+  describe Lune::Plugins::System do
+    it "System.notify binding calls Native::Notifications.show" do
       wv = FakeWebview.new
       bridge = Lune::Bridge.new(wv)
       app = Lune::App.new
-      app.install(Lune::Plugins::Notifications.new)
+      app.install(Lune::Plugins::System.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("Lune.Plugins.Notifications.notify", "seq11", [JSON::Any.new("Hello"), JSON::Any.new("World")])
+      wv.invoke("Lune.Plugins.System.notify", "seq11", [JSON::Any.new("Hello"), JSON::Any.new("World")])
 
-      # notifications.notify is async (its native impl shells out on Win32),
+      # System.notify is async (its native impl shells out on Win32),
       # so the callback runs on @async_pool. Wait for the resolve to land.
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -317,9 +316,7 @@ describe "Lune::Plugins (native)" do
       Lune::Native::NotificationsMock.last_title.should eq("Hello")
       Lune::Native::NotificationsMock.last_body.should eq("World")
     end
-  end
 
-  describe Lune::Plugins::System do
     it "System.screen_info binding returns width, height, and scale" do
       Lune::Native::ScreenMock.stub_info(2560, 1440, 2.0)
       wv = FakeWebview.new
