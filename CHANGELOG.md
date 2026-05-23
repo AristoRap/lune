@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- **Win32 window drag** — `opts.window.drag_zone` now drives a native drag on Windows. Previously a no-op outside macOS.
+
 ## [0.13.0] - 2026-05-23
 
 ### Breaking

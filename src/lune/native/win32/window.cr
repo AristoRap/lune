@@ -25,8 +25,11 @@
         SM_CXSCREEN = 0
         SM_CYSCREEN = 1
 
-        WM_DESTROY = 0x0002_u32
-        WM_CLOSE   = 0x0010_u32
+        WM_DESTROY       = 0x0002_u32
+        WM_CLOSE         = 0x0010_u32
+        WM_NCLBUTTONDOWN = 0x00A1_u32
+
+        HTCAPTION = 2_u64
 
         GWLP_WNDPROC = -4
 
@@ -38,6 +41,8 @@
         fun set_window_pos = SetWindowPos(hwnd : Void*, after : Void*, x : LibC::Int, y : LibC::Int, w : LibC::Int, h : LibC::Int, flags : UInt32) : LibC::Int
         fun get_system_metrics = GetSystemMetrics(index : LibC::Int) : LibC::Int
         fun post_message_w = PostMessageW(hwnd : Void*, msg : UInt32, wparam : LibC::UIntPtrT, lparam : LibC::IntPtrT) : LibC::Int
+        fun send_message_w = SendMessageW(hwnd : Void*, msg : UInt32, wparam : LibC::UIntPtrT, lparam : LibC::IntPtrT) : LibC::IntPtrT
+        fun release_capture = ReleaseCapture : LibC::Int
         fun set_window_long_ptr_w = SetWindowLongPtrW(hwnd : Void*, idx : LibC::Int, new_long : LibC::IntPtrT) : LibC::IntPtrT
         fun call_window_proc_w = CallWindowProcW(prev_proc : Void*, hwnd : Void*, msg : UInt32, wparam : LibC::UIntPtrT, lparam : LibC::IntPtrT) : LibC::IntPtrT
         fun def_window_proc_w = DefWindowProcW(hwnd : Void*, msg : UInt32, wparam : LibC::UIntPtrT, lparam : LibC::IntPtrT) : LibC::IntPtrT
@@ -124,7 +129,20 @@
         def self.set_titlebar_transparent(handle : Void*, full_size_content : Bool); end
         def self.set_background_transparent(handle : Void*); end
         def self.setup_drag_monitor; end
-        def self.start_window_drag(handle : Void*); end
+
+        # CSS-driven window drag. Called from the `mousedown`-bound JS binding
+        # while the left button is still down. The Win32 idiom:
+        #   ReleaseCapture()                              # free WebView2's grab
+        #   SendMessage(WM_NCLBUTTONDOWN, HTCAPTION, 0)   # enter the modal move loop
+        # The OS handles the actual drag until WM_LBUTTONUP. SendMessage blocks
+        # the calling fiber until the move loop ends — acceptable because the
+        # bridge dispatches each binding on its own fiber, so the UI thread is
+        # not held up.
+        def self.start_window_drag(handle : Void*)
+          LibUser32.release_capture
+          LibUser32.send_message_w(handle, LibUser32::WM_NCLBUTTONDOWN,
+            LibC::UIntPtrT.new(LibUser32::HTCAPTION), LibC::IntPtrT.new(0))
+        end
         def self.hide_title(handle : Void*); end
         def self.hide_traffic_lights(handle : Void*); end
         def self.set_appearance(handle : Void*, mode : Int32); end

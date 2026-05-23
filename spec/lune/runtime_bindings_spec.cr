@@ -507,7 +507,8 @@ describe "Lune::Plugins" do
         ids.should contain("Lune.Plugins.FileWatch.watch")
       when :win32
         ids.should_not contain("Lune.Plugins.DragOut.start")
-        ids.should_not contain("Lune.Plugins.Window.start_drag")
+        # Window.start_drag ships on Win32 via ReleaseCapture + WM_NCLBUTTONDOWN/HTCAPTION.
+        ids.should contain("Lune.Plugins.Window.start_drag")
         # Tray ships fully on Win32 — show/hide/clicks via Shell_NotifyIconW,
         # menus via CreatePopupMenu + TrackPopupMenu, icons via LoadImageW.
         ids.should contain("Lune.Plugins.Tray.show")
@@ -531,16 +532,16 @@ describe "Lune::Plugins" do
       # Per-platform totals — bump these when you add/remove a binding on any
       # plugin. Decreases when a plugin is platform-gated out.
       # Baseline includes Event.emit, Navigation.changed (both cross-
-      # platform) and Window.start_drag (darwin-only, defined inside an
-      # {% if flag?(:darwin) %} block on the Window plugin so it doesn't
-      # register on linux/win32).
-      #   darwin = 63 baseline (was 60 + Event.emit + Navigation.changed + Window.start_drag)
-      #   linux  = 63 - DragOut(1) - Window.start_drag(1)                   = 61
-      #   win32  = 63 - DragOut(1) - Window.start_drag(1) - FileWatch(2)    = 59
+      # platform) and Window.start_drag (darwin + win32; Linux still needs
+      # _NET_WM_MOVERESIZE so the binding stays compiled out via
+      # {% if flag?(:darwin) || flag?(:win32) %} on the Window plugin).
+      #   darwin = 63 baseline (Event.emit + Navigation.changed + Window.start_drag)
+      #   linux  = 63 - DragOut(1) - Window.start_drag(1)  = 61
+      #   win32  = 63 - DragOut(1) - FileWatch(2)          = 60
       expected = case Lune::Plugins::CURRENT_PLATFORM
                  when :darwin then 63
                  when :linux  then 61
-                 when :win32  then 59
+                 when :win32  then 60
                  else              63
                  end
 
