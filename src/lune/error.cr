@@ -30,6 +30,30 @@ module Lune
         io << '\n' << "  Fix: " << h << '\n'
       end
     end
+
+    # JS class declaration. Owned here (next to `Lune::Error`) rather than
+    # hardcoded in the generator so the Crystal error class and its JS
+    # mirror live in one file.
+    def self.js_stub : String
+      <<-JS
+        export class LuneError extends Error {
+          constructor(code, message) {
+            super(message);
+            this.name = "LuneError";
+            this.code = code;
+          }
+        }
+        JS
+    end
+
+    def self.dts_stub : String
+      <<-DTS
+        export declare class LuneError extends Error {
+          readonly code: string;
+          constructor(code: string, message: string);
+        }
+        DTS
+    end
   end
 
   # `Lune.use` rejected a plugin: duplicate descriptor id, duplicate `opts`

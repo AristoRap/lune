@@ -42,6 +42,25 @@ module Lune
       "  #{js_func_name}(#{params}) {\n    return __lune.call(#{id.inspect}#{call_tail});\n  },"
     end
 
+    # JS-side runtime that every per-binding stub from `#to_js_stub` calls
+    # into: looks up the registered window function, awaits it, and rewraps
+    # typed Crystal errors as `LuneError`. One copy lives at the top of
+    # `runtime.js`; per-binding stubs reference it by name.
+    def self.js_runtime : String
+      <<-JS
+        export const __lune = {
+          call(name, ...args) {
+            return window[name](...args).catch(function(err) {
+              if (err !== null && typeof err === 'object' && typeof err.code === 'string') {
+                throw new LuneError(err.code, err.error);
+              }
+              throw err;
+            });
+          },
+        };
+        JS
+    end
+
     def to_dts_sig : String
       if ret = @ts_return_type
         "  #{js_func_name}(#{dts_params}): #{ret};"
