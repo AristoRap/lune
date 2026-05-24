@@ -51,11 +51,14 @@
         # (in win32/window.cr) routes WM_COMMAND back to the registered
         # callback. RoleApp / RoleEdit are no-ops — macOS-only concepts.
         #
-        # Accelerator strings (`"cmd+p"`) are rendered as right-aligned hint
-        # text after a `\t` separator (e.g. "Pause Clock\tCtrl+P") so the
-        # shortcut shows in the menu, but the key combo doesn't actually
-        # fire the action yet. That needs WV2-child-HWND subclassing or a
-        # WV2 shard hook on `AcceleratorKeyPressed` — tracked in ROADMAP.
+        # Accelerator strings (`"cmd+p"`) render as right-aligned hint text
+        # after a `\t` separator (e.g. "Pause Clock\tCtrl+P"), but the key
+        # combo doesn't actually fire the action: WV2 grabs the WM_KEYDOWN
+        # at a layer below our parent WindowProc, and WH_KEYBOARD-based
+        # interception was too unreliable in practice (worked initially,
+        # broke after navigation, no clean way to suppress WV2's defaults
+        # without its `AcceleratorKeyPressed` event — which the webview
+        # shard doesn't expose yet). Tracked in ROADMAP.
         def self.set_from_options(handle : Void*, opts : Options::Menu, app_name : String) : Nil
           return if handle.null?
 
@@ -167,6 +170,8 @@
         # Renders the menu label with the shortcut hint appended after a tab,
         # which the Win32 menu draws right-aligned. Shortcut is darwin-style
         # (`"cmd+p"`) — translate to Win32 names so users see "Ctrl+P".
+        # Note: the hint is purely cosmetic on Win32 today — the keystroke
+        # itself isn't intercepted yet (see set_from_options docstring).
         private def self.format_label(item : Options::Menu::Item) : String
           shortcut = item.shortcut
           return item.label if shortcut.nil? || shortcut.empty?

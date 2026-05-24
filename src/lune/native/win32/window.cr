@@ -184,6 +184,12 @@
         @@command_handlers = {} of Void* => Hash(UInt32, Proc(Nil))
         @@prev_wndprocs = {} of Void* => Void*
 
+        # GC root for the WNDPROC trampoline. SetWindowLongPtrW stores only
+        # the function-pointer address — once the Proc wrapper is unreachable
+        # GC can reclaim its trampoline, leaving Windows with a dangling
+        # pointer and weird "the WNDPROC stops firing after a while" bugs.
+        @@wndproc_root : Proc(Void*, UInt32, LibC::UIntPtrT, LibC::IntPtrT, LibC::IntPtrT)? = nil
+
         # Idempotent WNDPROC subclass — both `on_close` and the menu's
         # WM_COMMAND wiring need the same trampoline, and subclassing twice
         # would store our own proc as the "previous", looping infinitely on
@@ -191,8 +197,8 @@
         # the subclass is already installed.
         private def self.ensure_subclassed(handle : Void*) : Nil
           return if @@prev_wndprocs.has_key?(handle)
-          new_proc = ->Window.lune_wndproc(Void*, UInt32, LibC::UIntPtrT, LibC::IntPtrT)
-          new_addr = LibC::IntPtrT.new!(new_proc.pointer.address)
+          proc = @@wndproc_root ||= ->Window.lune_wndproc(Void*, UInt32, LibC::UIntPtrT, LibC::IntPtrT)
+          new_addr = LibC::IntPtrT.new!(proc.pointer.address)
           prev_addr = LibUser32.set_window_long_ptr_w(handle, LibUser32::GWLP_WNDPROC, new_addr)
           @@prev_wndprocs[handle] = Pointer(Void).new(prev_addr.to_u64!)
         end
