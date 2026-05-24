@@ -41,11 +41,11 @@
       end
 
       module Menu
-        def self.setup_default(app_name : String)
+        def self.setup_default(handle : Void*, app_name : String)
           MenuMock.record_setup_default(app_name)
         end
 
-        def self.set_from_options(opts : Options::Menu, app_name : String)
+        def self.set_from_options(handle : Void*, opts : Options::Menu, app_name : String)
           MenuMock.record_set_menu(app_name, opts.to_json)
         end
 

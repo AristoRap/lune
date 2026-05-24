@@ -268,11 +268,13 @@ Tray icon, menu, and click events are owned by the `tray` plugin — configure `
 
 ## macOS
 
-**Supported:** macOS — **Not applicable:** Linux, Windows
+**Supported:** macOS — **Partial:** Windows (mouse-click only; accelerator hints render but key combos don't fire — see [ROADMAP.md](https://github.com/AristoRap/lune/blob/main/ROADMAP.md)) — **Not yet:** Linux
 
 ### Menu bar
 
-Use `opts.menu { |m| }` to define the application menu bar. When no menu is configured, Lune falls back to a standard menu (App + Edit + Window menus). If you set `opts.menu`, that menu replaces the default entirely.
+Use `opts.menu { |m| }` to define the application menu bar. When no menu is configured, Lune falls back to a standard menu (App + Edit + Window menus on macOS; no menu on Windows). If you set `opts.menu`, that menu replaces the default entirely.
+
+On Windows the menu attaches to the top-level window via `SetMenu`; submenus, separators, checkboxes, radios, and nested submenus all render and fire via mouse click. The `m.app_menu` / `m.edit_menu` role menus are macOS-only and silently skipped. Accelerator strings (`shortcut: "cmd+p"`) render as right-aligned hint text (`Ctrl+P`) but the key combo doesn't trigger the action yet — WebView2 owns the keyboard before our WindowProc sees it, so accelerator routing needs either a WV2-shard hook on `AcceleratorKeyPressed` or a child-HWND subclass. Tracked in [ROADMAP.md](https://github.com/AristoRap/lune/blob/main/ROADMAP.md).
 
 ```crystal
 opts.menu do |m|

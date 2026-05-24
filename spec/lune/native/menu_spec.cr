@@ -5,24 +5,24 @@ describe Lune::Native::Menu do
 
   describe ".setup_default" do
     it "records a setup_default call" do
-      Lune::Native::Menu.setup_default("My App")
+      Lune::Native::Menu.setup_default(Pointer(Void).null,"My App")
       Lune::Native::MenuMock.calls.should contain(:setup_default)
     end
 
     it "records the app name" do
-      Lune::Native::Menu.setup_default("My App")
+      Lune::Native::Menu.setup_default(Pointer(Void).null,"My App")
       Lune::Native::MenuMock.last_app_name.should eq("My App")
     end
 
     it "accepts an empty app name" do
-      Lune::Native::Menu.setup_default("")
+      Lune::Native::Menu.setup_default(Pointer(Void).null,"")
       Lune::Native::MenuMock.calls.should contain(:setup_default)
       Lune::Native::MenuMock.last_app_name.should eq("")
     end
 
     it "records the most recent call when called multiple times" do
-      Lune::Native::Menu.setup_default("First")
-      Lune::Native::Menu.setup_default("Second")
+      Lune::Native::Menu.setup_default(Pointer(Void).null,"First")
+      Lune::Native::Menu.setup_default(Pointer(Void).null,"Second")
       Lune::Native::MenuMock.last_app_name.should eq("Second")
       Lune::Native::MenuMock.calls.size.should eq(2)
     end
@@ -32,7 +32,7 @@ describe Lune::Native::Menu do
     it "records a set_menu call with the app name" do
       opts = Lune::Options::Menu.new
       opts.app_menu
-      Lune::Native::Menu.set_from_options(opts, "Demo")
+      Lune::Native::Menu.set_from_options(Pointer(Void).null, opts, "Demo")
       Lune::Native::MenuMock.calls.should contain(:set_menu)
       Lune::Native::MenuMock.last_app_name.should eq("Demo")
     end
@@ -46,7 +46,7 @@ describe Lune::Native::Menu do
         f.item("Quit", shortcut: "cmd+q") { }
       end
       opts.edit_menu
-      Lune::Native::Menu.set_from_options(opts, "Demo")
+      Lune::Native::Menu.set_from_options(Pointer(Void).null, opts, "Demo")
       json = Lune::Native::MenuMock.last_menu_json.not_nil!
       parsed = JSON.parse(json)
       parsed.as_a.size.should eq(3)
@@ -60,7 +60,7 @@ describe Lune::Native::Menu do
     it "serializes text item fields" do
       opts = Lune::Options::Menu.new
       opts.submenu("File") { |f| f.item("New", shortcut: "cmd+n", enabled: true) { } }
-      Lune::Native::Menu.set_from_options(opts, "App")
+      Lune::Native::Menu.set_from_options(Pointer(Void).null, opts, "App")
       json = Lune::Native::MenuMock.last_menu_json.not_nil!
       item = JSON.parse(json)[0]["children"][0]
       item["kind"].as_s.should eq("text")
@@ -72,7 +72,7 @@ describe Lune::Native::Menu do
     it "serializes checkbox item fields" do
       opts = Lune::Options::Menu.new
       opts.submenu("View") { |v| v.checkbox("Dark Mode", checked: true) { |_| } }
-      Lune::Native::Menu.set_from_options(opts, "App")
+      Lune::Native::Menu.set_from_options(Pointer(Void).null, opts, "App")
       json = Lune::Native::MenuMock.last_menu_json.not_nil!
       item = JSON.parse(json)[0]["children"][0]
       item["kind"].as_s.should eq("checkbox")
@@ -85,7 +85,7 @@ describe Lune::Native::Menu do
         v.radio("Light", selected: true) { }
         v.radio("Dark") { }
       end
-      Lune::Native::Menu.set_from_options(opts, "App")
+      Lune::Native::Menu.set_from_options(Pointer(Void).null, opts, "App")
       json = Lune::Native::MenuMock.last_menu_json.not_nil!
       children = JSON.parse(json)[0]["children"].as_a
       children[0]["kind"].as_s.should eq("radio")
@@ -96,7 +96,7 @@ describe Lune::Native::Menu do
     it "serializes separator items" do
       opts = Lune::Options::Menu.new
       opts.submenu("File") { |f| f.separator }
-      Lune::Native::Menu.set_from_options(opts, "App")
+      Lune::Native::Menu.set_from_options(Pointer(Void).null, opts, "App")
       json = Lune::Native::MenuMock.last_menu_json.not_nil!
       JSON.parse(json)[0]["children"][0]["kind"].as_s.should eq("separator")
     end
@@ -108,7 +108,7 @@ describe Lune::Native::Menu do
           r.item("doc.txt") { }
         end
       end
-      Lune::Native::Menu.set_from_options(opts, "App")
+      Lune::Native::Menu.set_from_options(Pointer(Void).null, opts, "App")
       json = Lune::Native::MenuMock.last_menu_json.not_nil!
       inner = JSON.parse(json)[0]["children"][0]
       inner["kind"].as_s.should eq("submenu")
@@ -119,7 +119,7 @@ describe Lune::Native::Menu do
     it "emits empty shortcut when none is set" do
       opts = Lune::Options::Menu.new
       opts.submenu("File") { |f| f.item("Open") { } }
-      Lune::Native::Menu.set_from_options(opts, "App")
+      Lune::Native::Menu.set_from_options(Pointer(Void).null, opts, "App")
       json = Lune::Native::MenuMock.last_menu_json.not_nil!
       item = JSON.parse(json)[0]["children"][0]
       item["shortcut"].as_s.should eq("")

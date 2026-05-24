@@ -51,9 +51,9 @@ module Lune
         wv.size(@options.min_width || 0, @options.min_height || 0, Webview::SizeHints::MIN) if @options.min_width || @options.min_height
         wv.size(@options.max_width || 0, @options.max_height || 0, Webview::SizeHints::MAX) if @options.max_width || @options.max_height
 
-        set_user_menu_or_default
-
         handle = wv.native_handle(Webview::NativeHandleKind::UI_WINDOW)
+        set_user_menu_or_default(handle)
+
         {% if flag?(:darwin) %}
           setup_mac_window_options(handle)
           # menubar_mode implies the tray icon must come up at boot — surface it
@@ -123,12 +123,13 @@ module Lune
       end
     end
 
-    private def set_user_menu_or_default : Nil
+    private def set_user_menu_or_default(handle : Void*) : Nil
       if @options.menu.any?
         @app.menu_options = @options.menu
-        Native::Menu.set_from_options(@options.menu, @options.title)
+        @app.window_handle = handle
+        Native::Menu.set_from_options(handle, @options.menu, @options.title)
       else
-        Native::Menu.setup_default(@options.title)
+        Native::Menu.setup_default(handle, @options.title)
       end
     end
 

@@ -4,6 +4,10 @@ module Lune
     property bridge : Bridge?
     property title : String = ""
     property menu_options : Options::Menu = Options::Menu.new
+    # Native top-level window handle. Set by the runner once `wv.native_handle`
+    # resolves; consumed by menu rebuilds (`update_menu`, `set_menu`) since
+    # Win32 `SetMenu` needs the HWND. macOS ignores the value.
+    property window_handle : Void* = Pointer(Void).null
     getter event : Event
     getter stream : Stream
 
@@ -46,13 +50,13 @@ module Lune
       opts = Options::Menu.new
       yield opts
       @menu_options = opts
-      Native::Menu.set_from_options(opts, @title)
+      Native::Menu.set_from_options(@window_handle, opts, @title)
     end
 
     # Re-applies the current menu after mutating `MenuItem` properties
     # (e.g. `item.enabled = false`).
     def update_menu
-      Native::Menu.set_from_options(@menu_options, @title)
+      Native::Menu.set_from_options(@window_handle, @menu_options, @title)
     end
 
     # The Parallel ExecutionContext owns a kqueue + worker threads. Allocating

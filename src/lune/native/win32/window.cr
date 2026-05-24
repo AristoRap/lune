@@ -28,6 +28,7 @@
 
         WM_DESTROY       = 0x0002_u32
         WM_CLOSE         = 0x0010_u32
+        WM_COMMAND       = 0x0111_u32
         WM_NCLBUTTONDOWN = 0x00A1_u32
 
         HTCAPTION = 2_u64
@@ -175,40 +176,82 @@
           LibUser32.post_message_w(handle, LibUser32::WM_CLOSE, LibC::UIntPtrT.new(0), LibC::IntPtrT.new(0))
         end
 
-        # Map HWND → user block + previous WNDPROC. Accessed only from the UI
-        # thread (on_close is called inside main_wv.dispatch; the subclassed
-        # WNDPROC runs on the same message-pump thread).
+        # Per-HWND hook state. Accessed only from the UI thread — `on_close` is
+        # called inside `main_wv.dispatch`, menu command handlers are
+        # registered from the runner before the message pump starts, and the
+        # subclassed WNDPROC runs on that pump thread.
         @@close_procs = {} of Void* => Proc(Nil)
+        @@command_handlers = {} of Void* => Hash(UInt32, Proc(Nil))
         @@prev_wndprocs = {} of Void* => Void*
+
+        # Idempotent WNDPROC subclass — both `on_close` and the menu's
+        # WM_COMMAND wiring need the same trampoline, and subclassing twice
+        # would store our own proc as the "previous", looping infinitely on
+        # forward. Marker entry (key present, value possibly null) tells us
+        # the subclass is already installed.
+        private def self.ensure_subclassed(handle : Void*) : Nil
+          return if @@prev_wndprocs.has_key?(handle)
+          new_proc = ->Window.lune_wndproc(Void*, UInt32, LibC::UIntPtrT, LibC::IntPtrT)
+          new_addr = LibC::IntPtrT.new!(new_proc.pointer.address)
+          prev_addr = LibUser32.set_window_long_ptr_w(handle, LibUser32::GWLP_WNDPROC, new_addr)
+          @@prev_wndprocs[handle] = Pointer(Void).new(prev_addr.to_u64!)
+        end
 
         # Subclass the HWND to trap WM_DESTROY and invoke the block. Mirrors
         # darwin's NSWindowWillCloseNotification observer (fires for both
         # programmatic close and user-clicked X).
         def self.on_close(handle : Void*, &block : ->) : Nil
           @@close_procs[handle] = block
+          ensure_subclassed(handle)
+        end
 
-          new_proc = ->Window.lune_wndproc(Void*, UInt32, LibC::UIntPtrT, LibC::IntPtrT)
-          new_addr = LibC::IntPtrT.new!(new_proc.pointer.address)
-          prev_addr = LibUser32.set_window_long_ptr_w(handle, LibUser32::GWLP_WNDPROC, new_addr)
-          @@prev_wndprocs[handle] = Pointer(Void).new(prev_addr.to_u64!) if prev_addr != 0
+        # Register a menu/accelerator command handler for `cmd_id` on `handle`.
+        # Called by `Native::Menu.set_from_options` after `AppendMenuW`-ing
+        # each clickable item with its allocated ID. The WNDPROC trampoline
+        # routes WM_COMMAND with HIWORD(wparam)=0 (menu) to the matching block.
+        def self.register_command_handler(handle : Void*, cmd_id : UInt32, &block : ->) : Nil
+          (@@command_handlers[handle] ||= {} of UInt32 => Proc(Nil))[cmd_id] = block
+          ensure_subclassed(handle)
+        end
+
+        def self.clear_command_handlers(handle : Void*) : Nil
+          @@command_handlers.delete(handle)
         end
 
         # Static WNDPROC: forward every message to the shard's original proc,
-        # but on WM_DESTROY first invoke the user's block (HWND still valid).
+        # but trap WM_DESTROY for close hooks and WM_COMMAND (menu items) for
+        # registered command handlers.
         def self.lune_wndproc(hwnd : Void*, msg : UInt32, wparam : LibC::UIntPtrT, lparam : LibC::IntPtrT) : LibC::IntPtrT
-          if msg == LibUser32::WM_DESTROY
+          case msg
+          when LibUser32::WM_DESTROY
             if block = @@close_procs.delete(hwnd)
               block.call
+            end
+          when LibUser32::WM_COMMAND
+            # HIWORD(wparam) == 0 → menu item; == 1 → accelerator. lparam is
+            # the HMENU for menu, NULL for accelerator. We accept both shapes
+            # so that a future accelerator-table commit reuses this dispatch
+            # without further changes.
+            notif = (wparam.to_u64 >> 16).to_u32
+            if notif <= 1
+              cmd_id = (wparam.to_u64 & 0xFFFF).to_u32
+              if (hash = @@command_handlers[hwnd]?) && (handler = hash[cmd_id]?)
+                handler.call
+                return LibC::IntPtrT.new(0)
+              end
             end
           end
 
           result = if prev = @@prev_wndprocs[hwnd]?
-                     LibUser32.call_window_proc_w(prev, hwnd, msg, wparam, lparam)
+                     prev.null? ? LibUser32.def_window_proc_w(hwnd, msg, wparam, lparam) : LibUser32.call_window_proc_w(prev, hwnd, msg, wparam, lparam)
                    else
                      LibUser32.def_window_proc_w(hwnd, msg, wparam, lparam)
                    end
 
-          @@prev_wndprocs.delete(hwnd) if msg == LibUser32::WM_DESTROY
+          if msg == LibUser32::WM_DESTROY
+            @@prev_wndprocs.delete(hwnd)
+            @@command_handlers.delete(hwnd)
+          end
           result
         end
       end

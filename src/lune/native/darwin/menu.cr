@@ -27,11 +27,11 @@
         @@box : Void*? = nil
         @@ctx_box : Void*? = nil
 
-        def self.setup_default(app_name : String)
+        def self.setup_default(handle : Void*, app_name : String)
           LibNativeMenu.setup_default_menu(app_name)
         end
 
-        def self.set_from_options(opts : Options::Menu, app_name : String)
+        def self.set_from_options(handle : Void*, opts : Options::Menu, app_name : String)
           json = opts.to_json
           registry = collect_registry(opts.top_level)
           @@box = Box.box(registry)

@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- **Win32 application menu bar** — `opts.menu { |m| }` now renders on Windows via `CreateMenu` + `AppendMenuW` + `SetMenu`. Submenus, separators, checkboxes, radios, and nested menus all click through (`WM_COMMAND` routed by a subclassed WindowProc). `m.app_menu` / `m.edit_menu` role menus are macOS-only and silently skipped. Accelerator strings render as right-aligned hint text (`"cmd+p"` → `Ctrl+P`) but the key combo doesn't fire the action yet — WebView2 grabs keyboard focus before our parent WindowProc sees `WM_KEYDOWN`. Tracked in [ROADMAP.md](https://github.com/AristoRap/lune/blob/main/ROADMAP.md).
+
+### Changed
+
+- **`Lune::Native::Menu.setup_default` / `set_from_options` now take a window handle** as their first argument (Void*). Darwin ignores it; Win32 needs it for `SetMenu`. `Lune::App` gains a `window_handle` property set by the runner so `App#set_menu` / `App#update_menu` can pass it through. Existing macOS apps are unaffected.
+
 ## [0.14.1] - 2026-05-24
 
 ### Fixed
