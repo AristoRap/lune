@@ -8,7 +8,7 @@ import Statusbar from "./components/Statusbar.vue";
 import Toast from "./components/Toast.vue";
 import { flatNav } from "./nav.js";
 import { lune } from "./lune.js";
-const { System, Event } = lune;
+const { System, Event, DeepLink } = lune;
 
 const route = useRoute();
 const router = useRouter();
@@ -47,6 +47,19 @@ onMounted(async () => {
   Event.on("zoom-in", () => setZoom(Math.round((currentZoom() + 0.1) * 10) / 10));
   Event.on("zoom-out", () => setZoom(Math.round(Math.max(0.5, currentZoom() - 0.1) * 10) / 10));
   Event.on("zoom-reset", () => setZoom(1));
+
+  // Global deep-link navigation: lune-demo://navigate/<view-id> routes to that
+  // view. Lives at App.vue (not the DeepLink page) so cold-start URLs — where
+  // the user lands on the home view, not DeepLink — still navigate.
+  DeepLink.on((url) => {
+    try {
+      const u = new URL(url);
+      if (u.protocol === "lune-demo:" && u.hostname === "navigate") {
+        const id = u.pathname.replace(/^\//, "");
+        if (id) router.push("/" + id);
+      }
+    } catch {}
+  });
 });
 </script>
 

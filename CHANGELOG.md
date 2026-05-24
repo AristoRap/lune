@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.1] - 2026-05-24
+
+### Fixed
+
+- **macOS cold-start deep links** — a `myapp://` URL that launched the app from a quit state used to silently drop the URL: the webview engine drives `NSApp run` from its C++ constructor and that returns once `applicationDidFinishLaunching:` fires, so the `kAEGetURL` Apple Event was dispatched to the default (no-op) handler *before* Crystal-side plugin install registered ours. The AE handler is now installed at dyld load time via `__attribute__((constructor))` in `ext/native/darwin/deep_link.m`; URLs that arrive pre-callback are stashed in a static buffer and flushed the moment `lune_deep_link_install` attaches Crystal's callback.
+- **Event emits during boot no longer dropped** — Crystal-side `app.event.emit` calls between bridge construction and the webview's first page-load (e.g. a deep link flushed from the cold-start buffer above, or anything emitted from `App#install` before navigation completes) used to resolve `if (window.__lune && typeof crystalEmit === 'function')` to false and disappear. `Lune::Event` now buffers them in an ordered queue (cap 64, drop-oldest with warning) and flushes in order when the runner's `wv.on_load` fires `event.mark_ready` — generic across plugins, not specific to `deep_link`. Demo: `lune-demo://navigate/<view>` now routes correctly on cold-start (handler lifted from `DeepLink.vue` into the always-mounted `App.vue` so it survives any landing view).
+
 ## [0.14.0] - 2026-05-23
 
 ### Added

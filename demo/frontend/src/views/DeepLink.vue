@@ -1,25 +1,17 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from "vue";
-import { useRouter } from "vue-router";
 import SectionHead from "../components/SectionHead.vue";
 
-const router = useRouter();
 const lastUrl = ref(null);
 const log = ref([]);
 
+// Display-only handler: shows the URL and appends to the log. Navigation for
+// `lune-demo://navigate/<id>` lives in App.vue so it works regardless of
+// which view is mounted (including the cold-start home view).
 function handleDeepLink(data) {
   const url = data.url;
   lastUrl.value = url;
   log.value.unshift({ url, ts: new Date().toLocaleTimeString() });
-
-  // lune-demo://navigate/<view-id> routes directly to that view
-  try {
-    const u = new URL(url);
-    if (u.protocol === "lune-demo:" && u.hostname === "navigate") {
-      const id = u.pathname.replace(/^\//, "");
-      if (id) router.push("/" + id);
-    }
-  } catch {}
 }
 
 const handler = (data) => handleDeepLink(data);

@@ -96,7 +96,7 @@ module Lune
           {% end %}
         end
 
-        callback_window_loaded_if_set(wv)
+        setup_window_loaded(wv)
 
         resolved.init_all_webviews(wv, handle, @app)
 
@@ -208,17 +208,25 @@ module Lune
       nil
     end
 
-    private def callback_window_loaded_if_set(wv : Webview::Webview) : Nil
-      if load_cb = @options.on_load
-        wv.on_load = -> {
+    # Always wires `wv.on_load`: it flushes the event boot queue (so any
+    # cold-start events — e.g. a deeplink that launched the app — reach JS the
+    # moment the bridge surface is alive) and then invokes the user callback
+    # if one is configured. Flushing must happen before the user callback so
+    # `on_load` handlers can observe the resulting JS-side state.
+    private def setup_window_loaded(wv : Webview::Webview) : Nil
+      load_cb = @options.on_load
+      app = @app
+      wv.on_load = -> {
+        app.event.mark_ready
+        if load_cb
           begin
             load_cb.call
           rescue ex
             Lune.logger.error { "on_load callback failed: #{ex.message}" }
             Lune.logger.debug(exception: ex) { "on_load callback failed (stacktrace)" }
           end
-        }
-      end
+        end
+      }
     end
   end
 end

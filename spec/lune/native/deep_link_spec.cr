@@ -40,6 +40,7 @@ describe Lune::Plugins::DeepLink do
     fake, bridge = make_bridge
     app = Lune::App.new
     app.bridge = bridge
+    app.event.mark_ready
 
     before = fake.dispatch_count
     app.install(Lune::Plugins::DeepLink.new)

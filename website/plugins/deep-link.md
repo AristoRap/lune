@@ -96,7 +96,7 @@ lune.DeepLink.on((url) => {
 
 ## Platform notes
 
-- **macOS** — Verified. Scheme registration is build-time only via `Info.plist` `CFBundleURLTypes`; `lune dev` runs don't get OS-level scheme routing.
+- **macOS** — Verified, including cold-start. Scheme registration is build-time only via `Info.plist` `CFBundleURLTypes`; `lune dev` runs don't get OS-level scheme routing. Cold-start URLs (Apple Event delivered before the WebView has loaded) are captured by an early-registered Apple Event handler in the native shim and replayed once Crystal attaches its callback; the Event boot queue then holds the emit until the page is ready. Wire JS listeners at app-root scope (not on a single view) if you want cold-start URLs to reach handlers regardless of which view is mounted first.
 - **Linux** — Untested. Cold-start and warm-start both wired; requires `.desktop` file from `lune dist`.
 - **Windows** — Partial. Cold-start (ARGV) works once registered in the registry; warm-start forwarding and scheme auto-registration not yet implemented.
 

@@ -75,6 +75,7 @@ describe Lune::Plugins::Hotkeys do
       plugin = Lune::Plugins::Hotkeys.new
       app = Lune::App.new
       app.bridge = bridge
+      app.event.mark_ready
       app.install(plugin)
 
       before = fake.dispatch_count

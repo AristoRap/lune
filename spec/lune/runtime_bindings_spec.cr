@@ -368,6 +368,7 @@ describe "Lune::Plugins" do
       fake, bridge = make_bridge
       app = Lune::App.new
       app.bridge = bridge
+      app.event.mark_ready
       app.install(Lune::Plugins::Tray.new)
       bridge.register_bindings(app.bindings)
 

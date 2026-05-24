@@ -163,7 +163,7 @@ lune.Event.emit("frontend-ready");
 ## Notes
 
 - `app.event.emit` is safe to call from any fiber — `app.async` tasks, async binding callbacks, or the main thread.
-- Events emitted before the WebView has opened are silently dropped. Emit from `on_load` or in response to a JS event to guarantee delivery.
+- Events emitted before the WebView has finished loading (e.g. a cold-start `deep_link` that launched the app, or anything emitted from a plugin's `install`) are held in a small in-memory queue and flushed in order the moment the JS bridge is alive. The queue holds up to 64 entries; on overflow the oldest is dropped and a warning is logged. JS-side listeners registered at module scope (or inside `onMounted` on a globally-mounted component) receive cold-start events on first render.
 - Crystal `app.event.on` handlers run on the webview main thread. Keep them short; dispatch long work to `app.async`.
 - For high-frequency or ordered streams, use [Stream](./stream) instead.
 

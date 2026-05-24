@@ -123,6 +123,7 @@ describe Lune::App do
         bridge = MockBridge.new
 
         app.bridge = bridge
+        app.event.mark_ready
 
         app.event.emit("ready", {status: "ok"})
 
@@ -136,6 +137,7 @@ describe Lune::App do
         bridge = MockBridge.new
 
         app.bridge = bridge
+        app.event.mark_ready
 
         app.event.emit("ready")
 

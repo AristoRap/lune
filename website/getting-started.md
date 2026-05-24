@@ -72,7 +72,7 @@ Add it to your `shard.yml`:
 dependencies:
   lune:
     github: AristoRap/lune
-    version: ~> 0.14.0
+    version: ~> 0.14.1
 ```
 
 Then install:
