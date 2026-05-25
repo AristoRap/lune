@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-05-25
+
 ### Added
 
 - **Win32 menu-accelerator keystroke routing — verified end-to-end.** `opts.menu` shortcut strings like `"cmd+p"` now fire their `WM_COMMAND` handler on Win32, regardless of which window has focus (main top-level or WebView2 content). The path:
