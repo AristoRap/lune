@@ -5,8 +5,12 @@
 ### Added
 
 - **Win32 application menu bar** — `opts.menu { |m| }` now renders on Windows via `CreateMenu` + `AppendMenuW` + `SetMenu`. Submenus, separators, checkboxes, radios, and nested menus all click through (`WM_COMMAND` routed by a subclassed WindowProc). `m.app_menu` / `m.edit_menu` role menus are macOS-only and silently skipped. Accelerator strings render as right-aligned hint text (`"cmd+p"` → `Ctrl+P`) but the key combo doesn't fire the action yet — WebView2 grabs keyboard focus before our parent WindowProc sees `WM_KEYDOWN`. Tracked in [ROADMAP.md](https://github.com/AristoRap/lune/blob/main/ROADMAP.md).
-- **Dialogs file-type filters** — `Dialogs.openFile` / `openFiles` / `saveFile` accept an optional `filters: [{name, extensions}]` array. Win32 uses `lpstrFilter` + `lpstrDefExt`, macOS feeds `NSOpenPanel.allowedFileTypes` (flat union across groups), Linux adds one `GtkFileFilter` per group. Demo's tray icon picker now filters to `.ico` / `.icns` / `.png` / `.svg`.
+- **Dialogs file-type filters** — `Dialogs.openFile` / `openFiles` / `saveFile` accept an optional `filters: [{name, extensions}]` array. Win32 uses `lpstrFilter` + `lpstrDefExt`, macOS feeds `NSOpenPanel.allowedFileTypes` (flat union across groups), Linux adds one `GtkFileFilter` per group. Demo's tray icon picker now filters to `.ico` / `.icns` / `.png` / `.svg`. Verified on macOS + Win32 via the demo picker; Linux shim matches the standard `GtkFileFilter` pattern but follows the project's existing Linux-untested posture.
 - **Win32 menubar-mode** — `opts.menubar_mode = true` now works on Windows: `WS_EX_TOOLWINDOW` hides the app from the taskbar and Alt+Tab list; `WM_ACTIVATEAPP` triggers auto-hide on focus loss. Pair with `opts.tray.toggle_window_on = [:left_click]` for popover-style apps.
+
+### Fixed
+
+- **Win32 WindowProc GC root** — `Native::Window.on_close` subclasses the HWND via `SetWindowLongPtrW(GWLP_WNDPROC, …)`, which only stores the trampoline's function-pointer address. The static Proc that owns the trampoline wasn't kept alive against the GC, so once the local reference fell out of scope the collector was free to reap it and the WNDPROC dangled — `on_close` was working only by luck. The Proc is now GC-rooted for the HWND's lifetime.
 
 ### Breaking
 
@@ -14,13 +18,13 @@
 
 ### Changed
 
-- **`Lune::Native::Menu.setup_default` / `set_from_options` now take a window handle** as their first argument (Void*). Darwin ignores it; Win32 needs it for `SetMenu`. `Lune::App` gains a `window_handle` property set by the runner so `App#set_menu` / `App#update_menu` can pass it through. Existing macOS apps are unaffected.
+- **`Lune::Native::Menu.setup_default` / `set_from_options` now take a window handle** as their first argument (Void\*). Darwin ignores it; Win32 needs it for `SetMenu`. `Lune::App` gains a `window_handle` property set by the runner so `App#set_menu` / `App#update_menu` can pass it through. Existing macOS apps are unaffected.
 
 ## [0.14.1] - 2026-05-24
 
 ### Fixed
 
-- **macOS cold-start deep links** — a `myapp://` URL that launched the app from a quit state used to silently drop the URL: the webview engine drives `NSApp run` from its C++ constructor and that returns once `applicationDidFinishLaunching:` fires, so the `kAEGetURL` Apple Event was dispatched to the default (no-op) handler *before* Crystal-side plugin install registered ours. The AE handler is now installed at dyld load time via `__attribute__((constructor))` in `ext/native/darwin/deep_link.m`; URLs that arrive pre-callback are stashed in a static buffer and flushed the moment `lune_deep_link_install` attaches Crystal's callback.
+- **macOS cold-start deep links** — a `myapp://` URL that launched the app from a quit state used to silently drop the URL: the webview engine drives `NSApp run` from its C++ constructor and that returns once `applicationDidFinishLaunching:` fires, so the `kAEGetURL` Apple Event was dispatched to the default (no-op) handler _before_ Crystal-side plugin install registered ours. The AE handler is now installed at dyld load time via `__attribute__((constructor))` in `ext/native/darwin/deep_link.m`; URLs that arrive pre-callback are stashed in a static buffer and flushed the moment `lune_deep_link_install` attaches Crystal's callback.
 - **Event emits during boot no longer dropped** — Crystal-side `app.event.emit` calls between bridge construction and the webview's first page-load (e.g. a deep link flushed from the cold-start buffer above, or anything emitted from `App#install` before navigation completes) used to resolve `if (window.__lune && typeof crystalEmit === 'function')` to false and disappear. `Lune::Event` now buffers them in an ordered queue (cap 64, drop-oldest with warning) and flushes in order when the runner's `wv.on_load` fires `event.mark_ready` — generic across plugins, not specific to `deep_link`. Demo: `lune-demo://navigate/<view>` now routes correctly on cold-start (handler lifted from `DeepLink.vue` into the always-mounted `App.vue` so it survives any landing view).
 
 ## [0.14.0] - 2026-05-23
