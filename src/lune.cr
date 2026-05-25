@@ -149,6 +149,7 @@ module Lune
   ENV_DEV_URL      = "LUNE_DEV_URL"
   ENV_FRONTEND_DIR = "LUNE_FRONTEND_DIR"
   ENV_APP_NAME     = "LUNE_APP_NAME"
+  ENV_URL_SCHEMES  = "LUNE_URL_SCHEMES"
 
   # Display name for the running app, baked at compile time from `lune.yml`'s
   # `name:` (forwarded by the CLI via `LUNE_APP_NAME`). Falls back to "Lune"
@@ -156,6 +157,20 @@ module Lune
   # it to derive the toast-notification AUMID; other platforms may pick it up
   # for window titles / log prefixes as needed.
   APP_NAME = {{ env("LUNE_APP_NAME") || "Lune" }}
+
+  # URL schemes declared in `lune.yml` (`url_schemes:`), baked in by the CLI
+  # via `LUNE_URL_SCHEMES` (comma-joined). Empty when unset. Used by the
+  # `deep_link` plugin on Win32 to self-register HKCU scheme handlers on
+  # first run, so a built app becomes a proper `myapp://` handler without
+  # the user having to touch the registry.
+  {% begin %}
+    {% schemes = (env("LUNE_URL_SCHEMES") || "").split(",").reject(&.empty?) %}
+    {% if schemes.empty? %}
+      URL_SCHEMES = [] of String
+    {% else %}
+      URL_SCHEMES = {{ schemes }}
+    {% end %}
+  {% end %}
 
   # Navigation priority (first match wins):
   #   1. html:   — inline HTML string (useful for tests and simple apps)

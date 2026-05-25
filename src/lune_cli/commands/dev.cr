@@ -97,6 +97,7 @@ module LuneCLI
           Lune::ENV_DEV_URL      => dev_url,
           Lune::ENV_FRONTEND_DIR => frontend_dir,
           Lune::ENV_APP_NAME     => app_name,
+          Lune::ENV_URL_SCHEMES  => config.url_schemes.join(","),
         })
         # Propagate --debug (set on the CLI's root command) into the spawned
         # user-app binary via LUNE_LOG; the binary's own Lune.default_logger

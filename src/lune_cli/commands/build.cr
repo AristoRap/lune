@@ -106,7 +106,10 @@ module LuneCLI
         # Bake `lune.yml`'s `name:` into the binary as Lune::APP_NAME via
         # `{{ env("LUNE_APP_NAME") }}` at compile time. Defaults to the app
         # entry's basename when `name:` is unset.
-        build_env = ENV.to_h.merge({Lune::ENV_APP_NAME => config.name || binary_name_for(app_entry)})
+        build_env = ENV.to_h.merge({
+          Lune::ENV_APP_NAME    => config.name || binary_name_for(app_entry),
+          Lune::ENV_URL_SCHEMES => config.url_schemes.join(","),
+        })
 
         app_status = Process.run(
           "crystal",

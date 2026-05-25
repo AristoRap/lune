@@ -11,6 +11,7 @@
   - Child windows opened through `lune.Windows.open(...)` call `wv.set_accel_target(main_hwnd)` so their accelerators route back to the main window's wndproc + command handlers — the same `cmd+q` works from any focused window.
   - Menu rebuild is atomic now (build new HMENU first, single `SetMenu` swap, then destroy the old) so toggling an item via shortcut no longer makes the main window's menu bar jitter.
 - **Win32 GUI subsystem for `lune build` output** — `lune build` now appends `/subsystem:windows /entry:mainCRTStartup` to the linker flags on Win32, so double-clicking a built `.exe` opens just the webview window (no console popup alongside). `lune dev` keeps the console so Crystal logs stay visible during development.
+- **Win32 URL-scheme auto-registration** — built apps now self-register each entry in `lune.yml`'s `url_schemes:` to `HKCU\Software\Classes\<scheme>\shell\open\command` on every cold start. HKCU writes need no admin and self-heal when the exe moves. `lune build` bakes the scheme list into `Lune::URL_SCHEMES` via `LUNE_URL_SCHEMES`; `lune dev` is excluded so a transient dev binary doesn't clobber a real installed registration. Closes the manual reg-key step previously documented under deep-link / Platform notes.
 
 ### Changed
 
