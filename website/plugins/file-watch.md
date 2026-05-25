@@ -2,14 +2,14 @@
 
 > Monitor files and directories for filesystem changes.
 
-|                  |                                  |
-| ---------------- | -------------------------------- |
-| **Config key**   | `file_watch`                     |
-| **JS namespace** | `FileWatch`                      |
-| **Core**         | No                               |
-| **Phases**       | Bindable · Lifecycle             |
-| **Hard deps**    | `event`                          |
-| **Platforms**    | macOS (kqueue) · Linux (inotify) · Windows (ReadDirectoryChangesW) |
+|                  |                         |
+| ---------------- | ----------------------- |
+| **Config key**   | `file_watch`            |
+| **JS namespace** | `FileWatch`             |
+| **Core**         | No                      |
+| **Phases**       | Bindable · Lifecycle    |
+| **Hard deps**    | `event`                 |
+| **Platforms**    | macOS · Linux · Windows |
 
 Backed by **kqueue** (`EVFILT_VNODE`) on macOS, **inotify** on Linux, and **ReadDirectoryChangesW + IOCP** on Windows — no polling, no extra dependencies. The watcher runs on a dedicated OS thread and never stalls the UI. All watches are released automatically on window close.
 

@@ -2,14 +2,14 @@
 
 > Persistent key-value store for preferences and app config.
 
-|                  |                      |
-| ---------------- | -------------------- |
-| **Config key**   | `kv`                 |
-| **JS namespace** | `Kv`                 |
-| **Core**         | No                   |
-| **Phases**       | Bindable · Lifecycle |
-| **Hard deps**    | —                    |
-| **Platforms**    | all                  |
+|                  |                         |
+| ---------------- | ----------------------- |
+| **Config key**   | `kv`                    |
+| **JS namespace** | `Kv`                    |
+| **Core**         | No                      |
+| **Phases**       | Bindable · Lifecycle    |
+| **Hard deps**    | —                       |
+| **Platforms**    | macOS · Linux · Windows |
 
 KV gives you a simple JSON-backed key-value store scoped to your app. Values persist across app restarts and are stored in the platform-standard app data directory. Use it for user preferences, last-used state, and lightweight config — anything that doesn't need the full query power of SQLite.
 

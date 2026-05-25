@@ -2,14 +2,14 @@
 
 > Read and write the system clipboard — text, HTML, and images.
 
-|                  |                                                     |
-| ---------------- | --------------------------------------------------- |
-| **Config key**   | `clipboard`                                         |
-| **JS namespace** | `Clipboard`                                         |
-| **Core**         | No                                                  |
-| **Phases**       | Bindable                                            |
-| **Hard deps**    | —                                                   |
-| **Platforms**    | macOS · Linux · Windows                             |
+|                  |                         |
+| ---------------- | ----------------------- |
+| **Config key**   | `clipboard`             |
+| **JS namespace** | `Clipboard`             |
+| **Core**         | No                      |
+| **Phases**       | Bindable                |
+| **Hard deps**    | —                       |
+| **Platforms**    | macOS · Linux · Windows |
 
 ---
 

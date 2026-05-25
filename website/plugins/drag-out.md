@@ -2,14 +2,14 @@
 
 > Initiate a native drag-out operation from the app to the desktop or Finder.
 
-|                  |                                |
-| ---------------- | ------------------------------ |
-| **Config key**   | `drag_out`                     |
-| **JS namespace** | `DragOut`                      |
-| **Core**         | No                             |
-| **Phases**       | Bindable                       |
-| **Hard deps**    | —                              |
-| **Platforms**    | macOS (Linux/Windows: planned) |
+|                  |            |
+| ---------------- | ---------- |
+| **Config key**   | `drag_out` |
+| **JS namespace** | `DragOut`  |
+| **Core**         | No         |
+| **Phases**       | Bindable   |
+| **Hard deps**    | —          |
+| **Platforms**    | macOS      |
 
 DragOut lets users drag files from your app's UI to external targets — Finder, the Desktop, other apps. Call `lune.DragOut.start` from a `mousedown` or `dragstart` handler with the file paths to drag.
 

@@ -2,14 +2,14 @@
 
 > Embedded database access with a typed JS bridge.
 
-|                  |                      |
-| ---------------- | -------------------- |
-| **Config key**   | `sqlite`             |
-| **JS namespace** | `Sqlite`             |
-| **Core**         | No                   |
-| **Phases**       | Bindable · Lifecycle |
-| **Hard deps**    | —                    |
-| **Platforms**    | all                  |
+|                  |                         |
+| ---------------- | ----------------------- |
+| **Config key**   | `sqlite`                |
+| **JS namespace** | `Sqlite`                |
+| **Core**         | No                      |
+| **Phases**       | Bindable · Lifecycle    |
+| **Hard deps**    | —                       |
+| **Platforms**    | macOS · Linux · Windows |
 
 SQLite gives your app a local, embedded database backed by [crystal-lang/crystal-sqlite3](https://github.com/crystal-lang/crystal-sqlite3). Open as many databases as you need — each call to `lune.Sqlite.open` returns an opaque handle you pass to subsequent operations. Use `:memory:` for an in-process database that lives only for the session, or an absolute path for a persistent file.
 

@@ -2,14 +2,14 @@
 
 > Receive custom URL scheme events (`myapp://...`) from the OS.
 
-|                  |                                            |
-| ---------------- | ------------------------------------------ |
-| **Config key**   | `deep_link`                                |
-| **JS namespace** | `DeepLink`                                 |
-| **Core**         | No                                         |
-| **Phases**       | Bindable                                   |
-| **Hard deps**    | `event`                                    |
-| **Platforms**    | macOS · Linux · Windows (cold-start only)  |
+|                  |                         |
+| ---------------- | ----------------------- |
+| **Config key**   | `deep_link`             |
+| **JS namespace** | `DeepLink`              |
+| **Core**         | No                      |
+| **Phases**       | Bindable                |
+| **Hard deps**    | `event`                 |
+| **Platforms**    | macOS · Linux · Windows |
 
 Register a custom URL scheme so the OS routes URLs into your running app — for OAuth redirects, shell integrations, or any external trigger that needs to pass data to your app.
 

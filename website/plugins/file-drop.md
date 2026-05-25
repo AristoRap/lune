@@ -2,14 +2,14 @@
 
 > Accept files dragged onto the app window from the OS.
 
-|                  |                                  |
-| ---------------- | -------------------------------- |
-| **Config key**   | `file_drop`                      |
-| **JS namespace** | `FileDrop`                       |
-| **Core**         | No                               |
-| **Phases**       | WebviewInject                    |
-| **Hard deps**    | `event`                          |
-| **Platforms**    | macOS · Linux (Windows: planned) |
+|                  |               |
+| ---------------- | ------------- |
+| **Config key**   | `file_drop`   |
+| **JS namespace** | `FileDrop`    |
+| **Core**         | No            |
+| **Phases**       | WebviewInject |
+| **Hard deps**    | `event`       |
+| **Platforms**    | macOS · Linux |
 
 FileDrop intercepts native OS file-drop events and delivers them to JavaScript as `{ x, y, paths }` events on the event bus.
 

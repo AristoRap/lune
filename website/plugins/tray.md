@@ -10,11 +10,7 @@
 | **Phases**       | Bindable                                                          |
 | **Hard deps**    | —                                                                 |
 | **Soft deps**    | `event` (menu item clicks emitted as events when event is active) |
-| **Platforms**    | macOS · Linux¹ · Windows²                                         |
-
-¹ Requires XWayland on Wayland compositors.
-
-² Windows: `lune.Tray.setIcon` requires a `.ico` path (PNG / SVG fall back to the default Windows app icon with a logger warning). See [Windows notes](#windows-notes) below.
+| **Platforms**    | macOS · Linux · Windows                                           |
 
 Tray has a soft dependency on `event`. When event is active, tray icon clicks and menu item selections emit events automatically. When event is absent, use the Crystal-side callbacks in the `opts.tray` block instead.
 

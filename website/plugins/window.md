@@ -2,14 +2,14 @@
 
 > Programmatic window controls from JavaScript and an opt-in CSS-driven window drag listener.
 
-|                  |                                            |
-| ---------------- | ------------------------------------------ |
-| **Config key**   | `window`                                   |
-| **JS namespace** | `Window`                                   |
-| **Core**         | No                                         |
-| **Phases**       | Bindable · WebviewInject                   |
-| **Hard deps**    | —                                          |
-| **Platforms**    | macOS · Linux · Windows (drag: macOS + Windows) |
+|                  |                          |
+| ---------------- | ------------------------ |
+| **Config key**   | `window`                 |
+| **JS namespace** | `Window`                 |
+| **Core**         | No                       |
+| **Phases**       | Bindable · WebviewInject |
+| **Hard deps**    | —                        |
+| **Platforms**    | macOS · Linux · Windows  |
 
 The Window plugin exposes runtime window controls to JavaScript — minimize, maximize, center, resize, retitle — and a CSS-driven drag listener for custom title bars. For initial window size, title, and macOS chrome options, see [Window Configuration](../guide/window).
 

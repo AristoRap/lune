@@ -2,14 +2,14 @@
 
 > Open and manage additional native windows from JavaScript.
 
-|                  |                      |
-| ---------------- | -------------------- |
-| **Config key**   | `windows`            |
-| **JS namespace** | `Windows`            |
-| **Core**         | No                   |
-| **Phases**       | Bindable · Lifecycle |
-| **Hard deps**    | —                    |
-| **Platforms**    | all                  |
+|                  |                         |
+| ---------------- | ----------------------- |
+| **Config key**   | `windows`               |
+| **JS namespace** | `Windows`               |
+| **Core**         | No                      |
+| **Phases**       | Bindable · Lifecycle    |
+| **Hard deps**    | —                       |
+| **Platforms**    | macOS · Linux · Windows |
 
 The Windows plugin lets you open additional native windows from JavaScript. Each new window gets its own `WKWebView` (macOS) or equivalent, shares all active plugin bindings with the main window, and participates in `app.event.emit` broadcasts. Use it for settings panels, secondary views, or any multi-window layout.
 
