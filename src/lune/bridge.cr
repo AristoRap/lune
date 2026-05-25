@@ -5,6 +5,7 @@ module Lune
     getter all_bindings : Hash(String, Binding)
 
     @async_pool : Fiber::ExecutionContext::Parallel? = nil
+    @wv : Webview::WebviewLike
 
     def initialize(@wv : Webview::WebviewLike)
       @closed = Atomic(Bool).new(false)
