@@ -140,8 +140,20 @@ jobs:
           # Stage on LIB and also at Crystal\lib\ — the Crystal linker
           # passes /LIBPATH:Crystal\lib before LIB env walk, so a stale
           # copy there would win regardless of LIB. Always overwrite both.
-          $crystalLib = "$(Split-Path (Get-Command crystal).Source -Parent)\..\lib"
-          $crystalLib = (Resolve-Path $crystalLib).Path
+          # Crystal's lib dir lives next to crystal.exe in some packages
+          # (flat layout: <root>\crystal.exe + <root>\lib\ — what the
+          # crystal-lang/install-crystal action on GitHub Actions uses)
+          # and one level up in others (Unix-style: <root>\bin\crystal.exe
+          # + <root>\lib\). Probe both before failing.
+          $crystalRoot = Split-Path (Get-Command crystal).Source -Parent
+          $crystalLib = $null
+          foreach ($candidate in @("$crystalRoot\..\lib", "$crystalRoot\lib")) {
+            if (Test-Path $candidate) {
+              $crystalLib = (Resolve-Path $candidate).Path
+              break
+            }
+          }
+          if (-not $crystalLib) { throw "Could not find Crystal lib dir near $crystalRoot" }
           Copy-Item "$ext\webview.lib" -Destination $crystalLib -Force
           "WEBVIEW_LIB_DIR=$ext" | Out-File -FilePath $env:GITHUB_ENV -Append
           "LIB=$env:SQLITE_LIB_DIR;$ext;$env:LIB" | Out-File -FilePath $env:GITHUB_ENV -Append
