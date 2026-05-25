@@ -9,10 +9,10 @@
 | **Core**         | No                      |
 | **Phases**       | Bindable                |
 | **Hard deps**    | —                       |
-| **Soft deps**    | `events`                |
+| **Soft deps**    | `event`                 |
 | **Platforms**    | macOS · Linux · Windows |
 
-Soft-depends on `events` — hotkey events are delivered via the event bus. If `events` is excluded, hotkey events are silently dropped.
+Soft-depends on `event` — hotkey events are delivered via the event bus. If `event` is excluded, hotkey events are silently dropped.
 
 ---
 
