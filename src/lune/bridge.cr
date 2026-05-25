@@ -6,7 +6,7 @@ module Lune
 
     @async_pool : Fiber::ExecutionContext::Parallel? = nil
 
-    def initialize(@wv : WebviewLike)
+    def initialize(@wv : Webview::WebviewLike)
       @closed = Atomic(Bool).new(false)
       @all_bindings = {} of String => Binding
     end
@@ -56,7 +56,7 @@ module Lune
 
     private def execute_binding(
       binding : Binding,
-      wv : WebviewLike,
+      wv : Webview::WebviewLike,
       seq : String,
       args : Array(JSON::Any),
     )
@@ -75,7 +75,7 @@ module Lune
     end
 
     private def dispatch_result(
-      wv : WebviewLike,
+      wv : Webview::WebviewLike,
       seq : String,
       closed : (-> Bool)? = nil,
       &block : -> JSON::Any
@@ -103,7 +103,7 @@ module Lune
     # stack — we've seen one SIGSEGV in `objc_autoreleasePoolPop` during the
     # error-reply path. Swallow everything here; the call has already produced
     # a payload string, so there's nothing left to surface.
-    private def safe_resolve(wv : WebviewLike, seq : String, status : Int32, payload : String, closed : (-> Bool)?) : Nil
+    private def safe_resolve(wv : Webview::WebviewLike, seq : String, status : Int32, payload : String, closed : (-> Bool)?) : Nil
       return if closed.try(&.call)
       wv.resolve(seq, status, payload)
     rescue ex

@@ -473,7 +473,7 @@ class MockInstallable
 end
 
 class MockWebview
-  include Lune::WebviewLike
+  include Webview::WebviewLike
 
   getter last_eval : String = ""
 

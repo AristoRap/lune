@@ -1,7 +1,7 @@
 require "../spec_helper"
 
 private class TypedFakeWebview
-  include Lune::WebviewLike
+  include Webview::WebviewLike
 
   getter resolve_calls : Array(Tuple(String, Int32, String))
 

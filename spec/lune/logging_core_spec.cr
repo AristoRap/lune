@@ -1,7 +1,7 @@
 require "../spec_helper"
 
 private class LoggingFakeWebview
-  include Lune::WebviewLike
+  include Webview::WebviewLike
 
   def initialize
     @bindings = {} of String => Proc(String, Array(JSON::Any), Nil)
