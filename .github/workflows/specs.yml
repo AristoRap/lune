@@ -16,11 +16,7 @@ on:
       - "package-lock.json"
       - "**.md"
 
-# Upstream webview commit to build webview.lib against on Windows. Bump when
-# you want to track a newer C library — see WINDOWS_SETUP.md step 4b.
-# Pinned for reproducibility + cache stability.
 env:
-  WEBVIEW_PIN: "0.12.0"
   SQLITE_DLL_URL: "https://www.sqlite.org/2024/sqlite-dll-win-x64-3450000.zip"
 
 jobs:
@@ -111,53 +107,6 @@ jobs:
           "$sqliteDir" | Out-File -FilePath $env:GITHUB_PATH -Append
           "SQLITE_LIB_DIR=$sqliteDir" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      - name: Cache webview.lib (Windows)
-        if: runner.os == 'Windows'
-        id: webview-cache
-        uses: actions/cache@v5
-        with:
-          path: ${{ runner.temp }}\webview-build
-          key: webview-windows-${{ env.WEBVIEW_PIN }}
-
-      - name: Build webview C library (Windows)
-        if: runner.os == 'Windows' && steps.webview-cache.outputs.cache-hit != 'true'
-        shell: pwsh
-        run: |
-          # Graphviz `dot` is required by webview's CMake (transitively via
-          # Doxygen for doc generation). Pre-installed Doxygen on the runner
-          # doesn't include Graphviz, so we add it here.
-          choco install -y graphviz | Out-Null
-
-          $src = "$env:RUNNER_TEMP\webview-src"
-          git clone --depth 1 --branch "${{ env.WEBVIEW_PIN }}" https://github.com/webview/webview.git $src
-          Push-Location $src
-          # WEBVIEW_IS_CI=OFF disables the clang-format `ALL` target — when ON
-          # (autodetected from $CI on GitHub runners) the format check runs
-          # during `cmake --build` and fails on any runner-vs-upstream
-          # clang-format version mismatch. We're consuming the library, not
-          # validating its source style, so opt out.
-          cmake -G Ninja -B build -S . `
-            -D CMAKE_BUILD_TYPE=Release `
-            -D WEBVIEW_IS_CI=OFF
-          cmake --build build
-          Pop-Location
-          # Stash only the .lib + .dll we need — cache stays small.
-          $out = "$env:RUNNER_TEMP\webview-build"
-          New-Item -ItemType Directory -Path $out -Force | Out-Null
-          Copy-Item "$src\build\core\webview.lib" -Destination $out
-          Copy-Item "$src\build\core\webview.dll" -Destination $out
-
-      - name: Wire webview into LIB / PATH (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          $out = "$env:RUNNER_TEMP\webview-build"
-          "$out" | Out-File -FilePath $env:GITHUB_PATH -Append
-          "WEBVIEW_LIB_DIR=$out" | Out-File -FilePath $env:GITHUB_ENV -Append
-          # `crystal spec` invokes link.exe which reads LIB — extend it so
-          # both sqlite3.lib and webview.lib resolve without changes to shards.
-          "LIB=$env:SQLITE_LIB_DIR;$out;$env:LIB" | Out-File -FilePath $env:GITHUB_ENV -Append
-
       - name: Install shards (Unix)
         if: runner.os != 'Windows'
         run: shards install
@@ -165,10 +114,49 @@ jobs:
       - name: Install shards (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
-        # --skip-postinstall: vendored webview shard has a Makefile-based
-        # postinstall hook for Unix; on Windows we built webview.lib via
-        # CMake above so the hook would be a no-op at best.
+        # --skip-postinstall: vendored webview shard's postinstall hook is
+        # a Unix Makefile-based build. On Windows we build webview.lib
+        # ourselves in the next step.
         run: shards install --skip-postinstall
+
+      - name: Build webview.lib from vendored fork source (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        # We track the AristoRap/lune-webview fork via shards (see
+        # shard.yml). After `shards install` the fork's webview.cc +
+        # webview.h are in `lib/webview/ext/`. Compile with cl.exe +
+        # /DWEBVIEW_STATIC so WEBVIEW_API resolves to `extern` (default
+        # is `inline` for C++, which produces a symbol-less .lib), then
+        # archive into webview.lib. Mirrors WINDOWS_SETUP.md step 4b.
+        run: |
+          $ext = "$env:GITHUB_WORKSPACE\lib\webview\ext"
+          Push-Location $ext
+          cl.exe /nologo /c /EHsc /MD /std:c++17 /DWEBVIEW_STATIC `
+            /I"$env:CPATH" webview.cc /Fo:webview.obj
+          if ($LASTEXITCODE -ne 0) { throw "cl.exe failed" }
+          lib /nologo /OUT:webview.lib webview.obj
+          if ($LASTEXITCODE -ne 0) { throw "lib.exe failed" }
+          Pop-Location
+          # Stage on LIB and also at Crystal\lib\ — the Crystal linker
+          # passes /LIBPATH:Crystal\lib before LIB env walk, so a stale
+          # copy there would win regardless of LIB. Always overwrite both.
+          # Crystal's lib dir lives next to crystal.exe in some packages
+          # (flat layout: <root>\crystal.exe + <root>\lib\ — what the
+          # crystal-lang/install-crystal action on GitHub Actions uses)
+          # and one level up in others (Unix-style: <root>\bin\crystal.exe
+          # + <root>\lib\). Probe both before failing.
+          $crystalRoot = Split-Path (Get-Command crystal).Source -Parent
+          $crystalLib = $null
+          foreach ($candidate in @("$crystalRoot\..\lib", "$crystalRoot\lib")) {
+            if (Test-Path $candidate) {
+              $crystalLib = (Resolve-Path $candidate).Path
+              break
+            }
+          }
+          if (-not $crystalLib) { throw "Could not find Crystal lib dir near $crystalRoot" }
+          Copy-Item "$ext\webview.lib" -Destination $crystalLib -Force
+          "WEBVIEW_LIB_DIR=$ext" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "LIB=$env:SQLITE_LIB_DIR;$ext;$env:LIB" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Run all specs
         run: crystal spec -Dlune_native_test_mock ${{ matrix.spec_flags }}

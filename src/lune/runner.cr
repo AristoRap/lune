@@ -54,6 +54,29 @@ module Lune
         handle = wv.native_handle(Webview::NativeHandleKind::UI_WINDOW)
         set_user_menu_or_default(handle)
 
+        {% if flag?(:win32) && !flag?(:lune_native_test_mock) %}
+          # Install the menu's HACCEL on the webview. Routed via
+          # TranslateAcceleratorW in two places inside the forked shard:
+          # the GetMessageW pump (focused = top-level window) and the
+          # ICoreWebView2Controller::AcceleratorKeyPressed event (focused
+          # = WV2 content). webview_set_accel is a no-op on non-Win32
+          # but current_accel_for is Win32-only — gate both.
+          wv.set_accel(Lune::Native::Menu.current_accel_for(handle))
+
+          # Re-install on every menu rebuild (app.update_menu) since
+          # set_from_options destroys the previous HACCEL — leaving the
+          # wv's cached pointer dangling. Subscription persists for the
+          # lifetime of the HWND.
+          Lune::Native::Menu.on_menu_rebuild(handle) do |new_accel|
+            wv.set_accel(new_accel)
+          end
+
+          # Disable WV2's built-in browser shortcuts (Ctrl+P / Ctrl+F /
+          # Ctrl+R / Ctrl+0 / etc.) so they reach AcceleratorKeyPressed
+          # without WV2 acting on them first.
+          wv.set_browser_accelerator_keys_enabled(false)
+        {% end %}
+
         {% if flag?(:darwin) %}
           setup_mac_window_options(handle)
         {% end %}

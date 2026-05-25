@@ -2,14 +2,14 @@
 
 > Receive custom URL scheme events (`myapp://...`) from the OS.
 
-|                  |                                                                           |
-| ---------------- | ------------------------------------------------------------------------- |
-| **Config key**   | `deep_link`                                                               |
-| **JS namespace** | `DeepLink`                                                                |
-| **Core**         | No                                                                        |
-| **Phases**       | Bindable                                                                  |
-| **Hard deps**    | `event`                                                                   |
-| **Platforms**    | macOS · Linux · Windows (Windows: cold-start ARGV only — see Limitations) |
+|                  |                                            |
+| ---------------- | ------------------------------------------ |
+| **Config key**   | `deep_link`                                |
+| **JS namespace** | `DeepLink`                                 |
+| **Core**         | No                                         |
+| **Phases**       | Bindable                                   |
+| **Hard deps**    | `event`                                    |
+| **Platforms**    | macOS · Linux · Windows (cold-start only)  |
 
 Register a custom URL scheme so the OS routes URLs into your running app — for OAuth redirects, shell integrations, or any external trigger that needs to pass data to your app.
 
@@ -48,7 +48,7 @@ Scheme names must be lowercase alphanumeric.
 1. **Cold start** — the OS launches a fresh app with the URL on the command line. Lune scans `ARGV` for an arg containing `://` and fires `lune.DeepLink.on` with that URL.
 2. **Warm start** — the OS launches a second process while the primary is already running. The second process tries to connect to a Unix-domain socket at `$XDG_RUNTIME_DIR/lune-<slug>.sock` (or `/tmp/…` if XDG isn't set); on success it forwards the URL and exits, and the primary instance fires `lune.DeepLink.on` instead. If no primary is listening, the second instance continues as the new primary.
 
-**Windows** — `myapp://` schemes need to be registered in the registry (`HKCU\Software\Classes\myapp\shell\open\command` → `"C:\path\to\app.exe" "%1"`) — Lune doesn't auto-register today. Once registered, the OS launches a fresh app with the URL on the command line and Lune scans `ARGV` like on Linux. Warm-start forwarding is not yet implemented on Windows (will use a named pipe in a follow-up).
+**Windows** — Every cold start writes `HKCU\Software\Classes\<scheme>\shell\open\command` → `"<exe>" "%1"` for each entry in `url_schemes`, so the app self-registers as the handler the first time the user launches the built binary. Writes are HKCU (no admin required) and idempotent — moving or renaming the exe self-heals on next launch. `lune dev` skips this so the temp dev binary doesn't clobber a real installed registration. Cold-start URLs land in `ARGV` and fire the listener; warm-start forwarding (named pipes) is still pending.
 
 ---
 
@@ -98,7 +98,7 @@ lune.DeepLink.on((url) => {
 
 - **macOS** — Verified, including cold-start. Scheme registration is build-time only via `Info.plist` `CFBundleURLTypes`; `lune dev` runs don't get OS-level scheme routing. Cold-start URLs (Apple Event delivered before the WebView has loaded) are captured by an early-registered Apple Event handler in the native shim and replayed once Crystal attaches its callback; the Event boot queue then holds the emit until the page is ready. Wire JS listeners at app-root scope (not on a single view) if you want cold-start URLs to reach handlers regardless of which view is mounted first.
 - **Linux** — Untested. Cold-start and warm-start both wired; requires `.desktop` file from `lune dist`.
-- **Windows** — Partial. Cold-start (ARGV) works once registered in the registry; warm-start forwarding and scheme auto-registration not yet implemented.
+- **Windows** — Cold-start delivery + HKCU scheme auto-registration work end-to-end on built binaries. `lune dev` does not write the registry (the dev binary path is transient). Warm-start forwarding still pending — relaunching while the app is open spawns a second instance.
 
 ---
 
@@ -107,7 +107,6 @@ lune.DeepLink.on((url) => {
 Planned for follow-up releases:
 
 - **Windows warm-start** — named-pipe IPC equivalent to Linux's Unix-socket forwarding.
-- **Windows scheme auto-registration** — `lune build` writes `HKCU\Software\Classes\<scheme>\shell\open\command` for each entry in `url_schemes`.
 
 ---
 

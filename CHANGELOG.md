@@ -1,5 +1,29 @@
 # Changelog
 
+## [Unreleased]
+
+## [0.16.0] - 2026-05-25
+
+### Added
+
+- **Win32 menu-accelerator keystroke routing — verified end-to-end.** `opts.menu` shortcut strings like `"cmd+p"` now fire their `WM_COMMAND` handler on Win32, regardless of which window has focus (main top-level or WebView2 content). The path:
+  - `Native::Menu.set_from_options` parses each item's shortcut into an `ACCEL` entry, builds an `HACCEL` via `CreateAcceleratorTableW`, and caches it per HWND alongside the `HMENU`.
+  - `Lune::Native::Menu.on_menu_rebuild` lets the runner subscribe to menu rebuilds so the wv's cached `HACCEL` pointer is refreshed every time `app.update_menu` destroys the old one.
+  - Runner hands the HACCEL to `wv.set_accel(accel)` and turns off `AreBrowserAcceleratorKeysEnabled` so `Ctrl+P` / `Ctrl+F` / `Ctrl+R` don't get grabbed by WebView2's built-in print/find/reload UI.
+  - Child windows opened through `lune.Windows.open(...)` call `wv.set_accel_target(main_hwnd)` so their accelerators route back to the main window's wndproc + command handlers — the same `cmd+q` works from any focused window.
+  - Menu rebuild is atomic now (build new HMENU first, single `SetMenu` swap, then destroy the old) so toggling an item via shortcut no longer makes the main window's menu bar jitter.
+- **Win32 GUI subsystem for `lune build` output** — `lune build` now appends `/subsystem:windows /entry:mainCRTStartup` to the linker flags on Win32, so double-clicking a built `.exe` opens just the webview window (no console popup alongside). `lune dev` keeps the console so Crystal logs stay visible during development.
+- **Win32 URL-scheme auto-registration** — built apps now self-register each entry in `lune.yml`'s `url_schemes:` to `HKCU\Software\Classes\<scheme>\shell\open\command` on every cold start. HKCU writes need no admin and self-heal when the exe moves. `lune build` bakes the scheme list into `Lune::URL_SCHEMES` via `LUNE_URL_SCHEMES`; `lune dev` is excluded so a transient dev binary doesn't clobber a real installed registration. Closes the manual reg-key step previously documented under deep-link / Platform notes.
+
+### Changed
+
+- **`webview` shard moved to the `AristoRap/lune-webview` fork** (branch tracking, no commit pin since we own the fork). Lune extensions added on top of the upstream shard:
+  - `webview_set_accel(w, haccel)` — installs a Win32 `HACCEL` on the message pump for `TranslateAcceleratorW`.
+  - `webview_set_accel_target(w, hwnd)` — override the target `HWND` that the accelerator handler dispatches `WM_COMMAND` to (for child-window webviews that want their menu shortcuts to fire on the main window's wndproc).
+  - `webview_set_browser_accelerator_keys_enabled(w, enabled)` — toggle `ICoreWebView2Settings3::put_AreBrowserAcceleratorKeysEnabled`.
+  - `ICoreWebView2Controller::AcceleratorKeyPressed` handler subscribed automatically in `embed()` — synthesises a `MSG`, runs `TranslateAcceleratorW` against the embedder-installed `HACCEL`, and calls `put_Handled(TRUE)` on match so accelerators fire even while WV2 has keyboard focus (the message never reaches `GetMessageW` in that state).
+  - `bind_deferred` / `resolve` are first-class methods on `Webview::Webview` now. `Webview::WebviewLike` lives in the shard. Lune's `src/lune/webview.cr` drops to a bare `include` reopen.
+
 ## [0.15.0] - 2026-05-25
 
 ### Added

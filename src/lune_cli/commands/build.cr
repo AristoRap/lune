@@ -87,18 +87,29 @@ module LuneCLI
         crystal_args << "--release" if release
 
         {% if flag?(:win32) %}
-          # Embed the app icon in the .exe via a tiny .rc → .res compile.
-          # Falls through silently if no icon is configured, the file is
-          # missing, or rc.exe isn't on PATH (no MSVC SDK).
+          # Win32 link flags:
+          #   - /subsystem:windows: build a GUI app, not a console app.
+          #     Without this, double-clicking the .exe pops a console
+          #     window alongside the webview window.
+          #   - /entry:mainCRTStartup: Crystal emits a standard `main`
+          #     entry point; MSVC's GUI default is wWinMainCRTStartup
+          #     which expects `WinMain`. Pin the entry to the C-runtime
+          #     console startup so Crystal's main still runs.
+          #   - app icon .res (optional): embed lune.yml's icon.
+          link_flags = ["/subsystem:windows", "/entry:mainCRTStartup"]
           if res_path = compile_win_icon_resource(config.icon)
-            crystal_args.concat(["--link-flags", res_path])
+            link_flags << res_path
           end
+          crystal_args.concat(["--link-flags", link_flags.join(" ")])
         {% end %}
 
         # Bake `lune.yml`'s `name:` into the binary as Lune::APP_NAME via
         # `{{ env("LUNE_APP_NAME") }}` at compile time. Defaults to the app
         # entry's basename when `name:` is unset.
-        build_env = ENV.to_h.merge({Lune::ENV_APP_NAME => config.name || binary_name_for(app_entry)})
+        build_env = ENV.to_h.merge({
+          Lune::ENV_APP_NAME    => config.name || binary_name_for(app_entry),
+          Lune::ENV_URL_SCHEMES => config.url_schemes.join(","),
+        })
 
         app_status = Process.run(
           "crystal",

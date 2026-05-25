@@ -1,5 +1,5 @@
 class FakeWebview
-  include Lune::WebviewLike
+  include Webview::WebviewLike
 
   getter dispatch_count : Int32
   getter resolve_calls : Array(Tuple(String, Int32, String))

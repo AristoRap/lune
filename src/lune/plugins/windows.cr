@@ -43,6 +43,28 @@ module Lune
           wv2.size(width, height, Webview::SizeHints::NONE)
           handle = wv2.native_handle(Webview::NativeHandleKind::UI_WINDOW)
 
+          {% if flag?(:win32) && !flag?(:lune_native_test_mock) %}
+            # Route the child window's menu-accelerator hits back to the
+            # main window's wndproc + command handlers, then install the
+            # current HACCEL so the child wv's AcceleratorKeyPressed
+            # handler has a table to match against. set_accel_target /
+            # set_accel / set_browser_accelerator_keys_enabled are all
+            # no-ops on non-Win32, so the macro guard is purely to avoid
+            # the main_handle lookup on platforms that don't need it.
+            main_handle = main_wv.native_handle(Webview::NativeHandleKind::UI_WINDOW)
+            wv2.set_accel_target(main_handle)
+            wv2.set_accel(Lune::Native::Menu.current_accel_for(main_handle))
+            # Keep the child in sync on app.update_menu — old HACCEL is
+            # destroyed by set_from_options and the new one needs to
+            # reach every open child window. Guard on @windows so a
+            # closed child's slot stops receiving updates.
+            captured_id = id
+            Lune::Native::Menu.on_menu_rebuild(main_handle) do |new_accel|
+              wv2.set_accel(new_accel) if @windows[captured_id]?
+            end
+            wv2.set_browser_accelerator_keys_enabled(false)
+          {% end %}
+
           resolved.init_all_webviews(wv2, handle, app)
 
           bridge = Bridge.new(wv2)

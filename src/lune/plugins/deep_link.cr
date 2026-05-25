@@ -32,6 +32,20 @@ module Lune
           end
         {% end %}
 
+        # Win32 self-registration: every cold start rewrites HKCU keys for
+        # each declared scheme so a moved or renamed exe self-heals. Skipped
+        # under `lune dev` (the temp dev binary path would clobber a real
+        # installed registration) and when no schemes are configured.
+        {% if flag?(:win32) && !flag?(:lune_dev) && !flag?(:lune_native_test_mock) %}
+          if (schemes = Lune::URL_SCHEMES).any?
+            if exe = Process.executable_path
+              schemes.each do |scheme|
+                Lune::Native::UrlScheme.register(scheme, exe, @app_title)
+              end
+            end
+          end
+        {% end %}
+
         {% if flag?(:lune_native_test_mock) || flag?(:darwin) %}
           Native::DeepLink.install do |url|
             app.event.emit("deep_link", {"url" => url})
