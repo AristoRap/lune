@@ -31,9 +31,12 @@ async function toggle() {
 
 async function pickIcon() {
   // Windows wants .ico; macOS wants .icns / .png; Linux wants .png / .svg.
-  // Lune's Dialogs.openFile doesn't enforce filters — the native side will
-  // warn + fall back to the system default if the format isn't supported.
-  const path = await Dialogs.openFile("Choose a tray icon");
+  // The filter constrains the picker per-platform; if the user picks a
+  // format the native tray layer doesn't support, it warns and falls
+  // back to the system default at runtime.
+  const path = await Dialogs.openFile("Choose a tray icon", [
+    { name: "Tray icons", extensions: ["ico", "icns", "png", "svg"] },
+  ]);
   if (!path) return;
   iconPath.value = path;
   if (visible.value) {

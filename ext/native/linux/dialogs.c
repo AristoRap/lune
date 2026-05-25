@@ -36,15 +36,47 @@ static void run_on_main(void (*fn)(void *), void *d) {
 
 // ── Dialog implementations ────────────────────────────────────────────────────
 
-typedef struct { const char *title; char *out; int out_size; int result; } OpenArgs;
+typedef struct { const char *title; const char *filters; char *out; int out_size; int result; } OpenArgs;
+typedef struct { const char *title; char *out; int out_size; int result; } OpenDirArgs;
 typedef struct { int type; const char *title; const char *msg; char *out; int out_size; int result; } MsgArgs;
-typedef struct { const char *title; const char *default_name; char *out; int out_size; int result; } SaveArgs;
+typedef struct { const char *title; const char *default_name; const char *filters; char *out; int out_size; int result; } SaveArgs;
+
+// Parse the cross-FFI filter format ("name|ext1,ext2\nname2|ext3") and add a
+// GtkFileFilter to the chooser for each group. Each extension becomes a
+// `*.ext` glob pattern. Empty / NULL filters string = no filter applied.
+static void _add_filters(GtkFileChooser *chooser, const char *filters) {
+    if (!filters || !filters[0]) return;
+    char *dup = g_strdup(filters);
+    char *saveptr_entry = NULL;
+    char *entry = strtok_r(dup, "\n", &saveptr_entry);
+    while (entry) {
+        char *pipe = strchr(entry, '|');
+        const char *name = entry;
+        char *exts = pipe ? pipe + 1 : entry;
+        if (pipe) *pipe = '\0';
+        GtkFileFilter *gfilter = gtk_file_filter_new();
+        gtk_file_filter_set_name(gfilter, (name && name[0]) ? name : "Files");
+        char *saveptr_ext = NULL;
+        char *ext = strtok_r(exts, ",", &saveptr_ext);
+        while (ext) {
+            while (*ext == ' ') ext++;
+            char pattern[128];
+            snprintf(pattern, sizeof(pattern), "*.%s", ext);
+            gtk_file_filter_add_pattern(gfilter, pattern);
+            ext = strtok_r(NULL, ",", &saveptr_ext);
+        }
+        gtk_file_chooser_add_filter(chooser, gfilter);
+        entry = strtok_r(NULL, "\n", &saveptr_entry);
+    }
+    g_free(dup);
+}
 
 static void _open_file_impl(void *p) {
     OpenArgs *a = p;
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
         a->title, NULL, GTK_FILE_CHOOSER_ACTION_OPEN,
         "_Cancel", GTK_RESPONSE_CANCEL, "_Open", GTK_RESPONSE_ACCEPT, NULL);
+    _add_filters(GTK_FILE_CHOOSER(dialog), a->filters);
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
         char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
         if (filename) {
@@ -59,7 +91,7 @@ static void _open_file_impl(void *p) {
 }
 
 static void _open_dir_impl(void *p) {
-    OpenArgs *a = p;
+    OpenDirArgs *a = p;
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
         a->title, NULL, GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
         "_Cancel", GTK_RESPONSE_CANCEL, "_Open", GTK_RESPONSE_ACCEPT, NULL);
@@ -82,6 +114,7 @@ static void _open_files_impl(void *p) {
         a->title, NULL, GTK_FILE_CHOOSER_ACTION_OPEN,
         "_Cancel", GTK_RESPONSE_CANCEL, "_Open", GTK_RESPONSE_ACCEPT, NULL);
     gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), TRUE);
+    _add_filters(GTK_FILE_CHOOSER(dialog), a->filters);
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
         GSList *filenames = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));
         GString *buf = g_string_new(NULL);
@@ -131,6 +164,7 @@ static void _save_file_impl(void *p) {
     gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog), TRUE);
     if (a->default_name && a->default_name[0])
         gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog), a->default_name);
+    _add_filters(GTK_FILE_CHOOSER(dialog), a->filters);
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
         char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
         if (filename) {
@@ -146,20 +180,20 @@ static void _save_file_impl(void *p) {
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
-int open_file_dialog(const char *title, char *out, int out_size) {
-    OpenArgs a = {title, out, out_size, 0};
+int open_file_dialog(const char *title, const char *filters, char *out, int out_size) {
+    OpenArgs a = {title, filters, out, out_size, 0};
     run_on_main(_open_file_impl, &a);
     return a.result;
 }
 
 int open_dir_dialog(const char *title, char *out, int out_size) {
-    OpenArgs a = {title, out, out_size, 0};
+    OpenDirArgs a = {title, out, out_size, 0};
     run_on_main(_open_dir_impl, &a);
     return a.result;
 }
 
-int open_files_dialog(const char *title, char *out, int out_size) {
-    OpenArgs a = {title, out, out_size, 0};
+int open_files_dialog(const char *title, const char *filters, char *out, int out_size) {
+    OpenArgs a = {title, filters, out, out_size, 0};
     run_on_main(_open_files_impl, &a);
     return a.result;
 }
@@ -171,8 +205,8 @@ int message_dialog(int type, const char *title, const char *message, char *out, 
     return a.result;
 }
 
-int save_file_dialog(const char *title, const char *default_name, char *out, int out_size) {
-    SaveArgs a = {title, default_name, out, out_size, 0};
+int save_file_dialog(const char *title, const char *default_name, const char *filters, char *out, int out_size) {
+    SaveArgs a = {title, default_name, filters, out, out_size, 0};
     run_on_main(_save_file_impl, &a);
     return a.result;
 }

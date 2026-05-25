@@ -38,6 +38,32 @@ const dest = await lune.Dialogs.saveFile("Save as", "output.csv");
 
 File pickers return an empty string (or empty array for `openFiles`) when the user cancels.
 
+#### File-type filters
+
+`openFile`, `openFiles`, and `saveFile` accept an optional `filters` array that constrains the picker to specific extensions:
+
+```js
+const path = await lune.Dialogs.openFile("Choose an icon", [
+  { name: "Tray icons", extensions: ["ico", "icns", "png", "svg"] },
+]);
+
+const paths = await lune.Dialogs.openFiles("Pick images", [
+  { name: "Raster", extensions: ["png", "jpg", "jpeg"] },
+  { name: "Vector", extensions: ["svg"] },
+]);
+
+const dest = await lune.Dialogs.saveFile("Export", "data.csv", [
+  { name: "CSV", extensions: ["csv"] },
+  { name: "JSON", extensions: ["json"] },
+]);
+```
+
+Each filter is `{ name: string, extensions: string[] }` — pass extensions WITHOUT the leading dot (`"png"`, not `".png"`). Omitted or empty array = no filtering. Behaviour per platform:
+
+- **Windows** maps to `lpstrFilter` on `GetOpenFileNameW` / `GetSaveFileNameW`; multiple filters show as a dropdown ("Tray icons (*.ico;*.icns;…)"). `saveFile` also sets `lpstrDefExt` to the first extension of the first filter, so a name typed without an extension auto-gains one.
+- **macOS** maps to `NSOpenPanel.allowedFileTypes` / `NSSavePanel.allowedFileTypes`. AppKit's older API is a flat union — multiple groups collapse into a single allowed-extensions set (no in-dialog dropdown).
+- **Linux** adds one `GtkFileFilter` per group; each extension becomes a `*.ext` glob. GTK shows a dropdown when multiple filters are present.
+
 ### Message dialogs
 
 ```js
@@ -66,24 +92,26 @@ if (answer === "OK") deleteAll();
 
 ## Full API reference
 
-| Method            | Signature                         | Returns                          |
-| ----------------- | --------------------------------- | -------------------------------- |
-| `openFile`        | `openFile(prompt)`                | `Promise<string>` — path or `""` |
-| `openDir`         | `openDir(prompt)`                 | `Promise<string>` — path or `""` |
-| `openFiles`       | `openFiles(prompt)`               | `Promise<string[]>`              |
-| `saveFile`        | `saveFile(prompt, filename)`      | `Promise<string>` — path or `""` |
-| `messageInfo`     | `messageInfo(title, message)`     | `Promise<void>`                  |
-| `messageWarning`  | `messageWarning(title, message)`  | `Promise<void>`                  |
-| `messageError`    | `messageError(title, message)`    | `Promise<void>`                  |
-| `messageQuestion` | `messageQuestion(title, message)` | `Promise<string>` — button label |
+| Method            | Signature                                  | Returns                          |
+| ----------------- | ------------------------------------------ | -------------------------------- |
+| `openFile`        | `openFile(prompt, filters?)`               | `Promise<string>` — path or `""` |
+| `openDir`         | `openDir(prompt)`                          | `Promise<string>` — path or `""` |
+| `openFiles`       | `openFiles(prompt, filters?)`              | `Promise<string[]>`              |
+| `saveFile`        | `saveFile(prompt, filename, filters?)`     | `Promise<string>` — path or `""` |
+| `messageInfo`     | `messageInfo(title, message)`              | `Promise<void>`                  |
+| `messageWarning`  | `messageWarning(title, message)`           | `Promise<void>`                  |
+| `messageError`    | `messageError(title, message)`             | `Promise<void>`                  |
+| `messageQuestion` | `messageQuestion(title, message)`          | `Promise<string>` — button label |
+
+`filters` is `{ name: string; extensions: string[] }[]`. Omitted or `[]` = no filter.
 
 ---
 
 ## Platform notes
 
-- **macOS** — Verified.
-- **Linux** — Untested.
-- **Windows** — Verified. Open/save/message all work; correct icons/buttons since v0.11.0.
+- **macOS** — Verified. File-type filters use `NSOpenPanel.allowedFileTypes` (flat union across groups; no in-dialog dropdown — see API surface above).
+- **Linux** — Untested. File-type filters use one `GtkFileFilter` per group, glob patterns `*.ext`.
+- **Windows** — Verified. Open/save/message all work; correct icons/buttons since v0.11.0. File-type filters use `lpstrFilter` and `lpstrDefExt`; multiple filters show as a dropdown.
 
 ---
 

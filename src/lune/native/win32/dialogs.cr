@@ -86,12 +86,44 @@
         PATH_BUF_SIZE  =  4096
         PATHS_BUF_SIZE = 65536
 
+        alias FileFilter = NamedTuple(name: String, extensions: Array(String))
+
         # Null-terminated UTF-16 buffer for Win32 W-suffix APIs.
         private def self.to_wstr(s : String) : UInt16*
           arr = s.to_utf16
           buf = Pointer(UInt16).malloc(arr.size + 1)
           arr.size.times { |i| buf[i] = arr[i] }
           buf[arr.size] = 0_u16
+          buf
+        end
+
+        # GetOpenFileNameW's `lpstrFilter` is a special UTF-16 buffer:
+        # name\0pattern1;pattern2\0name\0pattern\0\0
+        # i.e. NUL-separated pairs of (display name, semicolon-joined glob
+        # patterns), terminated by a double-NUL. Returns null when filters
+        # is empty so the picker shows every file.
+        private def self.build_lpstr_filter(filters : Array(FileFilter)) : UInt16*
+          return Pointer(UInt16).null if filters.empty?
+          parts = [] of String
+          filters.each do |f|
+            patterns = f[:extensions].map { |ext| "*.#{ext}" }.join(';')
+            label = f[:name].empty? ? patterns : "#{f[:name]} (#{patterns})"
+            parts << label
+            parts << patterns
+          end
+          # Build the contiguous UTF-16 buffer manually — to_utf16 doesn't
+          # preserve embedded NULs (it stops at the first one).
+          arrs = parts.map(&.to_utf16)
+          total = arrs.sum(&.size) + parts.size + 1 # one NUL per part + final NUL
+          buf = Pointer(UInt16).malloc(total)
+          offset = 0
+          arrs.each do |a|
+            a.size.times { |i| buf[offset + i] = a[i] }
+            offset += a.size
+            buf[offset] = 0_u16
+            offset += 1
+          end
+          buf[offset] = 0_u16
           buf
         end
 
@@ -108,7 +140,7 @@
         # GetOpenFileNameW and GetSaveFileNameW. Caller owns the lifetime of
         # the buffer pointer returned in the tuple — keep `buf` alive until
         # after the dialog call returns.
-        private def self.make_ofn(title : String, default_name : String, flags : UInt32) : {LibComDlg32::OpenFileNameW, Pointer(UInt16)}
+        private def self.make_ofn(title : String, default_name : String, flags : UInt32, filters : Array(FileFilter) = [] of FileFilter) : {LibComDlg32::OpenFileNameW, Pointer(UInt16)}
           # 1 MB scratch buffer fits any reasonable single-select result and
           # an OFN_ALLOWMULTISELECT result with hundreds of files.
           buf = Pointer(UInt16).malloc(PATHS_BUF_SIZE)
@@ -125,11 +157,13 @@
           ofn.max_file = PATHS_BUF_SIZE.to_u32
           ofn.title = to_wstr(title)
           ofn.flags = flags | LibComDlg32::OFN_EXPLORER | LibComDlg32::OFN_HIDEREADONLY
+          ofn.filter = build_lpstr_filter(filters)
+          ofn.filter_index = filters.empty? ? 0_u32 : 1_u32
           {ofn, buf}
         end
 
-        def self.open_file(title : String) : String?
-          ofn, buf = make_ofn(title, "", LibComDlg32::OFN_PATHMUSTEXIST | LibComDlg32::OFN_FILEMUSTEXIST)
+        def self.open_file(title : String, filters : Array(FileFilter) = [] of FileFilter) : String?
+          ofn, buf = make_ofn(title, "", LibComDlg32::OFN_PATHMUSTEXIST | LibComDlg32::OFN_FILEMUSTEXIST, filters)
           return nil if LibComDlg32.get_open_file_name_w(pointerof(ofn)) == 0
           from_wstr(buf)
         end
@@ -146,10 +180,11 @@
           ok == 0 ? nil : from_wstr(path_buf)
         end
 
-        def self.open_files(title : String) : Array(String)
+        def self.open_files(title : String, filters : Array(FileFilter) = [] of FileFilter) : Array(String)
           ofn, buf = make_ofn(title, "",
             LibComDlg32::OFN_PATHMUSTEXIST | LibComDlg32::OFN_FILEMUSTEXIST |
-            LibComDlg32::OFN_ALLOWMULTISELECT)
+            LibComDlg32::OFN_ALLOWMULTISELECT,
+            filters)
           return [] of String if LibComDlg32.get_open_file_name_w(pointerof(ofn)) == 0
           # Multi-select result is a null-separated list: [dir, file1, file2, ...]
           # terminated by a double-null. If only one file selected, buf contains
@@ -171,8 +206,14 @@
           segments[1..].map { |name| File.join(dir, name) }
         end
 
-        def self.save_file(title : String, default_name : String = "") : String?
-          ofn, buf = make_ofn(title, default_name, LibComDlg32::OFN_OVERWRITEPROMPT)
+        def self.save_file(title : String, default_name : String = "", filters : Array(FileFilter) = [] of FileFilter) : String?
+          ofn, buf = make_ofn(title, default_name, LibComDlg32::OFN_OVERWRITEPROMPT, filters)
+          # When filters are set and the user types a name without an extension,
+          # Win32 appends `def_ext` automatically — pick the first extension of
+          # the first filter so the save matches the user's chosen filter.
+          if !filters.empty? && !filters[0][:extensions].empty?
+            ofn.def_ext = to_wstr(filters[0][:extensions].first)
+          end
           return nil if LibComDlg32.get_save_file_name_w(pointerof(ofn)) == 0
           from_wstr(buf)
         end

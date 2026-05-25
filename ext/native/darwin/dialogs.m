@@ -9,7 +9,27 @@ static void run_on_main(void (^block)(void)) {
     else dispatch_sync(dispatch_get_main_queue(), block);
 }
 
-int open_file_dialog(const char *title, char *out, int out_size) {
+// Parse the cross-FFI filter format ("name|ext1,ext2\nname2|ext3") into a
+// flat NSArray of extension strings ("png", "jpg", ...). NSOpenPanel /
+// NSSavePanel.allowedFileTypes accepts a flat union list — macOS doesn't
+// surface per-group dropdowns the way Win32 / GTK do (the modern API
+// `allowedContentTypes` does but needs macOS 11+ + UTType import).
+static NSArray<NSString *> *parse_filter_extensions(const char *filters) {
+    if (!filters || !filters[0]) return nil;
+    NSMutableArray<NSString *> *out = [NSMutableArray array];
+    NSString *str = [NSString stringWithUTF8String:filters];
+    for (NSString *entry in [str componentsSeparatedByString:@"\n"]) {
+        NSRange pipe = [entry rangeOfString:@"|"];
+        NSString *exts = (pipe.location == NSNotFound) ? entry : [entry substringFromIndex:pipe.location + 1];
+        for (NSString *ext in [exts componentsSeparatedByString:@","]) {
+            NSString *trimmed = [ext stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+            if (trimmed.length > 0) [out addObject:trimmed];
+        }
+    }
+    return out.count > 0 ? out : nil;
+}
+
+int open_file_dialog(const char *title, const char *filters, char *out, int out_size) {
     __block int ret = 0;
     run_on_main(^{
         NSOpenPanel *panel = [NSOpenPanel openPanel];
@@ -17,6 +37,8 @@ int open_file_dialog(const char *title, char *out, int out_size) {
         panel.canChooseFiles = YES;
         panel.canChooseDirectories = NO;
         panel.allowsMultipleSelection = NO;
+        NSArray<NSString *> *exts = parse_filter_extensions(filters);
+        if (exts) panel.allowedFileTypes = exts;
         if ([panel runModal] == NSModalResponseOK) {
             NSURL *url = panel.URLs.firstObject;
             const char *path = url.fileSystemRepresentation;
@@ -47,7 +69,7 @@ int open_dir_dialog(const char *title, char *out, int out_size) {
     return ret;
 }
 
-int open_files_dialog(const char *title, char *out, int out_size) {
+int open_files_dialog(const char *title, const char *filters, char *out, int out_size) {
     __block int ret = 0;
     run_on_main(^{
         NSOpenPanel *panel = [NSOpenPanel openPanel];
@@ -55,6 +77,8 @@ int open_files_dialog(const char *title, char *out, int out_size) {
         panel.canChooseFiles = YES;
         panel.canChooseDirectories = NO;
         panel.allowsMultipleSelection = YES;
+        NSArray<NSString *> *exts = parse_filter_extensions(filters);
+        if (exts) panel.allowedFileTypes = exts;
         if ([panel runModal] == NSModalResponseOK) {
             NSMutableString *result = [NSMutableString string];
             for (NSURL *url in panel.URLs) {
@@ -101,13 +125,15 @@ int message_dialog(int type, const char *title, const char *message, char *out, 
     return ret;
 }
 
-int save_file_dialog(const char *title, const char *default_name, char *out, int out_size) {
+int save_file_dialog(const char *title, const char *default_name, const char *filters, char *out, int out_size) {
     __block int ret = 0;
     run_on_main(^{
         NSSavePanel *panel = [NSSavePanel savePanel];
         panel.title = [NSString stringWithUTF8String:title];
         if (default_name && default_name[0])
             panel.nameFieldStringValue = [NSString stringWithUTF8String:default_name];
+        NSArray<NSString *> *exts = parse_filter_extensions(filters);
+        if (exts) panel.allowedFileTypes = exts;
         if ([panel runModal] == NSModalResponseOK) {
             NSURL *url = panel.URL;
             const char *path = url.fileSystemRepresentation;

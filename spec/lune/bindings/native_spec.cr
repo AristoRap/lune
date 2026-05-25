@@ -138,7 +138,7 @@ describe "Lune::Plugins (native)" do
       app.install(Lune::Plugins::Dialogs.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("Lune.Plugins.Dialogs.open_file", "seq6", [JSON::Any.new("Pick")])
+      wv.invoke("Lune.Plugins.Dialogs.open_file", "seq6", [JSON::Any.new("Pick"), JSON::Any.new("[]")])
       Lune::Native::DialogsMock.calls.map(&.method).should contain(:open_file)
       wv.resolve_calls.find { |r| r[0] == "seq6" }.not_nil![2].should contain("/home/user/file.txt")
     end
@@ -151,7 +151,7 @@ describe "Lune::Plugins (native)" do
       app.install(Lune::Plugins::Dialogs.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("Lune.Plugins.Dialogs.save_file", "seq7", [JSON::Any.new("Save"), JSON::Any.new("data.csv")])
+      wv.invoke("Lune.Plugins.Dialogs.save_file", "seq7", [JSON::Any.new("Save"), JSON::Any.new("data.csv"), JSON::Any.new("[]")])
       Lune::Native::DialogsMock.calls.map(&.method).should contain(:save_file)
       wv.resolve_calls.find { |r| r[0] == "seq7" }.not_nil![2].should contain("/home/user/out.csv")
     end
@@ -177,7 +177,7 @@ describe "Lune::Plugins (native)" do
       app.install(Lune::Plugins::Dialogs.new)
       bridge.register_bindings(app.bindings)
 
-      wv.invoke("Lune.Plugins.Dialogs.open_files", "seq8b", [JSON::Any.new("Pick files")])
+      wv.invoke("Lune.Plugins.Dialogs.open_files", "seq8b", [JSON::Any.new("Pick files"), JSON::Any.new("[]")])
       Lune::Native::DialogsMock.calls.map(&.method).should contain(:open_files)
       result = JSON.parse(wv.resolve_calls.find { |r| r[0] == "seq8b" }.not_nil![2])
       result.as_a.map(&.as_s).should eq(["/a/one.txt", "/b/two.txt"])

@@ -2,7 +2,13 @@
   module Lune
     module Native
       module DialogsMock
-        record Call, method : Symbol, title : String, default_name : String = ""
+        alias FileFilter = NamedTuple(name: String, extensions: Array(String))
+
+        record Call,
+          method : Symbol,
+          title : String,
+          default_name : String = "",
+          filters : Array(FileFilter) = [] of FileFilter
 
         @@calls = [] of Call
         @@next_open_result : String? = nil
@@ -42,8 +48,8 @@
           @@next_message_result = result
         end
 
-        def self.record_open(title : String) : String?
-          @@calls << Call.new(:open_file, title)
+        def self.record_open(title : String, filters : Array(FileFilter)) : String?
+          @@calls << Call.new(:open_file, title, "", filters)
           @@next_open_result
         end
 
@@ -52,13 +58,13 @@
           @@next_open_dir_result
         end
 
-        def self.record_open_files(title : String) : Array(String)
-          @@calls << Call.new(:open_files, title)
+        def self.record_open_files(title : String, filters : Array(FileFilter)) : Array(String)
+          @@calls << Call.new(:open_files, title, "", filters)
           @@next_open_files_result
         end
 
-        def self.record_save(title : String, default_name : String) : String?
-          @@calls << Call.new(:save_file, title, default_name)
+        def self.record_save(title : String, default_name : String, filters : Array(FileFilter)) : String?
+          @@calls << Call.new(:save_file, title, default_name, filters)
           @@next_save_result
         end
 
@@ -69,20 +75,22 @@
       end
 
       module Dialogs
-        def self.open_file(title : String) : String?
-          DialogsMock.record_open(title)
+        alias FileFilter = NamedTuple(name: String, extensions: Array(String))
+
+        def self.open_file(title : String, filters : Array(FileFilter) = [] of FileFilter) : String?
+          DialogsMock.record_open(title, filters)
         end
 
         def self.open_dir(title : String) : String?
           DialogsMock.record_open_dir(title)
         end
 
-        def self.open_files(title : String) : Array(String)
-          DialogsMock.record_open_files(title)
+        def self.open_files(title : String, filters : Array(FileFilter) = [] of FileFilter) : Array(String)
+          DialogsMock.record_open_files(title, filters)
         end
 
-        def self.save_file(title : String, default_name : String = "") : String?
-          DialogsMock.record_save(title, default_name)
+        def self.save_file(title : String, default_name : String = "", filters : Array(FileFilter) = [] of FileFilter) : String?
+          DialogsMock.record_save(title, default_name, filters)
         end
 
         def self.message(type : Int32, title : String, message : String) : String
