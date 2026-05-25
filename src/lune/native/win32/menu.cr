@@ -95,13 +95,17 @@
         # callback. RoleApp / RoleEdit are no-ops — macOS-only concepts.
         #
         # Accelerator strings (`"cmd+p"`) render as right-aligned hint text
-        # after a `\t` separator (e.g. "Pause Clock\tCtrl+P"), but the key
-        # combo doesn't actually fire the action: WV2 grabs the WM_KEYDOWN
-        # at a layer below our parent WindowProc, and WH_KEYBOARD-based
-        # interception was too unreliable in practice (worked initially,
-        # broke after navigation, no clean way to suppress WV2's defaults
-        # without its `AcceleratorKeyPressed` event — which the webview
-        # shard doesn't expose yet). Tracked in ROADMAP.
+        # after a `\t` separator (e.g. "Pause Clock\tCtrl+P") AND fire the
+        # action. We walk the tree alongside the HMENU build, emit ACCEL
+        # entries for items whose shortcut parses, and CreateAcceleratorTableW
+        # the result. The runner hands the HACCEL to `wv.set_accel`; the
+        # AristoRap/lune-webview fork's run_impl pump calls
+        # TranslateAcceleratorW before TranslateMessage (for top-level focus),
+        # and its ICoreWebView2Controller::AcceleratorKeyPressed handler
+        # dispatches the same WM_COMMAND when WV2 content has focus. Child
+        # windows opened via `lune.Windows.open` use `set_accel_target` to
+        # route their accelerators back to the main wndproc, so the same
+        # shortcut works regardless of which window holds keyboard focus.
         def self.set_from_options(handle : Void*, opts : Options::Menu, app_name : String) : Nil
           return if handle.null?
 
