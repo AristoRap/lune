@@ -268,13 +268,13 @@ Tray icon, menu, and click events are owned by the `tray` plugin — configure `
 
 ## macOS
 
-**Supported:** macOS — **Partial:** Windows (mouse-click only; accelerator hints render but key combos don't fire — see [ROADMAP.md](https://github.com/AristoRap/lune/blob/main/ROADMAP.md)) — **Not yet:** Linux
+**Supported:** macOS, Windows — **Not yet:** Linux
 
 ### Menu bar
 
 Use `opts.menu { |m| }` to define the application menu bar. When no menu is configured, Lune falls back to a standard menu (App + Edit + Window menus on macOS; no menu on Windows). If you set `opts.menu`, that menu replaces the default entirely.
 
-On Windows the menu attaches to the top-level window via `SetMenu`; submenus, separators, checkboxes, radios, and nested submenus all render and fire via mouse click. The `m.app_menu` / `m.edit_menu` role menus are macOS-only and silently skipped. Accelerator strings (`shortcut: "cmd+p"`) render as right-aligned hint text (`Ctrl+P`) but the key combo doesn't trigger the action yet — this matches [Wails' Windows behaviour](https://github.com/wailsapp/wails/blob/master/v2/internal/frontend/desktop/windows/winc/menu.go) (shortcut text is cosmetic, dispatch needs the host to own the message pump and call `TranslateAcceleratorW`). The webview shard we depend on hides its message loop, so the proper fix is a shard-level patch. Tracked in [ROADMAP.md](https://github.com/AristoRap/lune/blob/main/ROADMAP.md).
+On Windows the menu attaches to the top-level window via `SetMenu`; submenus, separators, checkboxes, radios, and nested submenus all render and fire via both mouse click and keyboard shortcut. Accelerator strings (`shortcut: "cmd+p"`) render as right-aligned hint text (`Ctrl+P`) and the key combo dispatches the same `WM_COMMAND` the menu click does — via a `CreateAcceleratorTableW` HACCEL installed on the message pump (`TranslateAcceleratorW` for top-level focus) plus a `ICoreWebView2Controller::AcceleratorKeyPressed` handler (for keystrokes while the WebView2 content has focus). Child windows opened through `lune.Windows.open(...)` route their accelerators back to the main window's wndproc, so the same shortcut works regardless of which window is focused. `m.app_menu` / `m.edit_menu` role menus are macOS-only and silently skipped on Windows.
 
 ```crystal
 opts.menu do |m|

@@ -32,15 +32,19 @@ $cpathValue = Join-Path $includeDir.FullName "build\native\include"
 
 ### Set Environment Variable
 
-Set `CPATH` to point to the WebView2 headers:
+Set both `CPATH` (used by Crystal-side compile hooks) and `WEBVIEW2_SDK_DIR` (used when building `webview.lib` manually in step 4b) to point at the WebView2 SDK:
 
 ```powershell
 # Persistent (User scope)
 [Environment]::SetEnvironmentVariable("CPATH", $cpathValue, "User")
+[Environment]::SetEnvironmentVariable("WEBVIEW2_SDK_DIR", $includeDir.FullName + "\build\native", "User")
 
 # Or session-only (current PowerShell only)
 $env:CPATH = $cpathValue
+$env:WEBVIEW2_SDK_DIR = "$($includeDir.FullName)\build\native"
 ```
+
+`WEBVIEW2_SDK_DIR` should point at the directory **containing** `include\` and `x64\` (i.e. `Microsoft.Web.WebView2.<version>\build\native`), not the include dir itself.
 
 ## Step 2: Install Crystal Dependencies
 
@@ -106,30 +110,39 @@ Lune depends on two C libraries for Windows: sqlite3 and webview. Both must be b
 
 ### webview.lib
 
-1. Clone and build the webview repository:
+Lune ships against a fork of the webview shard (`AristoRap/lune-webview`) that adds Win32-specific extensions (HACCEL hook for menu accelerators, first-class `bind_deferred` / `resolve`). The `.lib` is built directly from the vendored source after `shards install`.
+
+1. Compile `webview.cc` and archive into `webview.lib` from the x64 Native Tools Command Prompt (or PowerShell with `Initialize-LuneEnv` loaded via `./make.ps1 env`):
 
    ```cmd
-   cd C:\temp
-   git clone https://github.com/webview/webview
-   cd webview
+   cd C:\Users\aris\code\lune\lib\webview\ext
+   cl.exe /nologo /c /EHsc /MD /std:c++17 /DWEBVIEW_STATIC /I"%WEBVIEW2_SDK_DIR%\include" webview.cc /Fo:webview.obj
+   lib /nologo /OUT:webview.lib webview.obj
    ```
 
-2. Configure and build with CMake (requires CMake and Ninja):
+   `/DWEBVIEW_STATIC` is critical — without it, `WEBVIEW_API` defaults to `inline` in C++ and the resulting `.lib` contains no usable function symbols. The link will then fail with `unresolved external symbol webview_create` (and others).
+
+2. Place the lib where Crystal's linker can find it. Crystal prepends `/LIBPATH:%CRYSTAL_HOME%\lib` to the link command **before** walking the `LIB` env, so a stale copy there wins regardless of what's on `LIB`. Always overwrite both:
 
    ```cmd
-   cmake -G Ninja -B build -S . -D CMAKE_BUILD_TYPE=Release
-   cmake --build build
+   copy /Y webview.lib "C:\Users\aris\AppData\Local\Programs\Crystal\lib\"
+   copy /Y webview.lib C:\sqlite3\
    ```
 
-3. Copy the built libraries:
-   ```cmd
-   copy C:\temp\webview\build\core\webview.lib "C:\Users\aris\AppData\Local\Programs\Crystal\lib\"
-   copy C:\temp\webview\build\core\webview.dll C:\Users\aris\code\lune\bin\
-   ```
+   Re-run both steps whenever the forked shard updates (typically right after `shards update webview`).
 
 ## Step 5: Build Lune CLI
 
-Run from x64 Native Tools Command Prompt with environment variables set:
+From a normal PowerShell session:
+
+```powershell
+cd C:\Users\aris\code\lune
+./make.ps1 build
+```
+
+`make.ps1` loads the MSVC environment via `Enter-VsDevShell` (or `vcvars64.bat` fallback), preserves any `LIB` extras you've set, and runs `shards build` with the right flags. The output is `bin\lune.exe`.
+
+For ad-hoc invocations without `make.ps1`, run from the x64 Native Tools Command Prompt with the extra paths appended:
 
 ```cmd
 set LIB=%LIB%;C:\sqlite3;C:\Users\aris\code\lune\lib\webview\ext
@@ -137,8 +150,6 @@ set PATH=%PATH%;C:\sqlite3
 cd C:\Users\aris\code\lune
 "C:\Users\aris\AppData\Local\Programs\Crystal\crystal.exe" build bin/lune.cr -o bin/lune.exe -Dpreview_mt -Dexecution_context
 ```
-
-The executable will be at `C:\Users\aris\code\lune\bin\lune.exe`.
 
 ## Step 6: Run a Lune App (`lune dev`)
 
