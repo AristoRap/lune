@@ -54,6 +54,16 @@ module Lune
         handle = wv.native_handle(Webview::NativeHandleKind::UI_WINDOW)
         set_user_menu_or_default(handle)
 
+        {% if flag?(:win32) && !flag?(:lune_native_test_mock) %}
+          # Hand the menu's HACCEL to the webview's message pump so menu
+          # shortcuts fire through TranslateAcceleratorW before WebView2
+          # sees the keystroke. webview_set_accel is a no-op on non-Win32
+          # but the getter (current_accel_for) is Win32-only — gate both.
+          if accel = Lune::Native::Menu.current_accel_for(handle)
+            wv.set_accel(accel)
+          end
+        {% end %}
+
         {% if flag?(:darwin) %}
           setup_mac_window_options(handle)
         {% end %}

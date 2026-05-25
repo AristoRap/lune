@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- **`webview` shard moved to the `AristoRap/lune-webview` fork** (branch tracking, no commit pin since we own the fork). The fork adds a `webview_set_accel(w, haccel)` C API that installs a Win32 `HACCEL` on the message pump's `TranslateAcceleratorW` call, plus the Crystal-side `set_accel` method. `bind_deferred` and `resolve` — previously reopened onto `Webview::Webview` from Lune's side — are now first-class methods in the fork; Lune's `src/lune/webview.cr` shrinks to just the `WebviewLike` protocol + the bare `include` reopen.
+- **Win32 menu-accelerator keystroke routing** — `Native::Menu.set_from_options` was already building an `HACCEL` alongside the `HMENU` (added in 0.15.0); the runner now hands it to the webview after `set_user_menu_or_default` so `TranslateAcceleratorW` routes the keystroke before WebView2 sees it. End-to-end Win32 verification pending — supersedes the cosmetic-only caveat noted in the 0.15.0 entry once confirmed.
+
 ## [0.15.0] - 2026-05-25
 
 ### Added
