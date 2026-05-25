@@ -56,10 +56,10 @@ module Lune
 
         {% if flag?(:darwin) %}
           setup_mac_window_options(handle)
-          # menubar_mode implies the tray icon must come up at boot — surface it
-          # via the generic `tray.auto_show` flag so the plugin owns wiring.
-          @options.tray.auto_show = true if @options.mac.menubar_mode
         {% end %}
+        # menubar_mode implies the tray icon must come up at boot — surface
+        # it via the generic `tray.auto_show` flag so the plugin owns wiring.
+        @options.tray.auto_show = true if menubar_mode_requested?
 
         registry = Plugins::Registry.new(handle, @options, on_quit: -> { wv.dispatch { wv.terminate } })
         resolved = registry.validate_resolve_install(@config.plugins, @app)
@@ -76,14 +76,12 @@ module Lune
 
         callback_window_ready_if_set(handle)
 
-        {% if flag?(:darwin) %}
-          if @options.mac.menubar_mode
-            setup_menubar_mode(handle)
-          end
-        {% end %}
+        if menubar_mode_requested?
+          setup_menubar_mode(handle)
+        end
 
         window_app_name = WindowState.app_name(@options.title)
-        menubar_mode = {% if flag?(:darwin) %}@options.mac.menubar_mode{% else %}false{% end %}
+        menubar_mode = menubar_mode_requested?
         if @options.remember_frame && !menubar_mode
           if saved = WindowState.load(window_app_name)
             Native::Window.set_frame(handle, saved[:x], saved[:y], saved[:width], saved[:height])
@@ -144,17 +142,26 @@ module Lune
       Native::Window.set_always_on_top(handle, true) if mac.always_on_top
     end
 
-    {% if flag?(:darwin) %}
-      # Menubar mode is purely a window-state preset: hide the dock icon, start
-      # the window hidden, and auto-hide whenever it loses focus. Tray icon
-      # appearance and click behavior are handled by the Tray plugin — see
-      # `opts.tray.auto_show` and `opts.tray.toggle_window_on`.
-      private def setup_menubar_mode(handle : Pointer(Void)) : Nil
-        Native::Window.set_activation_policy_accessory
-        Native::Window.hide(handle)
-        Native::Window.auto_hide_on_resign_key(handle)
-      end
-    {% end %}
+    # Cross-platform `opts.menubar_mode`. Linux has no native implementation
+    # yet — the request is silently ignored.
+    private def menubar_mode_requested? : Bool
+      {% if flag?(:darwin) || flag?(:win32) %}
+        @options.menubar_mode
+      {% else %}
+        false
+      {% end %}
+    end
+
+    # Menubar mode is purely a window-state preset: hide the app from the OS
+    # app switcher (Dock on macOS, taskbar + Alt+Tab on Win32), start the
+    # window hidden, and auto-hide whenever it loses focus. Tray icon
+    # appearance and click behavior are handled by the Tray plugin — see
+    # `opts.tray.auto_show` and `opts.tray.toggle_window_on`.
+    private def setup_menubar_mode(handle : Pointer(Void)) : Nil
+      Native::Window.set_activation_policy_accessory # macOS LSUIElement; no-op elsewhere
+      Native::Window.hide(handle)
+      Native::Window.auto_hide_on_resign_key(handle)
+    end
 
     private def callback_window_ready_if_set(handle : Pointer(Void)) : Nil
       if window_ready_cb = @options.on_window_ready

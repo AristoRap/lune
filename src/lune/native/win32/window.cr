@@ -28,8 +28,13 @@
 
         WM_DESTROY       = 0x0002_u32
         WM_CLOSE         = 0x0010_u32
+        WM_ACTIVATEAPP   = 0x001C_u32
         WM_COMMAND       = 0x0111_u32
         WM_NCLBUTTONDOWN = 0x00A1_u32
+
+        GWL_EXSTYLE        = -20
+        WS_EX_TOOLWINDOW   = 0x0000_0080_u32
+        WS_EX_APPWINDOW    = 0x0004_0000_u32
 
         HTCAPTION = 2_u64
 
@@ -48,6 +53,7 @@
         fun send_message_w = SendMessageW(hwnd : Void*, msg : UInt32, wparam : LibC::UIntPtrT, lparam : LibC::IntPtrT) : LibC::IntPtrT
         fun release_capture = ReleaseCapture : LibC::Int
         fun set_window_long_ptr_w = SetWindowLongPtrW(hwnd : Void*, idx : LibC::Int, new_long : LibC::IntPtrT) : LibC::IntPtrT
+        fun get_window_long_ptr_w = GetWindowLongPtrW(hwnd : Void*, idx : LibC::Int) : LibC::IntPtrT
         fun call_window_proc_w = CallWindowProcW(prev_proc : Void*, hwnd : Void*, msg : UInt32, wparam : LibC::UIntPtrT, lparam : LibC::IntPtrT) : LibC::IntPtrT
         fun def_window_proc_w = DefWindowProcW(hwnd : Void*, msg : UInt32, wparam : LibC::UIntPtrT, lparam : LibC::IntPtrT) : LibC::IntPtrT
       end
@@ -167,7 +173,22 @@
           LibUser32.is_window_visible(handle) != 0
         end
 
-        def self.auto_hide_on_resign_key(handle : Void*); end
+        # Wire menubar-mode behaviour on Win32:
+        #   1. WS_EX_TOOLWINDOW removes the window from the taskbar + Alt+Tab.
+        #   2. WM_ACTIVATEAPP=0 (app deactivated) auto-hides the window.
+        # Mirrors darwin's NSWindow `auto_hide_on_resign_key` observer. The
+        # runner calls this from `setup_menubar_mode`; the tray plugin's
+        # `toggle_window_on` re-shows the window on next tray-icon click.
+        # The taskbar picks up the new ex-style on the next ShowWindow call.
+        def self.auto_hide_on_resign_key(handle : Void*)
+          exstyle = LibUser32.get_window_long_ptr_w(handle, LibUser32::GWL_EXSTYLE).to_u64
+          new_style = (exstyle | LibUser32::WS_EX_TOOLWINDOW) & ~LibUser32::WS_EX_APPWINDOW.to_u64
+          LibUser32.set_window_long_ptr_w(handle, LibUser32::GWL_EXSTYLE,
+            LibC::IntPtrT.new!(new_style))
+
+          @@deactivate_procs[handle] = -> { LibUser32.show_window(handle, LibUser32::SW_HIDE); nil }
+          ensure_subclassed(handle)
+        end
 
         # PostMessage(WM_CLOSE) lets the existing WNDPROC chain destroy the
         # window normally (webview shard cleanup + our subclassed on_close trap
@@ -182,6 +203,7 @@
         # subclassed WNDPROC runs on that pump thread.
         @@close_procs = {} of Void* => Proc(Nil)
         @@command_handlers = {} of Void* => Hash(UInt32, Proc(Nil))
+        @@deactivate_procs = {} of Void* => Proc(Nil)
         @@prev_wndprocs = {} of Void* => Void*
 
         # GC root for the WNDPROC trampoline. SetWindowLongPtrW stores only
@@ -233,6 +255,11 @@
             if block = @@close_procs.delete(hwnd)
               block.call
             end
+          when LibUser32::WM_ACTIVATEAPP
+            # wParam = 0 means our app just lost focus to another app.
+            if wparam == 0 && (block = @@deactivate_procs[hwnd]?)
+              block.call
+            end
           when LibUser32::WM_COMMAND
             # HIWORD(wparam) == 0 → menu item; == 1 → accelerator. lparam is
             # the HMENU for menu, NULL for accelerator. We accept both shapes
@@ -257,6 +284,7 @@
           if msg == LibUser32::WM_DESTROY
             @@prev_wndprocs.delete(hwnd)
             @@command_handlers.delete(hwnd)
+            @@deactivate_procs.delete(hwnd)
           end
           result
         end

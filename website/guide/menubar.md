@@ -1,6 +1,6 @@
 # Menubar Apps
 
-Menubar mode turns your Lune app into a macOS status-bar utility: the dock icon is hidden, the window starts invisible, and a tray icon appears in the menu bar. The window stays out of the way until you bring it forward — typically from a menu item, or by opting clicks into the built-in window toggle.
+Menubar mode turns your Lune app into a tray-driven utility: the OS app-switcher entry is hidden (Dock on macOS, taskbar + Alt+Tab on Windows), the window starts invisible, and a tray icon appears in the menu bar / system tray. The window stays out of the way until you bring it forward — typically from a menu item, or by opting clicks into the built-in window toggle.
 
 ---
 
@@ -11,9 +11,10 @@ Menubar mode turns your Lune app into a macOS status-bar utility: the dock icon 
 Lune.run(app, assets: "frontend/dist") do |opts|
   opts.width  = 380
   opts.height = 500
+  opts.menubar_mode = true
 
+  # macOS-specific chrome polish (no traffic lights, full-bleed content).
   opts.mac do |m|
-    m.menubar_mode        = true
     m.full_size_content   = true
     m.hide_traffic_lights = true
   end
@@ -41,9 +42,9 @@ await lune.Tray.setIcon("/absolute/path/to/icon.png");
 
 It's a small preset of window-state flags:
 
-1. Sets `NSApplicationActivationPolicyAccessory` — removes the dock icon and app-switcher entry.
+1. Hides the app from the OS app switcher — `NSApplicationActivationPolicyAccessory` on macOS, `WS_EX_TOOLWINDOW` (no taskbar entry, no Alt+Tab) on Windows.
 2. Hides the window immediately after creation.
-3. Registers `NSWindowDidResignKeyNotification` — the window auto-hides whenever it loses focus.
+3. Wires an auto-hide-on-focus-loss observer — `NSWindowDidResignKeyNotification` on macOS, `WM_ACTIVATEAPP` on Windows.
 4. Auto-enables `opts.tray.auto_show` so the tray icon appears at boot.
 
 It does **not** wire any click-to-window behavior. That's `opts.tray.toggle_window_on`'s job — see below. The split keeps menubar-only apps (Docker, Slack — menu-driven) and popover-style apps (Bartender, MeetingBar — click toggles a window) cleanly distinguishable.
@@ -160,8 +161,8 @@ await lune.Window.hide();
 Menubar windows typically look best without a title bar:
 
 ```crystal
+opts.menubar_mode = true
 opts.mac do |m|
-  m.menubar_mode        = true
   m.full_size_content   = true  # content extends under title bar
   m.hide_traffic_lights = true  # no close/minimise/zoom buttons
   m.hide_title          = true  # no title text
@@ -174,8 +175,8 @@ opts.height = 500
 
 ## Platform support
 
-| Platform | Status            |
-| -------- | ----------------- |
-| macOS    | Supported         |
-| Linux    | Not yet supported |
-| Windows  | Not yet supported |
+| Platform | Status                                                                                                       |
+| -------- | ------------------------------------------------------------------------------------------------------------ |
+| macOS    | Supported                                                                                                    |
+| Windows  | Supported — `WS_EX_TOOLWINDOW` hides from taskbar + Alt+Tab; `WM_ACTIVATEAPP` triggers auto-hide on blur     |
+| Linux    | Not yet wired — `opts.menubar_mode = true` is silently ignored                                               |

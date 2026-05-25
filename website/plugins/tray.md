@@ -53,7 +53,7 @@ Lune.run(app) do |opts|
     t.event = "myTrayEvent"  # default: "trayEvent"
 
     # Optional: show the tray icon at boot without a JS `lune.Tray.show("")` call.
-    # Auto-enabled by `mac.menubar_mode`.
+    # Auto-enabled by `opts.menubar_mode`.
     t.auto_show = true
   end
 end
@@ -66,7 +66,7 @@ end
 | `on_right_click`   | `-> Nil`        | —                 | Crystal callback for right-click (full takeover)             |
 | `on_menu_click`    | `String -> Nil` | emit menu item id | Crystal callback for menu item selection                     |
 | `toggle_window_on` | `Array(Symbol)` | `[]`              | Clicks that toggle the window. `:left_click`, `:right_click` |
-| `auto_show`        | `Bool`          | `false`           | Show the tray icon at boot (set by `mac.menubar_mode`)       |
+| `auto_show`        | `Bool`          | `false`           | Show the tray icon at boot (set by `opts.menubar_mode`)      |
 
 ---
 

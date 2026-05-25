@@ -6,6 +6,11 @@
 
 - **Win32 application menu bar** — `opts.menu { |m| }` now renders on Windows via `CreateMenu` + `AppendMenuW` + `SetMenu`. Submenus, separators, checkboxes, radios, and nested menus all click through (`WM_COMMAND` routed by a subclassed WindowProc). `m.app_menu` / `m.edit_menu` role menus are macOS-only and silently skipped. Accelerator strings render as right-aligned hint text (`"cmd+p"` → `Ctrl+P`) but the key combo doesn't fire the action yet — WebView2 grabs keyboard focus before our parent WindowProc sees `WM_KEYDOWN`. Tracked in [ROADMAP.md](https://github.com/AristoRap/lune/blob/main/ROADMAP.md).
 - **Dialogs file-type filters** — `Dialogs.openFile` / `openFiles` / `saveFile` accept an optional `filters: [{name, extensions}]` array. Win32 uses `lpstrFilter` + `lpstrDefExt`, macOS feeds `NSOpenPanel.allowedFileTypes` (flat union across groups), Linux adds one `GtkFileFilter` per group. Demo's tray icon picker now filters to `.ico` / `.icns` / `.png` / `.svg`.
+- **Win32 menubar-mode** — `opts.menubar_mode = true` now works on Windows: `WS_EX_TOOLWINDOW` hides the app from the taskbar and Alt+Tab list; `WM_ACTIVATEAPP` triggers auto-hide on focus loss. Pair with `opts.tray.toggle_window_on = [:left_click]` for popover-style apps.
+
+### Breaking
+
+- **`opts.mac.menubar_mode` removed** — promoted to top-level `opts.menubar_mode` so the same flag covers macOS and Windows (Linux is a no-op for now). Search-and-replace in user code; no shim.
 
 ### Changed
 

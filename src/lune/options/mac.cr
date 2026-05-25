@@ -33,10 +33,6 @@ module Lune
       # Keeps the window above all other windows, including those from other apps.
       property always_on_top : Bool = false
 
-      # Hides the dock icon and anchors the window below the tray icon on click.
-      # The tray click toggles visibility automatically; set `opts.tray.on_click` to override.
-      property menubar_mode : Bool = false
-
       def initialize; end
     end
   end

@@ -78,8 +78,11 @@ Lune.run(app, assets: "frontend/dist") do |opts|
     # m.menubar_mode = true
   end
 
+  # Uncomment for popover-style: hides taskbar/dock entry, tray icon is the
+  # only handle on the app, left-click drops the window above/below the icon.
+  # opts.menubar_mode = true
   # opts.tray do |t|
-  #   t.toggle_window_on = [:left_click] # popover-style: left-click drops the window
+  #   t.toggle_window_on = [:left_click]
   # end
 
   # Custom-plugin config sits on opts the same way built-in plugin config does.

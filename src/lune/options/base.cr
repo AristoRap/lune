@@ -69,6 +69,13 @@ module Lune
     # handle (NSWindow* on macOS, GtkWindow* on Linux, HWND on Windows).
     property on_window_ready : (Void* -> Nil)? = nil
 
+    # Tray-only "popover" app mode: the window is hidden from the OS app
+    # switcher (Dock on macOS, taskbar + Alt+Tab on Win32), starts hidden,
+    # and auto-hides when the app loses focus. The tray icon shows at boot
+    # automatically; pair with `opts.tray.toggle_window_on = [:left_click]`
+    # for click-to-reveal popovers. Linux: not yet wired (no-op).
+    property menubar_mode : Bool = false
+
     getter mac : Mac = Mac.new
     getter menu : Menu = Menu.new
 

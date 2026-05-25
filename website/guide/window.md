@@ -222,7 +222,7 @@ window:
   remember_frame: true
 ```
 
-When `false` (the default), Lune ignores any previously saved state and opens the window at `opts.width` / `opts.height` every launch. On macOS in menubar mode (`mac.menubar_mode = true`), persistence is always disabled regardless of this flag — the window position there is derived from the tray icon on each toggle.
+When `false` (the default), Lune ignores any previously saved state and opens the window at `opts.width` / `opts.height` every launch. In menubar mode (`opts.menubar_mode = true`), persistence is always disabled regardless of this flag — the window position is derived from the tray icon on each toggle.
 
 ### Storage location
 

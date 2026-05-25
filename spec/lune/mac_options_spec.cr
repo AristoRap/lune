@@ -30,9 +30,6 @@ describe Lune::Options::Mac do
       Lune::Options::Mac.new.hide_traffic_lights.should be_false
     end
 
-    it "menubar_mode is false" do
-      Lune::Options::Mac.new.menubar_mode.should be_false
-    end
   end
 
   describe "via opts.mac block" do
@@ -63,11 +60,18 @@ describe Lune::Options::Mac do
       opts.mac.hide_traffic_lights.should be_true
     end
 
-    it "menubar_mode is settable" do
-      opts = Lune::Options.new
-      opts.mac { |m| m.menubar_mode = true }
-      opts.mac.menubar_mode.should be_true
-    end
+  end
+end
+
+describe "Lune::Options#menubar_mode" do
+  it "defaults to false" do
+    Lune::Options.new.menubar_mode.should be_false
+  end
+
+  it "is settable at the top level (cross-platform)" do
+    opts = Lune::Options.new
+    opts.menubar_mode = true
+    opts.menubar_mode.should be_true
   end
 end
 

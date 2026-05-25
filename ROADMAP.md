@@ -26,7 +26,8 @@ Features the platform exposes that Lune doesn't yet surface.
 - [ ] `autostart` plugin — register the app to launch at login (LaunchAgent on macOS, `.desktop` on Linux)
 - [ ] Reactive SQLite — `Sqlite.watch(db, sql, params, cb)` re-runs a query and pushes updated rows whenever the database is written; pairs with Stream for live Vue reactivity
 - [x] Dialogs file-type filters — `Dialogs.openFile` / `openFiles` / `saveFile` now accept an optional `filters: [{name, extensions}]` array. Win32 builds `lpstrFilter` + `lpstrDefExt` (multi-group dropdown, default extension on save); macOS feeds `NSOpenPanel.allowedFileTypes` (flat union — `allowedContentTypes` + UTType could surface group names but needs macOS 11+); Linux adds one `GtkFileFilter` per group with `*.ext` patterns. Verified on Win32 via the demo's tray icon picker; macOS / Linux changes ship unverified.
-- [x] Windows `opts.tray.toggle_window_on` — `Lune::Native::Tray.button_screen_rect` now uses `Shell_NotifyIconGetRect` to return the icon's screen rect, and `Lune::Plugins::Tray.build_window_toggle` shares its toggle path with macOS. Follow-up: a Windows analogue of `mac.menubar_mode` (auto-hide on focus loss, no taskbar entry) is still open.
+- [x] Windows `opts.tray.toggle_window_on` — `Lune::Native::Tray.button_screen_rect` now uses `Shell_NotifyIconGetRect` to return the icon's screen rect, and `Lune::Plugins::Tray.build_window_toggle` shares its toggle path with macOS.
+- [x] Cross-platform `opts.menubar_mode` — promoted to a top-level option (was `opts.mac.menubar_mode`). macOS uses `NSApplicationActivationPolicyAccessory` + `NSWindowDidResignKeyNotification`; Windows uses `WS_EX_TOOLWINDOW` (hides from taskbar + Alt+Tab) + `WM_ACTIVATEAPP` (auto-hide on app deactivation). Linux is silently ignored — open question: GTK `_NET_WM_STATE_SKIP_TASKBAR` + `_NET_WM_STATE_SKIP_PAGER` + FocusOut observer for parity.
 
 ## Architecture
 

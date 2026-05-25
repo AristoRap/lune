@@ -40,7 +40,7 @@ module Lune
 
         # When true, the tray icon is shown automatically at app start without
         # requiring a JS `lune.Tray.show("")` call. Auto-enabled by
-        # `mac.menubar_mode`.
+        # `opts.menubar_mode`.
         property auto_show : Bool = false
       end
 
@@ -139,7 +139,7 @@ module Lune
 
       # Hook the macro-generated install: run the binding registration, then
       # auto-show the tray icon at boot when `opts.tray.auto_show` is set
-      # (driven by `mac.menubar_mode`). Same click defaults the JS-triggered
+      # (driven by `opts.menubar_mode`). Same click defaults the JS-triggered
       # `Tray.show` binding uses, so behavior is consistent boot vs on-demand.
       def install(app : Lune::App) : Nil
         previous_def
