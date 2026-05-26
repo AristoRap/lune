@@ -69,9 +69,21 @@ searchButton.addEventListener("click", () =>
 
 ## Timing
 
-`app.event.emit` is safe to call from any fiber. Events emitted before the WebView is open are silently dropped — emit from `on_load` or in response to a JS event to guarantee delivery.
+`app.event.emit` is safe to call from any fiber. Events emitted before the bridge is ready are buffered (up to 64; oldest dropped with a warning on overflow) and flushed once the WebView loads — but for guaranteed delivery, emit from `on_load` or in response to a JS event.
 
-Crystal `app.event.on` handlers run on the webview main thread. Keep them short; dispatch long work to `app.async`.
+Crystal `app.event.on` handlers run on the webview main thread, the same thread Cocoa/GTK/WebView2 use to repaint. **Any blocking work inside the handler freezes the UI** — a synchronous DB query, slow file read, or HTTP call will visibly stall the window until it returns. Dispatch that work to `app.async`:
+
+```crystal
+app.event.on("search") do |data|
+  query = data["query"].as_s
+  app.async do
+    results = search_db(query) # blocking I/O — fine here, off the main thread
+    app.event.emit("results", results)
+  end
+end
+```
+
+This is the same rule that applies to sync bindings (see [Bindings](./bindings#async-bindings)) — the `on` handler isn't a binding, so `async: true` doesn't apply; you have to move the work yourself.
 
 ---
 
