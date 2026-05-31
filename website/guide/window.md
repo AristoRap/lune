@@ -266,11 +266,9 @@ Tray icon, menu, and click events are owned by the `tray` plugin — configure `
 
 ---
 
-## macOS
+## Menu bar
 
 **Supported:** macOS, Windows — **Not yet:** Linux
-
-### Menu bar
 
 Use `opts.menu { |m| }` to define the application menu bar. When no menu is configured, Lune falls back to a standard menu (App + Edit + Window menus on macOS; no menu on Windows). If you set `opts.menu`, that menu replaces the default entirely.
 
@@ -297,7 +295,7 @@ opts.menu do |m|
 end
 ```
 
-#### Role menus
+### Role menus
 
 Role menus insert the standard macOS menus built from native selectors — they work correctly without any Crystal callbacks.
 
@@ -308,7 +306,7 @@ Role menus insert the standard macOS menus built from native selectors — they 
 
 Per macOS convention `m.app_menu` should be first. `m.edit_menu` makes text inputs in your WebView support undo/redo and clipboard shortcuts automatically.
 
-#### Submenus
+### Submenus
 
 `m.submenu(label) { |group| }` adds a top-level menu. Inside the block, call builder methods on `group`:
 
@@ -322,7 +320,7 @@ Per macOS convention `m.app_menu` should be first. `m.edit_menu` makes text inpu
 
 All builder methods return the `Options::Menu::Item` they create — hold the reference to mutate it later (see [Runtime updates](#runtime-updates)).
 
-#### Shortcuts
+### Shortcuts
 
 Pass a shortcut string to any item. The format is modifier tokens joined by `+`, with the key last:
 
@@ -347,7 +345,7 @@ Named keys: `return`, `enter`, `tab`, `escape` / `esc`, `delete` / `backspace`, 
 
 Single-letter keys are automatically uppercased when `shift` is present (`"cmd+shift+z"` → key `Z`).
 
-#### Checkbox items
+### Checkbox items
 
 The block receives the new checked state as a `Bool`. The visual checkmark is toggled automatically by the native layer.
 
@@ -359,7 +357,7 @@ m.submenu "View" do |view|
 end
 ```
 
-#### Radio items
+### Radio items
 
 Adjacent radio items form a group automatically — no explicit grouping needed. When one is selected, the others in the group are deselected by the native layer. The block fires for the newly selected item only.
 
@@ -373,7 +371,7 @@ end
 
 To have two independent radio groups in the same submenu, separate them with a `separator`.
 
-#### Runtime updates
+### Runtime updates
 
 Every builder method returns the `Options::Menu::Item` it creates. Hold a reference to mutate `label`, `enabled`, or `checked` at runtime, then call `app.update_menu` to push the changes to the native layer.
 
@@ -404,7 +402,7 @@ end
 
 Both `app.update_menu` and `app.set_menu` return without doing anything on non-macOS platforms.
 
-#### Class-based menus
+### Class-based menus
 
 For larger apps, subclass `Options::Menu::Group` or `Options::Menu` instead of using inline blocks. The builder methods (`item`, `separator`, `checkbox`, `radio`, `submenu`) are inherited and can be called directly in `initialize`. State and callbacks live inside the class, keeping `main.cr` clean.
 
@@ -458,7 +456,11 @@ opts.menu AppMenu.new(app)
 
 ---
 
-### Window drag zones _(macOS only)_
+## macOS
+
+**Supported:** macOS — **Not yet:** Windows, Linux
+
+### Window drag zones
 
 CSS-marked elements that initiate a native window drag are handled by the `window` plugin — configure `opts.window.drag_zone = "--lune-draggable"` and tag DOM elements with `style="--lune-draggable: true"`. See the [Window plugin](../plugins/window#window-drag-macos-only) page for the full setup, including how detection walks up the DOM and the platform-availability matrix.
 
