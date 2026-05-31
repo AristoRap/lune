@@ -9,12 +9,14 @@ on:
       - "package.json"
       - "package-lock.json"
       - "**.md"
+      - "Makefile"
   pull_request:
     paths-ignore:
       - "website/**"
       - "package.json"
       - "package-lock.json"
       - "**.md"
+      - "Makefile"
 
 env:
   SQLITE_DLL_URL: "https://www.sqlite.org/2024/sqlite-dll-win-x64-3450000.zip"
