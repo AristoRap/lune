@@ -7,7 +7,9 @@ Lune reads an optional `lune.yml` file from the root of your project. All keys h
 ## Full reference
 
 ```yaml
-# App name (optional — used for display only)
+# App name (optional). Drives bundle/binary filenames, the macOS
+# CFBundleName, the derived bundle_id, and the runtime Lune::APP_NAME.
+# Defaults to the app entry's basename (e.g. `main` from src/main.cr).
 name: my_app
 
 # Path to the app icon asset, relative to the project root (optional)
@@ -70,9 +72,23 @@ url_schemes:
 
 ### `name`
 
-**Type:** `String?` — **Default:** `nil`
+**Type:** `String?` — **Default:** the app entry's basename (e.g. `main` from `src/main.cr`)
 
-Optional display name for the app. Not used by the CLI toolchain — you can safely omit it.
+The app name. It is not display-only — it determines artifact names and identifiers across the toolchain. When omitted, Lune derives it from the [`app_entry`](#app_entry) basename, which is rarely what you want for a shipped app, so set it explicitly before building or distributing.
+
+| Where it's used                          | Effect                                                                                            |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `lune build` (macOS)                     | Bundle directory `build/<name>.app` and `CFBundleName` in `Info.plist`                            |
+| `lune build` (Windows)                   | Binary `build/<name>.exe`                                                                         |
+| `lune build` (Linux)                     | Binary `build/<name>`                                                                             |
+| `lune dist` (macOS)                      | DMG filename `build/<name>.dmg` and the mounted volume name                                       |
+| `lune dist` (Linux)                      | `build/<name>.AppImage`, the `.AppDir` layout, and the `.desktop` `Name`/`Exec`                   |
+| [`mac.bundle_id`](#macbundle_id) default | Derived identifier `dev.lune.<name>` when no explicit `bundle_id` is set                          |
+| Runtime `Lune::APP_NAME`                 | Baked into the binary at build time; used for the window and the Windows toast-notification AUMID |
+
+```yaml
+name: my_app
+```
 
 ---
 
