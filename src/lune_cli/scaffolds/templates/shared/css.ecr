@@ -10,9 +10,17 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-::-webkit-scrollbar { display: none; }
+::-webkit-scrollbar {
+  display: none;
+}
 
 body {
   display: flex;
@@ -41,20 +49,30 @@ body {
 .logo {
   height: 16em;
   padding: 1em;
-  will-change: filter;
-  transition: filter 300ms;
+  transition:
+    filter 300ms,
+    transform 300ms;
+  will-change: filter, transform;
+}
+
+.logo:hover {
+  transform: scale(1.04);
+}
+
+.logo.lune {
+  filter: drop-shadow(0 0 0.8em #a78bfa00);
 }
 
 .logo.lune:hover {
-  filter: drop-shadow(0 0 1.5em #a78bfa99);
+  filter: drop-shadow(0 0 0.8em #a78bfacc);
 }
 
-.logo.vite:hover {
-  filter: drop-shadow(0 0 1.5em #ffd62e88);
+.logo.vue {
+  filter: drop-shadow(0 0 0.8em #41b88300);
 }
 
 .logo.vue:hover {
-  filter: drop-shadow(0 0 1.5em #41b88388);
+  filter: drop-shadow(0 0 0.8em #41b883cc);
 }
 
 /* ── heading ─────────────────────────────────────────── */
@@ -109,7 +127,9 @@ input[type="text"] {
   transition: border-color 250ms;
 }
 
-input[type="text"]:focus { border-color: #a78bfa; }
+input[type="text"]:focus {
+  border-color: #a78bfa;
+}
 
 .greet-result {
   color: rgba(255, 255, 255, 0.45);
@@ -145,7 +165,9 @@ button {
   background: rgba(255, 255, 255, 0.06);
   color: rgba(255, 255, 255, 0.87);
   cursor: pointer;
-  transition: border-color 250ms, background 250ms;
+  transition:
+    border-color 250ms,
+    background 250ms;
 }
 
 button:hover {

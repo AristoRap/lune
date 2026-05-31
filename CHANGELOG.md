@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.16.1] - 2026-06-01
+
+### Fixed
+
+- `lune init --template vue` scaffold now works out of the box: the frontend calls `api.Welcome.greet` / `api.Counter.inc/dec` and the backend installs the matching `Counter` binding (previously the Vue starter called bindings that didn't exist).
+
 ### Changed
 
 - Bumped the `argy` dependency to 0.4.0 (injectable per-command output streams). `lune version` now prints through the command's stdout stream — no user-facing change, but CLI output is now capturable in specs via the new `capture_cli` test helper.

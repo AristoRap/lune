@@ -419,6 +419,29 @@ describe LuneCLI do
     end
   end
 
+  describe "scaffold template consistency" do
+    ctx = LuneCLI::Context.new("demo_app", template: "vue")
+
+    # Every Bindable class emits `api.<ClassName>.<method>`. A namespace-less
+    # `api.greet(...)` or a lowercase `api.counter.*` is therefore unreachable —
+    # the call resolves to undefined and the bridge never fires.
+    it "only references bindings the Crystal backend exposes (vue template)" do
+      main = LuneCLI::Scaffolds::CrystalMain.new(ctx).to_h[:rendered]
+      app = LuneCLI::Scaffolds::VueApp.new(ctx).to_h[:rendered]
+
+      flat = app.scan(/\bapi\.([a-z]\w*)/).map { |m| m[1] }
+      flat.should be_empty
+
+      calls = app.scan(/\bapi\.([A-Za-z_]\w*)\.([A-Za-z_]\w*)/).map { |m| {m[1], m[2]} }
+      calls.should_not be_empty
+
+      calls.each do |(ns, method)|
+        main.should match(/class #{ns}\b/)
+        main.should match(/def #{method}\b/)
+      end
+    end
+  end
+
   describe "dist command" do
     it "is registered on the root command" do
       LuneCLI.root_command.subcommands.has_key?("dist").should be_true

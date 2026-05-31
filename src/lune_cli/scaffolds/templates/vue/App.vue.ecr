@@ -10,15 +10,15 @@ const count = ref(0);
 
 async function greet() {
   if (!name.value.trim()) return;
-  greetResult.value = await api.greet(name.value.trim());
+  greetResult.value = await api.Welcome.greet(name.value.trim());
 }
 
 async function inc() {
-  count.value = await api.counter.inc(count.value);
+  count.value = await api.Counter.inc(count.value);
 }
 
 async function dec() {
-  count.value = await api.counter.dec(count.value);
+  count.value = await api.Counter.dec(count.value);
 }
 </script>
 

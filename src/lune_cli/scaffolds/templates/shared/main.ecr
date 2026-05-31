@@ -17,8 +17,25 @@ class Welcome
   end
 end
 
+# A second binding surface. The class name becomes the JS namespace, so these
+# methods are reachable from the frontend as `api.Counter.inc` / `api.Counter.dec`.
+class Counter
+  include Lune::Bindable
+
+  @[Lune::Bind]
+  def inc(value : Int32) : Int32
+    value + 1
+  end
+
+  @[Lune::Bind]
+  def dec(value : Int32) : Int32
+    value - 1
+  end
+end
+
 app = Lune::App.new
 app.install(Welcome.new)
+app.install(Counter.new)
 
 Lune.run(app, assets: "frontend/dist") do |opts|
   opts.title = "<%= @ctx.app_name %>"
