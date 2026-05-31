@@ -238,6 +238,10 @@ describe LuneCLI do
     it "version string includes the lune version constant" do
       LuneCLI::Commands::Version.new.version_string.should eq("lune v#{Lune::VERSION}")
     end
+
+    it "prints the version to the command's injected stdout stream" do
+      capture_cli(["version"])[:out].should contain("lune v#{Lune::VERSION}")
+    end
   end
 
   describe LuneCLI::Config do

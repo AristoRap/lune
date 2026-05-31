@@ -15,7 +15,7 @@ dependencies:
     branch: master
   argy:
     github: AristoRap/argy
-    version: ~> 0.3
+    version: ~> 0.4
   sqlite3:
     github: crystal-lang/crystal-sqlite3
     version: ~> 0.23

@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Bumped the `argy` dependency to 0.4.0 (injectable per-command output streams). `lune version` now prints through the command's stdout stream — no user-facing change, but CLI output is now capturable in specs via the new `capture_cli` test helper.
+
 ## [0.16.0] - 2026-05-25
 
 ### Added

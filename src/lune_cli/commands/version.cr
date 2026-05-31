@@ -8,8 +8,8 @@ module LuneCLI
           long: "Print the Lune version and exit."
         )
 
-        command.on_run do |_cmd, _args|
-          puts version_string
+        command.on_run do |cmd, _args|
+          cmd.stdout.puts version_string
         end
 
         command

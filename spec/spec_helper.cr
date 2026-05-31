@@ -53,6 +53,24 @@ def with_logger(logger : Log, &)
   end
 end
 
+# Runs a CLI invocation with its output fully captured. argy's own text and
+# anything a command body prints through the command streams land in `out` /
+# `err`; structured `Lune.logger` entries land in `logs`. Uses the rescue-free
+# spec executor, so a command that raises `Argy::Error` propagates instead of
+# calling `exit` — wrap expected-failure calls in `expect_raises`.
+def capture_cli(argv : Array(String))
+  out = IO::Memory.new
+  err = IO::Memory.new
+  backend = CaptureBackend.new
+  root = LuneCLI.root_command
+  root.stdout = out
+  root.stderr = err
+  with_logger(Log.new("lune", backend, :debug)) do
+    root.__execute_without_rescue_for_spec(argv)
+  end
+  {out: out.to_s, err: err.to_s, logs: backend.entries}
+end
+
 # Runs the block inside a blank temp dir (no lune.yml) with Dir.cd applied.
 def in_blank_project(& : ->)
   with_tempdir do |dir|
