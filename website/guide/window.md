@@ -456,15 +456,17 @@ opts.menu AppMenu.new(app)
 
 ---
 
+## Window drag zones
+
+**Supported:** macOS, Windows — **Not yet:** Linux
+
+CSS-marked elements that initiate a native window drag are handled by the `window` plugin — configure `opts.window.drag_zone = "--lune-draggable"` and tag DOM elements with `style="--lune-draggable: true"`. See the [Window plugin](../plugins/window#window-drag-macos-windows) page for the full setup, including how detection walks up the DOM and the platform-availability matrix.
+
+---
+
 ## macOS
 
 **Supported:** macOS — **Not yet:** Windows, Linux
-
-### Window drag zones
-
-CSS-marked elements that initiate a native window drag are handled by the `window` plugin — configure `opts.window.drag_zone = "--lune-draggable"` and tag DOM elements with `style="--lune-draggable: true"`. See the [Window plugin](../plugins/window#window-drag-macos-only) page for the full setup, including how detection walks up the DOM and the platform-availability matrix.
-
----
 
 ### Window appearance
 
