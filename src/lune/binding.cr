@@ -1,4 +1,5 @@
 require "vow/manifest"
+require "vow/context"
 
 module Lune
   # A registered call from JS to Crystal. One class for both user-class bindings
@@ -16,16 +17,22 @@ module Lune
       @method : String,
       @args : Array(String),
       @return_type : String,
-      @callback : Proc(Array(JSON::Any), JSON::Any),
+      @callback : Proc(Hash(String, JSON::Any), ::Vow::Context?, JSON::Any),
       internal : Bool = false,
       async : Bool = false,
       @arg_names : Array(String) = [] of String,
-      @arg_transforms : Array(String?) = [] of String?,
       @ts_args : Array(String?) = [] of String?,
       @ts_return_type : String? = nil,
     )
       @internal = internal
       @async = async
+    end
+
+    # The named-object wire keys for this binding's args — the resolved arg name
+    # (override or Crystal param) camelCased, the same key the client sends, the
+    # callback decodes, and the `.d.ts` declares.
+    def arg_keys : Array(String)
+      resolved_arg_names.map(&.camelcase(lower: true))
     end
 
     def id : String
@@ -37,11 +44,10 @@ module Lune
     end
 
     def to_js_stub : String
-      names = resolved_arg_names
-      params = names.join(", ")
-      call_args = call_arg_exprs(names)
-      call_tail = call_args.empty? ? "" : ", #{call_args.join(", ")}"
-      "  #{js_func_name}(#{params}) {\n    return __lune.call(#{id.inspect}#{call_tail});\n  },"
+      # The single named-args object is forwarded as-is; its keys are typed by
+      # the `.d.ts`. A zero-arg stub defaults it to `{}` so `fn()` stays callable.
+      param = @args.empty? ? "args = {}" : "args"
+      "  #{js_func_name}(#{param}) {\n    return __lune.call(#{id.inspect}, args);\n  },"
     end
 
     # JS-side runtime that every per-binding stub from `#to_js_stub` calls
@@ -51,8 +57,8 @@ module Lune
     def self.js_runtime : String
       <<-JS
         export const __lune = {
-          call(name, ...args) {
-            return window[name](...args).catch(function(err) {
+          call(name, args) {
+            return window[name](args).catch(function(err) {
               if (err !== null && typeof err === 'object' && typeof err.code === 'string') {
                 throw new LuneError(err.code, err.error);
               }
@@ -86,18 +92,23 @@ module Lune
     # positional bindings carry no per-arg default info), and `verb` is the
     # neutral default since the webview transport has no HTTP-verb notion.
     def to_vow_descriptor : Vow::ProcedureDescriptor
-      names = resolved_arg_names
-      args = names.map_with_index do |name, i|
-        Vow::ArgDescriptor.new(name, @args[i]? || "JSON::Any", false)
+      keys = arg_keys
+      args = @args.map_with_index do |type, i|
+        Vow::ArgDescriptor.new(keys[i], type, false)
       end
       Vow::ProcedureDescriptor.new(name: id, args: args, return_type: @return_type, verb: "post")
     end
 
+    # The TS type of the single named-args object: `args: { camelKey: T; … }`,
+    # or `args?: {}` for a zero-arg binding (so `fn()` stays callable).
     def dts_params(known : Hash(String, String) = {} of String => String)
-      resolved_arg_names.each_with_index.map { |name, i|
-        ts = @ts_args[i]? || Lune::Generator.crystal_to_ts(@args[i], known)
-        "#{name}: #{ts}"
-      }.join(", ")
+      return "args?: {}" if @args.empty?
+      keys = arg_keys
+      fields = @args.each_with_index.map { |type, i|
+        ts = @ts_args[i]? || Lune::Generator.crystal_to_ts(type, known)
+        "#{keys[i]}: #{ts}"
+      }
+      "args: { #{fields.join("; ")} }"
     end
 
     def internal?
@@ -106,10 +117,6 @@ module Lune
 
     protected def resolved_arg_names : Array(String)
       @arg_names.empty? ? Array(String).new(@args.size) { |i| "arg#{i}" } : @arg_names
-    end
-
-    protected def call_arg_exprs(names : Array(String)) : Array(String)
-      names.map_with_index { |name, i| @arg_transforms[i]? || name }
     end
   end
 end

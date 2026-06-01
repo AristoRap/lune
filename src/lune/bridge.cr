@@ -1,4 +1,5 @@
 require "json"
+require "vow/registry"
 
 module Lune
   class Bridge
@@ -7,7 +8,7 @@ module Lune
     @async_pool : Fiber::ExecutionContext::Parallel? = nil
     @wv : Webview::WebviewLike
 
-    def initialize(@wv : Webview::WebviewLike)
+    def initialize(@wv : Webview::WebviewLike, @registry : ::Vow::Registry)
       @closed = Atomic(Bool).new(false)
       @all_bindings = {} of String => Binding
     end
@@ -61,16 +62,20 @@ module Lune
       seq : String,
       args : Array(JSON::Any),
     )
+      # The named-args object rides through the webview's positional array as a
+      # single element; hand its JSON straight to the registry (a zero-arg call
+      # sends `{}`). `dispatch` decodes, invokes, and JSON-encodes the result.
+      raw = args.empty? ? "{}" : args[0].to_json
       if binding.async
         pool = @async_pool ||= Fiber::ExecutionContext::Parallel.new("lune-async", System.cpu_count)
         pool.spawn do
           dispatch_result(wv, seq, closed: -> { @closed.get }) do
-            binding.callback.call(args)
+            @registry.dispatch(binding.id, raw, nil)
           end
         end
       else
         dispatch_result(wv, seq, closed: -> { @closed.get }) do
-          binding.callback.call(args)
+          @registry.dispatch(binding.id, raw, nil)
         end
       end
     end
@@ -79,21 +84,19 @@ module Lune
       wv : Webview::WebviewLike,
       seq : String,
       closed : (-> Bool)? = nil,
-      &block : -> JSON::Any
+      &block : -> String
     )
-      result = block.call
-      # Serialize OUTSIDE the dispatched block: if `to_json` raises (cyclic
-      # refs, encoding quirks), we'd rather have it unwind here — on a plain
-      # Crystal fiber — than inside the Cocoa `dispatch_async` callback
-      # where it can corrupt the autorelease-pool stack (signal 11 in
-      # `objc_autoreleasePoolPop`, observed once on the error path).
-      payload = result.to_json
+      # `Vow::Registry#dispatch` already JSON-encodes the result here — OUTSIDE
+      # the Cocoa `dispatch_async` callback below — so an encoding error unwinds
+      # on a plain Crystal fiber rather than inside the autorelease-pool callback
+      # (a SIGSEGV in `objc_autoreleasePoolPop` was observed once on that path).
+      payload = block.call
       return if closed.try(&.call)
       wv.dispatch { safe_resolve(wv, seq, 0, payload, closed) }
     rescue ex
       Lune.logger.error { "Binding execution failed: #{ex.message}" }
       Lune.logger.debug(exception: ex) { "Binding execution failed (stacktrace)" }
-      code = ex.as?(Lune::Error).try(&.code) || "error"
+      code = ex.as?(::Vow::Error).try(&.code) || ex.as?(Lune::Error).try(&.code) || "error"
       payload = error_envelope(code, ex.message)
       return if closed.try(&.call)
       wv.dispatch { safe_resolve(wv, seq, 1, payload, closed) }

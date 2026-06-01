@@ -87,7 +87,7 @@ module Lune
         registry = Plugins::Registry.new(handle, @options, on_quit: -> { wv.dispatch { wv.terminate } })
         resolved = registry.validate_resolve_install(@config.plugins, @app)
 
-        bridge = Bridge.new(wv)
+        bridge = Bridge.new(wv, @app.registry)
         bridge.register_bindings(@app.bindings.reject(&.internal?))
         bridge.register_bindings(@app.bindings.select(&.internal?))
         @app.bridge = bridge

@@ -1,8 +1,13 @@
 require "vow/manifest"
+require "vow/registry"
 
 module Lune
   class App
     getter bindings = [] of Binding
+    # The Vow::Registry every bound method registers into at install time — the
+    # transport-agnostic dispatch seam the Bridge sits on (name + named-object
+    # JSON in, JSON out, with typed `Vow::Error` decode failures).
+    getter registry = Vow::Registry.new
     # Captured `Vow::TypeDescriptor`s for the surface types reachable from the
     # registered bindings — populated by the `Bindable` macro alongside each
     # binding, split by surface so each interface lands in the right generated

@@ -23,7 +23,6 @@ module Lune
       end
 
       @[Lune::Bind]
-      @[Lune::BindOverride(arg_names: ["x", "y", "itemsJson"])]
       def show(x : Float64, y : Float64, items_json : String) : Nil
         Lune::Native::Menu.show_context_menu(@handle, x.to_f32, y.to_f32, items_json) do |id|
           @app.event.emit("context_menu", {"id" => id})
@@ -44,7 +43,7 @@ module Lune
           document.addEventListener('contextmenu', function(e) {
             if (!_ctx_items) return;
             e.preventDefault();
-            window[#{show_key.inspect}](e.clientX, e.clientY, JSON.stringify(_ctx_items));
+            window[#{show_key.inspect}]({ x: e.clientX, y: e.clientY, itemsJson: JSON.stringify(_ctx_items) });
           });
           #{block_line}
         })();

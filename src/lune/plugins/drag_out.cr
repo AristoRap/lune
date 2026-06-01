@@ -18,22 +18,21 @@ module Lune
       end
 
       @[Lune::Bind]
-      @[Lune::BindOverride(arg_names: ["paths"], arg_transforms: ["JSON.stringify(paths || [])"] of String?, ts_args: ["string[]"] of String?)]
-      def start(paths_json : String) : Nil
-        Lune::Native::Window.start_drag_out(@handle, JSON.parse(paths_json).as_a.map(&.as_s))
+      def start(paths : Array(String)) : Nil
+        Lune::Native::Window.start_drag_out(@handle, paths)
       end
 
       def unavailable_js_stub(platform : Symbol) : String?
         ns = binding_namespace.gsub("::", ".")
         msg = "#{ns}.start is not available on #{platform}"
         <<-JS
-          start(paths) { return Promise.reject(new LuneError("UNAVAILABLE_ON_PLATFORM", #{msg.inspect})); },
+          start(args) { return Promise.reject(new LuneError("UNAVAILABLE_ON_PLATFORM", #{msg.inspect})); },
         JS
       end
 
       def unavailable_dts_stub : String?
         <<-DTS
-          start(paths: string[]): Promise<void>;
+          start(args: { paths: string[] }): Promise<void>;
         DTS
       end
     end

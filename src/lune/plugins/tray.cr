@@ -150,7 +150,6 @@ module Lune
       end
 
       @[Lune::Bind]
-      @[Lune::BindOverride(arg_names: ["iconPath"])]
       def show(icon_path : String) : Nil
         Lune::Native::Tray.show(icon_path, on_tray_click_handler)
         Lune::Native::Tray.set_right_click_cb(on_right_click_handler)
@@ -171,21 +170,12 @@ module Lune
         Lune::Native::Tray.popup_menu
       end
 
+      # A tray menu entry. JS callers pass `[{id, label}]` directly; vow decodes
+      # it into this NamedTuple and maps it to `{ id: string; label: string }[]`.
+      alias TrayMenuItem = NamedTuple(id: String, label: String)
+
       @[Lune::Bind]
-      @[Lune::BindOverride(arg_names: ["items"], arg_transforms: ["JSON.stringify(items || [])"] of String?, ts_args: ["{ id: string; label: string }[]"] of String?)]
-      def set_menu(items_json : String) : Nil
-        items = begin
-          raw = Array(Hash(String, JSON::Any)).from_json(items_json)
-          raw.compact_map do |h|
-            id = h["id"]?.try(&.as_s?)
-            label = h["label"]?.try(&.as_s?)
-            next unless id && label
-            {id: id, label: label}
-          end
-        rescue ex : JSON::ParseException
-          Lune.logger.warn { "Tray.set_menu: invalid menu JSON — #{ex.message}" }
-          [] of {id: String, label: String}
-        end
+      def set_menu(items : Array(TrayMenuItem)) : Nil
         @has_menu = items.any?
         Lune::Native::Tray.set_menu(items, on_menu_click_handler)
       end
@@ -194,21 +184,21 @@ module Lune
         ns = binding_namespace.gsub("::", ".")
         reject = ->(m : String) { %(return Promise.reject(new LuneError("UNAVAILABLE_ON_PLATFORM", "#{ns}.#{m} is not available on #{platform}"));) }
         <<-JS
-          show(iconPath) { #{reject.call("show")} },
-          hide() { #{reject.call("hide")} },
-          setIcon(path) { #{reject.call("setIcon")} },
-          popupMenu() { #{reject.call("popupMenu")} },
-          setMenu(items) { #{reject.call("setMenu")} },
+          show(args) { #{reject.call("show")} },
+          hide(args = {}) { #{reject.call("hide")} },
+          setIcon(args) { #{reject.call("setIcon")} },
+          popupMenu(args = {}) { #{reject.call("popupMenu")} },
+          setMenu(args) { #{reject.call("setMenu")} },
         JS
       end
 
       def unavailable_dts_stub : String?
         <<-DTS
-          show(iconPath: string): Promise<void>;
-          hide(): Promise<void>;
-          setIcon(path: string): Promise<void>;
-          popupMenu(): Promise<void>;
-          setMenu(items: { id: string; label: string }[]): Promise<void>;
+          show(args: { iconPath: string }): Promise<void>;
+          hide(args?: {}): Promise<void>;
+          setIcon(args: { path: string }): Promise<void>;
+          popupMenu(args?: {}): Promise<void>;
+          setMenu(args: { items: { id: string; label: string }[] }): Promise<void>;
         DTS
       end
     end
