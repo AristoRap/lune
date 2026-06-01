@@ -33,7 +33,6 @@ private def wire_binding(fake, callback : Proc(Hash(String, JSON::Any), ::Vow::C
     method: "ping",
     args: [] of String,
     return_type: "String",
-    callback: callback,
     internal: false,
     async: false,
   )

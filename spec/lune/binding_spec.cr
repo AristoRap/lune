@@ -5,8 +5,7 @@ private def make_bd(method = "ping", namespace = "alpha", args = [] of String, r
     method: method,
     namespace: namespace,
     args: args,
-    return_type: return_type,
-    callback: ->(_a : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") }
+    return_type: return_type
   )
 end
 
@@ -59,7 +58,6 @@ describe Lune::Binding do
         namespace: "math",
         args: ["Int32", "String"],
         return_type: "Int32",
-        callback: ->(_a : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new(0_i64) },
         arg_names: ["n", "label"]
       )
       bd.to_js_stub.includes?("add(args)").should be_true
@@ -83,7 +81,6 @@ describe Lune::Binding do
         namespace: "math",
         args: ["Int32", "String"],
         return_type: "Int32",
-        callback: ->(_a : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new(0_i64) },
         arg_names: ["n", "label"]
       )
       bd.to_dts_sig.should eq("  add(args: { n: number; label: string }): Promise<number>;")

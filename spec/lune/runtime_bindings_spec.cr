@@ -44,7 +44,7 @@ describe "Lune::Plugins" do
       ))
       bridge_for(app, fake)
 
-      fake.invoke("Lune.Plugins.System.open_url", "seq-2", [JSON.parse(%({"url": "https://example.com"}))])
+      fake.invoke("Lune.Plugins.System.openUrl", "seq-2", [JSON.parse(%({"url": "https://example.com"}))])
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -91,6 +91,8 @@ describe "Lune::Plugins" do
 
       fake.invoke("Lune.Plugins.System.environment", "seq-5", [] of JSON::Any)
       env = JSON.parse(fake.resolve_calls[0][2])
+      # os is an OS enum; Crystal's default Enum#to_json lowercases, and vow
+      # derives the union from that same serialization — so wire and type agree.
       ["darwin", "linux", "windows"].should contain(env["os"].as_s)
     end
   end
@@ -102,7 +104,7 @@ describe "Lune::Plugins" do
       app.install(Lune::Plugins::Filesystem.new)
       bridge_for(app, fake)
 
-      fake.invoke("Lune.Plugins.Filesystem.home_dir", "seq-6", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.Filesystem.homeDir", "seq-6", [] of JSON::Any)
       _, _, result = fake.resolve_calls[0]
       JSON.parse(result).as_s.should eq(Path.home.to_s)
     end
@@ -113,7 +115,7 @@ describe "Lune::Plugins" do
       app.install(Lune::Plugins::Filesystem.new)
       bridge_for(app, fake)
 
-      fake.invoke("Lune.Plugins.Filesystem.temp_dir", "seq-7", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.Filesystem.tempDir", "seq-7", [] of JSON::Any)
       _, _, result = fake.resolve_calls[0]
       JSON.parse(result).as_s.should eq(Dir.tempdir)
     end
@@ -124,7 +126,7 @@ describe "Lune::Plugins" do
       app.install(Lune::Plugins::Filesystem.new)
       bridge_for(app, fake)
 
-      fake.invoke("Lune.Plugins.Filesystem.downloads_dir", "seq-8", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.Filesystem.downloadsDir", "seq-8", [] of JSON::Any)
       _, _, result = fake.resolve_calls[0]
       JSON.parse(result).as_s.should start_with(Path.home.to_s)
     end
@@ -135,7 +137,7 @@ describe "Lune::Plugins" do
       app.install(Lune::Plugins::Filesystem.new)
       bridge_for(app, fake)
 
-      fake.invoke("Lune.Plugins.Filesystem.app_data_dir", "seq-9", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.Filesystem.appDataDir", "seq-9", [] of JSON::Any)
       _, _, result = fake.resolve_calls[0]
       JSON.parse(result).as_s.should_not be_empty
     end
@@ -193,7 +195,7 @@ describe "Lune::Plugins" do
       ))
       bridge_for(app, fake)
 
-      fake.invoke("Lune.Plugins.Clipboard.read_html", "seq-20", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.Clipboard.readHtml", "seq-20", [] of JSON::Any)
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -215,7 +217,7 @@ describe "Lune::Plugins" do
       ))
       bridge_for(app, fake)
 
-      fake.invoke("Lune.Plugins.Clipboard.write_html", "seq-21", [JSON.parse(%({"html": "<p>hi</p>"}))])
+      fake.invoke("Lune.Plugins.Clipboard.writeHtml", "seq-21", [JSON.parse(%({"html": "<p>hi</p>"}))])
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -236,7 +238,7 @@ describe "Lune::Plugins" do
       ))
       bridge_for(app, fake)
 
-      fake.invoke("Lune.Plugins.Clipboard.read_image", "seq-22", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.Clipboard.readImage", "seq-22", [] of JSON::Any)
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -263,7 +265,7 @@ describe "Lune::Plugins" do
       ))
       bridge_for(app, fake)
 
-      fake.invoke("Lune.Plugins.Clipboard.read_image", "seq-img-err", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.Clipboard.readImage", "seq-img-err", [] of JSON::Any)
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -287,7 +289,7 @@ describe "Lune::Plugins" do
       ))
       bridge_for(app, fake)
 
-      fake.invoke("Lune.Plugins.Clipboard.write_image", "seq-23", [JSON.parse(%({"dataUrl": "data:image/png;base64,abc123"}))])
+      fake.invoke("Lune.Plugins.Clipboard.writeImage", "seq-23", [JSON.parse(%({"dataUrl": "data:image/png;base64,abc123"}))])
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -378,7 +380,7 @@ describe "Lune::Plugins" do
       app.install(Lune::Plugins::Tray.new)
       bridge_for(app, fake)
 
-      fake.invoke("Lune.Plugins.Tray.popup_menu", "seq-tray-3", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.Tray.popupMenu", "seq-tray-3", [] of JSON::Any)
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -460,19 +462,19 @@ describe "Lune::Plugins" do
       # cross-platform plugin's `install` quietly dropped a binding.
       ids.should contain("Lune.Plugins.System.quit")
       ids.should contain("Lune.Plugins.System.environment")
-      ids.should contain("Lune.Plugins.System.open_url")
-      ids.should contain("Lune.Plugins.Filesystem.home_dir")
+      ids.should contain("Lune.Plugins.System.openUrl")
+      ids.should contain("Lune.Plugins.Filesystem.homeDir")
       ids.should contain("Lune.Plugins.Clipboard.read")
       ids.should contain("Lune.Plugins.Clipboard.write")
-      ids.should contain("Lune.Plugins.Clipboard.read_html")
-      ids.should contain("Lune.Plugins.Clipboard.write_html")
-      ids.should contain("Lune.Plugins.Clipboard.read_image")
-      ids.should contain("Lune.Plugins.Clipboard.write_image")
+      ids.should contain("Lune.Plugins.Clipboard.readHtml")
+      ids.should contain("Lune.Plugins.Clipboard.writeHtml")
+      ids.should contain("Lune.Plugins.Clipboard.readImage")
+      ids.should contain("Lune.Plugins.Clipboard.writeImage")
       ids.should contain("Lune.Plugins.ContextMenu.show")
       ids.should contain("Lune.Plugins.Window.minimize")
-      ids.should contain("Lune.Plugins.Dialogs.open_file")
+      ids.should contain("Lune.Plugins.Dialogs.openFile")
       ids.should contain("Lune.Plugins.System.notify")
-      ids.should contain("Lune.Plugins.System.screen_info")
+      ids.should contain("Lune.Plugins.System.screenInfo")
       ids.should contain("Lune.Plugins.Event.emit")
       ids.should contain("Lune.Plugins.Navigation.changed")
     end
@@ -485,25 +487,25 @@ describe "Lune::Plugins" do
       case Lune::Plugins::CURRENT_PLATFORM
       when :darwin
         ids.should contain("Lune.Plugins.DragOut.start")
-        ids.should contain("Lune.Plugins.Window.start_drag")
+        ids.should contain("Lune.Plugins.Window.startDrag")
         ids.should contain("Lune.Plugins.Tray.show")
-        ids.should contain("Lune.Plugins.Tray.set_menu")
-        ids.should contain("Lune.Plugins.Tray.popup_menu")
+        ids.should contain("Lune.Plugins.Tray.setMenu")
+        ids.should contain("Lune.Plugins.Tray.popupMenu")
         ids.should contain("Lune.Plugins.FileWatch.watch")
       when :linux
         ids.should_not contain("Lune.Plugins.DragOut.start")
-        ids.should_not contain("Lune.Plugins.Window.start_drag")
+        ids.should_not contain("Lune.Plugins.Window.startDrag")
         ids.should contain("Lune.Plugins.Tray.show")
         ids.should contain("Lune.Plugins.FileWatch.watch")
       when :win32
         ids.should_not contain("Lune.Plugins.DragOut.start")
         # Window.start_drag ships on Win32 via ReleaseCapture + WM_NCLBUTTONDOWN/HTCAPTION.
-        ids.should contain("Lune.Plugins.Window.start_drag")
+        ids.should contain("Lune.Plugins.Window.startDrag")
         # Tray ships fully on Win32 — show/hide/clicks via Shell_NotifyIconW,
         # menus via CreatePopupMenu + TrackPopupMenu, icons via LoadImageW.
         ids.should contain("Lune.Plugins.Tray.show")
         ids.should contain("Lune.Plugins.Tray.hide")
-        ids.should contain("Lune.Plugins.Tray.set_menu")
+        ids.should contain("Lune.Plugins.Tray.setMenu")
         # FileWatch ships on Win32 via ReadDirectoryChangesW + IOCP.
         ids.should contain("Lune.Plugins.FileWatch.watch")
       end

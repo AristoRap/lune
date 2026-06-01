@@ -13,7 +13,6 @@ describe "Bridge races" do
       method: "echo",
       args: [] of String,
       return_type: "JSON",
-      callback: cb,
       internal: false,
       async: true
     )
@@ -59,7 +58,6 @@ describe "Bridge races" do
       method: "slow",
       args: [] of String,
       return_type: "JSON",
-      callback: cb,
       internal: false,
       async: true
     )

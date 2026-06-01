@@ -10,7 +10,6 @@ private def make_internal(method = "ping", namespace = "Test", args = [] of Stri
     method: method,
     args: args,
     return_type: return_type,
-    callback: ->(_a : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") },
     internal: true,
     arg_names: arg_names,
     ts_return_type: ts_return_type,
@@ -22,7 +21,7 @@ describe "Lune::Binding (internal: true — plugin surface)" do
     it "uses <Namespace>.<method> — same shape as user bindings" do
       make_internal(namespace: "Lune::Plugins::System", method: "quit").id.should eq("Lune.Plugins.System.quit")
       make_internal(namespace: "Lune::Plugins::Clipboard", method: "read").id.should eq("Lune.Plugins.Clipboard.read")
-      make_internal(namespace: "Lune::Plugins::System", method: "screen_info").id.should eq("Lune.Plugins.System.screen_info")
+      make_internal(namespace: "Lune::Plugins::System", method: "screen_info").id.should eq("Lune.Plugins.System.screenInfo")
     end
   end
 
@@ -50,7 +49,7 @@ describe "Lune::Binding (internal: true — plugin surface)" do
     it "emits an object method forwarding the named-args object" do
       stub = make_internal(namespace: "Lune::Plugins::System", method: "open_url", args: ["String"], arg_names: ["url"]).to_js_stub
       stub.includes?("openUrl(args)").should be_true
-      stub.includes?(%(__lune.call("Lune.Plugins.System.open_url", args))).should be_true
+      stub.includes?(%(__lune.call("Lune.Plugins.System.openUrl", args))).should be_true
     end
 
     it "forwards the named-args object regardless of arg count" do

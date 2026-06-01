@@ -44,7 +44,6 @@ private def wire(fake, namespace : String, method : String, args : Array(String)
     method: method,
     args: args,
     return_type: return_type,
-    callback: cb,
     async: async,
   )
   registry.register(binding.id, &cb)
@@ -114,6 +113,19 @@ describe "Bridge typed bindings" do
     body = JSON.parse(result)
     body["code"].as_s.should eq("not_found")
     body["error"].as_s.should eq("record 42 not found")
+  end
+
+  it "carries a typed error's hint onto the wire" do
+    fake = TypedFakeWebview.new
+    wire(fake, "test", "hinted", [] of String, "Nil") do |_args, _ctx|
+      raise Vow::Error.bad_input("nope", "try X instead")
+    end
+
+    fake.invoke("test.hinted", "seq-hint", [] of JSON::Any)
+
+    _seq, status, result = fake.resolve_calls[0]
+    status.should eq(1)
+    JSON.parse(result)["hint"].as_s.should eq("try X instead")
   end
 
   it "dispatches an async binding by name through the registry" do

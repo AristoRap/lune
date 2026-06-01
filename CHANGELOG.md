@@ -2,8 +2,15 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Per-call window context.** A `@[Lune::Bind]` method can declare a leading `ctx : Lune::WindowContext` parameter to receive the calling webview and the call's sequence id. The bridge injects it at dispatch, and it's kept out of the wire arguments, the manifest, and the generated client signature — so the JS call site is unchanged. Bindings that don't declare it are unaffected.
+- **Enums map to TypeScript string-literal unions.** A binding that returns or accepts a Crystal `enum` — directly or nested inside a `NamedTuple` / struct / `Array` — generates `type X = "a" | "b"` (captured generically by [vow](https://github.com/AristoRap/vow), emitted as a `.d.ts` `type` alias). The union is derived from the values each member **serializes to** (`Enum#to_json`), so it always matches the wire: Crystal's default lowercases (`Pending` → `"pending"`), and a custom `to_json` is reflected. `System.environment().os` now rides on a `Lune::Plugins::System::OS` enum — same `"darwin" | "linux" | "windows"` contract as before, now carried by the enum instead of a hand-written `@[Lune::BindOverride]`.
+- **Error hints reach the client.** A `Lune::Error` raised with a hint now carries it onto the wire (`{ code, error, hint }`) and into the generated `LuneError` (`readonly hint: string | null`), so the frontend can surface the corrective action you wrote in Crystal.
+
 ### Changed
 
+- **Depends on [vow](https://github.com/AristoRap/vow) `~> 0.2.0`** — marker-driven dispatch registration (lune keeps its own `@[Lune::Bind]` annotation while reusing vow's decode/invoke/encode), generic enum capture, and "did you mean?" diagnostics.
 - **Binding calls now take a single named-arguments object** _(breaking)_. A positional call like `api.Demo.greet(name)` becomes `api.Demo.greet({ name })` — the keys are the camelCased Crystal parameter names, typed by the generated `.d.ts`, so a missing or misspelled argument is caught at the call site instead of silently shifting. Zero-argument bindings stay callable as `fn()`.
 - **Dispatch now runs through [vow](https://github.com/AristoRap/vow)'s `Vow::Registry`.** The webview Bridge is a thin transport over `registry.dispatch`: arguments are decoded into their declared Crystal types, and a malformed or missing argument raises a typed `Vow::Error` (`bad_input`) mapped onto lune's `{ code, error }` reply envelope.
 - **Plugins that smuggled JSON-string arguments now take real typed arguments.** `Dialogs.openFile` / `openFiles` / `saveFile` accept `Array(FileFilter)`, `Tray.setMenu` accepts `Array(TrayMenuItem)`, and `DragOut.start` accepts `Array(String)` directly — the old `*_json : String` parameters and the client-side `JSON.stringify` calls are gone. A `NamedTuple` argument type (including an alias like `FileFilter`) is captured and inlined into the generated `.d.ts` automatically.

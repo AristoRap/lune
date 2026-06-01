@@ -41,7 +41,6 @@ describe "Lune core logging" do
             method: "ping",
             args: [] of String,
             return_type: "Nil",
-            callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new(nil) },
             internal: false,
             async: false
           ),
@@ -67,7 +66,6 @@ describe "Lune core logging" do
         method: "boom",
         args: [] of String,
         return_type: "void",
-        callback: cb,
       )
       app.register(binding)
       app.registry.register(binding.id, &cb)

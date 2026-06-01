@@ -47,7 +47,6 @@ describe Lune::App do
         method: "sum",
         args: ["a", "b"],
         return_type: "number",
-        callback: ->(args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new(args["a"].as_i + args["b"].as_i) },
       ))
 
       app.bindings.size.should eq(1)
@@ -70,30 +69,9 @@ describe Lune::App do
         args: ["url"],
         return_type: "object",
         async: true,
-        callback: ->(_a : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON.parse(%({"ok": true})) },
       ))
 
       app.bindings.first.async.should be_true
-    end
-
-    it "stores the callback block" do
-      app = Lune::App.new
-
-      app.register(Lune::Binding.new(
-        namespace: "util",
-        method: "echo",
-        args: ["value"],
-        return_type: "string",
-        callback: ->(args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new(args["value"].as_s) },
-      ))
-
-      binding = app.bindings.first
-
-      result = binding.callback.call({
-        "value" => JSON::Any.new("hello"),
-      }, nil)
-
-      result.as_s.should eq("hello")
     end
 
     it "accepts a pre-built internal binding directly" do
@@ -104,7 +82,6 @@ describe Lune::App do
         method: "test.ping",
         args: [] of String,
         return_type: "String",
-        callback: ->(_a : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") },
         internal: true,
       )
 

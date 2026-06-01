@@ -93,16 +93,23 @@ module Lune
         DTS
     end
 
-    # Renders one `export interface` per captured surface type, in capture order,
-    # mapping each field type through the `known`-aware TS mapper. Returns "" for
-    # an empty set so the heredoc collapses cleanly (no orphan blank line). The
-    # field name is the wire key already resolved by capture (honoring
-    # `@[JSON::Field(key:)]`), quoted when it isn't a valid JS identifier.
+    # Renders one declaration per captured surface type, in capture order: a
+    # `JSON::Serializable` struct becomes an `export interface` (fields mapped
+    # through the `known`-aware TS mapper); an `Enum` becomes an
+    # `export type X = "A" | "B"` string-literal-union alias (member names
+    # verbatim, as vow captured them). Returns "" for an empty set so the
+    # heredoc collapses cleanly. Field names are the wire keys already resolved
+    # by capture (honoring `@[JSON::Field(key:)]`), quoted when not valid JS
+    # identifiers.
     private def self.render_interfaces(types : Array(Vow::TypeDescriptor), known : Hash(String, String)) : String
       return "" if types.empty?
       blocks = types.map do |t|
-        body = t.fields.map { |f| "  #{ts_member(f.name)}: #{crystal_to_ts(f.type, known)};" }.join("\n")
-        "export interface #{t.name} {\n#{body}\n}"
+        if t.kind == "enum"
+          "export type #{t.name} = #{t.members.map(&.inspect).join(" | ")};"
+        else
+          body = t.fields.map { |f| "  #{ts_member(f.name)}: #{crystal_to_ts(f.type, known)};" }.join("\n")
+          "export interface #{t.name} {\n#{body}\n}"
+        end
       end
       "\n#{blocks.join("\n\n")}\n"
     end

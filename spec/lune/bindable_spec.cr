@@ -185,12 +185,28 @@ describe "Lune::Bindable + App bindings" do
     app.bindings.empty?.should eq(false)
   end
 
-  it "derives a TS string union from an enum return type" do
+  it "captures an enum return as a string-union type alias from its serialized values (via vow)" do
     app = Lune::App.new
     app.install(StatusModule.new)
 
+    # vow captures the enum generically (no lune-side enum logic): members are
+    # the values each one serializes to (Crystal's default lowercases +
+    # underscores), referenced by name in the stub and emitted as a `type` alias.
+    t = app.manifest.types.find { |ty| ty.name == "DemoStatus" }.not_nil!
+    t.kind.should eq("enum")
+    t.members.should eq(["pending", "running", "done", "two_words"])
+
+    known = Lune::Generator.known_types(app.manifest.types)
     b = app.bindings.first
-    b.to_dts_sig.should eq(%(  current(args?: {}): Promise<"pending" | "running" | "done" | "two_words">;))
+    b.to_dts_sig(known).should eq("  current(args?: {}): Promise<DemoStatus>;")
+
+    dts = Lune::Generator.generate_app_dts(
+      app.bindings.reject(&.internal?),
+      known: known,
+      types: app.user_types,
+    )
+    dts.includes?(%(export type DemoStatus = "pending" | "running" | "done" | "two_words";)).should be_true
+    dts.includes?("export interface DemoStatus").should be_false
   end
 
   describe "automatic struct interface capture" do

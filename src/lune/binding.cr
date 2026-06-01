@@ -1,5 +1,4 @@
 require "vow/manifest"
-require "vow/context"
 
 module Lune
   # A registered call from JS to Crystal. One class for both user-class bindings
@@ -10,14 +9,13 @@ module Lune
   # to `plugins/<id>.js`). The TS return type can be overridden via
   # `ts_return_type` (bypasses the default `Promise<T>` wrap).
   class Binding
-    getter namespace, method, args, return_type, callback, async
+    getter namespace, method, args, return_type, async
 
     def initialize(
       @namespace : String,
       @method : String,
       @args : Array(String),
       @return_type : String,
-      @callback : Proc(Hash(String, JSON::Any), ::Vow::Context?, JSON::Any),
       internal : Bool = false,
       async : Bool = false,
       @arg_names : Array(String) = [] of String,
@@ -35,8 +33,12 @@ module Lune
       resolved_arg_names.map(&.camelcase(lower: true))
     end
 
+    # The dispatch id: Crystal class path (`::`→`.`) plus the camelCased method
+    # leaf — matching the `proc_name` vow registers via `vow_register_marked`,
+    # so the Bridge binds and the Registry dispatches the same name.
     def id : String
-      @namespace.empty? ? @method : "#{@namespace.split("::").join(".")}.#{@method}"
+      leaf = @method.camelcase(lower: true)
+      @namespace.empty? ? leaf : "#{@namespace.split("::").join(".")}.#{leaf}"
     end
 
     def js_func_name : String
@@ -60,7 +62,7 @@ module Lune
           call(name, args) {
             return window[name](args).catch(function(err) {
               if (err !== null && typeof err === 'object' && typeof err.code === 'string') {
-                throw new LuneError(err.code, err.error);
+                throw new LuneError(err.code, err.error, err.hint ?? null);
               }
               throw err;
             });

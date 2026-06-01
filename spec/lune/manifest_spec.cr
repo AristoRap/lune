@@ -32,14 +32,13 @@ describe "Lune manifest (vow contract)" do
         method: "set_size",
         args: ["Int32", "Int32"],
         return_type: "Nil",
-        callback: ->(_a : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new(nil) },
         internal: true,
         async: false,
         arg_names: ["width", "height"],
       )
 
       d = b.to_vow_descriptor
-      d.name.should eq("Lune.Plugins.Window.set_size")
+      d.name.should eq("Lune.Plugins.Window.setSize")
       d.args.map(&.name).should eq(["width", "height"])
       d.args.map(&.type).should eq(["Int32", "Int32"])
       d.return_type.should eq("Nil")
@@ -52,7 +51,6 @@ describe "Lune manifest (vow contract)" do
         method: "greet",
         args: ["String"],
         return_type: "String",
-        callback: ->(_a : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("hi") },
       )
       b.to_vow_descriptor.args.map(&.name).should eq(["arg0"])
     end
@@ -63,7 +61,6 @@ describe "Lune manifest (vow contract)" do
         method: "ping",
         args: [] of String,
         return_type: "Nil",
-        callback: ->(_a : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new(nil) },
       )
       b.to_vow_descriptor.args.should be_empty
     end
@@ -84,7 +81,7 @@ describe "Lune manifest (vow contract)" do
     it "captures a known plugin procedure faithfully" do
       app = Lune::App.new
       app.install(Lune::Plugins::Window.new)
-      d = app.manifest.procedures.find { |p| p.name == "Lune.Plugins.Window.set_size" }.not_nil!
+      d = app.manifest.procedures.find { |p| p.name == "Lune.Plugins.Window.setSize" }.not_nil!
       d.args.map(&.type).should eq(["Int32", "Int32"])
       d.return_type.should eq("Nil")
     end
@@ -114,28 +111,28 @@ describe "Lune manifest (vow contract)" do
 
       signatures.should eq([
         "Lune.Plugins.Clipboard.read() -> String",
-        "Lune.Plugins.Clipboard.read_html() -> String",
-        "Lune.Plugins.Clipboard.read_image() -> String",
+        "Lune.Plugins.Clipboard.readHtml() -> String",
+        "Lune.Plugins.Clipboard.readImage() -> String",
         "Lune.Plugins.Clipboard.write(text: String) -> Nil",
-        "Lune.Plugins.Clipboard.write_html(html: String) -> Nil",
-        "Lune.Plugins.Clipboard.write_image(dataUrl: String) -> Nil",
+        "Lune.Plugins.Clipboard.writeHtml(html: String) -> Nil",
+        "Lune.Plugins.Clipboard.writeImage(dataUrl: String) -> Nil",
         "Lune.Plugins.ContextMenu.show(x: Float64, y: Float64, itemsJson: String) -> Nil",
-        "Lune.Plugins.Dialogs.message_error(title: String, message: String) -> Nil",
-        "Lune.Plugins.Dialogs.message_info(title: String, message: String) -> Nil",
-        "Lune.Plugins.Dialogs.message_question(title: String, message: String) -> String",
-        "Lune.Plugins.Dialogs.message_warning(title: String, message: String) -> Nil",
-        "Lune.Plugins.Dialogs.open_dir(prompt: String) -> String",
-        "Lune.Plugins.Dialogs.open_file(prompt: String, filters: Array(NamedTuple(name: String, extensions: Array(String)))) -> String",
-        "Lune.Plugins.Dialogs.open_files(prompt: String, filters: Array(NamedTuple(name: String, extensions: Array(String)))) -> Array(String)",
-        "Lune.Plugins.Dialogs.save_file(prompt: String, filename: String, filters: Array(NamedTuple(name: String, extensions: Array(String)))) -> String",
+        "Lune.Plugins.Dialogs.messageError(title: String, message: String) -> Nil",
+        "Lune.Plugins.Dialogs.messageInfo(title: String, message: String) -> Nil",
+        "Lune.Plugins.Dialogs.messageQuestion(title: String, message: String) -> String",
+        "Lune.Plugins.Dialogs.messageWarning(title: String, message: String) -> Nil",
+        "Lune.Plugins.Dialogs.openDir(prompt: String) -> String",
+        "Lune.Plugins.Dialogs.openFile(prompt: String, filters: Array(NamedTuple(name: String, extensions: Array(String)))) -> String",
+        "Lune.Plugins.Dialogs.openFiles(prompt: String, filters: Array(NamedTuple(name: String, extensions: Array(String)))) -> Array(String)",
+        "Lune.Plugins.Dialogs.saveFile(prompt: String, filename: String, filters: Array(NamedTuple(name: String, extensions: Array(String)))) -> String",
         "Lune.Plugins.DragOut.start(paths: Array(String)) -> Nil",
         "Lune.Plugins.Event.emit(name: String, data: JSON::Any) -> Nil",
         "Lune.Plugins.FileWatch.unwatch(path: String) -> Nil",
         "Lune.Plugins.FileWatch.watch(path: String) -> Nil",
-        "Lune.Plugins.Filesystem.app_data_dir() -> String",
-        "Lune.Plugins.Filesystem.downloads_dir() -> String",
-        "Lune.Plugins.Filesystem.home_dir() -> String",
-        "Lune.Plugins.Filesystem.temp_dir() -> String",
+        "Lune.Plugins.Filesystem.appDataDir() -> String",
+        "Lune.Plugins.Filesystem.downloadsDir() -> String",
+        "Lune.Plugins.Filesystem.homeDir() -> String",
+        "Lune.Plugins.Filesystem.tempDir() -> String",
         "Lune.Plugins.Hotkeys.register(accelerator: String) -> Nil",
         "Lune.Plugins.Hotkeys.unregister(accelerator: String) -> Nil",
         "Lune.Plugins.Kv.clear() -> Nil",
@@ -145,7 +142,7 @@ describe "Lune manifest (vow contract)" do
         "Lune.Plugins.Kv.keys() -> Array(String)",
         "Lune.Plugins.Kv.set(key: String, value: JSON::Any) -> Nil",
         "Lune.Plugins.Navigation.changed(url: String) -> Nil",
-        "Lune.Plugins.Shell.close_stdin(pid: String) -> Nil",
+        "Lune.Plugins.Shell.closeStdin(pid: String) -> Nil",
         "Lune.Plugins.Shell.kill(pid: String) -> Nil",
         "Lune.Plugins.Shell.list() -> Array(String)",
         "Lune.Plugins.Shell.run(command: String, args: Array(String)) -> NamedTuple(stdout: String, stderr: String, code: Int32)",
@@ -155,24 +152,24 @@ describe "Lune manifest (vow contract)" do
         "Lune.Plugins.Sqlite.exec(db: String, sql: String, params: Array(JSON::Any)) -> NamedTuple(changes: Int64, lastInsertId: Int64)",
         "Lune.Plugins.Sqlite.open(path: String) -> String",
         "Lune.Plugins.Sqlite.query(db: String, sql: String, params: Array(JSON::Any)) -> Array(Hash(String, JSON::Any))",
-        "Lune.Plugins.System.environment() -> NamedTuple(os: String, arch: String, devtools: Bool)",
+        "Lune.Plugins.System.environment() -> NamedTuple(os: OS, arch: String, devtools: Bool)",
         "Lune.Plugins.System.notify(title: String, body: String) -> Nil",
-        "Lune.Plugins.System.open_url(url: String) -> Nil",
+        "Lune.Plugins.System.openUrl(url: String) -> Nil",
         "Lune.Plugins.System.quit() -> Nil",
-        "Lune.Plugins.System.screen_info() -> NamedTuple(width: Int32, height: Int32, scale: Float64)",
+        "Lune.Plugins.System.screenInfo() -> NamedTuple(width: Int32, height: Int32, scale: Float64)",
         "Lune.Plugins.Tray.hide() -> Nil",
-        "Lune.Plugins.Tray.popup_menu() -> Nil",
-        "Lune.Plugins.Tray.set_icon(path: String) -> Nil",
-        "Lune.Plugins.Tray.set_menu(items: Array(NamedTuple(id: String, label: String))) -> Nil",
+        "Lune.Plugins.Tray.popupMenu() -> Nil",
+        "Lune.Plugins.Tray.setIcon(path: String) -> Nil",
+        "Lune.Plugins.Tray.setMenu(items: Array(NamedTuple(id: String, label: String))) -> Nil",
         "Lune.Plugins.Tray.show(iconPath: String) -> Nil",
         "Lune.Plugins.Window.center() -> Nil",
         "Lune.Plugins.Window.hide() -> Nil",
         "Lune.Plugins.Window.maximize() -> Nil",
         "Lune.Plugins.Window.minimize() -> Nil",
-        "Lune.Plugins.Window.set_size(width: Int32, height: Int32) -> Nil",
-        "Lune.Plugins.Window.set_title(title: String) -> Nil",
+        "Lune.Plugins.Window.setSize(width: Int32, height: Int32) -> Nil",
+        "Lune.Plugins.Window.setTitle(title: String) -> Nil",
         "Lune.Plugins.Window.show() -> Nil",
-        "Lune.Plugins.Window.start_drag() -> Nil",
+        "Lune.Plugins.Window.startDrag() -> Nil",
         "Lune.Plugins.Windows.close(id: String) -> Nil",
         "Lune.Plugins.Windows.list() -> Array(String)",
         "Lune.Plugins.Windows.open(opts: Hash(String, JSON::Any)) -> String",

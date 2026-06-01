@@ -1,10 +1,14 @@
 require "../spec_helper"
 require "file_utils"
 
-private def runtime_bindings
+private def runtime_app
   app = Lune::App.new
   Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |plugin| app.install(plugin) }
-  app.bindings.select(&.internal?)
+  app
+end
+
+private def runtime_bindings
+  runtime_app.bindings.select(&.internal?)
 end
 
 private def event_plugins
@@ -52,6 +56,14 @@ describe Lune::Generator do
     dts.includes?("readonly code: string").should be_true
   end
 
+  it "carries a hint on LuneError (runtime + d.ts)" do
+    js = Lune::Generator.generate_runtime_js([] of Lune::Binding)
+    js.includes?("this.hint = hint").should be_true
+
+    dts = Lune::Generator.generate_runtime_dts([] of Lune::Binding)
+    dts.includes?("readonly hint: string | null").should be_true
+  end
+
   it "exports Event namespace with on, once, off helpers" do
     js = Lune::Generator.generate_runtime_js([] of Lune::Binding, event_plugins)
 
@@ -94,12 +106,14 @@ describe Lune::Generator do
     js.includes?("openUrl(args)").should be_true
     js.includes?("environment(args = {})").should be_true
     js.includes?("Lune.Plugins.System.quit").should be_true
-    js.includes?("Lune.Plugins.System.open_url").should be_true
+    js.includes?("Lune.Plugins.System.openUrl").should be_true
     js.includes?("Lune.Plugins.System.environment").should be_true
   end
 
   it "generates runtime.d.ts with typed namespace interfaces" do
-    dts = Lune::Generator.generate_runtime_dts(runtime_bindings, event_plugins)
+    app = runtime_app
+    known = Lune::Generator.known_types(app.manifest.types)
+    dts = Lune::Generator.generate_runtime_dts(app.bindings.select(&.internal?), event_plugins, known: known, types: app.plugin_types)
 
     dts.includes?("export declare const Lune").should be_true
     dts.includes?("System: {").should be_true
@@ -112,18 +126,23 @@ describe Lune::Generator do
     dts.includes?("off(name: string").should be_true
   end
 
-  it "inlines structural shapes instead of carrying hand-written interfaces" do
-    dts = Lune::Generator.generate_runtime_dts(runtime_bindings, event_plugins)
+  it "inlines structural shapes and emits an enum as a string-union type alias" do
+    app = runtime_app
+    known = Lune::Generator.known_types(app.manifest.types)
+    dts = Lune::Generator.generate_runtime_dts(app.bindings.select(&.internal?), event_plugins, known: known, types: app.plugin_types)
 
-    # No named-type carryovers in the d.ts header — every shape is either
+    # No named-type carryovers in the d.ts header — every struct shape is either
     # derived from the Crystal type or inlined into the binding's ts_return_type.
     dts.includes?("LuneEnvironment").should be_false
     dts.includes?("ScreenInfo").should be_false
     dts.includes?("TrayMenuItem").should be_false
     dts.includes?("ContextMenuItem").should be_false
 
-    # environment() keeps the os string-literal union via an inlined BindOverride
-    dts.includes?(%(os: "darwin" | "linux" | "windows")).should be_true
+    # environment() references the captured OS enum, emitted as a string-literal
+    # union alias derived from the members' serialized values (vow capture, no
+    # BindOverride). Crystal's default Enum#to_json lowercases.
+    dts.includes?("os: OS;").should be_true
+    dts.includes?(%(export type OS = "darwin" | "linux" | "windows";)).should be_true
     # screen_info() is auto-derived from its NamedTuple return type
     dts.includes?("width: number; height: number; scale: number").should be_true
   end
@@ -193,7 +212,6 @@ describe Lune::Generator do
         method: "greet",
         args: [] of String,
         return_type: "String",
-        callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") },
         internal: false,
         async: false
       ),
@@ -202,7 +220,6 @@ describe Lune::Generator do
         method: "inc",
         args: [] of String,
         return_type: "Int32",
-        callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new(1_i64) },
         internal: false,
         async: false
       ),
@@ -227,7 +244,6 @@ describe Lune::Generator do
         method: "add",
         args: ["AddArgs"],
         return_type: "Int32",
-        callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new(0_i64) },
         internal: false,
         async: false
       ),
@@ -248,7 +264,6 @@ describe Lune::Generator do
           method: "greet",
           args: [] of String,
           return_type: "String",
-          callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") },
           internal: false,
           async: false
         ),
@@ -268,7 +283,6 @@ describe Lune::Generator do
         method: "zeta",
         args: [] of String,
         return_type: "String",
-        callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") },
         internal: false,
         async: false
       ),
@@ -277,7 +291,6 @@ describe Lune::Generator do
         method: "alpha",
         args: [] of String,
         return_type: "String",
-        callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") },
         internal: false,
         async: false
       ),
@@ -301,7 +314,6 @@ describe Lune::Generator do
         method: "ping",
         args: [] of String,
         return_type: "String",
-        callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") },
         internal: false,
         async: false
       ),
@@ -310,7 +322,6 @@ describe Lune::Generator do
         method: "sum",
         args: [] of String,
         return_type: "Int32",
-        callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new(0_i64) },
         internal: false,
         async: false
       ),
@@ -336,7 +347,6 @@ describe Lune::Generator do
         method: "ping",
         args: [] of String,
         return_type: "String",
-        callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") },
         internal: false,
         async: false
       ),
@@ -345,7 +355,6 @@ describe Lune::Generator do
         method: "sum",
         args: [] of String,
         return_type: "Int32",
-        callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new(0_i64) },
         internal: false,
         async: false
       ),
@@ -383,7 +392,6 @@ describe Lune::Generator do
           method: "hello",
           args: [] of String,
           return_type: "String",
-          callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") },
           internal: false,
           async: false
         ),
@@ -410,7 +418,6 @@ describe Lune::Generator do
           method: "ping",
           args: [] of String,
           return_type: "String",
-          callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") },
           internal: false,
           async: false
         ),
@@ -427,7 +434,6 @@ describe Lune::Generator do
           method: "ping",
           args: [] of String,
           return_type: "String",
-          callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") },
           internal: false,
           async: false
         ),
@@ -448,7 +454,6 @@ describe Lune::Generator do
           method: "ping",
           args: [] of String,
           return_type: "String",
-          callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") },
           internal: false,
           async: false
         ),
@@ -465,7 +470,6 @@ describe Lune::Generator do
           method: "ping",
           args: [] of String,
           return_type: "String",
-          callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") },
           internal: false,
           async: false
         ),
@@ -474,7 +478,6 @@ describe Lune::Generator do
           method: "pong",
           args: [] of String,
           return_type: "String",
-          callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") },
           internal: false,
           async: false
         ),

@@ -48,22 +48,27 @@ module Lune
         @on_open_url.call(url)
       end
 
-      # `os` is widened to a string-literal union via BindOverride because the
-      # Crystal signature only constrains it to `String` — the runtime returns
-      # one of `"darwin"`, `"linux"`, `"windows"` (and `"unknown"` is impossible
-      # in practice; the {% if %} chain covers every supported flag), so the
-      # narrower TS type is accurate and lets callers use exhaustive switch.
+      # The host platform, modeled as an enum so vow derives the TS union from
+      # it — a narrower type than `string` that lets callers switch exhaustively,
+      # with no hand-written BindOverride. vow reads each member's serialized
+      # form (`Enum#to_json`), so the default lowercasing gives the wire and the
+      # type the same `"darwin" | "linux" | "windows"` — they can't drift.
+      enum OS
+        Darwin
+        Linux
+        Windows
+      end
+
       @[Lune::Bind]
-      @[Lune::BindOverride(ts_return_type: %(Promise<{ os: "darwin" | "linux" | "windows"; arch: string; devtools: boolean }>))]
-      def environment : NamedTuple(os: String, arch: String, devtools: Bool)
+      def environment : NamedTuple(os: OS, arch: String, devtools: Bool)
         os = {% if flag?(:darwin) %}
-               "darwin"
+               OS::Darwin
              {% elsif flag?(:linux) %}
-               "linux"
+               OS::Linux
              {% elsif flag?(:win32) %}
-               "windows"
+               OS::Windows
              {% else %}
-               "unknown"
+               OS::Darwin
              {% end %}
         arch = {% if flag?(:aarch64) %}
                  "arm64"

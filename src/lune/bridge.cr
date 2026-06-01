@@ -66,16 +66,19 @@ module Lune
       # single element; hand its JSON straight to the registry (a zero-arg call
       # sends `{}`). `dispatch` decodes, invokes, and JSON-encodes the result.
       raw = args.empty? ? "{}" : args[0].to_json
+      # Per-call context — injected only into bindings that declare a leading
+      # `Lune::WindowContext` param; ignored by every other binding.
+      ctx = WindowContext.new(seq, wv)
       if binding.async
         pool = @async_pool ||= Fiber::ExecutionContext::Parallel.new("lune-async", System.cpu_count)
         pool.spawn do
           dispatch_result(wv, seq, closed: -> { @closed.get }) do
-            @registry.dispatch(binding.id, raw, nil)
+            @registry.dispatch(binding.id, raw, ctx)
           end
         end
       else
         dispatch_result(wv, seq, closed: -> { @closed.get }) do
-          @registry.dispatch(binding.id, raw, nil)
+          @registry.dispatch(binding.id, raw, ctx)
         end
       end
     end
@@ -97,7 +100,8 @@ module Lune
       Lune.logger.error { "Binding execution failed: #{ex.message}" }
       Lune.logger.debug(exception: ex) { "Binding execution failed (stacktrace)" }
       code = ex.as?(::Vow::Error).try(&.code) || ex.as?(Lune::Error).try(&.code) || "error"
-      payload = error_envelope(code, ex.message)
+      hint = ex.as?(::Vow::Error).try(&.hint) || ex.as?(Lune::Error).try(&.hint)
+      payload = error_envelope(code, ex.message, hint)
       return if closed.try(&.call)
       wv.dispatch { safe_resolve(wv, seq, 1, payload, closed) }
     end
@@ -118,8 +122,8 @@ module Lune
     # itself — if `ex.message` has a weird encoding or anything along the
     # `to_json` chain raises, fall back to a hand-built envelope so the JS
     # side at least sees a recognisable error shape.
-    private def error_envelope(code : String, message : String?) : String
-      {code: code, error: message}.to_json
+    private def error_envelope(code : String, message : String?, hint : String? = nil) : String
+      {code: code, error: message, hint: hint}.to_json
     rescue ex
       Lune.logger.error { "Failed to encode error envelope: #{ex.message}" } rescue nil
       %({"code":"error","error":"<encoding failed>"})

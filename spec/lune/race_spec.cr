@@ -20,7 +20,6 @@ describe "Race checks" do
             method: name,
             args: [] of String,
             return_type: "void",
-            callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new(nil) },
             internal: false,
             async: false
           )
@@ -46,7 +45,6 @@ describe "Race checks" do
             method: name,
             args: [] of String,
             return_type: "void",
-            callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new(nil) },
             internal: false,
             async: false
           )

@@ -46,7 +46,9 @@ module Lune
       def init_js : String?
         return nil if @config.drag_zone.empty?
         {% if flag?(:darwin) || flag?(:win32) %}
-          start_key = "#{binding_namespace.gsub("::", ".")}.start_drag"
+          # camelCased to match the binding's dispatch id (`Binding#id`
+          # camelCases the method leaf), which is what the bridge binds.
+          start_key = "#{binding_namespace.gsub("::", ".")}.startDrag"
           <<-JS
           (function(){
             document.addEventListener('mousedown', function(e) {

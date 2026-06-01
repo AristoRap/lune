@@ -104,7 +104,7 @@ export const lune: typeof Lune.Plugins;
 Return types are emitted **structurally** — Lune doesn't ship named interfaces like `LuneEnvironment` or `ScreenInfo` alongside the runtime. The generator derives the shape from the Crystal signature:
 
 - `NamedTuple(width: Int32, height: Int32, scale: Float64)` → `{ width: number; height: number; scale: number }`
-- A Crystal `enum` return type → a TS string-literal union (e.g. `enum Status; Pending; Running; Done; end` → `"pending" | "running" | "done"`, matching Crystal's default `Enum#to_json`)
+- A Crystal `enum` (a return type, or nested in a `NamedTuple` / struct / `Array`) → a TS string-literal union, captured generically by [vow](https://github.com/AristoRap/vow). The union is built from the values each member **serializes to** (`Enum#to_json`), so it always matches the wire — Crystal's default lowercases (`enum Status; Pending; Running; Done; end` → `"pending" | "running" | "done"`), and a custom `Enum#to_json` is reflected. If you want a different shape entirely, hand-write it with `@[Lune::BindOverride(ts_return_type: ...)]`.
 - A `JSON::Serializable` struct or class is captured automatically into a named `interface` (transitively — nested structs included), so the binding's signature references it by name. A non-serializable type that isn't given an explicit `@[Lune::BindOverride(ts_return_type: ...)]` is a generation error rather than a silent `Record<string, any>` (lune's type mapping runs on [vow](https://github.com/AristoRap/vow)'s strict mapper)
 
 If you want a named type for an inlined shape, alias the inferred return type:
