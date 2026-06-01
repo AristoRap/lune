@@ -15,7 +15,7 @@ dependencies:
     branch: master
   vow:
     github: AristoRap/vow
-    version: ~> 0.2.0
+    version: ~> 0.3.0
   argy:
     github: AristoRap/argy
     version: ~> 0.4
