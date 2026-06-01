@@ -214,8 +214,8 @@ module LuneCLI
         print_manifest_table(manifest, output)
       end
 
-      # Raised when `--api` output carries no manifest block (typically a runner
-      # that didn't reach the inspect short-circuit).
+      # Raised when `doctor api` output carries no manifest block (typically a
+      # runner that didn't reach the inspect short-circuit).
       class ManifestParseError < Exception
       end
 

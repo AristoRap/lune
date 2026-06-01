@@ -1,15 +1,9 @@
 module Lune
   module Plugins
-    # Exposes the app's live RPC contract — the `Vow::Manifest` (every procedure
-    # plus the custom types its signatures reference) — to the frontend. The
-    # `manifest` binding rides the normal registry like any plugin method; the
-    # injected `window.__lune.manifest` helper is a convenience wrapper over it.
-    #
-    # Whether the helper is injected follows `opts.devtools`: introspection is a
-    # development affordance, so with devtools off `init_js` returns nil and the
-    # wrapper never reaches the page. Whether the plugin exists at all is decided
-    # by `lune.yml` (`disabled: [introspection]` removes it entirely), the same
-    # as every other built-in.
+    # Exposes the app's live `Vow::Manifest` to the frontend over a normal
+    # `manifest` binding. The `window.__lune.manifest` helper wrapper is injected
+    # only when devtools are on (introspection is a development affordance);
+    # `lune.yml` decides whether the plugin is present at all.
     class Introspection < Lune::Plugin
       include Lune::Bindable
 

@@ -57,7 +57,6 @@ Two plugins are marked **core**: `event` and `stream`. They are enabled by defau
 | --------------------------------- | ---------------- | --------------- | ------- | ------------------------ | --------- | --------- | ------------------------------------- |
 | [Event](./event)                  | `event`          | `Event`         | **Yes** | WebviewInject            | —         | —         | all                                   |
 | [Stream](./stream)                | `stream`         | `Stream`        | **Yes** | WebviewInject            | —         | —         | all                                   |
-| [Introspection](./introspection)  | `introspection`  | `Introspection` | No      | Bindable · WebviewInject | —         | —         | all                                   |
 | [Clipboard](./clipboard)          | `clipboard`      | `Clipboard`     | No      | Bindable                 | —         | —         | all (image: no Win32)                 |
 | [ContextMenu](./context-menu)     | `context_menu`   | `ContextMenu`   | No      | Bindable · WebviewInject | `event`   | —         | macOS (Windows/Linux: planned)        |
 | [DeepLink](./deep-link)           | `deep_link`      | `DeepLink`      | No      | Bindable                 | `event`   | —         | macOS · Linux · Windows²              |
@@ -68,6 +67,7 @@ Two plugins are marked **core**: `event` and `stream`. They are enabled by defau
 | [FileWatch](./file-watch)         | `file_watch`     | `FileWatch`     | No      | Bindable · Lifecycle     | `event`   | —         | macOS · Linux                         |
 | [Filesystem](./filesystem)        | `filesystem`     | `Filesystem`    | No      | Bindable                 | —         | —         | all                                   |
 | [Hotkeys](./hotkeys)              | `hotkeys`        | `Hotkeys`       | No      | Bindable                 | —         | `event`   | macOS · Linux · Windows               |
+| [Introspection](./introspection)  | `introspection`  | `Introspection` | No      | Bindable · WebviewInject | —         | —         | all                                   |
 | [Navigation](./navigation)        | `navigation`     | —               | No      | WebviewInject            | —         | —         | all                                   |
 | [Kv](./kv)                        | `kv`             | `Kv`            | No      | Bindable · Lifecycle     | —         | —         | all                                   |
 | [Shell](./shell)                  | `shell`          | `Shell`         | No      | Bindable · Lifecycle     | `stream`  | —         | macOS · Linux · Windows³              |

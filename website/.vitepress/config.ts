@@ -42,7 +42,6 @@ export default defineConfig({
             items: [
               { text: 'Event', link: '/plugins/event' },
               { text: 'Stream', link: '/plugins/stream' },
-              { text: 'Introspection', link: '/plugins/introspection' },
             ],
           },
           {
@@ -57,6 +56,7 @@ export default defineConfig({
               { text: 'File Drop', link: '/plugins/file-drop' },
               { text: 'File Watch', link: '/plugins/file-watch' },
               { text: 'Hotkeys', link: '/plugins/hotkeys' },
+              { text: 'Introspection', link: '/plugins/introspection' },
               { text: 'Filesystem', link: '/plugins/filesystem' },
               { text: 'Navigation', link: '/plugins/navigation' },
               { text: 'KV', link: '/plugins/kv' },

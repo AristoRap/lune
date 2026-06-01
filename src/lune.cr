@@ -207,7 +207,7 @@ module Lune
   # parse. Everything that runs before `Lune.run` — `require`s, `Lune.use`
   # calls, top-level constants — has already executed by the time we get
   # here, so the list is what the live app would see.
-  # Markers framing the manifest JSON for `lune doctor --api` to lift out of the
+  # Markers framing the manifest JSON for `lune doctor api` to lift out of the
   # captured stdout — same parse-the-block-out-of-noisy-output contract as the
   # `LUNE_PLUGINS` markers above.
   INSPECT_MANIFEST_START = "<<<LUNE_MANIFEST"
@@ -215,7 +215,7 @@ module Lune
 
   # `-Dlune_inspect_api` short-circuits `Lune.run` and emits the live
   # `Vow::Manifest` — the typed RPC contract the app exposes — as framed JSON
-  # for `lune doctor --api`. Unlike `_inspect_run` (plugins, gathered before the
+  # for `lune doctor api`. Unlike `_inspect_run` (plugins, gathered before the
   # app exists) this needs the full binding set, so it resolves plugin stubs the
   # same way `_build_run` does and merges them with the user app's bindings and
   # captured types. The result is exactly the contract the generated client was
