@@ -9,10 +9,10 @@ const widthIn = ref(1100);
 const heightIn = ref(740);
 
 async function applyTitle() {
-  await Window.setTitle(titleIn.value);
+  await Window.setTitle({ title: titleIn.value });
 }
 async function applySize() {
-  await Window.setSize(parseInt(widthIn.value), parseInt(heightIn.value));
+  await Window.setSize({ width: parseInt(widthIn.value), height: parseInt(heightIn.value) });
 }
 </script>
 

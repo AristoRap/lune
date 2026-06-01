@@ -46,8 +46,8 @@ Generates:
 
 ```ts
 export interface FileModule {
-  read(path: string): Promise<string>;
-  exists(path: string): Promise<boolean>;
+  read(args: { path: string }): Promise<string>;
+  exists(args: { path: string }): Promise<boolean>;
 }
 
 export interface Api {
@@ -76,7 +76,7 @@ export const Lune: {
   Plugins: {
     System: {
       quit(): Promise<void>;
-      openUrl(url: string): Promise<void>;
+      openUrl(args: { url: string }): Promise<void>;
       environment(): Promise<{
         os: "darwin" | "linux" | "windows";
         arch: string;
@@ -87,7 +87,7 @@ export const Lune: {
       on(name: string, cb: (data: unknown) => void): void;
       once(name: string, cb: (data: unknown) => void): void;
       off(name: string, cb?: (data: unknown) => void): void;
-      emit(name: string, data?: unknown): Promise<void>;
+      emit(args: { name: string; data?: unknown }): Promise<void>;
     };
     Filesystem: {
       homeDir(): Promise<string>;
@@ -152,7 +152,7 @@ import { lune } from "../lunejs/runtime/runtime.js";
 import type { LuneError } from "../lunejs/runtime/runtime.js";
 
 // Fully typed — autocomplete works here
-const result = await api.FileModule.read("/tmp/hello.txt");
+const result = await api.FileModule.read({ path: "/tmp/hello.txt" });
 
 // environment() returns the structurally-typed object
 const env = await lune.System.environment();
@@ -189,7 +189,7 @@ lune.Event.on("progress", (data) => {
 import { LuneError } from "../lunejs/runtime/runtime.js";
 
 try {
-  await api.FileModule.read("/nonexistent");
+  await api.FileModule.read({ path: "/nonexistent" });
 } catch (e) {
   if (e instanceof LuneError) {
     console.error(`[${e.code}] ${e.message}`);

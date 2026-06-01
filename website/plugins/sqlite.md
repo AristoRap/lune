@@ -33,15 +33,15 @@ Or omit `plugins:` entirely — SQLite is active by default.
 import { lune } from "../lunejs/runtime/runtime.js";
 
 // In-memory: cleared when closed
-const db = await lune.Sqlite.open(":memory:");
+const db = await lune.Sqlite.open({ path: ":memory:" });
 
 // Persistent file
-const db = await lune.Sqlite.open(
-  "/Users/alice/Library/Application Support/myapp/data.db",
-);
+const db = await lune.Sqlite.open({
+  path: "/Users/alice/Library/Application Support/myapp/data.db",
+});
 
 // Always close when done
-await lune.Sqlite.close(db);
+await lune.Sqlite.close({ db });
 ```
 
 ---
@@ -51,17 +51,17 @@ await lune.Sqlite.close(db);
 `lune.Sqlite.exec` runs any statement that does not return rows — `CREATE`, `INSERT`, `UPDATE`, `DELETE`, `DROP`, etc. It returns `{ changes, lastInsertId }`.
 
 ```js
-await lune.Sqlite.exec(
+await lune.Sqlite.exec({
   db,
-  "CREATE TABLE notes (id INTEGER PRIMARY KEY, body TEXT)",
-  [],
-);
+  sql: "CREATE TABLE notes (id INTEGER PRIMARY KEY, body TEXT)",
+  params: [],
+});
 
-const { changes, lastInsertId } = await lune.Sqlite.exec(
+const { changes, lastInsertId } = await lune.Sqlite.exec({
   db,
-  "INSERT INTO notes (body) VALUES (?)",
-  ["Hello, Lune!"],
-);
+  sql: "INSERT INTO notes (body) VALUES (?)",
+  params: ["Hello, Lune!"],
+});
 // changes → 1, lastInsertId → 1
 ```
 
@@ -74,19 +74,19 @@ Pass an empty array `[]` for statements with no parameters.
 `lune.Sqlite.query` returns an array of plain objects, one per row, keyed by column name.
 
 ```js
-const rows = await lune.Sqlite.query(
+const rows = await lune.Sqlite.query({
   db,
-  "SELECT id, body FROM notes ORDER BY id",
-  [],
-);
+  sql: "SELECT id, body FROM notes ORDER BY id",
+  params: [],
+});
 // [{ id: 1, body: "Hello, Lune!" }]
 
 // Parameterised query
-const filtered = await lune.Sqlite.query(
+const filtered = await lune.Sqlite.query({
   db,
-  "SELECT * FROM notes WHERE body LIKE ?",
-  ["%Lune%"],
-);
+  sql: "SELECT * FROM notes WHERE body LIKE ?",
+  params: ["%Lune%"],
+});
 ```
 
 ---
@@ -97,10 +97,18 @@ All four SQLite placeholder styles are supported (`?`, `?N`, `@name`, `:name`, `
 
 ```js
 // Positional
-await lune.Sqlite.exec(db, "INSERT INTO t VALUES (?, ?)", [42, "hello"]);
+await lune.Sqlite.exec({
+  db,
+  sql: "INSERT INTO t VALUES (?, ?)",
+  params: [42, "hello"],
+});
 
 // Named (pass an array of values in bind order)
-await lune.Sqlite.exec(db, "INSERT INTO t VALUES (:n, :s)", [42, "hello"]);
+await lune.Sqlite.exec({
+  db,
+  sql: "INSERT INTO t VALUES (:n, :s)",
+  params: [42, "hello"],
+});
 ```
 
 ---
@@ -125,7 +133,7 @@ Both `exec` and `query` reject with a `LuneError` on failure:
 import { LuneError, lune } from "../lunejs/runtime/runtime.js";
 
 try {
-  await lune.Sqlite.exec(db, "NOT VALID SQL", []);
+  await lune.Sqlite.exec({ db, sql: "NOT VALID SQL", params: [] });
 } catch (err) {
   if (err instanceof LuneError) {
     console.error(err.code, err.message); // "sqlite_error" + driver message
@@ -141,10 +149,10 @@ Accessing a database that was never opened (or already closed) throws `LuneError
 
 | Method  | Signature                                                                | Description                      |
 | ------- | ------------------------------------------------------------------------ | -------------------------------- |
-| `open`  | `(path: string) → Promise<string>`                                       | Open or create a database        |
-| `close` | `(db: string) → Promise<void>`                                           | Close and release the database   |
-| `exec`  | `(db, sql, params) → Promise<{ changes: number; lastInsertId: number }>` | Run a non-SELECT statement       |
-| `query` | `(db, sql, params) → Promise<Record<string, unknown>[]>`                 | Run a SELECT and return all rows |
+| `open`  | `({ path }) → Promise<string>`                                              | Open or create a database        |
+| `close` | `({ db }) → Promise<void>`                                                  | Close and release the database   |
+| `exec`  | `({ db, sql, params }) → Promise<{ changes: number; lastInsertId: number }>` | Run a non-SELECT statement       |
+| `query` | `({ db, sql, params }) → Promise<Record<string, unknown>[]>`                | Run a SELECT and return all rows |
 
 ---
 

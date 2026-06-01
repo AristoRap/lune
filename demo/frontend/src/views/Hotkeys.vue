@@ -20,13 +20,13 @@ onUnmounted(() => Event.off("hotkey", handler));
 async function register() {
   const k = keyInput.value.trim();
   if (!k || registered.value.includes(k)) return;
-  await Hotkeys.register(k);
+  await Hotkeys.register({ accelerator: k });
   registered.value.push(k);
   keyInput.value = "";
 }
 
 async function unregister(key) {
-  await Hotkeys.unregister(key);
+  await Hotkeys.unregister({ accelerator: key });
   registered.value = registered.value.filter((k) => k !== key);
 }
 
@@ -48,12 +48,7 @@ function clearLog() {
     <div class="card">
       <span class="card-label">Register a shortcut</span>
       <div class="row">
-        <input
-          v-model="keyInput"
-          type="text"
-          placeholder="Ctrl+Shift+K"
-          @keydown.enter="register"
-        />
+        <input v-model="keyInput" type="text" placeholder="Ctrl+Shift+K" @keydown.enter="register" />
         <button class="primary" @click="register">Register</button>
       </div>
       <div class="hint">
@@ -93,9 +88,10 @@ function clearLog() {
   color: var(--muted);
   margin-top: 0.5rem;
 }
+
 .hint code {
   font-family: var(--font-mono);
-  background: rgba(255,255,255,0.06);
+  background: rgba(255, 255, 255, 0.06);
   padding: 0.1em 0.35em;
   border-radius: 3px;
 }
@@ -144,7 +140,11 @@ function clearLog() {
   line-height: 1;
   margin-left: auto;
 }
-.btn-remove:hover { color: var(--err, #f87171); background: rgba(248, 113, 113, 0.08); }
+
+.btn-remove:hover {
+  color: var(--err, #f87171);
+  background: rgba(248, 113, 113, 0.08);
+}
 
 .log-header {
   display: flex;
@@ -161,7 +161,10 @@ function clearLog() {
   cursor: pointer;
   padding: 0;
 }
-.btn-clear:hover { color: var(--text); }
+
+.btn-clear:hover {
+  color: var(--text);
+}
 
 .log {
   display: flex;

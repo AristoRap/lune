@@ -114,7 +114,7 @@ And in JS:
 ```js
 import { MyMqtt } from "../lunejs/runtime/runtime.js";
 
-await MyMqtt.publish("topics/hello", "world");
+await MyMqtt.publish({ topic: "topics/hello", payload: "world" });
 ```
 
 Third-party plugins sit at the **top level** of `runtime.js`, alongside `Lune` and `LuneError`. The `lune` named export is a shorthand for `Lune.Plugins` and only covers Lune's own built-ins (`lune.Tray.show()`, `lune.Clipboard.read()`, …); a plugin you publish exports as its own top-level name, not under `lune`.
@@ -279,7 +279,7 @@ Consumers import what they need by name:
 ```js
 import { lune, MyPlugin } from "../lunejs/runtime/runtime.js";
 
-await lune.Tray.show("/assets/icon.png");
+await lune.Tray.show({ iconPath: "/assets/icon.png" });
 await MyPlugin.doStuff();
 ```
 

@@ -61,7 +61,7 @@ describe Lune::Plugins::Windows do
       app = Lune::App.new
       app.install(plugin)
       list_b = app.bindings.find { |b| b.id == "Lune.Plugins.Windows.list" }.not_nil!
-      result = list_b.callback.call([] of JSON::Any)
+      result = list_b.callback.call({} of String => JSON::Any, nil)
       result.as_a.should be_empty
     end
   end
@@ -101,7 +101,7 @@ describe Lune::Plugins::Windows do
       app = Lune::App.new
       app.install(plugin)
       dts = Lune::Generator.generate_runtime_dts(app.bindings, [plugin] of Lune::Plugin)
-      dts.should contain("list(): Promise<string[]>")
+      dts.should contain("list(args?: {}): Promise<string[]>")
     end
   end
 end

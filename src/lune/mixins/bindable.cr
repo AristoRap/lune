@@ -89,7 +89,12 @@ module Lune
                 app.register(Lune::Binding.new(
                   namespace: {{ @type.name.stringify }},
                   method: {{ m.name.stringify }},
-                  args: {{ m.args.map(&.restriction.stringify) }} of String,
+                  # Resolved (not raw) arg-type strings: expanding aliases turns
+                  # `Array(FileFilter)` into its `NamedTuple(...)` form so the
+                  # generator inlines it as a TS object type instead of choking
+                  # on the bare alias identifier. Struct args stay matchable —
+                  # `known` is keyed by resolved crystal_name as well as basename.
+                  args: {{ m.args.map(&.restriction.resolve.stringify) }} of String,
                   return_type: {{ m.return_type.stringify }},
                   internal: {{ is_plugin }},
                   async: {{ async }},

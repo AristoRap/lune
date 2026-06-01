@@ -81,9 +81,9 @@ Call `lune.DeepLink.on` early (top-level module scope or `onMounted`) so the han
 import { lune } from "../lunejs/runtime/runtime.js";
 
 // 1. Open browser to auth URL
-lune.System.openUrl(
-  "https://provider.com/oauth/authorize?redirect_uri=myapp://oauth/callback&...",
-);
+lune.System.openUrl({
+  url: "https://provider.com/oauth/authorize?redirect_uri=myapp://oauth/callback&...",
+});
 
 // 2. Handle the redirect
 lune.DeepLink.on((url) => {

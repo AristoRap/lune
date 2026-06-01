@@ -32,7 +32,7 @@ describe "Lune manifest (vow contract)" do
         method: "set_size",
         args: ["Int32", "Int32"],
         return_type: "Nil",
-        callback: ->(_a : Array(JSON::Any)) { JSON::Any.new(nil) },
+        callback: ->(_a : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new(nil) },
         internal: true,
         async: false,
         arg_names: ["width", "height"],
@@ -52,7 +52,7 @@ describe "Lune manifest (vow contract)" do
         method: "greet",
         args: ["String"],
         return_type: "String",
-        callback: ->(_a : Array(JSON::Any)) { JSON::Any.new("hi") },
+        callback: ->(_a : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("hi") },
       )
       b.to_vow_descriptor.args.map(&.name).should eq(["arg0"])
     end
@@ -63,7 +63,7 @@ describe "Lune manifest (vow contract)" do
         method: "ping",
         args: [] of String,
         return_type: "Nil",
-        callback: ->(_a : Array(JSON::Any)) { JSON::Any.new(nil) },
+        callback: ->(_a : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new(nil) },
       )
       b.to_vow_descriptor.args.should be_empty
     end

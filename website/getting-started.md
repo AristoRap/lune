@@ -72,7 +72,7 @@ Add it to your `shard.yml`:
 dependencies:
   lune:
     github: AristoRap/lune
-    version: ~> 0.16.1
+    version: ~> 0.17.0
 ```
 
 Then install:
@@ -150,7 +150,7 @@ In your frontend, import the generated API and call it:
 ```js
 import api from "../lunejs/app/App.js";
 
-const message = await api.GreetModule.greet("world");
+const message = await api.GreetModule.greet({ name: "world" });
 console.log(message); // "Hello, world!"
 ```
 

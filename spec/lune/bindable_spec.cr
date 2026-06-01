@@ -81,16 +81,32 @@ private class NestedModule
   end
 end
 
+# A NamedTuple alias used as a binding *argument* type — the shape the Dialogs
+# (`Array(FileFilter)`) and Tray (`Array(TrayMenuItem)`) plugins rely on. The
+# macro must expand the alias to its NamedTuple form so the generator inlines it
+# as a TS object type; a bare alias identifier would otherwise hit vow's strict
+# mapper and raise `UnmappableType`.
+private alias PickFilter = NamedTuple(name: String, extensions: Array(String))
+
+private class PickerModule
+  include Lune::Bindable
+
+  @[Lune::Bind]
+  def pick(filters : Array(PickFilter)) : String
+    filters.map(&.[:name]).join(",")
+  end
+end
+
 describe "Lune::Bindable + App bindings" do
   it "deserializes a JSON::Serializable struct arg and returns the correct result" do
     fake = FakeWebview.new
-    bridge = Lune::Bridge.new(fake)
 
     app = Lune::App.new
     app.install(MathModule.new)
+    bridge = Lune::Bridge.new(fake, app.registry)
     bridge.register_bindings(app.bindings)
 
-    fake.invoke("MathModule.add", "seq-1", [JSON.parse(%q({"a": 3, "b": 4}))])
+    fake.invoke("MathModule.add", "seq-1", [JSON.parse(%q({"args": {"a": 3, "b": 4}}))])
 
     fake.resolve_calls.size.should eq(1)
     _seq, status, result = fake.resolve_calls[0]
@@ -100,13 +116,13 @@ describe "Lune::Bindable + App bindings" do
 
   it "returns an error when a struct arg has the wrong shape" do
     fake = FakeWebview.new
-    bridge = Lune::Bridge.new(fake)
 
     app = Lune::App.new
     app.install(MathModule.new)
+    bridge = Lune::Bridge.new(fake, app.registry)
     bridge.register_bindings(app.bindings)
 
-    fake.invoke("MathModule.add", "seq-2", [JSON.parse(%q({"x": 1}))])
+    fake.invoke("MathModule.add", "seq-2", [JSON.parse(%q({"args": {"x": 1}}))])
 
     fake.resolve_calls.size.should eq(1)
     _seq, status, _result = fake.resolve_calls[0]
@@ -115,10 +131,10 @@ describe "Lune::Bindable + App bindings" do
 
   it "returns an error when arg count does not match" do
     fake = FakeWebview.new
-    bridge = Lune::Bridge.new(fake)
 
     app = Lune::App.new
     app.install(MathModule.new)
+    bridge = Lune::Bridge.new(fake, app.registry)
     bridge.register_bindings(app.bindings)
 
     fake.invoke("MathModule.add", "seq-3", [] of JSON::Any)
@@ -126,7 +142,7 @@ describe "Lune::Bindable + App bindings" do
     fake.resolve_calls.size.should eq(1)
     _seq, status, result = fake.resolve_calls[0]
     status.should eq(1)
-    JSON.parse(result)["error"].as_s.should contain("expected 1 arg(s), got 0")
+    JSON.parse(result)["error"].as_s.should contain("missing required argument args")
   end
 
   it "registers bindings into App via install" do
@@ -144,7 +160,7 @@ describe "Lune::Bindable + App bindings" do
     app.install(GreetModule.new)
 
     b = app.bindings.first
-    b.to_dts_sig.should eq("  greet(msg: string): Promise<string>;")
+    b.to_dts_sig.should eq("  greet(args: { msg: string }): Promise<string>;")
   end
 
   it "supports multiple modules in one app" do
@@ -174,7 +190,7 @@ describe "Lune::Bindable + App bindings" do
     app.install(StatusModule.new)
 
     b = app.bindings.first
-    b.to_dts_sig.should eq(%(  current(): Promise<"pending" | "running" | "done" | "two_words">;))
+    b.to_dts_sig.should eq(%(  current(args?: {}): Promise<"pending" | "running" | "done" | "two_words">;))
   end
 
   describe "automatic struct interface capture" do
@@ -184,7 +200,7 @@ describe "Lune::Bindable + App bindings" do
 
       known = Lune::Generator.known_types(app.manifest.types)
       b = app.bindings.first
-      b.to_dts_sig(known).should eq("  state(): Promise<DemoCounterState>;")
+      b.to_dts_sig(known).should eq("  state(args?: {}): Promise<DemoCounterState>;")
     end
 
     it "captures the returned struct's fields into the manifest" do
@@ -234,7 +250,15 @@ describe "Lune::Bindable + App bindings" do
 
       known = Lune::Generator.known_types(app.manifest.types)
       b = app.bindings.first
-      b.to_dts_sig(known).should eq("  add(args: AddArgs): Promise<number>;")
+      b.to_dts_sig(known).should eq("  add(args: { args: AddArgs }): Promise<number>;")
+    end
+
+    it "inlines an aliased NamedTuple arg as a TS object type rather than raising" do
+      app = Lune::App.new
+      app.install(PickerModule.new) # pick(filters : Array(PickFilter)) : String
+
+      b = app.bindings.first
+      b.to_dts_sig.should eq("  pick(args: { filters: { name: string; extensions: string[] }[] }): Promise<string>;")
     end
   end
 end

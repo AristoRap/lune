@@ -39,7 +39,7 @@ end
 import { LuneError } from "../lunejs/runtime/runtime.js";
 
 try {
-  await api.Math.divide(10, 0);
+  await api.Math.divide({ a: 10, b: 0 });
 } catch (err) {
   console.log(err instanceof LuneError); // true
   console.log(err.code); // "error"
@@ -68,7 +68,7 @@ In JavaScript, use `instanceof` or branch on `code`:
 import { LuneError } from "../lunejs/runtime/runtime.js";
 
 try {
-  const user = await api.Users.getUser(99);
+  const user = await api.Users.getUser({ id: 99 });
 } catch (err) {
   if (err instanceof LuneError && err.code === "not_found") {
     showNotFoundMessage();
@@ -124,7 +124,7 @@ With TypeScript, `instanceof LuneError` narrows the type automatically — no cu
 import { LuneError } from "../lunejs/runtime/runtime.js";
 
 try {
-  await api.Users.getUser(99);
+  await api.Users.getUser({ id: 99 });
 } catch (err) {
   if (err instanceof LuneError) {
     // err is typed as LuneError here

@@ -10,7 +10,7 @@ private def make_internal(method = "ping", namespace = "Test", args = [] of Stri
     method: method,
     args: args,
     return_type: return_type,
-    callback: ->(_a : Array(JSON::Any)) { JSON::Any.new("ok") },
+    callback: ->(_a : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") },
     internal: true,
     arg_names: arg_names,
     ts_return_type: ts_return_type,
@@ -44,40 +44,40 @@ describe "Lune::Binding (internal: true — plugin surface)" do
     it "emits a stub calling the unified <Namespace>.<method> bridge ID" do
       stub = make_internal(namespace: "Lune::Plugins::System", method: "quit").to_js_stub
       stub.includes?(%("Lune.Plugins.System.quit")).should be_true
-      stub.includes?("quit()").should be_true
+      stub.includes?("quit(args = {})").should be_true
     end
 
-    it "emits an object method with named args" do
+    it "emits an object method forwarding the named-args object" do
       stub = make_internal(namespace: "Lune::Plugins::System", method: "open_url", args: ["String"], arg_names: ["url"]).to_js_stub
-      stub.includes?("openUrl(url)").should be_true
-      stub.includes?(%("Lune.Plugins.System.open_url", url)).should be_true
+      stub.includes?("openUrl(args)").should be_true
+      stub.includes?(%(__lune.call("Lune.Plugins.System.open_url", args))).should be_true
     end
 
-    it "falls back to arg0..argN when arg_names is empty" do
+    it "forwards the named-args object regardless of arg count" do
       stub = make_internal(namespace: "Lune::Plugins::Window", method: "set_size", args: ["Int32", "Int32"]).to_js_stub
-      stub.includes?("setSize(arg0, arg1)").should be_true
+      stub.includes?("setSize(args)").should be_true
     end
   end
 
   describe "#to_dts_sig" do
     it "emits an interface member wrapping return in Promise" do
       sig = make_internal(namespace: "Lune::Plugins::Filesystem", method: "home_dir", return_type: "String").to_dts_sig
-      sig.should eq("  homeDir(): Promise<string>;")
+      sig.should eq("  homeDir(args?: {}): Promise<string>;")
     end
 
     it "uses ts_return_type as the full return type bypassing auto-wrap" do
       sig = make_internal(namespace: "Lune::Plugins::System", method: "environment", return_type: "JSON", ts_return_type: "LuneEnvironment").to_dts_sig
-      sig.should eq("  environment(): LuneEnvironment;")
+      sig.should eq("  environment(args?: {}): LuneEnvironment;")
     end
 
     it "uses ts_return_type with explicit Promise when needed" do
       sig = make_internal(namespace: "Lune::Plugins::System", method: "screen_info", return_type: "String", ts_return_type: "Promise<ScreenInfo>").to_dts_sig
-      sig.should eq("  screenInfo(): Promise<ScreenInfo>;")
+      sig.should eq("  screenInfo(args?: {}): Promise<ScreenInfo>;")
     end
 
-    it "includes named params in the signature" do
+    it "includes the named-args object in the signature" do
       sig = make_internal(namespace: "Lune::Plugins::System", method: "notify", args: ["String", "String"], return_type: "Nil", arg_names: ["title", "body"]).to_dts_sig
-      sig.should eq("  notify(title: string, body: string): Promise<void>;")
+      sig.should eq("  notify(args: { title: string; body: string }): Promise<void>;")
     end
   end
 end

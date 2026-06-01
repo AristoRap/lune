@@ -74,14 +74,16 @@ Show the tray icon, set a menu, and handle events:
 import { lune } from "../lunejs/runtime/runtime.js";
 
 // Show the tray icon
-await lune.Tray.show("/assets/icon.png");
+await lune.Tray.show({ iconPath: "/assets/icon.png" });
 
 // Set a dropdown menu
-await lune.Tray.setMenu([
-  { id: "show", label: "Show window" },
-  { id: "---", label: "" }, // separator
-  { id: "quit", label: "Quit" },
-]);
+await lune.Tray.setMenu({
+  items: [
+    { id: "show", label: "Show window" },
+    { id: "---", label: "" }, // separator
+    { id: "quit", label: "Quit" },
+  ],
+});
 
 // Listen for tray events (requires event)
 lune.Event.on("trayEvent", (payload) => {
@@ -95,30 +97,32 @@ lune.Event.on("trayEvent", (payload) => {
 await lune.Tray.popupMenu();
 
 // Update the icon dynamically
-await lune.Tray.setIcon("/assets/icon-active.png");
+await lune.Tray.setIcon({ path: "/assets/icon-active.png" });
 
 // Hide the tray icon
 await lune.Tray.hide();
 ```
 
-| Method      | Signature        | Returns         | Description                      |
-| ----------- | ---------------- | --------------- | -------------------------------- |
-| `show`      | `show(iconPath)` | `Promise<void>` | Show tray icon from path         |
-| `hide`      | `hide()`         | `Promise<void>` | Hide the tray icon               |
-| `setIcon`   | `setIcon(path)`  | `Promise<void>` | Swap the icon image              |
-| `setMenu`   | `setMenu(items)` | `Promise<void>` | Set the dropdown menu items      |
-| `popupMenu` | `popupMenu()`    | `Promise<void>` | Open the menu (no-op if not set) |
+| Method      | Signature            | Returns         | Description                      |
+| ----------- | -------------------- | --------------- | -------------------------------- |
+| `show`      | `show({ iconPath })` | `Promise<void>` | Show tray icon from path         |
+| `hide`      | `hide()`             | `Promise<void>` | Hide the tray icon               |
+| `setIcon`   | `setIcon({ path })`  | `Promise<void>` | Swap the icon image              |
+| `setMenu`   | `setMenu({ items })` | `Promise<void>` | Set the dropdown menu items      |
+| `popupMenu` | `popupMenu()`        | `Promise<void>` | Open the menu (no-op if not set) |
 
 ### Menu item shape
 
 `setMenu` takes an array of `{ id: string; label: string }`. The shape is inlined in `runtime.d.ts` — Lune doesn't ship a named `TrayMenuItem` interface. Use `"---"` as the `id` for a separator.
 
 ```ts
-await lune.Tray.setMenu([
-  { id: "show", label: "Show window" },
-  { id: "---", label: "" }, // separator
-  { id: "quit", label: "Quit" },
-]);
+await lune.Tray.setMenu({
+  items: [
+    { id: "show", label: "Show window" },
+    { id: "---", label: "" }, // separator
+    { id: "quit", label: "Quit" },
+  ],
+});
 ```
 
 ---
@@ -152,7 +156,7 @@ end
 ```
 
 ```js
-lune.Tray.setMenu([{ id: "quit", label: "Quit" }]);
+lune.Tray.setMenu({ items: [{ id: "quit", label: "Quit" }] });
 ```
 
 **Left toggles window, right shows menu (popover style):**

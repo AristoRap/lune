@@ -8,30 +8,30 @@ const pickerOut = ref("");
 const dialogOut = ref("");
 
 async function pickFile() {
-  pickerOut.value = (await Dialogs.openFile("Select a file")) || "(cancelled)";
+  pickerOut.value = (await Dialogs.openFile({ prompt: "Select a file" })) || "(cancelled)";
 }
 async function pickFiles() {
-  const ps = await Dialogs.openFiles("Select files");
+  const ps = await Dialogs.openFiles({ prompt: "Select files" });
   pickerOut.value = ps.length ? ps.join("\n") : "(cancelled)";
 }
 async function pickDir() {
-  pickerOut.value = (await Dialogs.openDir("Select a folder")) || "(cancelled)";
+  pickerOut.value = (await Dialogs.openDir({ prompt: "Select a folder" })) || "(cancelled)";
 }
 async function saveAs() {
-  pickerOut.value = (await Dialogs.saveFile("Save as", "export.txt")) || "(cancelled)";
+  pickerOut.value = (await Dialogs.saveFile({ prompt: "Save as", filename: "export.txt" })) || "(cancelled)";
 }
 
 function info() {
-  Dialogs.messageInfo("Information", "This is an info dialog from Lune.");
+  Dialogs.messageInfo({ title: "Information", message: "This is an info dialog from Lune." });
 }
 function warn() {
-  Dialogs.messageWarning("Warning", "Something might need your attention.");
+  Dialogs.messageWarning({ title: "Warning", message: "Something might need your attention." });
 }
 function err() {
-  Dialogs.messageError("Error", "Something went wrong!");
+  Dialogs.messageError({ title: "Error", message: "Something went wrong!" });
 }
 async function ask() {
-  const yes = await Dialogs.messageQuestion("Confirm", "Do you want to proceed?");
+  const yes = await Dialogs.messageQuestion({ title: "Confirm", message: "Do you want to proceed?" });
   dialogOut.value = `Answer: ${yes}`;
 }
 </script>

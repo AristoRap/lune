@@ -72,7 +72,7 @@ This happens automatically on `lune dev` startup and during `lune build` (before
 
 ### 5. The call
 
-When frontend code calls `api.MyModule.greet("world")`:
+When frontend code calls `api.MyModule.greet({ name: "world" })`:
 
 1. The JS stub calls the WebView's native binding with the serialized arguments
 2. The Bridge deserializes them and dispatches to the Crystal method
@@ -223,7 +223,7 @@ end
 import { lune } from "../lunejs/runtime/runtime.js";
 
 lune.Event.on("results", (data) => renderResults(data));
-await lune.Event.emit("search", { query: input.value });
+await lune.Event.emit({ name: "search", data: { query: input.value } });
 ```
 
 Under the hood, `app.event.emit` calls `window.__lune.crystalEmit` (Crystal→JS); `lune.Event.emit` calls the `Event.emit` WebView binding (JS→Crystal), which is just an ordinary `@[Lune::Bind]` method on the `Event` plugin like any other. See the [Event](./event) guide for the full API.

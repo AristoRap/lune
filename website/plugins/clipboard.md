@@ -23,14 +23,14 @@ All methods return a `Promise`.
 import { lune } from "../lunejs/runtime/runtime.js";
 
 const text = await lune.Clipboard.read();
-await lune.Clipboard.write("Hello from Lune");
+await lune.Clipboard.write({ text: "Hello from Lune" });
 ```
 
 ### HTML
 
 ```js
 const html = await lune.Clipboard.readHtml();
-await lune.Clipboard.writeHtml("<b>bold</b>");
+await lune.Clipboard.writeHtml({ html: "<b>bold</b>" });
 ```
 
 ### Images
@@ -39,21 +39,21 @@ Images are exchanged as data URLs (`data:image/png;base64,...`):
 
 ```js
 const dataUrl = await lune.Clipboard.readImage();
-await lune.Clipboard.writeImage(dataUrl);
+await lune.Clipboard.writeImage({ dataUrl });
 ```
 
 ---
 
 ## Full API reference
 
-| Method       | Signature             | Returns                      |
-| ------------ | --------------------- | ---------------------------- |
-| `read`       | `read()`              | `Promise<string>`            |
-| `write`      | `write(text)`         | `Promise<void>`              |
-| `readHtml`   | `readHtml()`          | `Promise<string>`            |
-| `writeHtml`  | `writeHtml(html)`     | `Promise<void>`              |
-| `readImage`  | `readImage()`         | `Promise<string>` — data URL |
-| `writeImage` | `writeImage(dataUrl)` | `Promise<void>`              |
+| Method       | Signature                 | Returns                      |
+| ------------ | ------------------------- | ---------------------------- |
+| `read`       | `read()`                  | `Promise<string>`            |
+| `write`      | `write({ text })`         | `Promise<void>`              |
+| `readHtml`   | `readHtml()`              | `Promise<string>`            |
+| `writeHtml`  | `writeHtml({ html })`     | `Promise<void>`              |
+| `readImage`  | `readImage()`             | `Promise<string>` — data URL |
+| `writeImage` | `writeImage({ dataUrl })` | `Promise<void>`              |
 
 ---
 

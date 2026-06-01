@@ -33,16 +33,18 @@ app = Lune::App.new
 app.install(MathModule.new)
 ```
 
-In JavaScript:
+In JavaScript, every binding takes a **single arguments object** whose keys are the (camelCased) parameter names:
 
 ```js
 import api from "../lunejs/app/App.js";
 
-const result = await api.MathModule.add(2, 3); // 5
-const upper = await api.MathModule.toUpper("hello"); // "HELLO"
+const result = await api.MathModule.add({ a: 2, b: 3 }); // 5
+const upper = await api.MathModule.toUpper({ s: "hello" }); // "HELLO"
 ```
 
-All binding calls return a `Promise`, regardless of whether the Crystal method is synchronous.
+All binding calls return a `Promise`, regardless of whether the Crystal method is synchronous. A zero-argument binding can be called as `fn()` or `fn({})`.
+
+> **Named arguments, not positional.** Calls pass one object — `add({ a, b })`, not `add(2, 3)`. The keys are checked against the generated `.d.ts`, so a typo or missing field is caught at the call site, and adding or reordering Crystal parameters never silently shifts an argument. The shape rides over the bridge as the call's single payload.
 
 ---
 
@@ -56,7 +58,7 @@ Crystal methods use `snake_case`. Lune converts them to `camelCase` using Crysta
 | `slow_echo`     | `slowEcho`    |
 | `get_user_name` | `getUserName` |
 
-Parameter names are preserved as-is in the generated `.d.ts`. A method `def slow_echo(name : String)` produces `slowEcho(name: string)`.
+Parameter names become the keys of the arguments object in the generated `.d.ts`. A method `def slow_echo(name : String)` produces `slowEcho(args: { name: string })`, called as `slowEcho({ name: "…" })`.
 
 ---
 
@@ -76,7 +78,7 @@ end
 ```
 
 ```js
-await api.Database.Queries.findUser(42);
+await api.Database.Queries.findUser({ id: 42 });
 ```
 
 ---
@@ -197,7 +199,7 @@ The default export is `api`, an object containing all registered namespaces:
 ```js
 import api from "../lunejs/app/App.js";
 
-await api.GreetModule.greet("world");
+await api.GreetModule.greet({ name: "world" });
 ```
 
 Named exports are also available for each top-level namespace, which can be more convenient:
@@ -205,8 +207,8 @@ Named exports are also available for each top-level namespace, which can be more
 ```js
 import { GreetModule, MathModule } from "../lunejs/app/App.js";
 
-await GreetModule.greet("world");
-await MathModule.add(1, 2);
+await GreetModule.greet({ name: "world" });
+await MathModule.add({ a: 1, b: 2 });
 ```
 
 Both import styles refer to the same underlying stubs.
@@ -251,18 +253,24 @@ class MyPlugin
   include Lune::Installable
 
   def install(app : Lune::App)
-    app.bind(
+    # The callback receives the named-args object (keyed by the wire arg names)
+    # and an optional per-call context, and returns a `JSON::Any`.
+    callback = ->(_args : Hash(String, JSON::Any), _ctx : Vow::Context?) : JSON::Any {
+      JSON::Any.new("pong")
+    }
+
+    binding = Lune::Binding.new(
       namespace: "MyPlugin",
       method: "ping",
       args: [] of String,
       return_type: "String",
-      async: false,
-      arg_names: [] of String,
-    ) do |_args|
-      JSON.parse("\"pong\"")
-    end
+      callback: callback,
+    )
+
+    app.register(binding)                         # emit the stub into the generated client
+    app.registry.register(binding.id, &callback)  # make it dispatchable
   end
 end
 ```
 
-This is rarely needed for application code — prefer `Lune::Bindable` for most cases.
+This is rarely needed for application code — prefer `Lune::Bindable` for most cases, which wires both steps for you.

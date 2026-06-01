@@ -33,84 +33,65 @@ private class TypedFakeWebview
   end
 end
 
+# Register a procedure into a fresh registry AND build a matching Binding, then
+# wire both onto the fake webview through a Bridge. The Bridge dispatches by id
+# through the registry (the binding only supplies id/async), so the same
+# callback backs both. This mirrors how the Bindable macro wires real plugins.
+private def wire(fake, namespace : String, method : String, args : Array(String), return_type : String, async : Bool = false, &cb : Hash(String, JSON::Any), ::Vow::Context? -> JSON::Any) : Nil
+  registry = Vow::Registry.new
+  binding = Lune::Binding.new(
+    namespace: namespace,
+    method: method,
+    args: args,
+    return_type: return_type,
+    callback: cb,
+    async: async,
+  )
+  registry.register(binding.id, &cb)
+  bridge = Lune::Bridge.new(fake, registry)
+  bridge.register_bindings([binding])
+end
+
 describe "Bridge typed bindings" do
-  it "bind_typed with a primitive arg converts input and output" do
+  it "decodes a named arg and encodes the result" do
     fake = TypedFakeWebview.new
-    bridge = Lune::Bridge.new(fake)
+    wire(fake, "test", "inc", ["Int32"], "Int32") do |args, _ctx|
+      n = Vow::Registry.decode(Int32, args["n"])
+      JSON::Any.new((n + 1).to_i64)
+    end
 
-    binding = Lune::Binding.new(
-      namespace: "test",
-      method: "inc",
-      args: ["Int32"],
-      return_type: "Int32",
-      callback: ->(args : Array(JSON::Any)) : JSON::Any {
-        n = args[0].as_i.to_i32
-        JSON::Any.new(n + 1)
-      },
-      internal: false,
-      async: false
-    )
-
-    bridge.register_bindings([binding])
-
-    fake.invoke("test.inc", "seq-1", [JSON::Any.new(41_i64)])
+    fake.invoke("test.inc", "seq-1", [JSON.parse(%({"n": 41}))])
 
     fake.resolve_calls.size.should eq(1)
-
     seq, status, result = fake.resolve_calls[0]
     seq.should eq("seq-1")
     status.should eq(0)
     JSON.parse(result).as_i.should eq(42)
   end
 
-  it "bind_typed returns error on wrong arity" do
+  it "maps a missing required arg to the bad_input envelope" do
     fake = TypedFakeWebview.new
-    bridge = Lune::Bridge.new(fake)
+    wire(fake, "test", "inc", ["Int32"], "Int32") do |args, _ctx|
+      raise Vow::Error.bad_input("missing required argument n") unless args.has_key?("n")
+      JSON::Any.new((Vow::Registry.decode(Int32, args["n"]) + 1).to_i64)
+    end
 
-    binding = Lune::Binding.new(
-      namespace: "test",
-      method: "inc",
-      args: ["Int32"],
-      return_type: "Int32",
-      callback: ->(args : Array(JSON::Any)) : JSON::Any {
-        if args.size != 1
-          raise "Expected 1 argument"
-        end
-        n = args[0].as_i.to_i32
-        JSON::Any.new(n + 1)
-      },
-      internal: false,
-      async: false
-    )
-
-    bridge.register_bindings([binding])
-
-    fake.invoke("test.inc", "seq-2", [] of JSON::Any)
+    fake.invoke("test.inc", "seq-2", [JSON.parse("{}")])
 
     fake.resolve_calls.size.should eq(1)
-
     _seq, status, result = fake.resolve_calls[0]
     status.should eq(1)
-    JSON.parse(result)["error"].as_s.should contain("Expected 1 argument")
+    body = JSON.parse(result)
+    body["code"].as_s.should eq("bad_input")
+    body["error"].as_s.should contain("missing required argument n")
   end
 
-  it "generic exception produces code: \"error\" in the error envelope" do
+  it "maps a generic exception to code \"error\"" do
     fake = TypedFakeWebview.new
-    bridge = Lune::Bridge.new(fake)
+    wire(fake, "test", "boom", [] of String, "Nil") do |_args, _ctx|
+      raise "something went wrong"
+    end
 
-    binding = Lune::Binding.new(
-      namespace: "test",
-      method: "boom",
-      args: [] of String,
-      return_type: "Nil",
-      callback: ->(_args : Array(JSON::Any)) : JSON::Any {
-        raise "something went wrong"
-      },
-      internal: false,
-      async: false
-    )
-
-    bridge.register_bindings([binding])
     fake.invoke("test.boom", "seq-3", [] of JSON::Any)
 
     _seq, status, result = fake.resolve_calls[0]
@@ -120,23 +101,12 @@ describe "Bridge typed bindings" do
     body["error"].as_s.should contain("something went wrong")
   end
 
-  it "Lune::Error subclass uses its code in the error envelope" do
+  it "uses a Lune::Error subclass's code in the error envelope" do
     fake = TypedFakeWebview.new
-    bridge = Lune::Bridge.new(fake)
+    wire(fake, "test", "notfound", [] of String, "Nil") do |_args, _ctx|
+      raise Lune::Error.new("not_found", "record 42 not found")
+    end
 
-    binding = Lune::Binding.new(
-      namespace: "test",
-      method: "notfound",
-      args: [] of String,
-      return_type: "Nil",
-      callback: ->(_args : Array(JSON::Any)) : JSON::Any {
-        raise Lune::Error.new("not_found", "record 42 not found")
-      },
-      internal: false,
-      async: false
-    )
-
-    bridge.register_bindings([binding])
     fake.invoke("test.notfound", "seq-4", [] of JSON::Any)
 
     _seq, status, result = fake.resolve_calls[0]
@@ -144,5 +114,23 @@ describe "Bridge typed bindings" do
     body = JSON.parse(result)
     body["code"].as_s.should eq("not_found")
     body["error"].as_s.should eq("record 42 not found")
+  end
+
+  it "dispatches an async binding by name through the registry" do
+    fake = TypedFakeWebview.new
+    wire(fake, "test", "doubler", ["Int32"], "Int32", async: true) do |args, _ctx|
+      JSON::Any.new((Vow::Registry.decode(Int32, args["n"]) * 2).to_i64)
+    end
+
+    fake.invoke("test.doubler", "seq-async", [JSON.parse(%({"n": 21}))])
+
+    # The async pool resolves on its own fiber; yield until the reply lands.
+    while fake.resolve_calls.empty?
+      Fiber.yield
+    end
+
+    _seq, status, result = fake.resolve_calls[0]
+    status.should eq(0)
+    JSON.parse(result).as_i.should eq(42)
   end
 end

@@ -33,15 +33,15 @@ Or omit `plugins:` entirely.
 import { lune } from "../lunejs/runtime/runtime.js";
 
 // Write any JSON-serialisable value
-await lune.Kv.set("theme", "dark");
-await lune.Kv.set("window_scale", 1.5);
-await lune.Kv.set("recent_files", ["/tmp/a.txt", "/tmp/b.txt"]);
+await lune.Kv.set({ key: "theme", value: "dark" });
+await lune.Kv.set({ key: "window_scale", value: 1.5 });
+await lune.Kv.set({ key: "recent_files", value: ["/tmp/a.txt", "/tmp/b.txt"] });
 
 // Read back (returns null if the key doesn't exist)
-const theme = await lune.Kv.get("theme");
+const theme = await lune.Kv.get({ key: "theme" });
 console.log(theme); // "dark"
 
-const missing = await lune.Kv.get("no_such_key");
+const missing = await lune.Kv.get({ key: "no_such_key" });
 console.log(missing); // null
 ```
 
@@ -50,9 +50,9 @@ console.log(missing); // null
 ## Checking and deleting keys
 
 ```js
-const exists = await lune.Kv.has("theme"); // true
-await lune.Kv.delete("theme");
-const gone = await lune.Kv.has("theme"); // false
+const exists = await lune.Kv.has({ key: "theme" }); // true
+await lune.Kv.delete({ key: "theme" });
+const gone = await lune.Kv.has({ key: "theme" }); // false
 ```
 
 ---
@@ -72,10 +72,10 @@ await lune.Kv.clear(); // removes all entries
 
 | Method   | Signature                      | Description                           |
 | -------- | ------------------------------ | ------------------------------------- |
-| `get`    | `(key) → Promise<unknown>`     | Return the value or `null` if not set |
-| `set`    | `(key, value) → Promise<void>` | Store any JSON-serialisable value     |
-| `delete` | `(key) → Promise<void>`        | Remove a key; no-op if absent         |
-| `has`    | `(key) → Promise<boolean>`     | Check whether a key exists            |
+| `get`    | `({ key }) → Promise<unknown>`        | Return the value or `null` if not set |
+| `set`    | `({ key, value }) → Promise<void>`    | Store any JSON-serialisable value     |
+| `delete` | `({ key }) → Promise<void>`           | Remove a key; no-op if absent         |
+| `has`    | `({ key }) → Promise<boolean>`        | Check whether a key exists            |
 | `keys`   | `() → Promise<string[]>`       | List all stored keys                  |
 | `clear`  | `() → Promise<void>`           | Remove all entries                    |
 

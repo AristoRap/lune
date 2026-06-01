@@ -92,7 +92,7 @@ onMounted(() => {
       Use <code>lune.yml</code>'s <code>plugins:</code> block with <code>enabled</code> / <code>disabled</code> lists
       to restrict which plugins this app loads.
     </p>
-    <button class="btn-link primary" @click="System.openUrl(DOCS_URL)">
+    <button class="btn-link primary" @click="System.openUrl({ url: DOCS_URL })">
       Open plugin reference →
     </button>
   </div>

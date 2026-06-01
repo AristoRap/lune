@@ -59,9 +59,9 @@ lune.Event.once("connected", () => showWelcomeMessage());
 ### Emitting from JavaScript
 
 ```js
-await lune.Event.emit("search", { query: input.value });
-await lune.Event.emit("user-action", "button-clicked");
-await lune.Event.emit("ready");
+await lune.Event.emit({ name: "search", data: { query: input.value } });
+await lune.Event.emit({ name: "user-action", data: "button-clicked" });
+await lune.Event.emit({ name: "ready" });
 ```
 
 `lune.Event.emit` is async — it resolves once Crystal has received the event.
@@ -88,12 +88,12 @@ The `data` argument is a `JSON::Any` — use `.as_s`, `.as_i`, `.as_a`, `[]` etc
 
 ## JavaScript API
 
-| Method | Signature           | Description                                        |
-| ------ | ------------------- | -------------------------------------------------- |
-| `on`   | `on(name, cb)`      | Persistent listener                                |
-| `once` | `once(name, cb)`    | One-shot listener                                  |
-| `off`  | `off(name, cb?)`    | Remove a specific listener, or all if `cb` omitted |
-| `emit` | `emit(name, data?)` | Send an event to Crystal; returns `Promise<void>`  |
+| Method | Signature               | Description                                        |
+| ------ | ----------------------- | -------------------------------------------------- |
+| `on`   | `on(name, cb)`          | Persistent listener                                |
+| `once` | `once(name, cb)`        | One-shot listener                                  |
+| `off`  | `off(name, cb?)`        | Remove a specific listener, or all if `cb` omitted |
+| `emit` | `emit({ name, data? })` | Send an event to Crystal; returns `Promise<void>`  |
 
 ---
 
@@ -141,7 +141,7 @@ end
 ```js
 lune.Event.on("search-results", (results) => renderResults(results));
 searchInput.addEventListener("input", (e) => {
-  lune.Event.emit("search", { query: e.target.value });
+  lune.Event.emit({ name: "search", data: { query: e.target.value } });
 });
 ```
 
@@ -155,7 +155,7 @@ end
 
 ```js
 lune.Event.on("config", (cfg) => applyConfig(cfg));
-lune.Event.emit("frontend-ready");
+lune.Event.emit({ name: "frontend-ready" });
 ```
 
 ---

@@ -10,7 +10,7 @@ describe Lune::Event do
 
     it "returns Nil when a bridge is wired (no leak of internal each result)" do
       app = Lune::App.new
-      app.bridge = Lune::Bridge.new(FakeWebview.new)
+      app.bridge = Lune::Bridge.new(FakeWebview.new, app.registry)
       app.event.emit("foo", "bar").should be_nil
     end
   end
@@ -19,7 +19,7 @@ describe Lune::Event do
     it "holds emits until mark_ready is called, then flushes in order" do
       app = Lune::App.new
       fwv = FakeWebview.new
-      app.bridge = Lune::Bridge.new(fwv)
+      app.bridge = Lune::Bridge.new(fwv, app.registry)
 
       app.event.emit("deep_link", {"url" => "lune://test/1"})
       app.event.emit("deep_link", {"url" => "lune://test/2"})
@@ -37,7 +37,7 @@ describe Lune::Event do
     it "dispatches immediately for emits issued after mark_ready" do
       app = Lune::App.new
       fwv = FakeWebview.new
-      app.bridge = Lune::Bridge.new(fwv)
+      app.bridge = Lune::Bridge.new(fwv, app.registry)
 
       app.event.mark_ready
       app.event.emit("foo", "bar")
@@ -48,7 +48,7 @@ describe Lune::Event do
     it "mark_ready is idempotent — second call does not re-flush" do
       app = Lune::App.new
       fwv = FakeWebview.new
-      app.bridge = Lune::Bridge.new(fwv)
+      app.bridge = Lune::Bridge.new(fwv, app.registry)
 
       app.event.emit("foo", 1)
       app.event.mark_ready
@@ -61,7 +61,7 @@ describe Lune::Event do
     it "caps the pending queue and drops oldest on overflow" do
       app = Lune::App.new
       fwv = FakeWebview.new
-      app.bridge = Lune::Bridge.new(fwv)
+      app.bridge = Lune::Bridge.new(fwv, app.registry)
 
       cap = Lune::Event::PENDING_MAX
       (cap + 5).times { |i| app.event.emit("e", i) }

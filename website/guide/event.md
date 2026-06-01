@@ -32,7 +32,7 @@ lune.Event.once("connected", () => showWelcomeMessage());
 Emit from JavaScript with `lune.Event.emit`:
 
 ```js
-await lune.Event.emit("search", { query: input.value });
+await lune.Event.emit({ name: "search", data: { query: input.value } });
 ```
 
 Listen in Crystal with `app.event.on` or `app.event.once`:
@@ -61,7 +61,7 @@ end
 // JS side
 lune.Event.on("results", (data) => renderList(data));
 searchButton.addEventListener("click", () =>
-  lune.Event.emit("search", { query: input.value }),
+  lune.Event.emit({ name: "search", data: { query: input.value } }),
 );
 ```
 

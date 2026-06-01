@@ -72,7 +72,7 @@ describe Lune::Generator do
     app.install(event)
     js = Lune::Generator.generate_runtime_js(app.bindings.select(&.internal?), event_plugins)
 
-    js.includes?("emit(name, data)").should be_true
+    js.includes?("emit(args)").should be_true
     js.includes?(%("Lune.Plugins.Event.emit")).should be_true
   end
 
@@ -82,7 +82,7 @@ describe Lune::Generator do
     app.install(event)
     dts = Lune::Generator.generate_runtime_dts(app.bindings.select(&.internal?), event_plugins)
 
-    dts.includes?("emit(name: string").should be_true
+    dts.includes?("emit(args: { name: string; data: unknown })").should be_true
   end
 
   it "exports System namespace with quit, openUrl, environment" do
@@ -90,9 +90,9 @@ describe Lune::Generator do
 
     js.includes?("export const Lune").should be_true
     js.includes?("System:").should be_true
-    js.includes?("quit()").should be_true
-    js.includes?("openUrl(").should be_true
-    js.includes?("environment()").should be_true
+    js.includes?("quit(args = {})").should be_true
+    js.includes?("openUrl(args)").should be_true
+    js.includes?("environment(args = {})").should be_true
     js.includes?("Lune.Plugins.System.quit").should be_true
     js.includes?("Lune.Plugins.System.open_url").should be_true
     js.includes?("Lune.Plugins.System.environment").should be_true
@@ -104,9 +104,9 @@ describe Lune::Generator do
     dts.includes?("export declare const Lune").should be_true
     dts.includes?("System: {").should be_true
     dts.includes?("Event: {").should be_true
-    dts.includes?("quit()").should be_true
-    dts.includes?("openUrl(").should be_true
-    dts.includes?("environment()").should be_true
+    dts.includes?("quit(args?: {})").should be_true
+    dts.includes?("openUrl(args:").should be_true
+    dts.includes?("environment(args?: {})").should be_true
     dts.includes?("on(name: string").should be_true
     dts.includes?("once(name: string").should be_true
     dts.includes?("off(name: string").should be_true
@@ -128,15 +128,15 @@ describe Lune::Generator do
     dts.includes?("width: number; height: number; scale: number").should be_true
   end
 
-  it "exports DragOut namespace with start binding (paths JSON-stringified)" do
+  it "exports DragOut namespace with start binding (paths in the named-args object)" do
     bindings, plugins = drag_out_setup
     js = Lune::Generator.generate_runtime_js(bindings, plugins)
 
     js.includes?("export const Lune").should be_true
     js.includes?("DragOut:").should be_true
-    js.includes?("start(paths)").should be_true
-    js.includes?("JSON.stringify(paths || [])").should be_true
-    js.scan(/start\(paths\)/).size.should eq(1)
+    js.includes?("start(args)").should be_true
+    js.includes?(%(__lune.call("Lune.Plugins.DragOut.start", args))).should be_true
+    js.scan(/start\(args\)/).size.should eq(1)
   end
 
   it "declares DragOut interface in runtime.d.ts" do
@@ -144,8 +144,8 @@ describe Lune::Generator do
     dts = Lune::Generator.generate_runtime_dts(bindings, plugins)
 
     dts.includes?("DragOut: {").should be_true
-    dts.includes?("start(paths: string[])").should be_true
-    dts.scan(/start\(paths: string\[\]\)/).size.should eq(1)
+    dts.includes?("start(args: { paths: string[] })").should be_true
+    dts.scan(/start\(args: \{ paths: string\[\] \}\)/).size.should eq(1)
   end
 
   describe "platform-unavailable stubs" do
@@ -170,7 +170,7 @@ describe Lune::Generator do
       )
 
       dts.includes?("DragOut: {").should be_true
-      dts.includes?("start(paths: string[]): Promise<void>").should be_true
+      dts.includes?("start(args: { paths: string[] }): Promise<void>").should be_true
     end
 
     it "does not duplicate a namespace when both live and unavailable lists name it" do
@@ -193,7 +193,7 @@ describe Lune::Generator do
         method: "greet",
         args: [] of String,
         return_type: "String",
-        callback: ->(_args : Array(JSON::Any)) { JSON::Any.new("ok") },
+        callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") },
         internal: false,
         async: false
       ),
@@ -202,7 +202,7 @@ describe Lune::Generator do
         method: "inc",
         args: [] of String,
         return_type: "Int32",
-        callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(1_i64) },
+        callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new(1_i64) },
         internal: false,
         async: false
       ),
@@ -227,7 +227,7 @@ describe Lune::Generator do
         method: "add",
         args: ["AddArgs"],
         return_type: "Int32",
-        callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(0_i64) },
+        callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new(0_i64) },
         internal: false,
         async: false
       ),
@@ -248,7 +248,7 @@ describe Lune::Generator do
           method: "greet",
           args: [] of String,
           return_type: "String",
-          callback: ->(_args : Array(JSON::Any)) { JSON::Any.new("ok") },
+          callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") },
           internal: false,
           async: false
         ),
@@ -268,7 +268,7 @@ describe Lune::Generator do
         method: "zeta",
         args: [] of String,
         return_type: "String",
-        callback: ->(_args : Array(JSON::Any)) { JSON::Any.new("ok") },
+        callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") },
         internal: false,
         async: false
       ),
@@ -277,7 +277,7 @@ describe Lune::Generator do
         method: "alpha",
         args: [] of String,
         return_type: "String",
-        callback: ->(_args : Array(JSON::Any)) { JSON::Any.new("ok") },
+        callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") },
         internal: false,
         async: false
       ),
@@ -290,8 +290,8 @@ describe Lune::Generator do
 
     js.includes?("export const alpha = {").should be_true
     js.includes?("export const counter = {").should be_true
-    js.includes?("zeta()").should be_true
-    js.includes?("alpha()").should be_true
+    js.includes?("zeta(args = {})").should be_true
+    js.includes?("alpha(args = {})").should be_true
   end
 
   it "includes namespace objects and a default export" do
@@ -301,7 +301,7 @@ describe Lune::Generator do
         method: "ping",
         args: [] of String,
         return_type: "String",
-        callback: ->(_args : Array(JSON::Any)) { JSON::Any.new("ok") },
+        callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") },
         internal: false,
         async: false
       ),
@@ -310,7 +310,7 @@ describe Lune::Generator do
         method: "sum",
         args: [] of String,
         return_type: "Int32",
-        callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(0_i64) },
+        callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new(0_i64) },
         internal: false,
         async: false
       ),
@@ -336,7 +336,7 @@ describe Lune::Generator do
         method: "ping",
         args: [] of String,
         return_type: "String",
-        callback: ->(_args : Array(JSON::Any)) { JSON::Any.new("ok") },
+        callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") },
         internal: false,
         async: false
       ),
@@ -345,7 +345,7 @@ describe Lune::Generator do
         method: "sum",
         args: [] of String,
         return_type: "Int32",
-        callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(0_i64) },
+        callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new(0_i64) },
         internal: false,
         async: false
       ),
@@ -383,7 +383,7 @@ describe Lune::Generator do
           method: "hello",
           args: [] of String,
           return_type: "String",
-          callback: ->(_args : Array(JSON::Any)) { JSON::Any.new("ok") },
+          callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") },
           internal: false,
           async: false
         ),
@@ -410,7 +410,7 @@ describe Lune::Generator do
           method: "ping",
           args: [] of String,
           return_type: "String",
-          callback: ->(_args : Array(JSON::Any)) { JSON::Any.new("ok") },
+          callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") },
           internal: false,
           async: false
         ),
@@ -427,7 +427,7 @@ describe Lune::Generator do
           method: "ping",
           args: [] of String,
           return_type: "String",
-          callback: ->(_args : Array(JSON::Any)) { JSON::Any.new("ok") },
+          callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") },
           internal: false,
           async: false
         ),
@@ -448,7 +448,7 @@ describe Lune::Generator do
           method: "ping",
           args: [] of String,
           return_type: "String",
-          callback: ->(_args : Array(JSON::Any)) { JSON::Any.new("ok") },
+          callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") },
           internal: false,
           async: false
         ),
@@ -465,7 +465,7 @@ describe Lune::Generator do
           method: "ping",
           args: [] of String,
           return_type: "String",
-          callback: ->(_args : Array(JSON::Any)) { JSON::Any.new("ok") },
+          callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") },
           internal: false,
           async: false
         ),
@@ -474,7 +474,7 @@ describe Lune::Generator do
           method: "pong",
           args: [] of String,
           return_type: "String",
-          callback: ->(_args : Array(JSON::Any)) { JSON::Any.new("ok") },
+          callback: ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") },
           internal: false,
           async: false
         ),
@@ -484,7 +484,7 @@ describe Lune::Generator do
 
       mtime_after.should_not eq(mtime_before)
       File.read(app_path).includes?("export const alpha = {").should be_true
-      File.read(app_path).includes?("pong()").should be_true
+      File.read(app_path).includes?("pong(args = {})").should be_true
     end
   end
 end

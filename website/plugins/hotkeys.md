@@ -34,11 +34,11 @@ plugins:
 import { lune } from "../lunejs/runtime/runtime.js";
 
 // Register on page load
-await lune.Hotkeys.register("Ctrl+Shift+K");
-await lune.Hotkeys.register("Ctrl+Shift+P");
+await lune.Hotkeys.register({ accelerator: "Ctrl+Shift+K" });
+await lune.Hotkeys.register({ accelerator: "Ctrl+Shift+P" });
 
 // Unregister when no longer needed
-await lune.Hotkeys.unregister("Ctrl+Shift+K");
+await lune.Hotkeys.unregister({ accelerator: "Ctrl+Shift+K" });
 ```
 
 Shortcuts are released automatically when the app quits. You do not need to unregister them manually on exit.
@@ -86,10 +86,10 @@ Accelerators are `+`-separated modifier and key names, case-insensitive:
 Key names: `A`–`Z`, `0`–`9`, `F1`–`F12`, `Space`, `Return`, `Enter`, `Tab`, `Backspace`, `Delete`, `Escape`, `Left`, `Right`, `Up`, `Down`, `Home`, `End`, `PageUp`, `PageDown`, `Minus`, `Equal`, and common punctuation (`[`, `]`, `;`, `'`, `` ` ``, `,`, `.`, `/`, `\`).
 
 ```js
-await lune.Hotkeys.register("Ctrl+K"); // single modifier
-await lune.Hotkeys.register("Cmd+Shift+P"); // macOS
-await lune.Hotkeys.register("Ctrl+Shift+F5"); // modifier + function key
-await lune.Hotkeys.register("Alt+Left"); // modifier + arrow
+await lune.Hotkeys.register({ accelerator: "Ctrl+K" }); // single modifier
+await lune.Hotkeys.register({ accelerator: "Cmd+Shift+P" }); // macOS
+await lune.Hotkeys.register({ accelerator: "Ctrl+Shift+F5" }); // modifier + function key
+await lune.Hotkeys.register({ accelerator: "Alt+Left" }); // modifier + arrow
 ```
 
 ---
@@ -100,8 +100,8 @@ await lune.Hotkeys.register("Alt+Left"); // modifier + arrow
 import { lune } from "../lunejs/runtime/runtime.js";
 
 async function setupHotkeys() {
-  await lune.Hotkeys.register("Ctrl+Shift+K");
-  await lune.Hotkeys.register("Ctrl+Shift+N");
+  await lune.Hotkeys.register({ accelerator: "Ctrl+Shift+K" });
+  await lune.Hotkeys.register({ accelerator: "Ctrl+Shift+N" });
 
   lune.Hotkeys.on((data) => {
     if (data.key === "Ctrl+Shift+K") toggleSearch();

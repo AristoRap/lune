@@ -35,7 +35,7 @@ function fmt(obj) {
 // ---- open / close ----
 async function openDb() {
   try {
-    db.value = await Sqlite.open(":memory:");
+    db.value = await Sqlite.open({ path: ":memory:" });
     status.value = "open";
     statusMsg.value = `handle: ${db.value}`;
   } catch (err) {
@@ -46,7 +46,7 @@ async function openDb() {
 
 async function closeDb() {
   if (!db.value) return;
-  await Sqlite.close(db.value);
+  await Sqlite.close({ db: db.value });
   db.value = null;
   status.value = "closed";
   statusMsg.value = "";
@@ -57,14 +57,14 @@ async function closeDb() {
 }
 
 onUnmounted(() => {
-  if (db.value) Sqlite.close(db.value).catch(() => { });
+  if (db.value) Sqlite.close({ db: db.value }).catch(() => { });
 });
 
 // ---- exec (create table) ----
 async function runCreate() {
   if (!db.value) return;
   try {
-    createResult.value = await Sqlite.exec(db.value, createSql.value, []);
+    createResult.value = await Sqlite.exec({ db: db.value, sql: createSql.value, params: [] });
   } catch (err) {
     createResult.value = { error: err.message || String(err) };
   }
@@ -75,11 +75,11 @@ async function runInsert() {
   if (!db.value) return;
   const now = new Date().toISOString();
   try {
-    insertResult.value = await Sqlite.exec(
-      db.value,
-      "INSERT INTO notes (body, created_at) VALUES (?, ?)",
-      [insertBody.value, now]
-    );
+    insertResult.value = await Sqlite.exec({
+      db: db.value,
+      sql: "INSERT INTO notes (body, created_at) VALUES (?, ?)",
+      params: [insertBody.value, now],
+    });
   } catch (err) {
     insertResult.value = { error: err.message || String(err) };
   }
@@ -89,7 +89,7 @@ async function runInsert() {
 async function runQuery() {
   if (!db.value) return;
   try {
-    queryRows.value = await Sqlite.query(db.value, querySql.value, []);
+    queryRows.value = await Sqlite.query({ db: db.value, sql: querySql.value, params: [] });
   } catch (err) {
     queryRows.value = [{ error: err.message || String(err) }];
   }
@@ -99,7 +99,7 @@ async function runQuery() {
 async function runExec() {
   if (!db.value) return;
   try {
-    execResult.value = await Sqlite.exec(db.value, execSql.value, []);
+    execResult.value = await Sqlite.exec({ db: db.value, sql: execSql.value, params: [] });
   } catch (err) {
     execResult.value = { error: err.message || String(err) };
   }

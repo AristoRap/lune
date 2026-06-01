@@ -6,7 +6,7 @@ private def make_bd(method = "ping", namespace = "alpha", args = [] of String, r
     namespace: namespace,
     args: args,
     return_type: return_type,
-    callback: ->(_a : Array(JSON::Any)) { JSON::Any.new("ok") }
+    callback: ->(_a : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") }
   )
 end
 
@@ -38,7 +38,7 @@ describe Lune::Binding do
   describe "#to_js_stub" do
     it "emits a JS function stub with the correct call ID" do
       stub = make_bd(method: "ping", namespace: "alpha").to_js_stub
-      stub.includes?("ping()").should be_true
+      stub.includes?("ping(args = {})").should be_true
       stub.includes?(%("alpha.ping")).should be_true
       stub.includes?("return __lune.call(").should be_true
     end
@@ -48,45 +48,45 @@ describe Lune::Binding do
       stub.includes?(%("alpha.beta.go")).should be_true
     end
 
-    it "falls back to arg0..argN when arg_names is empty" do
+    it "forwards the single named-args object regardless of arity" do
       stub = make_bd(method: "add", namespace: "math", args: ["Int32", "String"]).to_js_stub
-      stub.includes?("add(arg0, arg1)").should be_true
+      stub.includes?("add(args)").should be_true
     end
 
-    it "uses arg_names when provided" do
+    it "forwards the named-args object when arg_names are provided" do
       bd = Lune::Binding.new(
         method: "add",
         namespace: "math",
         args: ["Int32", "String"],
         return_type: "Int32",
-        callback: ->(_a : Array(JSON::Any)) { JSON::Any.new(0_i64) },
+        callback: ->(_a : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new(0_i64) },
         arg_names: ["n", "label"]
       )
-      bd.to_js_stub.includes?("add(n, label)").should be_true
+      bd.to_js_stub.includes?("add(args)").should be_true
     end
   end
 
   describe "#to_dts_sig" do
-    it "emits a typed Promise signature with no params" do
+    it "emits a typed Promise signature with an optional empty args object" do
       sig = make_bd(method: "ping", namespace: "alpha", return_type: "String").to_dts_sig
-      sig.should eq("  ping(): Promise<string>;")
+      sig.should eq("  ping(args?: {}): Promise<string>;")
     end
 
-    it "maps Crystal args to TypeScript parameter types using arg0..argN fallback" do
+    it "maps Crystal args to a typed named-args object using arg0..argN fallback keys" do
       sig = make_bd(method: "add", namespace: "math", args: ["Int32", "String"], return_type: "Int32").to_dts_sig
-      sig.should eq("  add(arg0: number, arg1: string): Promise<number>;")
+      sig.should eq("  add(args: { arg0: number; arg1: string }): Promise<number>;")
     end
 
-    it "uses arg_names when provided" do
+    it "uses arg_names as the named-args object keys when provided" do
       bd = Lune::Binding.new(
         method: "add",
         namespace: "math",
         args: ["Int32", "String"],
         return_type: "Int32",
-        callback: ->(_a : Array(JSON::Any)) { JSON::Any.new(0_i64) },
+        callback: ->(_a : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new(0_i64) },
         arg_names: ["n", "label"]
       )
-      bd.to_dts_sig.should eq("  add(n: number, label: string): Promise<number>;")
+      bd.to_dts_sig.should eq("  add(args: { n: number; label: string }): Promise<number>;")
     end
 
     it "maps Nil return to void" do

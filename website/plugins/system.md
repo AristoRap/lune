@@ -22,7 +22,7 @@ import { lune } from "../lunejs/runtime/runtime.js";
 await lune.System.quit();
 
 // Open a URL in the default browser
-await lune.System.openUrl("https://example.com");
+await lune.System.openUrl({ url: "https://example.com" });
 
 // Query the runtime environment
 const env = await lune.System.environment();
@@ -34,16 +34,19 @@ const { width, height, scale } = await lune.System.screenInfo();
 console.log(`${width}×${height} @ ${scale}x`);
 
 // Post a native desktop notification
-await lune.System.notify("Build complete", "Your app compiled successfully.");
+await lune.System.notify({
+  title: "Build complete",
+  body: "Your app compiled successfully.",
+});
 ```
 
-| Method        | Signature             | Returns                                                                              |
-| ------------- | --------------------- | ------------------------------------------------------------------------------------ |
-| `quit`        | `quit()`              | `Promise<void>`                                                                      |
-| `openUrl`     | `openUrl(url)`        | `Promise<void>`                                                                      |
-| `environment` | `environment()`       | `Promise<{ os: "darwin" \| "linux" \| "windows"; arch: string; devtools: boolean }>` |
-| `screenInfo`  | `screenInfo()`        | `Promise<{ width: number; height: number; scale: number }>`                          |
-| `notify`      | `notify(title, body)` | `Promise<void>`                                                                      |
+| Method        | Signature                 | Returns                                                                              |
+| ------------- | ------------------------- | ------------------------------------------------------------------------------------ |
+| `quit`        | `quit()`                  | `Promise<void>`                                                                      |
+| `openUrl`     | `openUrl({ url })`        | `Promise<void>`                                                                      |
+| `environment` | `environment()`           | `Promise<{ os: "darwin" \| "linux" \| "windows"; arch: string; devtools: boolean }>` |
+| `screenInfo`  | `screenInfo()`            | `Promise<{ width: number; height: number; scale: number }>`                          |
+| `notify`      | `notify({ title, body })` | `Promise<void>`                                                                      |
 
 Return types are inlined structurally — `runtime.d.ts` no longer ships named `LuneEnvironment` / `ScreenInfo` interfaces. If you need a name, alias the inferred return type at the call site:
 
@@ -71,7 +74,7 @@ end
 
 ## Notifications
 
-`lune.System.notify(title, body)` posts a native OS desktop notification. Click handling (firing an event back into the app when the user clicks a notification) is not currently wired up.
+`lune.System.notify({ title, body })` posts a native OS desktop notification. Click handling (firing an event back into the app when the user clicks a notification) is not currently wired up.
 
 - **macOS** — `NSUserNotificationCenter`. The app must be running; there is no persistence.
 - **Linux** — `libnotify`. Requires `libnotify-dev` at build time.

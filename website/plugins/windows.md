@@ -33,10 +33,12 @@ Or omit `plugins:` entirely — Windows is active by default.
 import { lune } from "../lunejs/runtime/runtime.js";
 
 const id = await lune.Windows.open({
-  title: "Settings",
-  url: "https://localhost:5173/settings",
-  width: 640,
-  height: 480,
+  opts: {
+    title: "Settings",
+    url: "https://localhost:5173/settings",
+    width: 640,
+    height: 480,
+  },
 });
 ```
 
@@ -56,10 +58,10 @@ const id = await lune.Windows.open({
 ## Closing a window
 
 ```js
-await lune.Windows.close(id);
+await lune.Windows.close({ id });
 ```
 
-Closes the native window and releases all resources. Both `lune.Windows.close(id)` and the user clicking the OS × button follow the same cleanup path — the bridge is torn down, the handle is freed, and the `window_closed` event fires on the main window.
+Closes the native window and releases all resources. Both `lune.Windows.close({ id })` and the user clicking the OS × button follow the same cleanup path — the bridge is torn down, the handle is freed, and the `window_closed` event fires on the main window.
 
 ---
 
@@ -78,15 +80,15 @@ Returns the handles of all currently open secondary windows (the main window is 
 
 | Method  | Signature                                       | Description                            |
 | ------- | ----------------------------------------------- | -------------------------------------- |
-| `open`  | `(opts: Record<string, any>) → Promise<string>` | Open a new window, return its handle   |
-| `close` | `(id: string) → Promise<void>`                  | Close the window by handle             |
+| `open`  | `({ opts: Record<string, any> }) → Promise<string>` | Open a new window, return its handle   |
+| `close` | `({ id: string }) → Promise<void>`                  | Close the window by handle             |
 | `list`  | `() → Promise<string[]>`                        | List all open secondary window handles |
 
 ---
 
 ## Window closed event
 
-When a secondary window is closed — either via `lune.Windows.close(id)` or by the user clicking the OS × button — the `window_closed` event fires in the main window:
+When a secondary window is closed — either via `lune.Windows.close({ id })` or by the user clicking the OS × button — the `window_closed` event fires in the main window:
 
 ```js
 import { lune } from "../lunejs/runtime/runtime.js";
