@@ -49,7 +49,8 @@ module Lune
       # The single named-args object is forwarded as-is; its keys are typed by
       # the `.d.ts`. A zero-arg stub defaults it to `{}` so `fn()` stays callable.
       param = @args.empty? ? "args = {}" : "args"
-      "  #{js_func_name}(#{param}) {\n    return __lune.call(#{id.inspect}, args);\n  },"
+      bm = Lune::Plugin::BRIDGE_MARKER
+      "  #{js_func_name}(#{param}) {\n    return #{bm}.call(#{id.inspect}, args);\n  },"
     end
 
     # JS-side runtime that every per-binding stub from `#to_js_stub` calls
@@ -57,8 +58,9 @@ module Lune
     # typed Crystal errors as `LuneError`. One copy lives at the top of
     # `runtime.js`; per-binding stubs reference it by name.
     def self.js_runtime : String
+      bm = Lune::Plugin::BRIDGE_MARKER
       <<-JS
-        export const __lune = {
+        export const #{bm} = {
           call(name, args) {
             return window[name](args).catch(function(err) {
               if (err !== null && typeof err === 'object' && typeof err.code === 'string') {
