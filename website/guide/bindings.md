@@ -253,22 +253,17 @@ class MyPlugin
   include Lune::Installable
 
   def install(app : Lune::App)
-    # The callback receives the named-args object (keyed by the wire arg names)
-    # and an optional per-call context, and returns a `JSON::Any`.
-    callback = ->(_args : Hash(String, JSON::Any), _ctx : Vow::Context?) : JSON::Any {
-      JSON::Any.new("pong")
-    }
-
     binding = Lune::Binding.new(
       namespace: "MyPlugin",
       method: "ping",
       args: [] of String,
       return_type: "String",
-      callback: callback,
     )
 
-    app.register(binding)                         # emit the stub into the generated client
-    app.registry.register(binding.id, &callback)  # make it dispatchable
+    app.register(binding)
+    app.registry.register(binding.id) do |_args, _ctx|
+      JSON::Any.new("pong")
+    end
   end
 end
 ```

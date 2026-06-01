@@ -41,7 +41,7 @@ Structural improvements that unlock whole categories of apps.
 
 Items the project can't pursue until external dependencies move. Each entry names the dependency.
 
-- [ ] **Win32 runtime end-to-end build — Crystal ≥ 1.21.** v0.10.0 + v0.11.0 added Win32 implementations for window / screen / dialog / clipboard-html / hotkeys / context-menu / notify / deep-link-cold-start, but Crystal 1.20.x can't compile a runnable binary on MSVC (`LibC::PidT` missing in `Process.initialize`; fixed in [crystal#16933](https://github.com/crystal-lang/crystal/pull/16933)). Once 1.21 is in our toolchain, walk through the **Platform notes** on each [plugin page](website/plugins/) and verify each plugin end-to-end on Windows.
+- [ ] **Win32 toolchain — vanilla Crystal ≥ 1.21.** Crystal 1.20.x can't compile a runnable binary on MSVC (`LibC::PidT` missing in `Process.initialize`; fixed in [crystal#16933](https://github.com/crystal-lang/crystal/pull/16933)). Local builds work with a one-line stdlib patch; promote to a supported toolchain (CI matrix without the patch) once 1.21 ships.
 
 ---
 

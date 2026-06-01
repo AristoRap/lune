@@ -90,4 +90,4 @@ The `window.__lune.manifest()` wrapper has the same signature and return value; 
 
 - **macOS** — Verified.
 - **Linux** — Untested.
-- **Windows** — Untested.
+- **Windows** — Verified.

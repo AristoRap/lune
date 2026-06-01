@@ -251,7 +251,7 @@ end
 
 `async: true` runs the binding on a background thread (`Fiber::ExecutionContext::Parallel`), the same pool `app.async` uses. Use it for anything that blocks (network, slow file IO).
 
-For TS-side overrides on the generated stub (custom argument names, JS-side `JSON.stringify` wrappers, full return type override), add `@[Lune::BindOverride]` on the same method — see [Bindings](./bindings) for the full table.
+For TS-side overrides on the generated stub (per-arg TS types, full return type override), add `@[Lune::BindOverride]` on the same method — see [Bindings](./bindings) for the full table.
 
 ---
 
