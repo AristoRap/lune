@@ -4,7 +4,12 @@
 
 ### Changed
 
-- **TypeScript type generation now runs on [vow](https://github.com/AristoRap/vow)'s strict mapper** (the typed-RPC core extracted out of lune). `JSON::Any` maps to `any` (was `Record<string, any>`), and union / `Set` / `Char` types now map accurately. The mapper is fail-loud: a Crystal type it can't represent honestly is a generation error (`Vow::Codegen::UnmappableType`) instead of a silent `Record<string, any>` — so an un-annotated `JSON::Serializable` struct reaching the bridge fails the build rather than emitting a misleading client type. Annotate such structs with `@[Lune::TsType]` or `@[Lune::BindOverride(ts_return_type: ...)]`.
+- **TypeScript type generation now runs on [vow](https://github.com/AristoRap/vow)'s strict mapper** (the typed-RPC core extracted out of lune). `JSON::Any` maps to `any` (was `Record<string, any>`), and union / `Set` / `Char` types now map accurately. The mapper is fail-loud: a Crystal type it can't represent honestly is a generation error (`Vow::Codegen::UnmappableType`) instead of a silent `Record<string, any>`.
+- **`JSON::Serializable` struct returns and arguments are captured automatically as named TypeScript `interface`s** — transitively, including nested structs and structs inside `NamedTuple` / `Array` / `Hash` / unions, scoped to the file (`runtime.d.ts` vs `App.d.ts`) that references them. Returning or accepting a serializable struct from a `@[Lune::Bind]` method is all that's needed; use `@[Lune::BindOverride(ts_return_type: ...)]` for an inline shape (e.g. a string-literal union).
+
+### Removed
+
+- **`@[Lune::TsType]` and `Lune.register_ts_type`** — superseded by automatic struct capture (above). Drop the annotation; the struct is captured the same way by being returned from (or passed to) a binding.
 
 ## [0.16.1] - 2026-06-01
 

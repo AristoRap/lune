@@ -1,4 +1,5 @@
 require "json"
+require "vow/codegen/collect"
 
 module Lune
   # Marks a method as exposed across the bridge. The macro that picks this up
@@ -12,15 +13,6 @@ module Lune
   # `ts_args` (TS-side argument types), `ts_return_type` (TS-side full return
   # type bypassing the default `Promise<T>` auto-wrap).
   annotation BindOverride; end
-
-  # Marks a Crystal struct / record / class as a TypeScript surface type. When
-  # such a type appears as the return of a `@[Lune::Bind]` method, the macro
-  # registers it via `Lune.register_ts_type` and the generator emits a named
-  # `export interface <Name> { ... }` declaration in `runtime.d.ts`; the
-  # binding's `ts_return_type` is set to `Promise<<Name>>` automatically.
-  # Without this annotation, struct returns fall back to `Record<string, any>`
-  # (or the author can inline the shape via `@[Lune::BindOverride(ts_return_type: ...)]`).
-  annotation TsType; end
 
   # `include Lune::Bindable` turns a class into a bridge surface. The compiler
   # walks its methods, picks up every method tagged `@[Lune::Bind]`, and
@@ -42,6 +34,11 @@ module Lune
           {% begin %}
             @app = app
             {% is_plugin = @type.ancestors.includes?(Lune::Plugin) %}
+            # Surface types reachable from this class's bound signatures, captured
+            # transitively by vow and registered alongside the bindings so the
+            # generator can emit a named `interface` per `JSON::Serializable`
+            # struct (no annotation needed).
+            __vow_types = [] of ::Vow::TypeDescriptor
             {% for m in @type.methods %}
               {% if bind_ann = m.annotation(Lune::Bind) %}
                 {% override_ann = m.annotation(Lune::BindOverride) %}
@@ -53,22 +50,11 @@ module Lune
                 # `TwoWords` → `"two_words"`).
                 {% return_resolved = m.return_type.resolve? %}
                 {% enum_return_union = (return_resolved && return_resolved.ancestors.includes?(Enum)) ? return_resolved.constants.map { |c| "\"" + c.stringify.underscore + "\"" }.join(" | ") : nil %}
-                # TsType-annotated return: register the struct's fields so the
-                # generator can emit `export interface <Name> { ... }`, and
-                # wire `ts_return_type` to reference that name. Recognised by
-                # `m.return_type.resolve.annotation(Lune::TsType)`.
-                {% ts_type_ann = return_resolved && return_resolved.annotation(Lune::TsType) %}
-                {% ts_type_name = ts_type_ann ? return_resolved.name.stringify.split("::").last : nil %}
-                {% if ts_type_ann %}
-                  Lune.register_ts_type(
-                    {{ ts_type_name }},
-                    [
-                      {% for ivar in return_resolved.instance_vars %}
-                        { {{ ivar.name.stringify }}, {{ ivar.type.stringify }} },
-                      {% end %}
-                    ] of Tuple(String, String)
-                  )
-                {% end %}
+                # The return type is supplied explicitly (so it isn't mapped from
+                # the Crystal type, and must not be captured) when an author set
+                # `ts_return_type` or when it's an enum union. Skipping capture
+                # here also keeps `collect` off enums, which it can't represent.
+                {% has_explicit_return = (override_ann && override_ann[:ts_return_type]) || enum_return_union %}
                 app.register(Lune::Binding.new(
                   namespace: {{ @type.name.stringify }},
                   method: {{ m.name.stringify }},
@@ -81,8 +67,6 @@ module Lune
                   {% if override_ann && override_ann[:ts_args] %}ts_args: {{ override_ann[:ts_args] }},{% end %}
                   {% if override_ann && override_ann[:ts_return_type] %}
                     ts_return_type: {{ override_ann[:ts_return_type] }},
-                  {% elsif ts_type_ann %}
-                    ts_return_type: "Promise<{{ ts_type_name.id }}>",
                   {% elsif enum_return_union %}
                     ts_return_type: %(Promise<{{ enum_return_union.id }}>),
                   {% end %}
@@ -95,8 +79,33 @@ module Lune
                     JSON.parse(result.to_json)
                   }
                 ))
+                # Capture the surface types this signature references. Unions are
+                # unwrapped at the call site (a union node can't survive a
+                # macro-call argument). The return leg is skipped when an explicit
+                # TS type already stands in for it.
+                # Pass the *resolved* (fully-qualified) type node so it resolves
+                # regardless of where the generated `install` lands — an
+                # unqualified name (`CounterState`) written inside a module
+                # wouldn't resolve from here.
+                {% unless has_explicit_return %}
+                  {% rr = m.return_type.resolve %}
+                  {% if rr.union? %}
+                    {% for u in rr.union_types %}::Vow::Codegen.collect(__vow_types, {{ u }}, ""){% end %}
+                  {% else %}
+                    ::Vow::Codegen.collect(__vow_types, {{ rr }}, "")
+                  {% end %}
+                {% end %}
+                {% for arg in m.args %}
+                  {% ar = arg.restriction.resolve %}
+                  {% if ar.union? %}
+                    {% for u in ar.union_types %}::Vow::Codegen.collect(__vow_types, {{ u }}, ""){% end %}
+                  {% else %}
+                    ::Vow::Codegen.collect(__vow_types, {{ ar }}, "")
+                  {% end %}
+                {% end %}
               {% end %}
             {% end %}
+            app.register_types(__vow_types, {{ is_plugin }})
           {% end %}
         {% end %}
       end

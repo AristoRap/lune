@@ -99,7 +99,7 @@ Lune maps Crystal types to TypeScript types for the generated `.d.ts` file, usin
 
 The mapper is **strict**: it maps a type accurately or fails the build — it never silently widens an unknown type to `Record<string, any>`. So:
 
-- A **custom struct/class** must be surfaced explicitly: annotate it `@[Lune::TsType]` for a named `interface` (see below), or give the binding an explicit `@[Lune::BindOverride(ts_return_type: ...)]` / `ts_args:`. An un-annotated struct that reaches the boundary is a generation error, not a misleading `Record<string, any>`.
+- A **`JSON::Serializable` struct/class** is captured automatically into a named `interface` (transitively, including nested structs) — return it or accept it from a binding and the generated `.d.ts` references it by name. A struct that is _not_ `JSON::Serializable` (and isn't given an explicit `@[Lune::BindOverride(ts_return_type: ...)]` / `ts_args:`) is a generation error, not a misleading `Record<string, any>`.
 - **Bare `Array` / `Hash` / `NamedTuple`** (no type parameters) are an error too — always write `Array(T)` / `Hash(K, V)` so the generated `.d.ts` keeps its parameter and frontend code needs no `as` casts.
 
 Custom types must be JSON-serializable. Add `include JSON::Serializable` to your structs:

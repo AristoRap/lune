@@ -40,7 +40,8 @@ private class StatusModule
   end
 end
 
-@[Lune::TsType]
+# No annotation: a `JSON::Serializable` struct returned by a binding is captured
+# into a named `interface` automatically (Phase 1b — vow auto-capture).
 private struct DemoCounterState
   include JSON::Serializable
   getter value : Int32
@@ -57,6 +58,26 @@ private class TsTypeModule
   @[Lune::Bind]
   def state : DemoCounterState
     DemoCounterState.new(0, 1, ["a"])
+  end
+end
+
+# A struct whose field is another serializable struct — proves transitive
+# capture (both interfaces emitted, the outer referencing the inner by name).
+private struct Wrapper
+  include JSON::Serializable
+  getter inner : DemoCounterState
+  getter tag : String
+
+  def initialize(@inner, @tag)
+  end
+end
+
+private class NestedModule
+  include Lune::Bindable
+
+  @[Lune::Bind]
+  def wrapped : Wrapper
+    Wrapper.new(DemoCounterState.new(0, 1, ["a"]), "t")
   end
 end
 
@@ -156,35 +177,64 @@ describe "Lune::Bindable + App bindings" do
     b.to_dts_sig.should eq(%(  current(): Promise<"pending" | "running" | "done" | "two_words">;))
   end
 
-  describe "@[Lune::TsType] return type" do
-    it "wires ts_return_type to Promise<TypeName> by simple name" do
+  describe "automatic struct interface capture" do
+    it "maps a struct return to its named interface via the manifest's known types" do
       app = Lune::App.new
       app.install(TsTypeModule.new)
 
+      known = Lune::Generator.known_types(app.manifest.types)
       b = app.bindings.first
-      b.to_dts_sig.should eq("  state(): Promise<DemoCounterState>;")
+      b.to_dts_sig(known).should eq("  state(): Promise<DemoCounterState>;")
     end
 
-    it "registers the type's fields with Lune.register_ts_type" do
+    it "captures the returned struct's fields into the manifest" do
       app = Lune::App.new
       app.install(TsTypeModule.new)
 
-      fields = Lune.registered_ts_types["DemoCounterState"]
-      fields.should eq([{"value", "Int32"}, {"step", "Int32"}, {"labels", "Array(String)"}])
+      t = app.manifest.types.find { |ty| ty.name == "DemoCounterState" }.not_nil!
+      t.fields.map(&.name).should eq(["value", "step", "labels"])
+      t.fields.map(&.type).should eq(["Int32", "Int32", "Array(String)"])
     end
 
-    it "emits an export interface block in the generated d.ts" do
+    it "emits exactly one export interface block (no double-emission)" do
       app = Lune::App.new
       app.install(TsTypeModule.new)
 
-      dts = Lune::Generator.generate_runtime_dts(app.bindings.select(&.internal?))
-      # Plain bindings (internal? == false on user classes) won't surface in
-      # runtime.d.ts, but the interface block is sourced from the registry and
-      # appears regardless. Assert on the interface, not on the binding sig.
-      dts.includes?("export interface DemoCounterState {").should be_true
+      # TsTypeModule is a user class, so its interface lands in App.d.ts.
+      dts = Lune::Generator.generate_app_dts(
+        app.bindings.reject(&.internal?),
+        known: Lune::Generator.known_types(app.manifest.types),
+        types: app.user_types,
+      )
+      dts.scan(/export interface DemoCounterState \{/).size.should eq(1)
       dts.includes?("value: number;").should be_true
       dts.includes?("step: number;").should be_true
       dts.includes?("labels: string[];").should be_true
+    end
+
+    it "captures nested serializable structs transitively" do
+      app = Lune::App.new
+      app.install(NestedModule.new)
+
+      app.manifest.types.map(&.name).sort.should eq(["DemoCounterState", "Wrapper"])
+
+      dts = Lune::Generator.generate_app_dts(
+        app.bindings.reject(&.internal?),
+        known: Lune::Generator.known_types(app.manifest.types),
+        types: app.user_types,
+      )
+      dts.includes?("export interface Wrapper {").should be_true
+      dts.includes?("inner: DemoCounterState;").should be_true
+      dts.includes?("export interface DemoCounterState {").should be_true
+    end
+
+    it "resolves a struct argument to its interface name rather than raising" do
+      app = Lune::App.new
+      app.install(MathModule.new) # add(args : AddArgs) : Int32
+
+      known = Lune::Generator.known_types(app.manifest.types)
+      b = app.bindings.first
+      b.to_dts_sig(known).should eq("  add(args: AddArgs): Promise<number>;")
     end
   end
 end

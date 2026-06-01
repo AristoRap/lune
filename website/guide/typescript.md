@@ -105,7 +105,7 @@ Return types are emitted **structurally** — Lune doesn't ship named interfaces
 
 - `NamedTuple(width: Int32, height: Int32, scale: Float64)` → `{ width: number; height: number; scale: number }`
 - A Crystal `enum` return type → a TS string-literal union (e.g. `enum Status; Pending; Running; Done; end` → `"pending" | "running" | "done"`, matching Crystal's default `Enum#to_json`)
-- A `JSON::Serializable` struct or class must be given an explicit shape — annotate it `@[Lune::TsType]` for a named `interface`, or set `@[Lune::BindOverride(ts_return_type: ...)]`. lune's type mapping runs on [vow](https://github.com/AristoRap/vow)'s strict mapper, so an un-annotated struct reaching the boundary is a generation error, not a silent `Record<string, any>`
+- A `JSON::Serializable` struct or class is captured automatically into a named `interface` (transitively — nested structs included), so the binding's signature references it by name. A non-serializable type that isn't given an explicit `@[Lune::BindOverride(ts_return_type: ...)]` is a generation error rather than a silent `Record<string, any>` (lune's type mapping runs on [vow](https://github.com/AristoRap/vow)'s strict mapper)
 
 If you want a named type for an inlined shape, alias the inferred return type:
 

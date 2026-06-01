@@ -1,6 +1,14 @@
+require "vow/manifest"
+
 module Lune
   class App
     getter bindings = [] of Binding
+    # Captured `Vow::TypeDescriptor`s for the surface types reachable from the
+    # registered bindings — populated by the `Bindable` macro alongside each
+    # binding, split by surface so each interface lands in the right generated
+    # `.d.ts` (`plugin_types` → `runtime.d.ts`, `user_types` → `App.d.ts`).
+    getter plugin_types = [] of Vow::TypeDescriptor
+    getter user_types = [] of Vow::TypeDescriptor
     property bridge : Bridge?
     property title : String = ""
     property menu_options : Options::Menu = Options::Menu.new
@@ -43,6 +51,19 @@ module Lune
 
     def register(binding : Binding)
       @bindings << binding
+    end
+
+    # Records captured surface types for a bindable surface. *internal* is the
+    # class's plugin-ness (it routes the interfaces to the right `.d.ts`).
+    def register_types(types : Array(Vow::TypeDescriptor), internal : Bool) : Nil
+      (internal ? @plugin_types : @user_types).concat(types)
+    end
+
+    # The static `Vow::Manifest` for everything registered on this app — the
+    # contract behind the generated client and introspection, derived from the
+    # current binding set and the captured surface types.
+    def manifest : Vow::Manifest
+      Lune::Generator.manifest(@bindings, @plugin_types + @user_types)
     end
 
     # Replaces the application menu bar at runtime.

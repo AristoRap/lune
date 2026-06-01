@@ -223,6 +223,8 @@ module Lune
           @lunejs_dir,
           registry.all,
           registry.platform_filtered,
+          plugin_types: @app.plugin_types + all_stubs.plugin_types,
+          user_types: @app.user_types,
         )
         wv.navigate(dev_url)
       elsif !Assets.empty?
