@@ -109,7 +109,12 @@ describe "Lune manifest (vow contract)" do
         "#{p.name}(#{args}) -> #{p.return_type}"
       end.sort
 
-      signatures.should eq([
+      # The full macOS contract. Some bindings are compiled out on other
+      # platforms (the same gating the runtime-bindings count spec documents):
+      # DragOut is darwin-only; Window.startDrag is darwin + win32 (Linux still
+      # needs _NET_WM_MOVERESIZE). Drop those entries per platform so the snapshot
+      # pins the *shipped* contract on each OS rather than only macOS.
+      expected = [
         "Lune.Plugins.Clipboard.read() -> String",
         "Lune.Plugins.Clipboard.readHtml() -> String",
         "Lune.Plugins.Clipboard.readImage() -> String",
@@ -174,7 +179,16 @@ describe "Lune manifest (vow contract)" do
         "Lune.Plugins.Windows.close(id: String) -> Nil",
         "Lune.Plugins.Windows.list() -> Array(String)",
         "Lune.Plugins.Windows.open(opts: Hash(String, JSON::Any)) -> String",
-      ])
+      ]
+
+      case Lune::Plugins::CURRENT_PLATFORM
+      when :linux
+        expected.reject! { |s| s.starts_with?("Lune.Plugins.DragOut.") || s == "Lune.Plugins.Window.startDrag() -> Nil" }
+      when :win32
+        expected.reject! { |s| s.starts_with?("Lune.Plugins.DragOut.") }
+      end
+
+      signatures.should eq(expected.sort)
     end
   end
 end
