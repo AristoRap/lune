@@ -67,6 +67,12 @@ describe LuneCLI do
       cmd.subcommands.has_key?("doctor").should be_true
     end
 
+    it "exposes `api` as a doctor subcommand" do
+      cmd = LuneCLI.root_command
+      doctor = cmd.subcommands["doctor"]
+      doctor.subcommands.has_key?("api").should be_true
+    end
+
     it "registers short aliases for dev, build, and run" do
       cmd = LuneCLI.root_command
 

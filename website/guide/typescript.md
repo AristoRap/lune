@@ -198,3 +198,27 @@ try {
 ```
 
 See [Error Handling](./error-handling) for the full pattern including typed code branches.
+
+---
+
+## Introspecting the RPC contract
+
+The generated `.d.ts` files _are_ the contract, but Lune can also hand you the contract as structured data — the **manifest**: every procedure (its name, argument names/types, and return type) plus the custom types those signatures reference. It's the same intermediate representation the code generator consumes.
+
+Two ways to reach it:
+
+**From the CLI** — `lune doctor api` prints a readable table of the surface, and `lune doctor api --json` dumps the raw manifest JSON for tooling. See the [CLI reference](/cli-reference#lune-doctor-api).
+
+**At runtime** — the [Introspection](/plugins/introspection) plugin (enabled by default) exposes `lune.Introspection.manifest()`, which returns the typed `Manifest`:
+
+```js
+import { lune } from "../lunejs/runtime/runtime.js";
+
+const contract = await lune.Introspection.manifest();
+console.log(contract.procedures.length, "procedures");
+console.table(
+  contract.procedures.map((p) => ({ name: p.name, returns: p.return_type })),
+);
+```
+
+For quick console use the plugin also injects a `window.__lune.manifest()` wrapper, but only when [devtools](/configuration) are on — so it's absent in a production build. The typed binding is always available while the plugin is enabled. The shape is `{ procedures: [...], types: [...] }` — handy for building an API explorer panel or asserting in a test that the surface you expect is exposed.

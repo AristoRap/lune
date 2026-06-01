@@ -21,6 +21,7 @@ import Sqlite from "./views/Sqlite.vue";
 import Windows from "./views/Windows.vue";
 import Plugins from "./views/Plugins.vue";
 import Counter from "./views/Counter.vue";
+import Introspection from "./views/Introspection.vue";
 
 export const navGroups = [
   {
@@ -33,6 +34,12 @@ export const navGroups = [
       { id: "bindings", label: "Bindings", icon: "code", view: Bindings },
       { id: "event", label: "Event", icon: "bolt", view: Event },
       { id: "stream", label: "Stream", icon: "bolt", view: Stream },
+      {
+        id: "introspection",
+        label: "Introspection",
+        icon: "code",
+        view: Introspection,
+      },
       { id: "counter", label: "Custom plugin", icon: "shield", view: Counter },
     ],
   },

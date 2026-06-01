@@ -42,6 +42,7 @@ export default defineConfig({
             items: [
               { text: 'Event', link: '/plugins/event' },
               { text: 'Stream', link: '/plugins/stream' },
+              { text: 'Introspection', link: '/plugins/introspection' },
             ],
           },
           {

@@ -524,18 +524,18 @@ describe "Lune::Plugins" do
 
       # Per-platform totals — bump these when you add/remove a binding on any
       # plugin. Decreases when a plugin is platform-gated out.
-      # Baseline includes Event.emit, Navigation.changed (both cross-
-      # platform) and Window.start_drag (darwin + win32; Linux still needs
-      # _NET_WM_MOVERESIZE so the binding stays compiled out via
+      # Baseline includes Event.emit, Navigation.changed, Introspection.manifest
+      # (all cross-platform) and Window.start_drag (darwin + win32; Linux still
+      # needs _NET_WM_MOVERESIZE so the binding stays compiled out via
       # {% if flag?(:darwin) || flag?(:win32) %} on the Window plugin).
-      #   darwin = 63 baseline (Event.emit + Navigation.changed + Window.start_drag)
-      #   linux  = 63 - DragOut(1) - Window.start_drag(1)  = 61
-      #   win32  = 63 - DragOut(1)                         = 62
+      #   darwin = 64 baseline (Event.emit + Navigation.changed + Introspection.manifest + Window.start_drag)
+      #   linux  = 64 - DragOut(1) - Window.start_drag(1)  = 62
+      #   win32  = 64 - DragOut(1)                         = 63
       expected = case Lune::Plugins::CURRENT_PLATFORM
-                 when :darwin then 63
-                 when :linux  then 61
-                 when :win32  then 62
-                 else              63
+                 when :darwin then 64
+                 when :linux  then 62
+                 when :win32  then 63
+                 else              64
                  end
 
       app.bindings.size.should eq(expected)

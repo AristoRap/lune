@@ -214,6 +214,12 @@ lune doctor [flags]
 | ----------- | ------- | ------------------------------------------------------------------------------------------------------- |
 | `--plugins` | `false` | After the environment checks, also list the live plugin registration set (built-ins + `Lune.use` calls) |
 
+**Subcommands:**
+
+| Subcommand | Description                                                   |
+| ---------- | ------------------------------------------------------------- |
+| `api`      | Introspect the typed RPC contract the app exposes (see below) |
+
 **Environment checks:**
 
 | Check           | What it verifies                                    |
@@ -230,6 +236,38 @@ lune doctor [flags]
 The built-in registry is summarised with platform availability and soft-dep gaps. ✓ marks active, ✗ marks platform-filtered. A `soft dep <id> not active` annotation appears when a dependent's optional dep isn't in the active set.
 
 With `--plugins`, the doctor compiles your app entry with `-Dlune_inspect`, short-circuits `Lune.run` after the registry is populated, and lists the live set — the same shape the running app would see, including any `Lune.use(MyPlugin.new)` calls your code makes. This catches "I registered it but the app doesn't see it" mismatches early.
+
+### `lune doctor api`
+
+Introspect the typed RPC surface your app exposes — the exact contract the generated client was built against. It compiles your app entry, resolves the full binding set (the same way a build does), and prints every procedure with its argument names/types and return type, followed by the custom types (structs and enums) those signatures reference:
+
+```sh
+lune doctor api
+```
+
+```
+  procedures (73):
+    Demo.greet(name: String) -> String
+    Lune.Plugins.Window.setSize(width: Int32, height: Int32) -> Nil
+    Lune.Plugins.System.environment() -> NamedTuple(os: OS, arch: String, devtools: Bool)
+    …
+
+  types (2):
+    OS = "darwin" | "linux" | "windows"
+    CounterState { value: Int32; step: Int32; at_default: Bool }
+```
+
+**Flags:**
+
+| Flag     | Default | Description                                                                                                                            |
+| -------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `--json` | `false` | Print the raw [Vow manifest](/guide/typescript) JSON on stdout instead of the table, with no environment report — pipe it into tooling |
+
+```sh
+lune doctor api --json | jq '.procedures | length'
+```
+
+The same contract is available **at runtime** via the [Introspection](/plugins/introspection) plugin (`lune.Introspection.manifest()`) — see [TypeScript & introspection](/guide/typescript).
 
 **Example output:**
 

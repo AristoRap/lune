@@ -168,6 +168,8 @@ module Lune
 
     {% if flag?(:lune_inspect) %}
       ::Lune._inspect_run
+    {% elsif flag?(:lune_inspect_api) %}
+      ::Lune._inspect_api_run({{ app }})
     {% elsif flag?(:build_mode) %}
       ::Lune._build_run({{ app }})
     {% else %}
@@ -205,6 +207,35 @@ module Lune
   # parse. Everything that runs before `Lune.run` — `require`s, `Lune.use`
   # calls, top-level constants — has already executed by the time we get
   # here, so the list is what the live app would see.
+  # Markers framing the manifest JSON for `lune doctor --api` to lift out of the
+  # captured stdout — same parse-the-block-out-of-noisy-output contract as the
+  # `LUNE_PLUGINS` markers above.
+  INSPECT_MANIFEST_START = "<<<LUNE_MANIFEST"
+  INSPECT_MANIFEST_END   = "LUNE_MANIFEST>>>"
+
+  # `-Dlune_inspect_api` short-circuits `Lune.run` and emits the live
+  # `Vow::Manifest` — the typed RPC contract the app exposes — as framed JSON
+  # for `lune doctor --api`. Unlike `_inspect_run` (plugins, gathered before the
+  # app exists) this needs the full binding set, so it resolves plugin stubs the
+  # same way `_build_run` does and merges them with the user app's bindings and
+  # captured types. The result is exactly the contract the generated client was
+  # built against.
+  def self._inspect_api_run(app : App) : Nil
+    config = Config.load
+    registry = Plugins::Registry.new(Pointer(Void).null, Options.new)
+    stubs = App.new
+    registry.validate_resolve_install(config.plugins, stubs)
+
+    bindings = app.bindings + stubs.bindings.select(&.internal?)
+    types = app.plugin_types + stubs.plugin_types + app.user_types
+    manifest = Generator.manifest(bindings, types)
+
+    STDOUT.puts INSPECT_MANIFEST_START
+    STDOUT.puts manifest.to_json
+    STDOUT.puts INSPECT_MANIFEST_END
+    exit 0
+  end
+
   def self._inspect_run : Nil
     STDOUT.puts "<<<LUNE_PLUGINS"
     registered_plugins.each do |p|

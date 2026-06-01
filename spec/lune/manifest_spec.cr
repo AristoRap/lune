@@ -135,6 +135,7 @@ describe "Lune manifest (vow contract)" do
         "Lune.Plugins.Filesystem.tempDir() -> String",
         "Lune.Plugins.Hotkeys.register(accelerator: String) -> Nil",
         "Lune.Plugins.Hotkeys.unregister(accelerator: String) -> Nil",
+        "Lune.Plugins.Introspection.manifest() -> Vow::Manifest",
         "Lune.Plugins.Kv.clear() -> Nil",
         "Lune.Plugins.Kv.delete(key: String) -> Nil",
         "Lune.Plugins.Kv.get(key: String) -> JSON::Any",
