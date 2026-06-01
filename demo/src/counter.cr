@@ -20,6 +20,7 @@ module MyCustomPlugin
     include JSON::Serializable
     getter value : Int32
     getter step : Int32
+    @[JSON::Field(key: "atDefault")]
     getter at_default : Bool
 
     def initialize(@value, @step, @at_default)

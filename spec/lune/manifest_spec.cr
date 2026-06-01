@@ -155,7 +155,7 @@ describe "Lune manifest (vow contract)" do
         "Lune.Plugins.Shell.spawn(command: String, args: Array(String)) -> String",
         "Lune.Plugins.Shell.write(pid: String, text: String) -> Nil",
         "Lune.Plugins.Sqlite.close(db: String) -> Nil",
-        "Lune.Plugins.Sqlite.exec(db: String, sql: String, params: Array(JSON::Any)) -> NamedTuple(changes: Int64, lastInsertId: Int64)",
+        "Lune.Plugins.Sqlite.exec(db: String, sql: String, params: Array(JSON::Any)) -> ExecResult",
         "Lune.Plugins.Sqlite.open(path: String) -> String",
         "Lune.Plugins.Sqlite.query(db: String, sql: String, params: Array(JSON::Any)) -> Array(Hash(String, JSON::Any))",
         "Lune.Plugins.System.environment() -> NamedTuple(os: OS, arch: String, devtools: Bool)",

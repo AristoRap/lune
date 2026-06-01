@@ -74,7 +74,7 @@ async function reset() {
         <div class="state-row"><span class="state-key">value</span><span class="state-val">{{ state.value }}</span>
         </div>
         <div class="state-row"><span class="state-key">step</span><span class="state-val">{{ state.step }}</span></div>
-        <div class="state-row"><span class="state-key">at_default</span><span class="state-val">{{ state.at_default
+        <div class="state-row"><span class="state-key">atDefault</span><span class="state-val">{{ state.atDefault
             }}</span></div>
       </div>
       <div v-else class="log-empty">Loading…</div>

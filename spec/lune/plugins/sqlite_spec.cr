@@ -282,7 +282,11 @@ describe Lune::Plugins::Sqlite do
       plugin = Lune::Plugins::Sqlite.new
       app = Lune::App.new
       app.install(plugin)
-      dts = Lune::Generator.generate_runtime_dts(app.bindings, [plugin] of Lune::Plugin)
+      known = Lune::Generator.known_types(app.plugin_types)
+      dts = Lune::Generator.generate_runtime_dts(
+        app.bindings, [plugin] of Lune::Plugin,
+        known: known, types: app.plugin_types,
+      )
       dts.should contain("open(args: { path: string }): Promise<string>")
     end
   end

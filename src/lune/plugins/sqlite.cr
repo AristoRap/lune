@@ -16,6 +16,16 @@ module Lune
       @databases = {} of String => DB::Database
       @mu = Mutex.new
 
+      struct ExecResult
+        include JSON::Serializable
+        getter changes : Int64
+        @[JSON::Field(key: "lastInsertId")]
+        getter last_insert_id : Int64
+
+        def initialize(@changes, @last_insert_id)
+        end
+      end
+
       @[Lune::Bind(async: true)]
       def open(path : String) : String
         uri = path == ":memory:" ? "sqlite3::memory:" : "sqlite3:#{path}"
@@ -32,12 +42,12 @@ module Lune
       end
 
       @[Lune::Bind(async: true)]
-      def exec(db : String, sql : String, params : Array(JSON::Any)) : NamedTuple(changes: Int64, lastInsertId: Int64)
+      def exec(db : String, sql : String, params : Array(JSON::Any)) : ExecResult
         database = @mu.synchronize { @databases[db]? }
         raise Lune::Error.new("sqlite_not_open", "No open database with id \"#{db}\"") unless database
         begin
           result = database.exec(sql, args: to_db_args(params))
-          {changes: result.rows_affected, lastInsertId: result.last_insert_id}
+          ExecResult.new(result.rows_affected, result.last_insert_id)
         rescue ex : SQLite3::Exception | DB::Error
           raise Lune::Error.new("sqlite_error", ex.message || "SQLite error")
         end
