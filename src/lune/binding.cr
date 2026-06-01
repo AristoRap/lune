@@ -70,7 +70,7 @@ module Lune
     end
 
     def dts_return_type
-      Lune::Generator.crystal_to_ts(@return_type)
+      Lune::Generator.crystal_return_to_ts(@return_type)
     end
 
     def dts_params

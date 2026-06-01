@@ -13,6 +13,9 @@ dependencies:
   webview:
     github: AristoRap/lune-webview
     branch: master
+  vow:
+    github: AristoRap/vow
+    version: ~> 0.1
   argy:
     github: AristoRap/argy
     version: ~> 0.4

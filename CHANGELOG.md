@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **TypeScript type generation now runs on [vow](https://github.com/AristoRap/vow)'s strict mapper** (the typed-RPC core extracted out of lune). `JSON::Any` maps to `any` (was `Record<string, any>`), and union / `Set` / `Char` types now map accurately. The mapper is fail-loud: a Crystal type it can't represent honestly is a generation error (`Vow::Codegen::UnmappableType`) instead of a silent `Record<string, any>` — so an un-annotated `JSON::Serializable` struct reaching the bridge fails the build rather than emitting a misleading client type. Annotate such structs with `@[Lune::TsType]` or `@[Lune::BindOverride(ts_return_type: ...)]`.
+
 ## [0.16.1] - 2026-06-01
 
 ### Fixed

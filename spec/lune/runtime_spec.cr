@@ -201,7 +201,7 @@ describe Lune::Generator do
         namespace: "counter",
         method: "inc",
         args: [] of String,
-        return_type: "Number",
+        return_type: "Int32",
         callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(1_i64) },
         internal: false,
         async: false
@@ -216,7 +216,11 @@ describe Lune::Generator do
     dts.includes?("inc(").should be_true
   end
 
-  it "maps JSON::Serializable struct args to Record<string, any> in App.d.ts" do
+  # vow's strict mapper refuses to silently widen an unknown struct arg to
+  # `Record<string, any>`. Until the manifest captures the type (Phase 1), an
+  # unmapped struct arg is a loud `UnmappableType` at generation time, not a lie
+  # in the emitted `.d.ts`.
+  it "raises on an unmappable struct arg type instead of widening it in App.d.ts" do
     bindings = [
       Lune::Binding.new(
         namespace: "math",
@@ -229,9 +233,9 @@ describe Lune::Generator do
       ),
     ]
 
-    dts = Lune::Generator.generate_app_dts(bindings)
-
-    dts.includes?("arg0: Record<string, any>").should be_true
+    expect_raises(Vow::Codegen::UnmappableType) do
+      Lune::Generator.generate_app_dts(bindings)
+    end
   end
 
   it "writes .d.ts files alongside the JS files" do

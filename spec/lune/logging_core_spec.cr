@@ -40,7 +40,7 @@ describe "Lune core logging" do
             namespace: "test",
             method: "ping",
             args: [] of String,
-            return_type: "void",
+            return_type: "Nil",
             callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(nil) },
             internal: false,
             async: false

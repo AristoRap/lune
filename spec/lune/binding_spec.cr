@@ -94,26 +94,40 @@ describe Lune::Binding do
     end
   end
 
+  # Type mapping is delegated to vow's strict `Vow::Codegen.crystal_to_ts`
+  # (arg position) and `return_to_ts` (return position). vow RAISES on a type it
+  # can't map honestly rather than silently widening it to `Record<string, any>`,
+  # and it understands unions, `Set`, `Char`, and `JSON::Any`.
   describe ".crystal_to_ts" do
     it "maps primitive Crystal types" do
       Lune::Generator.crystal_to_ts("String").should eq("string")
       Lune::Generator.crystal_to_ts("Bool").should eq("boolean")
-      Lune::Generator.crystal_to_ts("Nil").should eq("void")
+      Lune::Generator.crystal_to_ts("Char").should eq("string")
       Lune::Generator.crystal_to_ts("Int32").should eq("number")
       Lune::Generator.crystal_to_ts("Int64").should eq("number")
       Lune::Generator.crystal_to_ts("Float32").should eq("number")
       Lune::Generator.crystal_to_ts("Float64").should eq("number")
     end
 
-    it "maps bare collection types to permissive fallbacks" do
-      Lune::Generator.crystal_to_ts("Array").should eq("any[]")
-      Lune::Generator.crystal_to_ts("Hash").should eq("Record<string, any>")
+    it "maps JSON::Any to any (not Record<string, any>)" do
+      Lune::Generator.crystal_to_ts("JSON::Any").should eq("any")
+    end
+
+    # `Nil` is the one type whose mapping depends on position: a `Nil` argument
+    # is `null`, but a `Nil` return is `void` (`Promise<void>`).
+    it "maps Nil to null in argument position and void in return position" do
+      Lune::Generator.crystal_to_ts("Nil").should eq("null")
+      Lune::Generator.crystal_return_to_ts("Nil").should eq("void")
     end
 
     it "maps parameterized Array to a typed TS array" do
       Lune::Generator.crystal_to_ts("Array(String)").should eq("string[]")
       Lune::Generator.crystal_to_ts("Array(Int32)").should eq("number[]")
       Lune::Generator.crystal_to_ts("Array(Bool)").should eq("boolean[]")
+    end
+
+    it "maps Set to a TS array" do
+      Lune::Generator.crystal_to_ts("Set(String)").should eq("string[]")
     end
 
     it "maps parameterized Hash to Record<K, V>" do
@@ -124,6 +138,11 @@ describe Lune::Binding do
     it "maps Tuple to TS tuple syntax" do
       Lune::Generator.crystal_to_ts("Tuple(String, Int32)").should eq("[string, number]")
       Lune::Generator.crystal_to_ts("Tuple(String, Int32, Bool)").should eq("[string, number, boolean]")
+    end
+
+    it "maps unions, mapping Nil to null" do
+      Lune::Generator.crystal_to_ts("(String | Nil)").should eq("string | null")
+      Lune::Generator.crystal_to_ts("Int32 | String").should eq("number | string")
     end
 
     it "recurses through nested generics" do
@@ -137,12 +156,22 @@ describe Lune::Binding do
       Lune::Generator.crystal_to_ts("Hash( String , Int32 )").should eq("Record<string, number>")
     end
 
-    it "falls back to Record<string, any> for unknown types" do
-      Lune::Generator.crystal_to_ts("MyStruct").should eq("Record<string, any>")
+    it "raises on an unmapped identifier instead of widening to Record<string, any>" do
+      expect_raises(Vow::Codegen::UnmappableType) do
+        Lune::Generator.crystal_to_ts("MyStruct")
+      end
     end
 
-    it "falls back to Record<string, any> for unknown inner generic types" do
-      Lune::Generator.crystal_to_ts("Array(MyStruct)").should eq("Record<string, any>[]")
+    it "raises on an unmapped inner generic type" do
+      expect_raises(Vow::Codegen::UnmappableType) do
+        Lune::Generator.crystal_to_ts("Array(MyStruct)")
+      end
+    end
+
+    it "raises on bare collection types with no element type" do
+      expect_raises(Vow::Codegen::UnmappableType) { Lune::Generator.crystal_to_ts("Array") }
+      expect_raises(Vow::Codegen::UnmappableType) { Lune::Generator.crystal_to_ts("Hash") }
+      expect_raises(Vow::Codegen::UnmappableType) { Lune::Generator.crystal_to_ts("NamedTuple") }
     end
 
     it "supports extended integer / unsigned int primitives" do
@@ -172,10 +201,6 @@ describe Lune::Binding do
     it "tolerates whitespace inside NamedTuple field specs" do
       Lune::Generator.crystal_to_ts("NamedTuple( width : Int32 , height : Int32 )")
         .should eq("{ width: number; height: number }")
-    end
-
-    it "falls back to Record<string, any> for bare NamedTuple (no params)" do
-      Lune::Generator.crystal_to_ts("NamedTuple").should eq("Record<string, any>")
     end
   end
 end
