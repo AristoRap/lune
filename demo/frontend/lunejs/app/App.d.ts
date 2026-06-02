@@ -10,12 +10,12 @@ export declare const Demo: {
 
 export declare const api: {
   Demo: {
-    greet(args: { name: string }): Promise<string>;
-    reverse(args: { text: string }): Promise<string>;
-    fileInfo(args: { path: string }): Promise<string>;
-    failWith(args: { code: string }): Promise<string>;
-    processFiles(args: { paths: string[] }): Promise<void>;
-  };
+  greet(args: { name: string }): Promise<string>;
+  reverse(args: { text: string }): Promise<string>;
+  fileInfo(args: { path: string }): Promise<string>;
+  failWith(args: { code: string }): Promise<string>;
+  processFiles(args: { paths: string[] }): Promise<void>;
+};
 };
 
 export default api;

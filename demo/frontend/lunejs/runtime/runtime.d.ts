@@ -22,7 +22,7 @@ export interface ProcedureDescriptor {
   name: string;
   args: ArgDescriptor[];
   returnType: string;
-  verb: string;
+  opts: Record<string, any>;
 }
 
 export interface ArgDescriptor {
@@ -52,143 +52,135 @@ export interface CounterState {
 
 export declare const Lune: {
   Plugins: {
-    Event: {
-      emit(args: { name: string; data: unknown }): Promise<void>;
-      on(name: string, cb: (data: unknown) => void): void;
-      once(name: string, cb: (data: unknown) => void): void;
-      off(name: string, cb?: (data: unknown) => void): void;
-    };
-    System: {
-      quit(args?: {}): Promise<void>;
-      openUrl(args: { url: string }): Promise<void>;
-      environment(args?: {}): Promise<{ os: OS; arch: string; devtools: boolean }>;
-      screenInfo(args?: {}): Promise<{ width: number; height: number; scale: number }>;
-      notify(args: { title: string; body: string }): Promise<void>;
-    };
-    Filesystem: {
-      homeDir(args?: {}): Promise<string>;
-      tempDir(args?: {}): Promise<string>;
-      downloadsDir(args?: {}): Promise<string>;
-      appDataDir(args?: {}): Promise<string>;
-    };
-    Clipboard: {
-      read(args?: {}): Promise<string>;
-      readHtml(args?: {}): Promise<string>;
-      readImage(args?: {}): Promise<string>;
-      write(args: { text: string }): Promise<void>;
-      writeHtml(args: { html: string }): Promise<void>;
-      writeImage(args: { dataUrl: string }): Promise<void>;
-    };
-    Window: {
-      minimize(args?: {}): Promise<void>;
-      maximize(args?: {}): Promise<void>;
-      center(args?: {}): Promise<void>;
-      hide(args?: {}): Promise<void>;
-      show(args?: {}): Promise<void>;
-      setTitle(args: { title: string }): Promise<void>;
-      setSize(args: { width: number; height: number }): Promise<void>;
-      startDrag(args?: {}): Promise<void>;
-    };
-    Dialogs: {
-      openFile(args: { prompt: string; filters: { name: string; extensions: string[] }[] }): Promise<string>;
-      openDir(args: { prompt: string }): Promise<string>;
-      openFiles(args: { prompt: string; filters: { name: string; extensions: string[] }[] }): Promise<string[]>;
-      saveFile(args: { prompt: string; filename: string; filters: { name: string; extensions: string[] }[] }): Promise<string>;
-      messageInfo(args: { title: string; message: string }): Promise<void>;
-      messageWarning(args: { title: string; message: string }): Promise<void>;
-      messageError(args: { title: string; message: string }): Promise<void>;
-      messageQuestion(args: { title: string; message: string }): Promise<string>;
-    };
-    Tray: {
-      show(args: { iconPath: string }): Promise<void>;
-      hide(args?: {}): Promise<void>;
-      setIcon(args: { path: string }): Promise<void>;
-      popupMenu(args?: {}): Promise<void>;
-      setMenu(args: { items: { id: string; label: string }[] }): Promise<void>;
-    };
-    ContextMenu: {
-      show(args: { x: number; y: number; itemsJson: string }): Promise<void>;
-      set(items: { id?: string; label?: string; enabled?: boolean; separator?: boolean }[]): void;
-      clear(): void;
-      onSelect(cb: (id: string) => void): void;
-    };
-    DragOut: {
-      start(args: { paths: string[] }): Promise<void>;
-    };
-    FileWatch: {
-      watch(args: { path: string }): Promise<void>;
-      unwatch(args: { path: string }): Promise<void>;
-      on(cb: (event: { path: string; kind: "modified" | "created" | "deleted" | "renamed" }) => void): void;
-      once(cb: (event: { path: string; kind: "modified" | "created" | "deleted" | "renamed" }) => void): void;
-      off(cb?: (event: { path: string; kind: "modified" | "created" | "deleted" | "renamed" }) => void): void;
-    };
-    Shell: {
-      spawn(args: { command: string; args: string[] }): Promise<string>;
-      kill(args: { pid: string }): Promise<void>;
-      write(args: { pid: string; text: string }): Promise<void>;
-      closeStdin(args: { pid: string }): Promise<void>;
-      list(args?: {}): Promise<string[]>;
-      run(args: { command: string; args: string[] }): Promise<{ stdout: string; stderr: string; code: number }>;
-      listen(pid: string, opts: { stdout?: (data: { line: string }) => void; stderr?: (data: { line: string }) => void; exit?: (data: { code: number }) => void }): void;
-      unlisten(pid: string): void;
-    };
-    Hotkeys: {
-      register(args: { accelerator: string }): Promise<void>;
-      unregister(args: { accelerator: string }): Promise<void>;
-      on(cb: (event: { key: string }) => void): void;
-      once(cb: (event: { key: string }) => void): void;
-      off(cb?: (event: { key: string }) => void): void;
-    };
-    Sqlite: {
-      open(args: { path: string }): Promise<string>;
-      close(args: { db: string }): Promise<void>;
-      exec(args: { db: string; sql: string; params: any[] }): Promise<ExecResult>;
-      query(args: { db: string; sql: string; params: any[] }): Promise<Record<string, unknown>[]>;
-    };
-    Kv: {
-      get(args: { key: string }): Promise<unknown>;
-      set(args: { key: string; value: unknown }): Promise<void>;
-      delete(args: { key: string }): Promise<void>;
-      has(args: { key: string }): Promise<boolean>;
-      keys(args?: {}): Promise<string[]>;
-      clear(args?: {}): Promise<void>;
-    };
-    Windows: {
-      open(args: { opts: Record<string, any> }): Promise<string>;
-      close(args: { id: string }): Promise<void>;
-      list(args?: {}): Promise<string[]>;
-    };
-    Navigation: {
-      changed(args: { url: string }): Promise<void>;
-    };
-    Introspection: {
-      manifest(args?: {}): Promise<Manifest>;
-    };
-    Stream: {
-      on(name: string, cb: (data: unknown) => void): void;
-      once(name: string, cb: (data: unknown) => void): void;
-      off(name: string, cb?: (data: unknown) => void): void;
-      send(name: string, data?: unknown): void;
-    };
-    FileDrop: {
-      on(cb: (x: number, y: number, paths: string[]) => void): void;
-      off(): void;
-    };
-    DeepLink: {
-      on(cb: (url: string) => void): void;
-      off(): void;
-    };
-  };
+  Event: {
+  emit(args: { name: string; data: unknown }): Promise<void>;
+  on(name: string, cb: (data: unknown) => void): void;
+  once(name: string, cb: (data: unknown) => void): void;
+  off(name: string, cb?: (data: unknown) => void): void;};
+  System: {
+  quit(args?: {}): Promise<void>;
+  openUrl(args: { url: string }): Promise<void>;
+  environment(args?: {}): Promise<{ os: OS; arch: string; devtools: boolean }>;
+  screenInfo(args?: {}): Promise<{ width: number; height: number; scale: number }>;
+  notify(args: { title: string; body: string }): Promise<void>;
+};
+  Filesystem: {
+  homeDir(args?: {}): Promise<string>;
+  tempDir(args?: {}): Promise<string>;
+  downloadsDir(args?: {}): Promise<string>;
+  appDataDir(args?: {}): Promise<string>;
+};
+  Clipboard: {
+  read(args?: {}): Promise<string>;
+  readHtml(args?: {}): Promise<string>;
+  readImage(args?: {}): Promise<string>;
+  write(args: { text: string }): Promise<void>;
+  writeHtml(args: { html: string }): Promise<void>;
+  writeImage(args: { dataUrl: string }): Promise<void>;
+};
+  Window: {
+  minimize(args?: {}): Promise<void>;
+  maximize(args?: {}): Promise<void>;
+  center(args?: {}): Promise<void>;
+  hide(args?: {}): Promise<void>;
+  show(args?: {}): Promise<void>;
+  setTitle(args: { title: string }): Promise<void>;
+  setSize(args: { width: number; height: number }): Promise<void>;
+  startDrag(args?: {}): Promise<void>;
+};
+  Dialogs: {
+  openFile(args: { prompt: string; filters: { name: string; extensions: string[] }[] }): Promise<string>;
+  openDir(args: { prompt: string }): Promise<string>;
+  openFiles(args: { prompt: string; filters: { name: string; extensions: string[] }[] }): Promise<string[]>;
+  saveFile(args: { prompt: string; filename: string; filters: { name: string; extensions: string[] }[] }): Promise<string>;
+  messageInfo(args: { title: string; message: string }): Promise<void>;
+  messageWarning(args: { title: string; message: string }): Promise<void>;
+  messageError(args: { title: string; message: string }): Promise<void>;
+  messageQuestion(args: { title: string; message: string }): Promise<string>;
+};
+  Tray: {
+  show(args: { iconPath: string }): Promise<void>;
+  hide(args?: {}): Promise<void>;
+  setIcon(args: { path: string }): Promise<void>;
+  popupMenu(args?: {}): Promise<void>;
+  setMenu(args: { items: { id: string; label: string }[] }): Promise<void>;
+};
+  ContextMenu: {
+  show(args: { x: number; y: number; itemsJson: string }): Promise<void>;
+  set(items: { id?: string; label?: string; enabled?: boolean; separator?: boolean }[]): void;
+  clear(): void;
+  onSelect(cb: (id: string) => void): void;};
+  DragOut: {
+  start(args: { paths: string[] }): Promise<void>;
+};
+  FileWatch: {
+  watch(args: { path: string }): Promise<void>;
+  unwatch(args: { path: string }): Promise<void>;
+  on(cb: (event: { path: string; kind: "modified" | "created" | "deleted" | "renamed" }) => void): void;
+  once(cb: (event: { path: string; kind: "modified" | "created" | "deleted" | "renamed" }) => void): void;
+  off(cb?: (event: { path: string; kind: "modified" | "created" | "deleted" | "renamed" }) => void): void;};
+  Shell: {
+  spawn(args: { command: string; args: string[] }): Promise<string>;
+  kill(args: { pid: string }): Promise<void>;
+  write(args: { pid: string; text: string }): Promise<void>;
+  closeStdin(args: { pid: string }): Promise<void>;
+  list(args?: {}): Promise<string[]>;
+  run(args: { command: string; args: string[] }): Promise<{ stdout: string; stderr: string; code: number }>;
+  listen(pid: string, opts: { stdout?: (data: { line: string }) => void; stderr?: (data: { line: string }) => void; exit?: (data: { code: number }) => void }): void;
+  unlisten(pid: string): void;};
+  Hotkeys: {
+  register(args: { accelerator: string }): Promise<void>;
+  unregister(args: { accelerator: string }): Promise<void>;
+  on(cb: (event: { key: string }) => void): void;
+  once(cb: (event: { key: string }) => void): void;
+  off(cb?: (event: { key: string }) => void): void;};
+  Sqlite: {
+  open(args: { path: string }): Promise<string>;
+  close(args: { db: string }): Promise<void>;
+  exec(args: { db: string; sql: string; params: any[] }): Promise<ExecResult>;
+  query(args: { db: string; sql: string; params: any[] }): Promise<Record<string, unknown>[]>;
+};
+  Kv: {
+  get(args: { key: string }): Promise<unknown>;
+  set(args: { key: string; value: unknown }): Promise<void>;
+  delete(args: { key: string }): Promise<void>;
+  has(args: { key: string }): Promise<boolean>;
+  keys(args?: {}): Promise<string[]>;
+  clear(args?: {}): Promise<void>;
+};
+  Windows: {
+  open(args: { opts: Record<string, any> }): Promise<string>;
+  close(args: { id: string }): Promise<void>;
+  list(args?: {}): Promise<string[]>;
+};
+  Navigation: {
+  changed(args: { url: string }): Promise<void>;
+};
+  Introspection: {
+  manifest(args?: {}): Promise<Manifest>;
+};
+  Stream: {
+  on(name: string, cb: (data: unknown) => void): void;
+  once(name: string, cb: (data: unknown) => void): void;
+  off(name: string, cb?: (data: unknown) => void): void;
+  send(name: string, data?: unknown): void;};
+  FileDrop: {
+  on(cb: (x: number, y: number, paths: string[]) => void): void;
+  off(): void;};
+  DeepLink: {
+  on(cb: (url: string) => void): void;
+  off(): void;};
+};
 };
 
 export declare const MyCustomPlugin: {
   Counter: {
-    value(args?: {}): Promise<number>;
-    state(args?: {}): Promise<CounterState>;
-    increment(args?: {}): Promise<number>;
-    decrement(args?: {}): Promise<number>;
-    reset(args?: {}): Promise<number>;
-  };
+  value(args?: {}): Promise<number>;
+  state(args?: {}): Promise<CounterState>;
+  increment(args?: {}): Promise<number>;
+  decrement(args?: {}): Promise<number>;
+  reset(args?: {}): Promise<number>;
+};
 };
 
 export declare const lune: typeof Lune.Plugins;

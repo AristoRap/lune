@@ -1,5 +1,5 @@
 name: lune
-version: 0.17.0
+version: 0.18.0
 description: Build native desktop apps with Crystal and a web frontend.
 
 authors:
@@ -15,7 +15,7 @@ dependencies:
     branch: master
   vow:
     github: AristoRap/vow
-    version: ~> 0.3
+    version: ~> 0.4
   argy:
     github: AristoRap/argy
     version: ~> 0.4

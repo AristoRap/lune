@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.18.0] - 2026-06-02
+
+### Changed
+
+- **Depends on [vow](https://github.com/AristoRap/vow) `~> 0.4`.** `Vow::ProcedureDescriptor` drops the `verb` field — the webview transport has no HTTP-verb notion, and lune always set it to the neutral `"post"`.
+
 ## [0.17.0] - 2026-06-02
 
 ### Added

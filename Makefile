@@ -56,7 +56,6 @@ patch:
 	patch=$$(echo $$current | cut -d. -f3); \
 	next="$$major.$$minor.$$((patch + 1))"; \
 	sed -i.bak "s/^version: .*/version: $$next/" shard.yml && rm shard.yml.bak; \
-	sed -i.bak "s/VERSION = \".*\"/VERSION = \"$$next\"/" src/lune.cr && rm src/lune.cr.bak; \
 	sed -i.bak "s/version: ~> .*/version: ~> $$next/" website/getting-started.md && rm website/getting-started.md.bak; \
 	sed -i.bak "s/const version = '.*'/const version = '$$next'/" website/.vitepress/config.ts && rm website/.vitepress/config.ts.bak; \
 	echo "Bumped $$current → $$next"
@@ -67,7 +66,6 @@ minor:
 	cur_minor=$$(echo $$current | cut -d. -f2); \
 	next="$$major.$$((cur_minor + 1)).0"; \
 	sed -i.bak "s/^version: .*/version: $$next/" shard.yml && rm shard.yml.bak; \
-	sed -i.bak "s/VERSION = \".*\"/VERSION = \"$$next\"/" src/lune.cr && rm src/lune.cr.bak; \
 	sed -i.bak "s/version: ~> .*/version: ~> $$next/" website/getting-started.md && rm website/getting-started.md.bak; \
 	sed -i.bak "s/const version = '.*'/const version = '$$next'/" website/.vitepress/config.ts && rm website/.vitepress/config.ts.bak; \
 	echo "Bumped $$current → $$next"

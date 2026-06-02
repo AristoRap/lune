@@ -42,7 +42,7 @@ describe "Lune manifest (vow contract)" do
       d.args.map(&.name).should eq(["width", "height"])
       d.args.map(&.type).should eq(["Int32", "Int32"])
       d.return_type.should eq("Nil")
-      d.verb.should eq("post")
+      d.opts.should be_empty
     end
 
     it "falls back to positional arg names when none are supplied" do

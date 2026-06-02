@@ -11,12 +11,8 @@ export class LuneError extends Error {
 
 export const __lune = {
   call(name, args) {
-    return window[name](args).catch(function (err) {
-      if (
-        err !== null &&
-        typeof err === "object" &&
-        typeof err.code === "string"
-      ) {
+    return window[name](args).catch(function(err) {
+      if (err !== null && typeof err === 'object' && typeof err.code === 'string') {
         throw new LuneError(err.code, err.error, err.hint ?? null);
       }
       throw err;
@@ -26,362 +22,292 @@ export const __lune = {
 
 export const Lune = {
   Plugins: {
-    Event: {
-      emit(args) {
-        return __lune.call("Lune.Plugins.Event.emit", args);
-      },
-      on(name, cb) {
-        window.__lune.on(name, cb, -1);
-      },
-      once(name, cb) {
-        window.__lune.on(name, cb, 1);
-      },
-      off(name, cb) {
-        window.__lune.off(name, cb);
-      },
-    },
-    System: {
-      quit(args = {}) {
-        return __lune.call("Lune.Plugins.System.quit", args);
-      },
-      openUrl(args) {
-        return __lune.call("Lune.Plugins.System.openUrl", args);
-      },
-      environment(args = {}) {
-        return __lune.call("Lune.Plugins.System.environment", args);
-      },
-      screenInfo(args = {}) {
-        return __lune.call("Lune.Plugins.System.screenInfo", args);
-      },
-      notify(args) {
-        return __lune.call("Lune.Plugins.System.notify", args);
-      },
-    },
-    Filesystem: {
-      homeDir(args = {}) {
-        return __lune.call("Lune.Plugins.Filesystem.homeDir", args);
-      },
-      tempDir(args = {}) {
-        return __lune.call("Lune.Plugins.Filesystem.tempDir", args);
-      },
-      downloadsDir(args = {}) {
-        return __lune.call("Lune.Plugins.Filesystem.downloadsDir", args);
-      },
-      appDataDir(args = {}) {
-        return __lune.call("Lune.Plugins.Filesystem.appDataDir", args);
-      },
-    },
-    Clipboard: {
-      read(args = {}) {
-        return __lune.call("Lune.Plugins.Clipboard.read", args);
-      },
-      readHtml(args = {}) {
-        return __lune.call("Lune.Plugins.Clipboard.readHtml", args);
-      },
-      readImage(args = {}) {
-        return __lune.call("Lune.Plugins.Clipboard.readImage", args);
-      },
-      write(args) {
-        return __lune.call("Lune.Plugins.Clipboard.write", args);
-      },
-      writeHtml(args) {
-        return __lune.call("Lune.Plugins.Clipboard.writeHtml", args);
-      },
-      writeImage(args) {
-        return __lune.call("Lune.Plugins.Clipboard.writeImage", args);
-      },
-    },
-    Window: {
-      minimize(args = {}) {
-        return __lune.call("Lune.Plugins.Window.minimize", args);
-      },
-      maximize(args = {}) {
-        return __lune.call("Lune.Plugins.Window.maximize", args);
-      },
-      center(args = {}) {
-        return __lune.call("Lune.Plugins.Window.center", args);
-      },
-      hide(args = {}) {
-        return __lune.call("Lune.Plugins.Window.hide", args);
-      },
-      show(args = {}) {
-        return __lune.call("Lune.Plugins.Window.show", args);
-      },
-      setTitle(args) {
-        return __lune.call("Lune.Plugins.Window.setTitle", args);
-      },
-      setSize(args) {
-        return __lune.call("Lune.Plugins.Window.setSize", args);
-      },
-      startDrag(args = {}) {
-        return __lune.call("Lune.Plugins.Window.startDrag", args);
-      },
-    },
-    Dialogs: {
-      openFile(args) {
-        return __lune.call("Lune.Plugins.Dialogs.openFile", args);
-      },
-      openDir(args) {
-        return __lune.call("Lune.Plugins.Dialogs.openDir", args);
-      },
-      openFiles(args) {
-        return __lune.call("Lune.Plugins.Dialogs.openFiles", args);
-      },
-      saveFile(args) {
-        return __lune.call("Lune.Plugins.Dialogs.saveFile", args);
-      },
-      messageInfo(args) {
-        return __lune.call("Lune.Plugins.Dialogs.messageInfo", args);
-      },
-      messageWarning(args) {
-        return __lune.call("Lune.Plugins.Dialogs.messageWarning", args);
-      },
-      messageError(args) {
-        return __lune.call("Lune.Plugins.Dialogs.messageError", args);
-      },
-      messageQuestion(args) {
-        return __lune.call("Lune.Plugins.Dialogs.messageQuestion", args);
-      },
-    },
-    Tray: {
-      show(args) {
-        return __lune.call("Lune.Plugins.Tray.show", args);
-      },
-      hide(args = {}) {
-        return __lune.call("Lune.Plugins.Tray.hide", args);
-      },
-      setIcon(args) {
-        return __lune.call("Lune.Plugins.Tray.setIcon", args);
-      },
-      popupMenu(args = {}) {
-        return __lune.call("Lune.Plugins.Tray.popupMenu", args);
-      },
-      setMenu(args) {
-        return __lune.call("Lune.Plugins.Tray.setMenu", args);
-      },
-    },
-    ContextMenu: {
-      show(args) {
-        return __lune.call("Lune.Plugins.ContextMenu.show", args);
-      },
-      set(items) {
-        window.__lune.setContextMenu(items || []);
-      },
-      clear() {
-        window.__lune.setContextMenu([]);
-      },
-      onSelect(cb) {
-        window.__lune.on(
-          "context_menu",
-          function (data) {
-            cb(data.id);
-          },
-          -1,
-        );
-      },
-    },
-    DragOut: {
-      start(args) {
-        return __lune.call("Lune.Plugins.DragOut.start", args);
-      },
-    },
-    FileWatch: {
-      watch(args) {
-        return __lune.call("Lune.Plugins.FileWatch.watch", args);
-      },
-      unwatch(args) {
-        return __lune.call("Lune.Plugins.FileWatch.unwatch", args);
-      },
-      on(cb) {
-        window.__lune.on("file_watch", cb, -1);
-      },
-      once(cb) {
-        window.__lune.on("file_watch", cb, 1);
-      },
-      off(cb) {
-        window.__lune.off("file_watch", cb);
-      },
-    },
-    Shell: {
-      spawn(args) {
-        return __lune.call("Lune.Plugins.Shell.spawn", args);
-      },
-      kill(args) {
-        return __lune.call("Lune.Plugins.Shell.kill", args);
-      },
-      write(args) {
-        return __lune.call("Lune.Plugins.Shell.write", args);
-      },
-      closeStdin(args) {
-        return __lune.call("Lune.Plugins.Shell.closeStdin", args);
-      },
-      list(args = {}) {
-        return __lune.call("Lune.Plugins.Shell.list", args);
-      },
-      run(args) {
-        return __lune.call("Lune.Plugins.Shell.run", args);
-      },
-      listen(pid, opts) {
-        var b = window.__lune;
-        if (!opts) return;
-        if (opts.stdout) b.stOn("shell:" + pid + ":stdout", opts.stdout);
-        if (opts.stderr) b.stOn("shell:" + pid + ":stderr", opts.stderr);
-        if (opts.exit) {
-          var _wrap = function (d) {
-            b.stOff("shell:" + pid + ":stdout");
-            b.stOff("shell:" + pid + ":stderr");
-            b.stOff("shell:" + pid + ":exit");
-            opts.exit(d);
-          };
-          b.stOn("shell:" + pid + ":exit", _wrap);
-        }
-      },
-      unlisten(pid) {
-        var b = window.__lune;
+  Event: {
+  emit(args) {
+    return __lune.call("Lune.Plugins.Event.emit", args);
+  },
+  on(name, cb)     { window.__lune.on(name, cb, -1); },
+  once(name, cb)   { window.__lune.on(name, cb,  1); },
+  off(name, cb)    { window.__lune.off(name, cb); },},
+  System: {
+  quit(args = {}) {
+    return __lune.call("Lune.Plugins.System.quit", args);
+  },
+  openUrl(args) {
+    return __lune.call("Lune.Plugins.System.openUrl", args);
+  },
+  environment(args = {}) {
+    return __lune.call("Lune.Plugins.System.environment", args);
+  },
+  screenInfo(args = {}) {
+    return __lune.call("Lune.Plugins.System.screenInfo", args);
+  },
+  notify(args) {
+    return __lune.call("Lune.Plugins.System.notify", args);
+  },
+},
+  Filesystem: {
+  homeDir(args = {}) {
+    return __lune.call("Lune.Plugins.Filesystem.homeDir", args);
+  },
+  tempDir(args = {}) {
+    return __lune.call("Lune.Plugins.Filesystem.tempDir", args);
+  },
+  downloadsDir(args = {}) {
+    return __lune.call("Lune.Plugins.Filesystem.downloadsDir", args);
+  },
+  appDataDir(args = {}) {
+    return __lune.call("Lune.Plugins.Filesystem.appDataDir", args);
+  },
+},
+  Clipboard: {
+  read(args = {}) {
+    return __lune.call("Lune.Plugins.Clipboard.read", args);
+  },
+  readHtml(args = {}) {
+    return __lune.call("Lune.Plugins.Clipboard.readHtml", args);
+  },
+  readImage(args = {}) {
+    return __lune.call("Lune.Plugins.Clipboard.readImage", args);
+  },
+  write(args) {
+    return __lune.call("Lune.Plugins.Clipboard.write", args);
+  },
+  writeHtml(args) {
+    return __lune.call("Lune.Plugins.Clipboard.writeHtml", args);
+  },
+  writeImage(args) {
+    return __lune.call("Lune.Plugins.Clipboard.writeImage", args);
+  },
+},
+  Window: {
+  minimize(args = {}) {
+    return __lune.call("Lune.Plugins.Window.minimize", args);
+  },
+  maximize(args = {}) {
+    return __lune.call("Lune.Plugins.Window.maximize", args);
+  },
+  center(args = {}) {
+    return __lune.call("Lune.Plugins.Window.center", args);
+  },
+  hide(args = {}) {
+    return __lune.call("Lune.Plugins.Window.hide", args);
+  },
+  show(args = {}) {
+    return __lune.call("Lune.Plugins.Window.show", args);
+  },
+  setTitle(args) {
+    return __lune.call("Lune.Plugins.Window.setTitle", args);
+  },
+  setSize(args) {
+    return __lune.call("Lune.Plugins.Window.setSize", args);
+  },
+  startDrag(args = {}) {
+    return __lune.call("Lune.Plugins.Window.startDrag", args);
+  },
+},
+  Dialogs: {
+  openFile(args) {
+    return __lune.call("Lune.Plugins.Dialogs.openFile", args);
+  },
+  openDir(args) {
+    return __lune.call("Lune.Plugins.Dialogs.openDir", args);
+  },
+  openFiles(args) {
+    return __lune.call("Lune.Plugins.Dialogs.openFiles", args);
+  },
+  saveFile(args) {
+    return __lune.call("Lune.Plugins.Dialogs.saveFile", args);
+  },
+  messageInfo(args) {
+    return __lune.call("Lune.Plugins.Dialogs.messageInfo", args);
+  },
+  messageWarning(args) {
+    return __lune.call("Lune.Plugins.Dialogs.messageWarning", args);
+  },
+  messageError(args) {
+    return __lune.call("Lune.Plugins.Dialogs.messageError", args);
+  },
+  messageQuestion(args) {
+    return __lune.call("Lune.Plugins.Dialogs.messageQuestion", args);
+  },
+},
+  Tray: {
+  show(args) {
+    return __lune.call("Lune.Plugins.Tray.show", args);
+  },
+  hide(args = {}) {
+    return __lune.call("Lune.Plugins.Tray.hide", args);
+  },
+  setIcon(args) {
+    return __lune.call("Lune.Plugins.Tray.setIcon", args);
+  },
+  popupMenu(args = {}) {
+    return __lune.call("Lune.Plugins.Tray.popupMenu", args);
+  },
+  setMenu(args) {
+    return __lune.call("Lune.Plugins.Tray.setMenu", args);
+  },
+},
+  ContextMenu: {
+  show(args) {
+    return __lune.call("Lune.Plugins.ContextMenu.show", args);
+  },
+  set(items)      { window.__lune.setContextMenu(items || []); },
+  clear()         { window.__lune.setContextMenu([]); },
+  onSelect(cb)    { window.__lune.on("context_menu", function(data) { cb(data.id); }, -1); },},
+  DragOut: {
+  start(args) {
+    return __lune.call("Lune.Plugins.DragOut.start", args);
+  },
+},
+  FileWatch: {
+  watch(args) {
+    return __lune.call("Lune.Plugins.FileWatch.watch", args);
+  },
+  unwatch(args) {
+    return __lune.call("Lune.Plugins.FileWatch.unwatch", args);
+  },
+  on(cb)   { window.__lune.on("file_watch", cb, -1); },
+  once(cb) { window.__lune.on("file_watch", cb, 1); },
+  off(cb)  { window.__lune.off("file_watch", cb); },},
+  Shell: {
+  spawn(args) {
+    return __lune.call("Lune.Plugins.Shell.spawn", args);
+  },
+  kill(args) {
+    return __lune.call("Lune.Plugins.Shell.kill", args);
+  },
+  write(args) {
+    return __lune.call("Lune.Plugins.Shell.write", args);
+  },
+  closeStdin(args) {
+    return __lune.call("Lune.Plugins.Shell.closeStdin", args);
+  },
+  list(args = {}) {
+    return __lune.call("Lune.Plugins.Shell.list", args);
+  },
+  run(args) {
+    return __lune.call("Lune.Plugins.Shell.run", args);
+  },
+  listen(pid, opts) {
+    var b = window.__lune;
+    if (!opts) return;
+    if (opts.stdout) b.stOn("shell:" + pid + ":stdout", opts.stdout);
+    if (opts.stderr) b.stOn("shell:" + pid + ":stderr", opts.stderr);
+    if (opts.exit) {
+      var _wrap = function(d) {
         b.stOff("shell:" + pid + ":stdout");
         b.stOff("shell:" + pid + ":stderr");
         b.stOff("shell:" + pid + ":exit");
-      },
-    },
-    Hotkeys: {
-      register(args) {
-        return __lune.call("Lune.Plugins.Hotkeys.register", args);
-      },
-      unregister(args) {
-        return __lune.call("Lune.Plugins.Hotkeys.unregister", args);
-      },
-      on(cb) {
-        window.__lune.on("hotkey", cb, -1);
-      },
-      once(cb) {
-        window.__lune.on("hotkey", cb, 1);
-      },
-      off(cb) {
-        window.__lune.off("hotkey", cb);
-      },
-    },
-    Sqlite: {
-      open(args) {
-        return __lune.call("Lune.Plugins.Sqlite.open", args);
-      },
-      close(args) {
-        return __lune.call("Lune.Plugins.Sqlite.close", args);
-      },
-      exec(args) {
-        return __lune.call("Lune.Plugins.Sqlite.exec", args);
-      },
-      query(args) {
-        return __lune.call("Lune.Plugins.Sqlite.query", args);
-      },
-    },
-    Kv: {
-      get(args) {
-        return __lune.call("Lune.Plugins.Kv.get", args);
-      },
-      set(args) {
-        return __lune.call("Lune.Plugins.Kv.set", args);
-      },
-      delete(args) {
-        return __lune.call("Lune.Plugins.Kv.delete", args);
-      },
-      has(args) {
-        return __lune.call("Lune.Plugins.Kv.has", args);
-      },
-      keys(args = {}) {
-        return __lune.call("Lune.Plugins.Kv.keys", args);
-      },
-      clear(args = {}) {
-        return __lune.call("Lune.Plugins.Kv.clear", args);
-      },
-    },
-    Windows: {
-      open(args) {
-        return __lune.call("Lune.Plugins.Windows.open", args);
-      },
-      close(args) {
-        return __lune.call("Lune.Plugins.Windows.close", args);
-      },
-      list(args = {}) {
-        return __lune.call("Lune.Plugins.Windows.list", args);
-      },
-    },
-    Navigation: {
-      changed(args) {
-        return __lune.call("Lune.Plugins.Navigation.changed", args);
-      },
-    },
-    Introspection: {
-      manifest(args = {}) {
-        return __lune.call("Lune.Plugins.Introspection.manifest", args);
-      },
-    },
-    Stream: {
-      on(name, cb) {
-        window.__lune.stOn(name, cb);
-      },
-      once(name, cb) {
-        var w = function (d) {
-          cb(d);
-          window.__lune.stOff(name, w);
-        };
-        window.__lune.stOn(name, w);
-      },
-      off(name, cb) {
-        window.__lune.stOff(name, cb);
-      },
-      send(name, data) {
-        window.__lune.stSend(name, data);
-      },
-    },
-    FileDrop: {
-      on(cb) {
-        window.__lune.on(
-          "file_drop",
-          function (data) {
-            cb(data.x, data.y, data.paths);
-          },
-          -1,
-        );
-      },
-      off() {
-        window.__lune.off("file_drop");
-      },
-    },
-    DeepLink: {
-      on(cb) {
-        window.__lune.on(
-          "deep_link",
-          function (data) {
-            cb(data.url);
-          },
-          -1,
-        );
-      },
-      off() {
-        window.__lune.off("deep_link");
-      },
-    },
+        opts.exit(d);
+      };
+      b.stOn("shell:" + pid + ":exit", _wrap);
+    }
   },
+  unlisten(pid) {
+    var b = window.__lune;
+    b.stOff("shell:" + pid + ":stdout");
+    b.stOff("shell:" + pid + ":stderr");
+    b.stOff("shell:" + pid + ":exit");
+  },},
+  Hotkeys: {
+  register(args) {
+    return __lune.call("Lune.Plugins.Hotkeys.register", args);
+  },
+  unregister(args) {
+    return __lune.call("Lune.Plugins.Hotkeys.unregister", args);
+  },
+  on(cb)   { window.__lune.on("hotkey", cb, -1); },
+  once(cb) { window.__lune.on("hotkey", cb, 1); },
+  off(cb)  { window.__lune.off("hotkey", cb); },},
+  Sqlite: {
+  open(args) {
+    return __lune.call("Lune.Plugins.Sqlite.open", args);
+  },
+  close(args) {
+    return __lune.call("Lune.Plugins.Sqlite.close", args);
+  },
+  exec(args) {
+    return __lune.call("Lune.Plugins.Sqlite.exec", args);
+  },
+  query(args) {
+    return __lune.call("Lune.Plugins.Sqlite.query", args);
+  },
+},
+  Kv: {
+  get(args) {
+    return __lune.call("Lune.Plugins.Kv.get", args);
+  },
+  set(args) {
+    return __lune.call("Lune.Plugins.Kv.set", args);
+  },
+  delete(args) {
+    return __lune.call("Lune.Plugins.Kv.delete", args);
+  },
+  has(args) {
+    return __lune.call("Lune.Plugins.Kv.has", args);
+  },
+  keys(args = {}) {
+    return __lune.call("Lune.Plugins.Kv.keys", args);
+  },
+  clear(args = {}) {
+    return __lune.call("Lune.Plugins.Kv.clear", args);
+  },
+},
+  Windows: {
+  open(args) {
+    return __lune.call("Lune.Plugins.Windows.open", args);
+  },
+  close(args) {
+    return __lune.call("Lune.Plugins.Windows.close", args);
+  },
+  list(args = {}) {
+    return __lune.call("Lune.Plugins.Windows.list", args);
+  },
+},
+  Navigation: {
+  changed(args) {
+    return __lune.call("Lune.Plugins.Navigation.changed", args);
+  },
+},
+  Introspection: {
+  manifest(args = {}) {
+    return __lune.call("Lune.Plugins.Introspection.manifest", args);
+  },
+},
+  Stream: {
+  on(name, cb)     { window.__lune.stOn(name, cb); },
+  once(name, cb)   { var w=function(d){ cb(d); window.__lune.stOff(name,w); }; window.__lune.stOn(name,w); },
+  off(name, cb)    { window.__lune.stOff(name, cb); },
+  send(name, data) { window.__lune.stSend(name, data); },},
+  FileDrop: {
+  on(cb)  { window.__lune.on("file_drop", function(data) { cb(data.x, data.y, data.paths); }, -1); },
+  off()   { window.__lune.off("file_drop"); },},
+  DeepLink: {
+  on(cb)  { window.__lune.on("deep_link", function(data) { cb(data.url); }, -1); },
+  off()   { window.__lune.off("deep_link"); },},
+},
 };
 
 export const MyCustomPlugin = {
   Counter: {
-    value(args = {}) {
-      return __lune.call("MyCustomPlugin.Counter.value", args);
-    },
-    state(args = {}) {
-      return __lune.call("MyCustomPlugin.Counter.state", args);
-    },
-    increment(args = {}) {
-      return __lune.call("MyCustomPlugin.Counter.increment", args);
-    },
-    decrement(args = {}) {
-      return __lune.call("MyCustomPlugin.Counter.decrement", args);
-    },
-    reset(args = {}) {
-      return __lune.call("MyCustomPlugin.Counter.reset", args);
-    },
+  value(args = {}) {
+    return __lune.call("MyCustomPlugin.Counter.value", args);
   },
+  state(args = {}) {
+    return __lune.call("MyCustomPlugin.Counter.state", args);
+  },
+  increment(args = {}) {
+    return __lune.call("MyCustomPlugin.Counter.increment", args);
+  },
+  decrement(args = {}) {
+    return __lune.call("MyCustomPlugin.Counter.decrement", args);
+  },
+  reset(args = {}) {
+    return __lune.call("MyCustomPlugin.Counter.reset", args);
+  },
+},
 };
 
 export const lune = Lune.Plugins;

@@ -32,7 +32,6 @@ private def sample_manifest : Vow::Manifest
         name: "Lune.Plugins.System.environment",
         args: [] of Vow::ArgDescriptor,
         return_type: "Environment",
-        verb: "get",
       ),
     ],
     types: [
@@ -136,7 +135,6 @@ describe LuneCLI::Commands::Doctor do
       report.should contain("procedures (2)")
       report.should contain("Lune.Plugins.Window.setSize(width: Int32, height: Int32) -> Nil")
       report.should contain("Lune.Plugins.System.environment() -> Environment")
-      report.should contain("[get]")
       report.should contain("types (2)")
       report.should contain("Environment")
       report.should contain("OS = \"darwin\" | \"linux\" | \"windows\"")

@@ -254,8 +254,7 @@ module LuneCLI
         else
           procs.each do |p|
             args = p.args.map { |a| "#{a.name}: #{a.type}#{a.optional ? "?" : ""}" }.join(", ")
-            verb = p.verb == "post" ? "" : " [#{p.verb}]"
-            output.puts "    #{p.name}(#{args}) -> #{p.return_type}#{verb}"
+            output.puts "    #{p.name}(#{args}) -> #{p.return_type}"
           end
         end
 

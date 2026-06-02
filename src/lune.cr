@@ -25,7 +25,7 @@ require "./lune/platform/deep_link_ipc"
 require "./lune/runner"
 
 module Lune
-  VERSION = "0.17.0"
+  VERSION = {{ `shards version "#{__DIR__}"`.chomp.stringify }}
 
   # Module-level registration so third-party shards can publish plugins the
   # same way built-ins do: `Lune.use(MyPlugin.new)` before `Lune.run`. The

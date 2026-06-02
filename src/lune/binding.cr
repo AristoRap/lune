@@ -89,18 +89,15 @@ module Lune
       Lune::Generator.crystal_return_to_ts(@return_type, known)
     end
 
-    # The static `Vow::ProcedureDescriptor` for this binding — its entry in the
-    # manifest that mirrors the *current* wire contract: the dispatch `id` as the
-    # procedure name, the resolved JS-facing arg names paired with their declared
-    # Crystal type, and the return type. `optional` is always false (lune's
-    # positional bindings carry no per-arg default info), and `verb` is the
-    # neutral default since the webview transport has no HTTP-verb notion.
+    # The static `Vow::ProcedureDescriptor` for this binding. `optional` is
+    # always false (lune's positional bindings carry no per-arg default info),
+    # and `opts` is left empty — the webview transport has no verb/opt notion.
     def to_vow_descriptor : Vow::ProcedureDescriptor
       keys = arg_keys
       args = @args.map_with_index do |type, i|
         Vow::ArgDescriptor.new(keys[i], type, false)
       end
-      Vow::ProcedureDescriptor.new(name: id, args: args, return_type: @return_type, verb: "post")
+      Vow::ProcedureDescriptor.new(name: id, args: args, return_type: @return_type)
     end
 
     # The TS type of the single named-args object: `args: { camelKey: T; … }`,
