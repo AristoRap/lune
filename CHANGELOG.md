@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.17.0] - 2026-06-02
 
 ### Added
 
@@ -12,7 +12,7 @@
 
 ### Changed
 
-- **Depends on [vow](https://github.com/AristoRap/vow) `~> 0.2.0`** — marker-driven dispatch registration (lune keeps its own `@[Lune::Bind]` annotation while reusing vow's decode/invoke/encode), generic enum capture, and "did you mean?" diagnostics.
+- **Depends on [vow](https://github.com/AristoRap/vow) `~> 0.3.0`** — marker-driven dispatch registration (lune keeps its own `@[Lune::Bind]` annotation while reusing vow's decode/invoke/encode), generic enum capture, "did you mean?" diagnostics, and a manifest whose JS-facing JSON keys are camelCase (`returnType`, `crystalName`) so the `Introspection.manifest()` contract reads consistently in JS/TS.
 - **Binding calls now take a single named-arguments object** _(breaking)_. A positional call like `api.Demo.greet(name)` becomes `api.Demo.greet({ name })` — the keys are the camelCased Crystal parameter names, typed by the generated `.d.ts`, so a missing or misspelled argument is caught at the call site instead of silently shifting. Zero-argument bindings stay callable as `fn()`.
 - **Dispatch now runs through [vow](https://github.com/AristoRap/vow)'s `Vow::Registry`.** The webview Bridge is a thin transport over `registry.dispatch`: arguments are decoded into their declared Crystal types, and a malformed or missing argument raises a typed `Vow::Error` (`bad_input`) mapped onto lune's `{ code, error }` reply envelope.
 - **`Dialogs` / `Tray` / `DragOut` now take real typed arguments.** `Dialogs.openFile` / `openFiles` / `saveFile` accept `Array(FileFilter)`, `Tray.setMenu` accepts `Array(TrayMenuItem)`, and `DragOut.start` accepts `Array(String)` — no more `_json : String` smuggling or client-side `JSON.stringify` for these plugins. A `NamedTuple` argument type (including an alias like `FileFilter`) is captured and inlined into the generated `.d.ts` automatically.

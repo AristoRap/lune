@@ -13,6 +13,7 @@
 *.dll
 *.exe
 *.pdb
+.DS_Store
 
 # demo — commit source, ignore generated/installed dirs
 demo/lib/
