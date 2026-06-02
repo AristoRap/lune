@@ -1,9 +1,11 @@
 require "../spec_helper"
 
-private def make_bridge
-  fake = FakeWebview.new
-  bridge = Lune::Bridge.new(fake)
-  {fake, bridge}
+# Build a Bridge wired to the app's registry (the Bindable macro populated it
+# during install). The Bridge dispatches by binding id through this registry.
+private def bridge_for(app : Lune::App, fake : FakeWebview) : Lune::Bridge
+  bridge = Lune::Bridge.new(fake, app.registry)
+  bridge.register_bindings(app.bindings)
+  bridge
 end
 
 private def install(app : Lune::App, *mods : Lune::Installable)
@@ -14,35 +16,35 @@ end
 describe "Lune::Plugins" do
   describe Lune::Plugins::System do
     it "does not pollute user bindings" do
-      fake, bridge = make_bridge
+      fake = FakeWebview.new
       app = Lune::App.new
       app.install(Lune::Plugins::System.new(on_quit: -> { }))
-      bridge.register_bindings(app.bindings)
+      bridge = bridge_for(app, fake)
       bridge.all_bindings.values.reject(&.internal?).should be_empty
     end
 
     it "invokes on_quit callback when lifecycle.quit is triggered" do
-      fake, bridge = make_bridge
+      fake = FakeWebview.new
       quit_called = false
       app = Lune::App.new
       app.install(Lune::Plugins::System.new(on_quit: -> { quit_called = true; nil }))
-      bridge.register_bindings(app.bindings)
+      bridge_for(app, fake)
 
       fake.invoke("Lune.Plugins.System.quit", "seq-1", [] of JSON::Any)
       quit_called.should be_true
     end
 
     it "registers lifecycle.open_url and passes the url to on_open_url" do
-      fake, bridge = make_bridge
+      fake = FakeWebview.new
       opened_url = ""
       app = Lune::App.new
       app.install(Lune::Plugins::System.new(
         on_quit: -> { },
         on_open_url: ->(url : String) { opened_url = url; nil }
       ))
-      bridge.register_bindings(app.bindings)
+      bridge_for(app, fake)
 
-      fake.invoke("Lune.Plugins.System.open_url", "seq-2", [JSON::Any.new("https://example.com")])
+      fake.invoke("Lune.Plugins.System.openUrl", "seq-2", [JSON.parse(%({"url": "https://example.com"}))])
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -56,10 +58,10 @@ describe "Lune::Plugins" do
     end
 
     it "returns environment with os, arch, and devtools fields" do
-      fake, bridge = make_bridge
+      fake = FakeWebview.new
       app = Lune::App.new
       app.install(Lune::Plugins::System.new(on_quit: -> { }, devtools: true))
-      bridge.register_bindings(app.bindings)
+      bridge_for(app, fake)
 
       fake.invoke("Lune.Plugins.System.environment", "seq-3", [] of JSON::Any)
       _seq, status, result = fake.resolve_calls[0]
@@ -71,10 +73,10 @@ describe "Lune::Plugins" do
     end
 
     it "reflects the devtools flag in environment" do
-      fake, bridge = make_bridge
+      fake = FakeWebview.new
       app = Lune::App.new
       app.install(Lune::Plugins::System.new(on_quit: -> { }, devtools: false))
-      bridge.register_bindings(app.bindings)
+      bridge_for(app, fake)
 
       fake.invoke("Lune.Plugins.System.environment", "seq-4", [] of JSON::Any)
       env = JSON.parse(fake.resolve_calls[0][2])
@@ -82,58 +84,60 @@ describe "Lune::Plugins" do
     end
 
     it "returns a known os value" do
-      fake, bridge = make_bridge
+      fake = FakeWebview.new
       app = Lune::App.new
       app.install(Lune::Plugins::System.new(on_quit: -> { }))
-      bridge.register_bindings(app.bindings)
+      bridge_for(app, fake)
 
       fake.invoke("Lune.Plugins.System.environment", "seq-5", [] of JSON::Any)
       env = JSON.parse(fake.resolve_calls[0][2])
+      # os is an OS enum; Crystal's default Enum#to_json lowercases, and vow
+      # derives the union from that same serialization — so wire and type agree.
       ["darwin", "linux", "windows"].should contain(env["os"].as_s)
     end
   end
 
   describe Lune::Plugins::Filesystem do
     it "filesystem.home_dir resolves and matches Path.home" do
-      fake, bridge = make_bridge
+      fake = FakeWebview.new
       app = Lune::App.new
       app.install(Lune::Plugins::Filesystem.new)
-      bridge.register_bindings(app.bindings)
+      bridge_for(app, fake)
 
-      fake.invoke("Lune.Plugins.Filesystem.home_dir", "seq-6", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.Filesystem.homeDir", "seq-6", [] of JSON::Any)
       _, _, result = fake.resolve_calls[0]
       JSON.parse(result).as_s.should eq(Path.home.to_s)
     end
 
     it "filesystem.temp_dir resolves and matches Dir.tempdir" do
-      fake, bridge = make_bridge
+      fake = FakeWebview.new
       app = Lune::App.new
       app.install(Lune::Plugins::Filesystem.new)
-      bridge.register_bindings(app.bindings)
+      bridge_for(app, fake)
 
-      fake.invoke("Lune.Plugins.Filesystem.temp_dir", "seq-7", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.Filesystem.tempDir", "seq-7", [] of JSON::Any)
       _, _, result = fake.resolve_calls[0]
       JSON.parse(result).as_s.should eq(Dir.tempdir)
     end
 
     it "filesystem.downloads_dir returns a path under the home directory" do
-      fake, bridge = make_bridge
+      fake = FakeWebview.new
       app = Lune::App.new
       app.install(Lune::Plugins::Filesystem.new)
-      bridge.register_bindings(app.bindings)
+      bridge_for(app, fake)
 
-      fake.invoke("Lune.Plugins.Filesystem.downloads_dir", "seq-8", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.Filesystem.downloadsDir", "seq-8", [] of JSON::Any)
       _, _, result = fake.resolve_calls[0]
       JSON.parse(result).as_s.should start_with(Path.home.to_s)
     end
 
     it "filesystem.app_data_dir returns a non-empty string" do
-      fake, bridge = make_bridge
+      fake = FakeWebview.new
       app = Lune::App.new
       app.install(Lune::Plugins::Filesystem.new)
-      bridge.register_bindings(app.bindings)
+      bridge_for(app, fake)
 
-      fake.invoke("Lune.Plugins.Filesystem.app_data_dir", "seq-9", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.Filesystem.appDataDir", "seq-9", [] of JSON::Any)
       _, _, result = fake.resolve_calls[0]
       JSON.parse(result).as_s.should_not be_empty
     end
@@ -141,12 +145,12 @@ describe "Lune::Plugins" do
 
   describe Lune::Plugins::Clipboard do
     it "clipboard.read resolves with the value returned by on_read" do
-      fake, bridge = make_bridge
+      fake = FakeWebview.new
       app = Lune::App.new
       app.install(Lune::Plugins::Clipboard.new(
         on_read: -> : String { "clipboard content" }
       ))
-      bridge.register_bindings(app.bindings)
+      bridge_for(app, fake)
 
       fake.invoke("Lune.Plugins.Clipboard.read", "seq-10", [] of JSON::Any)
 
@@ -162,15 +166,15 @@ describe "Lune::Plugins" do
     end
 
     it "clipboard.write calls on_write with the provided text and resolves" do
-      fake, bridge = make_bridge
+      fake = FakeWebview.new
       written = ""
       app = Lune::App.new
       app.install(Lune::Plugins::Clipboard.new(
         on_write: ->(text : String) { written = text; nil }
       ))
-      bridge.register_bindings(app.bindings)
+      bridge_for(app, fake)
 
-      fake.invoke("Lune.Plugins.Clipboard.write", "seq-11", [JSON::Any.new("hello clipboard")])
+      fake.invoke("Lune.Plugins.Clipboard.write", "seq-11", [JSON.parse(%({"text": "hello clipboard"}))])
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -184,14 +188,14 @@ describe "Lune::Plugins" do
     end
 
     it "clipboard.read_html resolves with HTML from on_read_html" do
-      fake, bridge = make_bridge
+      fake = FakeWebview.new
       app = Lune::App.new
       app.install(Lune::Plugins::Clipboard.new(
         on_read_html: -> : String { "<b>hello</b>" }
       ))
-      bridge.register_bindings(app.bindings)
+      bridge_for(app, fake)
 
-      fake.invoke("Lune.Plugins.Clipboard.read_html", "seq-20", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.Clipboard.readHtml", "seq-20", [] of JSON::Any)
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -205,15 +209,15 @@ describe "Lune::Plugins" do
     end
 
     it "clipboard.write_html calls on_write_html with the HTML and resolves" do
-      fake, bridge = make_bridge
+      fake = FakeWebview.new
       written = ""
       app = Lune::App.new
       app.install(Lune::Plugins::Clipboard.new(
         on_write_html: ->(html : String) { written = html; nil }
       ))
-      bridge.register_bindings(app.bindings)
+      bridge_for(app, fake)
 
-      fake.invoke("Lune.Plugins.Clipboard.write_html", "seq-21", [JSON::Any.new("<p>hi</p>")])
+      fake.invoke("Lune.Plugins.Clipboard.writeHtml", "seq-21", [JSON.parse(%({"html": "<p>hi</p>"}))])
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -227,14 +231,14 @@ describe "Lune::Plugins" do
     end
 
     it "clipboard.read_image resolves with a data URL from on_read_image" do
-      fake, bridge = make_bridge
+      fake = FakeWebview.new
       app = Lune::App.new
       app.install(Lune::Plugins::Clipboard.new(
         on_read_image: -> : String { "data:image/png;base64,abc123" }
       ))
-      bridge.register_bindings(app.bindings)
+      bridge_for(app, fake)
 
-      fake.invoke("Lune.Plugins.Clipboard.read_image", "seq-22", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.Clipboard.readImage", "seq-22", [] of JSON::Any)
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -252,16 +256,16 @@ describe "Lune::Plugins" do
       # "UNAVAILABLE_ON_PLATFORM", bridge forwards it as a typed JS LuneError
       # (status 1, body has {code: ..., error: ...}). Catchable with .catch in
       # user code the same way platform-gated plugin rejections are.
-      fake, bridge = make_bridge
+      fake = FakeWebview.new
       app = Lune::App.new
       app.install(Lune::Plugins::Clipboard.new(
         on_read_image: -> : String {
           raise Lune::Error.new("UNAVAILABLE_ON_PLATFORM", "Lune.Plugins.Clipboard.readImage is not available on win32")
         }
       ))
-      bridge.register_bindings(app.bindings)
+      bridge_for(app, fake)
 
-      fake.invoke("Lune.Plugins.Clipboard.read_image", "seq-img-err", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.Clipboard.readImage", "seq-img-err", [] of JSON::Any)
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -277,15 +281,15 @@ describe "Lune::Plugins" do
     end
 
     it "clipboard.write_image calls on_write_image with the data URL and resolves" do
-      fake, bridge = make_bridge
+      fake = FakeWebview.new
       written = ""
       app = Lune::App.new
       app.install(Lune::Plugins::Clipboard.new(
         on_write_image: ->(data_url : String) { written = data_url; nil }
       ))
-      bridge.register_bindings(app.bindings)
+      bridge_for(app, fake)
 
-      fake.invoke("Lune.Plugins.Clipboard.write_image", "seq-23", [JSON::Any.new("data:image/png;base64,abc123")])
+      fake.invoke("Lune.Plugins.Clipboard.writeImage", "seq-23", [JSON.parse(%({"dataUrl": "data:image/png;base64,abc123"}))])
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -303,18 +307,14 @@ describe "Lune::Plugins" do
     before_each { Lune::Native::MenuMock.reset }
 
     it "context_menu.show calls show_context_menu with the given coordinates and JSON" do
-      fake, bridge = make_bridge
+      fake = FakeWebview.new
       app = Lune::App.new
-      app.bridge = bridge
-
       app.install(Lune::Plugins::ContextMenu.new)
-      bridge.register_bindings(app.bindings)
+      app.bridge = bridge_for(app, fake)
 
       items_json = "[{\"id\":\"copy\",\"label\":\"Copy\"}]"
       fake.invoke("Lune.Plugins.ContextMenu.show", "seq-40", [
-        JSON::Any.new(15.0_f64),
-        JSON::Any.new(25.0_f64),
-        JSON::Any.new(items_json),
+        JSON.parse(%({"x": 15.0, "y": 25.0, "itemsJson": #{items_json.to_json}})),
       ])
 
       _, status, _ = fake.resolve_calls[0]
@@ -324,20 +324,17 @@ describe "Lune::Plugins" do
     end
 
     it "emits context_menu event to user app when an item is selected" do
-      fake, bridge = make_bridge
+      fake = FakeWebview.new
       app = Lune::App.new
-      app.bridge = bridge
 
       Lune::Native::MenuMock.stub_context_selection("copy")
 
       app.install(Lune::Plugins::ContextMenu.new)
-      bridge.register_bindings(app.bindings)
+      app.bridge = bridge_for(app, fake)
 
       items_json = "[{\"id\":\"copy\",\"label\":\"Copy\"}]"
       fake.invoke("Lune.Plugins.ContextMenu.show", "seq-41", [
-        JSON::Any.new(0.0_f64),
-        JSON::Any.new(0.0_f64),
-        JSON::Any.new(items_json),
+        JSON.parse(%({"x": 0.0, "y": 0.0, "itemsJson": #{items_json.to_json}})),
       ])
 
       _, status, _ = fake.resolve_calls[0]
@@ -353,38 +350,37 @@ describe "Lune::Plugins" do
     end
 
     it "tray.show registers a non-nil left-click callback" do
-      fake, bridge = make_bridge
+      fake = FakeWebview.new
       app = Lune::App.new
       app.install(Lune::Plugins::Tray.new)
-      bridge.register_bindings(app.bindings)
+      bridge_for(app, fake)
 
-      fake.invoke("Lune.Plugins.Tray.show", "seq-tray-1", [JSON::Any.new("")])
+      fake.invoke("Lune.Plugins.Tray.show", "seq-tray-1", [JSON.parse(%({"iconPath": ""}))])
 
       Lune::Native::TrayMock.calls.should contain(:show)
       Lune::Native::TrayMock.last_click_cb.should_not be_nil
     end
 
     it "default left-click emits trayEvent with left_click payload" do
-      fake, bridge = make_bridge
+      fake = FakeWebview.new
       app = Lune::App.new
-      app.bridge = bridge
       app.event.mark_ready
       app.install(Lune::Plugins::Tray.new)
-      bridge.register_bindings(app.bindings)
+      app.bridge = bridge_for(app, fake)
 
-      fake.invoke("Lune.Plugins.Tray.show", "seq-tray-2", [JSON::Any.new("")])
+      fake.invoke("Lune.Plugins.Tray.show", "seq-tray-2", [JSON.parse(%({"iconPath": ""}))])
       Lune::Native::TrayMock.simulate_click
 
       fake.eval_calls.any?(&.includes?("left_click")).should be_true
     end
 
     it "tray.popup_menu invokes the native popup" do
-      fake, bridge = make_bridge
+      fake = FakeWebview.new
       app = Lune::App.new
       app.install(Lune::Plugins::Tray.new)
-      bridge.register_bindings(app.bindings)
+      bridge_for(app, fake)
 
-      fake.invoke("Lune.Plugins.Tray.popup_menu", "seq-tray-3", [] of JSON::Any)
+      fake.invoke("Lune.Plugins.Tray.popupMenu", "seq-tray-3", [] of JSON::Any)
 
       deadline = Time.instant + 2.seconds
       while Time.instant < deadline
@@ -398,18 +394,17 @@ describe "Lune::Plugins" do
     end
 
     it "user-provided on_click override skips default emission" do
-      fake, bridge = make_bridge
+      fake = FakeWebview.new
       app = Lune::App.new
-      app.bridge = bridge
       clicked = 0
 
       plugin = Lune::Plugins::Tray.new
       plugin.config.on_click = -> { clicked += 1; nil }
       plugin.setup(Lune::Plugin::SetupCtx.new(Lune::Options.new, Pointer(Void).null))
       app.install(plugin)
-      bridge.register_bindings(app.bindings)
+      app.bridge = bridge_for(app, fake)
 
-      fake.invoke("Lune.Plugins.Tray.show", "seq-tray-5", [JSON::Any.new("")])
+      fake.invoke("Lune.Plugins.Tray.show", "seq-tray-5", [JSON.parse(%({"iconPath": ""}))])
       Lune::Native::TrayMock.simulate_click
 
       clicked.should eq(1)
@@ -417,9 +412,7 @@ describe "Lune::Plugins" do
     end
 
     it "auto_show triggers native show on install when set" do
-      fake, bridge = make_bridge
       app = Lune::App.new
-      app.bridge = bridge
 
       plugin = Lune::Plugins::Tray.new
       plugin.config.auto_show = true
@@ -430,7 +423,6 @@ describe "Lune::Plugins" do
     end
 
     it "auto_show is false by default — no native show happens on install" do
-      fake, bridge = make_bridge
       app = Lune::App.new
 
       plugin = Lune::Plugins::Tray.new
@@ -445,13 +437,12 @@ describe "Lune::Plugins" do
     before_each { Lune::Native::WindowMock.reset }
 
     it "drag_out.start calls start_drag_out with the given paths" do
-      fake, bridge = make_bridge
+      fake = FakeWebview.new
       app = Lune::App.new
       app.install(Lune::Plugins::DragOut.new)
-      bridge.register_bindings(app.bindings)
+      bridge_for(app, fake)
 
-      paths_json = "[\"/etc/hosts\",\"/etc/shells\"]"
-      fake.invoke("Lune.Plugins.DragOut.start", "seq-50", [JSON::Any.new(paths_json)])
+      fake.invoke("Lune.Plugins.DragOut.start", "seq-50", [JSON.parse(%({"paths": ["/etc/hosts", "/etc/shells"]}))])
 
       _, status, _ = fake.resolve_calls[0]
       status.should eq(0)
@@ -471,19 +462,19 @@ describe "Lune::Plugins" do
       # cross-platform plugin's `install` quietly dropped a binding.
       ids.should contain("Lune.Plugins.System.quit")
       ids.should contain("Lune.Plugins.System.environment")
-      ids.should contain("Lune.Plugins.System.open_url")
-      ids.should contain("Lune.Plugins.Filesystem.home_dir")
+      ids.should contain("Lune.Plugins.System.openUrl")
+      ids.should contain("Lune.Plugins.Filesystem.homeDir")
       ids.should contain("Lune.Plugins.Clipboard.read")
       ids.should contain("Lune.Plugins.Clipboard.write")
-      ids.should contain("Lune.Plugins.Clipboard.read_html")
-      ids.should contain("Lune.Plugins.Clipboard.write_html")
-      ids.should contain("Lune.Plugins.Clipboard.read_image")
-      ids.should contain("Lune.Plugins.Clipboard.write_image")
+      ids.should contain("Lune.Plugins.Clipboard.readHtml")
+      ids.should contain("Lune.Plugins.Clipboard.writeHtml")
+      ids.should contain("Lune.Plugins.Clipboard.readImage")
+      ids.should contain("Lune.Plugins.Clipboard.writeImage")
       ids.should contain("Lune.Plugins.ContextMenu.show")
       ids.should contain("Lune.Plugins.Window.minimize")
-      ids.should contain("Lune.Plugins.Dialogs.open_file")
+      ids.should contain("Lune.Plugins.Dialogs.openFile")
       ids.should contain("Lune.Plugins.System.notify")
-      ids.should contain("Lune.Plugins.System.screen_info")
+      ids.should contain("Lune.Plugins.System.screenInfo")
       ids.should contain("Lune.Plugins.Event.emit")
       ids.should contain("Lune.Plugins.Navigation.changed")
     end
@@ -496,25 +487,25 @@ describe "Lune::Plugins" do
       case Lune::Plugins::CURRENT_PLATFORM
       when :darwin
         ids.should contain("Lune.Plugins.DragOut.start")
-        ids.should contain("Lune.Plugins.Window.start_drag")
+        ids.should contain("Lune.Plugins.Window.startDrag")
         ids.should contain("Lune.Plugins.Tray.show")
-        ids.should contain("Lune.Plugins.Tray.set_menu")
-        ids.should contain("Lune.Plugins.Tray.popup_menu")
+        ids.should contain("Lune.Plugins.Tray.setMenu")
+        ids.should contain("Lune.Plugins.Tray.popupMenu")
         ids.should contain("Lune.Plugins.FileWatch.watch")
       when :linux
         ids.should_not contain("Lune.Plugins.DragOut.start")
-        ids.should_not contain("Lune.Plugins.Window.start_drag")
+        ids.should_not contain("Lune.Plugins.Window.startDrag")
         ids.should contain("Lune.Plugins.Tray.show")
         ids.should contain("Lune.Plugins.FileWatch.watch")
       when :win32
         ids.should_not contain("Lune.Plugins.DragOut.start")
         # Window.start_drag ships on Win32 via ReleaseCapture + WM_NCLBUTTONDOWN/HTCAPTION.
-        ids.should contain("Lune.Plugins.Window.start_drag")
+        ids.should contain("Lune.Plugins.Window.startDrag")
         # Tray ships fully on Win32 — show/hide/clicks via Shell_NotifyIconW,
         # menus via CreatePopupMenu + TrackPopupMenu, icons via LoadImageW.
         ids.should contain("Lune.Plugins.Tray.show")
         ids.should contain("Lune.Plugins.Tray.hide")
-        ids.should contain("Lune.Plugins.Tray.set_menu")
+        ids.should contain("Lune.Plugins.Tray.setMenu")
         # FileWatch ships on Win32 via ReadDirectoryChangesW + IOCP.
         ids.should contain("Lune.Plugins.FileWatch.watch")
       end
@@ -533,18 +524,18 @@ describe "Lune::Plugins" do
 
       # Per-platform totals — bump these when you add/remove a binding on any
       # plugin. Decreases when a plugin is platform-gated out.
-      # Baseline includes Event.emit, Navigation.changed (both cross-
-      # platform) and Window.start_drag (darwin + win32; Linux still needs
-      # _NET_WM_MOVERESIZE so the binding stays compiled out via
+      # Baseline includes Event.emit, Navigation.changed, Introspection.manifest
+      # (all cross-platform) and Window.start_drag (darwin + win32; Linux still
+      # needs _NET_WM_MOVERESIZE so the binding stays compiled out via
       # {% if flag?(:darwin) || flag?(:win32) %} on the Window plugin).
-      #   darwin = 63 baseline (Event.emit + Navigation.changed + Window.start_drag)
-      #   linux  = 63 - DragOut(1) - Window.start_drag(1)  = 61
-      #   win32  = 63 - DragOut(1)                         = 62
+      #   darwin = 64 baseline (Event.emit + Navigation.changed + Introspection.manifest + Window.start_drag)
+      #   linux  = 64 - DragOut(1) - Window.start_drag(1)  = 62
+      #   win32  = 64 - DragOut(1)                         = 63
       expected = case Lune::Plugins::CURRENT_PLATFORM
-                 when :darwin then 63
-                 when :linux  then 61
-                 when :win32  then 62
-                 else              63
+                 when :darwin then 64
+                 when :linux  then 62
+                 when :win32  then 63
+                 else              64
                  end
 
       app.bindings.size.should eq(expected)

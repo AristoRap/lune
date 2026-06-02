@@ -87,7 +87,7 @@ module Lune
         registry = Plugins::Registry.new(handle, @options, on_quit: -> { wv.dispatch { wv.terminate } })
         resolved = registry.validate_resolve_install(@config.plugins, @app)
 
-        bridge = Bridge.new(wv)
+        bridge = Bridge.new(wv, @app.registry)
         bridge.register_bindings(@app.bindings.reject(&.internal?))
         bridge.register_bindings(@app.bindings.select(&.internal?))
         @app.bridge = bridge
@@ -223,6 +223,8 @@ module Lune
           @lunejs_dir,
           registry.all,
           registry.platform_filtered,
+          plugin_types: @app.plugin_types + all_stubs.plugin_types,
+          user_types: @app.user_types,
         )
         wv.navigate(dev_url)
       elsif !Assets.empty?

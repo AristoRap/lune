@@ -10,6 +10,48 @@ private class UserSidePlugin < Lune::Plugin
   end
 end
 
+private def framed_manifest(json : String) : String
+  String.build do |s|
+    s << "build chatter we ignore\n"
+    s << "<<<LUNE_MANIFEST\n"
+    s << json << "\n"
+    s << "LUNE_MANIFEST>>>\n"
+    s << "trailing noise\n"
+  end
+end
+
+private def sample_manifest : Vow::Manifest
+  Vow::Manifest.new(
+    procedures: [
+      Vow::ProcedureDescriptor.new(
+        name: "Lune.Plugins.Window.setSize",
+        args: [Vow::ArgDescriptor.new("width", "Int32"), Vow::ArgDescriptor.new("height", "Int32")],
+        return_type: "Nil",
+      ),
+      Vow::ProcedureDescriptor.new(
+        name: "Lune.Plugins.System.environment",
+        args: [] of Vow::ArgDescriptor,
+        return_type: "Environment",
+        verb: "get",
+      ),
+    ],
+    types: [
+      Vow::TypeDescriptor.new(
+        name: "Environment",
+        crystal_name: "Lune::Plugins::System::Environment",
+        fields: [Vow::FieldDescriptor.new("os", "OS"), Vow::FieldDescriptor.new("arch", "String")],
+      ),
+      Vow::TypeDescriptor.new(
+        name: "OS",
+        crystal_name: "Lune::Plugins::System::OS",
+        fields: [] of Vow::FieldDescriptor,
+        kind: "enum",
+        members: ["darwin", "linux", "windows"],
+      ),
+    ],
+  )
+end
+
 # Doctor only prints plugins with `--plugins` (the inspect-mode compile is
 # slow). Default mode is env checks only. The plugin sections — `built-in:`
 # (from `Lune.registered_plugins` inside the CLI binary) and `imported:`
@@ -59,6 +101,45 @@ describe LuneCLI::Commands::Doctor do
       doctor = LuneCLI::Commands::Doctor.new
       framed = "<<<LUNE_PLUGINS\nfoo\tFoo\tdarwin\nLUNE_PLUGINS>>>\n" # missing built_in col
       doctor.parse_inspect_output_for_spec(framed).should be_empty
+    end
+  end
+
+  # `--api` compiles app_entry with `-Dlune_inspect_api`, which emits the live
+  # `Vow::Manifest` JSON framed by `<<<LUNE_MANIFEST` / `LUNE_MANIFEST>>>`.
+  # Doctor lifts the JSON out of the captured stdout (build chatter and all),
+  # parses it, and renders a human contract table — or, with `--json`, prints
+  # the raw manifest straight through for tooling.
+  describe "manifest introspection (--api)" do
+    it "lifts the framed manifest JSON out of captured stdout" do
+      doctor = LuneCLI::Commands::Doctor.new
+      manifest = doctor.parse_manifest_output_for_spec(framed_manifest(sample_manifest.to_json))
+      manifest.procedures.map(&.name).should eq([
+        "Lune.Plugins.Window.setSize",
+        "Lune.Plugins.System.environment",
+      ])
+      manifest.types.map(&.name).should eq(["Environment", "OS"])
+    end
+
+    it "raises a clear error when no manifest block is present" do
+      doctor = LuneCLI::Commands::Doctor.new
+      expect_raises(Exception, /no manifest/i) do
+        doctor.parse_manifest_output_for_spec("just build chatter, no markers")
+      end
+    end
+
+    it "renders a procedure-and-types contract table" do
+      doctor = LuneCLI::Commands::Doctor.new
+      output = IO::Memory.new
+      doctor.print_manifest_table_for_spec(sample_manifest, output)
+      report = output.to_s
+
+      report.should contain("procedures (2)")
+      report.should contain("Lune.Plugins.Window.setSize(width: Int32, height: Int32) -> Nil")
+      report.should contain("Lune.Plugins.System.environment() -> Environment")
+      report.should contain("[get]")
+      report.should contain("types (2)")
+      report.should contain("Environment")
+      report.should contain("OS = \"darwin\" | \"linux\" | \"windows\"")
     end
   end
 end

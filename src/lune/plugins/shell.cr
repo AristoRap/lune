@@ -19,9 +19,8 @@ module Lune
       # scheduler — illegal from the webview Isolated thread. async routes
       # the callback through @async_pool so the spawn is safe.
       @[Lune::Bind(async: true)]
-      @[Lune::BindOverride(arg_names: ["command", "args"])]
-      def spawn(command : String, argv : Array(String)) : String
-        spawn_proc(@app, command, argv)
+      def spawn(command : String, args : Array(String)) : String
+        spawn_proc(@app, command, args)
       end
 
       @[Lune::Bind]
@@ -51,11 +50,10 @@ module Lune
       # Avoids the Stream listener race that occurs when a process exits
       # before the JS .then() callback can register Stream handlers.
       @[Lune::Bind(async: true)]
-      @[Lune::BindOverride(arg_names: ["command", "args"], ts_return_type: "Promise<{ stdout: string; stderr: string; code: number }>")]
-      def run(command : String, argv : Array(String)) : NamedTuple(stdout: String, stderr: String, code: Int32)
+      def run(command : String, args : Array(String)) : NamedTuple(stdout: String, stderr: String, code: Int32)
         out_buf = IO::Memory.new
         err_buf = IO::Memory.new
-        status = Shell.with_win32_cmd_fallback(command, argv) do |c, a|
+        status = Shell.with_win32_cmd_fallback(command, args) do |c, a|
           Process.run(c, args: a, output: out_buf, error: err_buf)
         end
         code = status.exit_code? || -1

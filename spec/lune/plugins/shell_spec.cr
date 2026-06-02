@@ -75,7 +75,7 @@ describe Lune::Plugins::Shell do
       ids.should contain("Lune.Plugins.Shell.run")
       ids.should contain("Lune.Plugins.Shell.list")
       ids.should contain("Lune.Plugins.Shell.write")
-      ids.should contain("Lune.Plugins.Shell.close_stdin")
+      ids.should contain("Lune.Plugins.Shell.closeStdin")
     end
 
     it "list binding returns empty array when no processes are running" do
@@ -83,7 +83,7 @@ describe Lune::Plugins::Shell do
       app = Lune::App.new
       app.install(plugin)
       list_b = app.bindings.find { |b| b.id == "Lune.Plugins.Shell.list" }.not_nil!
-      result = list_b.callback.call([] of JSON::Any)
+      result = JSON.parse(app.registry.dispatch(list_b.id, ({} of String => JSON::Any).to_json, nil))
       result.as_a.should be_empty
     end
 
@@ -93,12 +93,12 @@ describe Lune::Plugins::Shell do
       app.install(plugin)
       spawn_b = app.bindings.find { |b| b.id == "Lune.Plugins.Shell.spawn" }.not_nil!
       list_b = app.bindings.find { |b| b.id == "Lune.Plugins.Shell.list" }.not_nil!
-      pid = spawn_b.callback.call([JSON::Any.new(SHELL_SPEC_SLEEP_CMD), JSON::Any.new(shell_spec_json_args(SHELL_SPEC_SLEEP_ARGS))]).as_s
-      pids = list_b.callback.call([] of JSON::Any).as_a.map(&.as_s)
+      pid = JSON.parse(app.registry.dispatch(spawn_b.id, ({"command" => JSON::Any.new(SHELL_SPEC_SLEEP_CMD), "args" => JSON::Any.new(shell_spec_json_args(SHELL_SPEC_SLEEP_ARGS))}).to_json, nil)).as_s
+      pids = JSON.parse(app.registry.dispatch(list_b.id, ({} of String => JSON::Any).to_json, nil)).as_a.map(&.as_s)
       pids.should contain(pid)
       # cleanup
       kill_b = app.bindings.find { |b| b.id == "Lune.Plugins.Shell.kill" }.not_nil!
-      kill_b.callback.call([JSON::Any.new(pid)])
+      JSON.parse(app.registry.dispatch(kill_b.id, ({"pid" => JSON::Any.new(pid)}).to_json, nil))
     end
 
     it "spawn binding returns a string pid" do
@@ -106,7 +106,7 @@ describe Lune::Plugins::Shell do
       app = Lune::App.new
       app.install(plugin)
       spawn_b = app.bindings.find { |b| b.id == "Lune.Plugins.Shell.spawn" }.not_nil!
-      result = spawn_b.callback.call([JSON::Any.new(SHELL_SPEC_ECHO_CMD), JSON::Any.new(shell_spec_json_args(SHELL_SPEC_ECHO_ARGS))])
+      result = JSON.parse(app.registry.dispatch(spawn_b.id, ({"command" => JSON::Any.new(SHELL_SPEC_ECHO_CMD), "args" => JSON::Any.new(shell_spec_json_args(SHELL_SPEC_ECHO_ARGS))}).to_json, nil))
       result.as_s.size.should eq(16) # Random.new.hex(8) → 16 hex chars
     end
 
@@ -116,7 +116,7 @@ describe Lune::Plugins::Shell do
       app.install(plugin)
       kill_b = app.bindings.find { |b| b.id == "Lune.Plugins.Shell.kill" }.not_nil!
       # killing a non-existent pid does nothing
-      result = kill_b.callback.call([JSON::Any.new("nonexistent")])
+      result = JSON.parse(app.registry.dispatch(kill_b.id, ({"pid" => JSON::Any.new("nonexistent")}).to_json, nil))
       result.raw.should be_nil
     end
 
@@ -125,7 +125,7 @@ describe Lune::Plugins::Shell do
       app = Lune::App.new
       app.install(plugin)
       run_b = app.bindings.find { |b| b.id == "Lune.Plugins.Shell.run" }.not_nil!
-      result = run_b.callback.call([JSON::Any.new(SHELL_SPEC_ECHO_CMD), JSON::Any.new(shell_spec_json_args(SHELL_SPEC_ECHO_ARGS))])
+      result = JSON.parse(app.registry.dispatch(run_b.id, ({"command" => JSON::Any.new(SHELL_SPEC_ECHO_CMD), "args" => JSON::Any.new(shell_spec_json_args(SHELL_SPEC_ECHO_ARGS))}).to_json, nil))
       result["stdout"].as_s.strip.should eq("hello")
       result["stderr"].as_s.should eq("")
       result["code"].as_i.should eq(0)
@@ -136,7 +136,7 @@ describe Lune::Plugins::Shell do
       app = Lune::App.new
       app.install(plugin)
       write_b = app.bindings.find { |b| b.id == "Lune.Plugins.Shell.write" }.not_nil!
-      result = write_b.callback.call([JSON::Any.new("nonexistent"), JSON::Any.new("hello\n")])
+      result = JSON.parse(app.registry.dispatch(write_b.id, ({"pid" => JSON::Any.new("nonexistent"), "text" => JSON::Any.new("hello\n")}).to_json, nil))
       result.raw.should be_nil
     end
 
@@ -144,8 +144,8 @@ describe Lune::Plugins::Shell do
       plugin = Lune::Plugins::Shell.new
       app = Lune::App.new
       app.install(plugin)
-      close_b = app.bindings.find { |b| b.id == "Lune.Plugins.Shell.close_stdin" }.not_nil!
-      result = close_b.callback.call([JSON::Any.new("nonexistent")])
+      close_b = app.bindings.find { |b| b.id == "Lune.Plugins.Shell.closeStdin" }.not_nil!
+      result = JSON.parse(app.registry.dispatch(close_b.id, ({"pid" => JSON::Any.new("nonexistent")}).to_json, nil))
       result.raw.should be_nil
     end
 
@@ -155,12 +155,12 @@ describe Lune::Plugins::Shell do
       app.install(plugin)
       spawn_b = app.bindings.find { |b| b.id == "Lune.Plugins.Shell.spawn" }.not_nil!
       write_b = app.bindings.find { |b| b.id == "Lune.Plugins.Shell.write" }.not_nil!
-      close_b = app.bindings.find { |b| b.id == "Lune.Plugins.Shell.close_stdin" }.not_nil!
+      close_b = app.bindings.find { |b| b.id == "Lune.Plugins.Shell.closeStdin" }.not_nil!
       # Stdin-consumer process (cat on POSIX, more on Win32) — test that
       # write + close_stdin doesn't raise. Content isn't asserted here.
-      pid = spawn_b.callback.call([JSON::Any.new(SHELL_SPEC_STDIN_CMD), JSON::Any.new(shell_spec_json_args(SHELL_SPEC_STDIN_ARGS))]).as_s
-      write_b.callback.call([JSON::Any.new(pid), JSON::Any.new("hello\n")]).raw.should be_nil
-      close_b.callback.call([JSON::Any.new(pid)]).raw.should be_nil
+      pid = JSON.parse(app.registry.dispatch(spawn_b.id, ({"command" => JSON::Any.new(SHELL_SPEC_STDIN_CMD), "args" => JSON::Any.new(shell_spec_json_args(SHELL_SPEC_STDIN_ARGS))}).to_json, nil)).as_s
+      JSON.parse(app.registry.dispatch(write_b.id, ({"pid" => JSON::Any.new(pid), "text" => JSON::Any.new("hello\n")}).to_json, nil)).raw.should be_nil
+      JSON.parse(app.registry.dispatch(close_b.id, ({"pid" => JSON::Any.new(pid)}).to_json, nil)).raw.should be_nil
     end
   end
 
@@ -198,10 +198,10 @@ describe Lune::Plugins::Shell do
       app = Lune::App.new
       app.install(plugin)
       dts = Lune::Generator.generate_runtime_dts(app.bindings, [plugin] of Lune::Plugin)
-      dts.scan(/write\(pid: string/).size.should eq(1)
-      dts.scan(/closeStdin\(pid: string/).size.should eq(1)
-      plugin.dts_helpers.should_not contain("write(pid: string")
-      plugin.dts_helpers.should_not contain("closeStdin(pid: string")
+      dts.scan(/write\(args: \{ pid: string/).size.should eq(1)
+      dts.scan(/closeStdin\(args: \{ pid: string/).size.should eq(1)
+      plugin.dts_helpers.should_not contain("write(args: { pid: string")
+      plugin.dts_helpers.should_not contain("closeStdin(args: { pid: string")
     end
   end
 
@@ -258,7 +258,7 @@ describe Lune::Plugins::Shell do
       app = Lune::App.new
       app.install(plugin)
       dts = Lune::Generator.generate_runtime_dts(app.bindings, [plugin] of Lune::Plugin)
-      dts.should contain("list(): Promise<string[]>")
+      dts.should contain("list(args?: {}): Promise<string[]>")
     end
   end
 end

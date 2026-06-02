@@ -24,7 +24,7 @@ async function toggle() {
     await Tray.hide();
     visible.value = false;
   } else {
-    await Tray.show(iconPath.value);
+    await Tray.show({ iconPath: iconPath.value });
     visible.value = true;
   }
 }
@@ -34,42 +34,47 @@ async function pickIcon() {
   // The filter constrains the picker per-platform; if the user picks a
   // format the native tray layer doesn't support, it warns and falls
   // back to the system default at runtime.
-  const path = await Dialogs.openFile("Choose a tray icon", [
-    { name: "Tray icons", extensions: ["ico", "icns", "png", "svg"] },
-  ]);
+  const path = await Dialogs.openFile({
+    prompt: "Choose a tray icon",
+    filters: [{ name: "Tray icons", extensions: ["ico", "icns", "png", "svg"] }],
+  });
   if (!path) return;
   iconPath.value = path;
   if (visible.value) {
-    await Tray.setIcon(path);
+    await Tray.setIcon({ path });
   }
 }
 
 async function resetIcon() {
   iconPath.value = "";
   if (visible.value) {
-    await Tray.setIcon("");
+    await Tray.setIcon({ path: "" });
   }
 }
 
 function setMenuA() {
-  Tray.setMenu([
-    { id: "open", label: "Open" },
-    { id: "---", label: "" },
-    { id: "quit", label: "Quit" },
-  ]);
+  Tray.setMenu({
+    items: [
+      { id: "open", label: "Open" },
+      { id: "---", label: "" },
+      { id: "quit", label: "Quit" },
+    ],
+  });
   activeMenu.value = "a";
 }
 function setMenuB() {
-  Tray.setMenu([
-    { id: "pause", label: "Pause" },
-    { id: "resume", label: "Resume" },
-    { id: "---", label: "" },
-    { id: "quit", label: "Quit" },
-  ]);
+  Tray.setMenu({
+    items: [
+      { id: "pause", label: "Pause" },
+      { id: "resume", label: "Resume" },
+      { id: "---", label: "" },
+      { id: "quit", label: "Quit" },
+    ],
+  });
   activeMenu.value = "b";
 }
 function clearMenu() {
-  Tray.setMenu([]);
+  Tray.setMenu({ items: [] });
   activeMenu.value = null;
 }
 </script>

@@ -9,7 +9,7 @@ const files = [
 ];
 
 function startDrag(path) {
-  DragOut.start([path]);
+  DragOut.start({ paths: [path] });
 }
 </script>
 

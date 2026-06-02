@@ -46,8 +46,8 @@ Generates:
 
 ```ts
 export interface FileModule {
-  read(path: string): Promise<string>;
-  exists(path: string): Promise<boolean>;
+  read(args: { path: string }): Promise<string>;
+  exists(args: { path: string }): Promise<boolean>;
 }
 
 export interface Api {
@@ -76,7 +76,7 @@ export const Lune: {
   Plugins: {
     System: {
       quit(): Promise<void>;
-      openUrl(url: string): Promise<void>;
+      openUrl(args: { url: string }): Promise<void>;
       environment(): Promise<{
         os: "darwin" | "linux" | "windows";
         arch: string;
@@ -87,7 +87,7 @@ export const Lune: {
       on(name: string, cb: (data: unknown) => void): void;
       once(name: string, cb: (data: unknown) => void): void;
       off(name: string, cb?: (data: unknown) => void): void;
-      emit(name: string, data?: unknown): Promise<void>;
+      emit(args: { name: string; data?: unknown }): Promise<void>;
     };
     Filesystem: {
       homeDir(): Promise<string>;
@@ -104,8 +104,8 @@ export const lune: typeof Lune.Plugins;
 Return types are emitted **structurally** — Lune doesn't ship named interfaces like `LuneEnvironment` or `ScreenInfo` alongside the runtime. The generator derives the shape from the Crystal signature:
 
 - `NamedTuple(width: Int32, height: Int32, scale: Float64)` → `{ width: number; height: number; scale: number }`
-- A Crystal `enum` return type → a TS string-literal union (e.g. `enum Status; Pending; Running; Done; end` → `"pending" | "running" | "done"`, matching Crystal's default `Enum#to_json`)
-- Anything else (`JSON::Serializable` structs, classes) → `Record<string, any>` unless overridden with `@[Lune::BindOverride(ts_return_type: ...)]`
+- A Crystal `enum` (a return type, or nested in a `NamedTuple` / struct / `Array`) → a TS string-literal union, captured generically by [vow](https://github.com/AristoRap/vow). The union is built from the values each member **serializes to** (`Enum#to_json`), so it always matches the wire — Crystal's default lowercases (`enum Status; Pending; Running; Done; end` → `"pending" | "running" | "done"`), and a custom `Enum#to_json` is reflected. If you want a different shape entirely, hand-write it with `@[Lune::BindOverride(ts_return_type: ...)]`.
+- A `JSON::Serializable` struct or class is captured automatically into a named `interface` (transitively — nested structs included), so the binding's signature references it by name. A non-serializable type that isn't given an explicit `@[Lune::BindOverride(ts_return_type: ...)]` is a generation error rather than a silent `Record<string, any>` (lune's type mapping runs on [vow](https://github.com/AristoRap/vow)'s strict mapper)
 
 If you want a named type for an inlined shape, alias the inferred return type:
 
@@ -152,7 +152,7 @@ import { lune } from "../lunejs/runtime/runtime.js";
 import type { LuneError } from "../lunejs/runtime/runtime.js";
 
 // Fully typed — autocomplete works here
-const result = await api.FileModule.read("/tmp/hello.txt");
+const result = await api.FileModule.read({ path: "/tmp/hello.txt" });
 
 // environment() returns the structurally-typed object
 const env = await lune.System.environment();
@@ -189,7 +189,7 @@ lune.Event.on("progress", (data) => {
 import { LuneError } from "../lunejs/runtime/runtime.js";
 
 try {
-  await api.FileModule.read("/nonexistent");
+  await api.FileModule.read({ path: "/nonexistent" });
 } catch (e) {
   if (e instanceof LuneError) {
     console.error(`[${e.code}] ${e.message}`);
@@ -198,3 +198,27 @@ try {
 ```
 
 See [Error Handling](./error-handling) for the full pattern including typed code branches.
+
+---
+
+## Introspecting the RPC contract
+
+The generated `.d.ts` files _are_ the contract, but Lune can also hand you the contract as structured data — the **manifest**: every procedure (its name, argument names/types, and return type) plus the custom types those signatures reference. It's the same intermediate representation the code generator consumes.
+
+Two ways to reach it:
+
+**From the CLI** — `lune doctor api` prints a readable table of the surface, and `lune doctor api --json` dumps the raw manifest JSON for tooling. See the [CLI reference](/cli-reference#lune-doctor-api).
+
+**At runtime** — the [Introspection](/plugins/introspection) plugin (enabled by default) exposes `lune.Introspection.manifest()`, which returns the typed `Manifest`:
+
+```js
+import { lune } from "../lunejs/runtime/runtime.js";
+
+const contract = await lune.Introspection.manifest();
+console.log(contract.procedures.length, "procedures");
+console.table(
+  contract.procedures.map((p) => ({ name: p.name, returns: p.return_type })),
+);
+```
+
+For quick console use the plugin also injects a `window.__lune.manifest()` wrapper, but only when [devtools](/configuration) are on — so it's absent in a production build. The typed binding is always available while the plugin is enabled. The shape is `{ procedures: [...], types: [...] }` — handy for building an API explorer panel or asserting in a test that the surface you expect is exposed.

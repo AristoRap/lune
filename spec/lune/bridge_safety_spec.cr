@@ -23,24 +23,30 @@ private class WeirdMessageError < Exception
   end
 end
 
-private def make_binding(callback : Proc(Array(JSON::Any), JSON::Any))
-  Lune::Binding.new(
+# Build a Test.ping binding around *callback*, register the same proc into a
+# fresh registry, and wire both onto *fake* through a Bridge (mirrors the
+# `wire` helper in bridge_typed_spec.cr). The Bridge dispatches by id through
+# the registry, so the callback backs both. Returns the wired bridge.
+private def wire_binding(fake, callback : Proc(Hash(String, JSON::Any), ::Vow::Context?, JSON::Any))
+  binding = Lune::Binding.new(
     namespace: "Test",
     method: "ping",
     args: [] of String,
     return_type: "String",
-    callback: callback,
     internal: false,
     async: false,
   )
+  registry = Vow::Registry.new
+  registry.register(binding.id, &callback)
+  bridge = Lune::Bridge.new(fake, registry)
+  bridge.register_binding(binding)
+  bridge
 end
 
 describe "Lune::Bridge — safety barriers" do
   it "swallows a raise from wv.resolve on the success path" do
     fake = RaisingResolveWebview.new
-    bridge = Lune::Bridge.new(fake)
-    binding = make_binding(->(_args : Array(JSON::Any)) { JSON::Any.new("ok") })
-    bridge.register_binding(binding)
+    wire_binding(fake, ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") })
 
     backend = CaptureBackend.new
     logger = Log.new("lune.bridge.safety", backend, :debug)
@@ -56,9 +62,7 @@ describe "Lune::Bridge — safety barriers" do
 
   it "swallows a raise from wv.resolve on the error path" do
     fake = RaisingResolveWebview.new
-    bridge = Lune::Bridge.new(fake)
-    binding = make_binding(->(_args : Array(JSON::Any)) { raise Lune::Error.new("validation_error", "Demo error raised from Crystal") })
-    bridge.register_binding(binding)
+    wire_binding(fake, ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { raise Lune::Error.new("validation_error", "Demo error raised from Crystal") })
 
     backend = CaptureBackend.new
     logger = Log.new("lune.bridge.safety", backend, :debug)
@@ -76,9 +80,7 @@ describe "Lune::Bridge — safety barriers" do
   it "completes the success path when resolve does not raise" do
     fake = RaisingResolveWebview.new
     fake.raise_on_resolve = false
-    bridge = Lune::Bridge.new(fake)
-    binding = make_binding(->(_args : Array(JSON::Any)) { JSON::Any.new("ok") })
-    bridge.register_binding(binding)
+    wire_binding(fake, ->(_args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) { JSON::Any.new("ok") })
 
     fake.invoke("Test.ping", "seq-ok", [] of JSON::Any)
 

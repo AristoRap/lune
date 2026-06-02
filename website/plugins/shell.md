@@ -37,7 +37,10 @@ Or omit `plugins:` entirely.
 ```js
 import { lune } from "../lunejs/runtime/runtime.js";
 
-const pid = await lune.Shell.spawn("ping", ["-c", "5", "127.0.0.1"]);
+const pid = await lune.Shell.spawn({
+  command: "ping",
+  args: ["-c", "5", "127.0.0.1"],
+});
 
 lune.Shell.listen(pid, {
   stdout: ({ line }) => console.log("out:", line),
@@ -55,7 +58,10 @@ lune.Shell.listen(pid, {
 `lune.Shell.run` is an async binding that captures all output and resolves with `{ stdout, stderr, code }` once the process exits. Use it for short-lived commands where you want all output at once.
 
 ```js
-const { stdout, stderr, code } = await lune.Shell.run("uname", ["-a"]);
+const { stdout, stderr, code } = await lune.Shell.run({
+  command: "uname",
+  args: ["-a"],
+});
 console.log(stdout); // Darwin …
 ```
 
@@ -64,8 +70,8 @@ console.log(stdout); // Darwin …
 ## Killing a process
 
 ```js
-const pid = await lune.Shell.spawn("sleep", ["60"]);
-await lune.Shell.kill(pid); // sends SIGTERM
+const pid = await lune.Shell.spawn({ command: "sleep", args: ["60"] });
+await lune.Shell.kill({ pid }); // sends SIGTERM
 ```
 
 Calling `lune.Shell.kill` on an already-exited pid is a no-op.
@@ -95,24 +101,24 @@ for (const pid of pids) {
 `lune.Shell.write` sends text to the standard input of a running process. Use it for interactive programs that read commands from stdin — shells, REPLs, password prompts, etc.
 
 ```js
-const pid = await lune.Shell.spawn("/bin/sh", ["-i"]);
+const pid = await lune.Shell.spawn({ command: "/bin/sh", args: ["-i"] });
 
 lune.Shell.listen(pid, {
   stdout: ({ line }) => console.log(line),
   exit: ({ code }) => console.log("exited", code),
 });
 
-await lune.Shell.write(pid, "echo hello\n");
-await lune.Shell.write(pid, "exit\n");
+await lune.Shell.write({ pid, text: "echo hello\n" });
+await lune.Shell.write({ pid, text: "exit\n" });
 ```
 
 `lune.Shell.close_stdin` closes the stdin pipe, which sends EOF to the process. Many programs (e.g. `sort`, `cat`, `wc`) only flush their output once stdin is closed:
 
 ```js
-const pid = await lune.Shell.spawn("sort", []);
-await lune.Shell.write(pid, "banana\n");
-await lune.Shell.write(pid, "apple\n");
-lune.Shell.closeStdin(pid); // EOF → sort prints sorted output and exits
+const pid = await lune.Shell.spawn({ command: "sort", args: [] });
+await lune.Shell.write({ pid, text: "banana\n" });
+await lune.Shell.write({ pid, text: "apple\n" });
+lune.Shell.closeStdin({ pid }); // EOF → sort prints sorted output and exits
 ```
 
 `lune.Shell.kill` also closes stdin automatically.
@@ -122,7 +128,10 @@ lune.Shell.closeStdin(pid); // EOF → sort prints sorted output and exits
 ## Unsubscribing early
 
 ```js
-const pid = await lune.Shell.spawn("tail", ["-f", "/var/log/system.log"]);
+const pid = await lune.Shell.spawn({
+  command: "tail",
+  args: ["-f", "/var/log/system.log"],
+});
 lune.Shell.listen(pid, { stdout: ({ line }) => render(line) });
 
 // Stop receiving output but let the process keep running
@@ -135,12 +144,12 @@ lune.Shell.unlisten(pid);
 
 | Method       | Signature                                            | Description                               |
 | ------------ | ---------------------------------------------------- | ----------------------------------------- |
-| `spawn`      | `(command, args) → Promise<string>`                  | Start a process; returns pid              |
-| `run`        | `(command, args?) → Promise<{stdout, stderr, code}>` | Spawn and collect all output              |
-| `kill`       | `(pid) → Promise<void>`                              | Send SIGTERM to a running process         |
-| `list`       | `() → Promise<string[]>`                             | List pids of all currently live processes |
-| `write`      | `(pid, text) → Promise<void>`                        | Write text to a process's stdin           |
-| `closeStdin` | `(pid) → Promise<void>`                              | Close stdin, sending EOF to the process   |
+| `spawn`      | `({ command, args }) → Promise<string>`                  | Start a process; returns pid              |
+| `run`        | `({ command, args? }) → Promise<{stdout, stderr, code}>` | Spawn and collect all output              |
+| `kill`       | `({ pid }) → Promise<void>`                              | Send SIGTERM to a running process         |
+| `list`       | `() → Promise<string[]>`                                 | List pids of all currently live processes |
+| `write`      | `({ pid, text }) → Promise<void>`                        | Write text to a process's stdin           |
+| `closeStdin` | `({ pid }) → Promise<void>`                              | Close stdin, sending EOF to the process   |
 | `listen`     | `(pid, opts) → void`                                 | Subscribe to output channels              |
 | `unlisten`   | `(pid) → void`                                       | Remove all listeners for a pid            |
 
@@ -169,7 +178,7 @@ Crystal reads `stdout` and `stderr` in parallel async fibers, then waits for bot
 ## Notes
 
 - **Output is line-buffered.** Each `{ line }` payload is one line. Processes that don't flush until exit produce no output until they exit or flush.
-- **Shell metacharacters are not expanded.** Pass the binary as the first argument and flags as separate array elements. For pipes or globs: `spawn("/bin/sh", ["-c", "ls | grep foo"])`.
+- **Shell metacharacters are not expanded.** Pass the binary as the first argument and flags as separate array elements. For pipes or globs: `spawn({ command: "/bin/sh", args: ["-c", "ls | grep foo"] })`.
 - **Auto-cleanup on window close.** The `Lifecycle` shutdown hook sends SIGTERM to all running processes when the app quits.
 - **Windows cmd builtins and `.cmd`/`.bat` shims work transparently.** When `CreateProcess` raises `File::NotFoundError` for a name like `echo`, `dir`, `type`, `npm.cmd`, or `yarn.cmd`, the plugin auto-retries via `cmd /c <name> …`. No manual wrapping required.
 

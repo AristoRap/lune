@@ -37,10 +37,11 @@ module Lune
     def self.js_stub : String
       <<-JS
         export class LuneError extends Error {
-          constructor(code, message) {
+          constructor(code, message, hint = null) {
             super(message);
             this.name = "LuneError";
             this.code = code;
+            this.hint = hint;
           }
         }
         JS
@@ -50,7 +51,8 @@ module Lune
       <<-DTS
         export declare class LuneError extends Error {
           readonly code: string;
-          constructor(code: string, message: string);
+          readonly hint: string | null;
+          constructor(code: string, message: string, hint?: string | null);
         }
         DTS
     end

@@ -126,7 +126,7 @@ describe Lune::Plugin do
 
       binding = app.bindings.find { |b| b.id == "Lune.Plugins.System.environment" }
       binding.should_not be_nil
-      result = binding.not_nil!.callback.call([] of JSON::Any)
+      result = JSON.parse(app.registry.dispatch(binding.not_nil!.id, ({} of String => JSON::Any).to_json, nil))
       result["devtools"].as_bool.should be_true
     end
 

@@ -1,8 +1,8 @@
 require "../../spec_helper"
 
-private def make_hotkeys_bridge
+private def make_hotkeys_bridge(registry : ::Vow::Registry)
   fake = FakeWebview.new
-  bridge = Lune::Bridge.new(fake)
+  bridge = Lune::Bridge.new(fake, registry)
   {fake, bridge}
 end
 
@@ -71,9 +71,9 @@ describe Lune::Plugins::Hotkeys do
     end
 
     it "emits a hotkey event to the frontend when a hotkey fires" do
-      fake, bridge = make_hotkeys_bridge
       plugin = Lune::Plugins::Hotkeys.new
       app = Lune::App.new
+      fake, bridge = make_hotkeys_bridge(app.registry)
       app.bridge = bridge
       app.event.mark_ready
       app.install(plugin)
@@ -97,8 +97,8 @@ describe Lune::Plugins::Hotkeys do
       app = Lune::App.new
       app.install(plugin)
       js = Lune::Generator.generate_runtime_js(app.bindings, [plugin] of Lune::Plugin)
-      js.scan(/\bregister\(accelerator\)/).size.should eq(1)
-      js.scan(/\bunregister\(accelerator\)/).size.should eq(1)
+      js.scan(/\bregister\(args\)/).size.should eq(1)
+      js.scan(/\bunregister\(args\)/).size.should eq(1)
       plugin.js_helpers.should_not contain("register(")
       plugin.js_helpers.should_not contain("unregister(")
     end
@@ -117,8 +117,8 @@ describe Lune::Plugins::Hotkeys do
       app = Lune::App.new
       app.install(plugin)
       dts = Lune::Generator.generate_runtime_dts(app.bindings, [plugin] of Lune::Plugin)
-      dts.scan(/\bregister\(accelerator: string\)/).size.should eq(1)
-      dts.scan(/\bunregister\(accelerator: string\)/).size.should eq(1)
+      dts.scan(/\bregister\(args: \{ accelerator: string \}\)/).size.should eq(1)
+      dts.scan(/\bunregister\(args: \{ accelerator: string \}\)/).size.should eq(1)
       plugin.dts_helpers.should_not contain("register(")
       plugin.dts_helpers.should_not contain("unregister(")
     end

@@ -67,7 +67,7 @@ module Lune
 
           resolved.init_all_webviews(wv2, handle, app)
 
-          bridge = Bridge.new(wv2)
+          bridge = Bridge.new(wv2, app.registry)
           bridge.register_bindings(bindings.reject(&.internal?))
           bridge.register_bindings(bindings.select(&.internal?))
 

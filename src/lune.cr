@@ -7,6 +7,7 @@ require "./lune/binding"
 require "./lune/native/**"
 require "webview"
 require "./lune/error"
+require "./lune/window_context"
 require "./lune/bridge"
 require "./lune/mixins/installable"
 require "./lune/mixins/subscribable"
@@ -24,7 +25,7 @@ require "./lune/platform/deep_link_ipc"
 require "./lune/runner"
 
 module Lune
-  VERSION = "0.16.1"
+  VERSION = "0.17.0"
 
   # Module-level registration so third-party shards can publish plugins the
   # same way built-ins do: `Lune.use(MyPlugin.new)` before `Lune.run`. The
@@ -120,25 +121,6 @@ module Lune
     @@registered_accessors = accessors
   end
 
-  # TsType registry: structs / records / classes annotated with
-  # `@[Lune::TsType]` and referenced by a `@[Lune::Bind]` return type land here
-  # via the `Bindable` macro. `Lune::Generator.generate_runtime_dts` reads from
-  # this hash and emits one `export interface <Name> { ... }` per entry at the
-  # top of `runtime.d.ts`, so plugin authors can hand the frontend named types
-  # instead of inlined anonymous shapes. Field types are stored as raw Crystal
-  # strings (`"Int32"`, `"Array(String)"`, …) and rendered via `crystal_to_ts`
-  # at emit time — keeps the registry purely structural and lets the same TS
-  # mapping rules apply uniformly to fields and binding signatures.
-  @@registered_ts_types = {} of String => Array(Tuple(String, String))
-
-  def self.register_ts_type(name : String, fields : Array(Tuple(String, String))) : Nil
-    @@registered_ts_types[name] = fields
-  end
-
-  def self.registered_ts_types : Hash(String, Array(Tuple(String, String)))
-    @@registered_ts_types
-  end
-
   # Default frontend directory name (matches the lune.yml default).
   DEFAULT_FRONTEND_DIR = "frontend"
 
@@ -186,6 +168,8 @@ module Lune
 
     {% if flag?(:lune_inspect) %}
       ::Lune._inspect_run
+    {% elsif flag?(:lune_inspect_api) %}
+      ::Lune._inspect_api_run({{ app }})
     {% elsif flag?(:build_mode) %}
       ::Lune._build_run({{ app }})
     {% else %}
@@ -210,6 +194,8 @@ module Lune
       lunejs_dir,
       resolved.plugins,
       registry.platform_filtered,
+      plugin_types: app.plugin_types + stubs.plugin_types,
+      user_types: app.user_types,
     )
   end
 
@@ -221,6 +207,35 @@ module Lune
   # parse. Everything that runs before `Lune.run` — `require`s, `Lune.use`
   # calls, top-level constants — has already executed by the time we get
   # here, so the list is what the live app would see.
+  # Markers framing the manifest JSON for `lune doctor api` to lift out of the
+  # captured stdout — same parse-the-block-out-of-noisy-output contract as the
+  # `LUNE_PLUGINS` markers above.
+  INSPECT_MANIFEST_START = "<<<LUNE_MANIFEST"
+  INSPECT_MANIFEST_END   = "LUNE_MANIFEST>>>"
+
+  # `-Dlune_inspect_api` short-circuits `Lune.run` and emits the live
+  # `Vow::Manifest` — the typed RPC contract the app exposes — as framed JSON
+  # for `lune doctor api`. Unlike `_inspect_run` (plugins, gathered before the
+  # app exists) this needs the full binding set, so it resolves plugin stubs the
+  # same way `_build_run` does and merges them with the user app's bindings and
+  # captured types. The result is exactly the contract the generated client was
+  # built against.
+  def self._inspect_api_run(app : App) : Nil
+    config = Config.load
+    registry = Plugins::Registry.new(Pointer(Void).null, Options.new)
+    stubs = App.new
+    registry.validate_resolve_install(config.plugins, stubs)
+
+    bindings = app.bindings + stubs.bindings.select(&.internal?)
+    types = app.plugin_types + stubs.plugin_types + app.user_types
+    manifest = Generator.manifest(bindings, types)
+
+    STDOUT.puts INSPECT_MANIFEST_START
+    STDOUT.puts manifest.to_json
+    STDOUT.puts INSPECT_MANIFEST_END
+    exit 0
+  end
+
   def self._inspect_run : Nil
     STDOUT.puts "<<<LUNE_PLUGINS"
     registered_plugins.each do |p|

@@ -114,7 +114,7 @@ And in JS:
 ```js
 import { MyMqtt } from "../lunejs/runtime/runtime.js";
 
-await MyMqtt.publish("topics/hello", "world");
+await MyMqtt.publish({ topic: "topics/hello", payload: "world" });
 ```
 
 Third-party plugins sit at the **top level** of `runtime.js`, alongside `Lune` and `LuneError`. The `lune` named export is a shorthand for `Lune.Plugins` and only covers Lune's own built-ins (`lune.Tray.show()`, `lune.Clipboard.read()`, …); a plugin you publish exports as its own top-level name, not under `lune`.
@@ -251,7 +251,7 @@ end
 
 `async: true` runs the binding on a background thread (`Fiber::ExecutionContext::Parallel`), the same pool `app.async` uses. Use it for anything that blocks (network, slow file IO).
 
-For TS-side overrides on the generated stub (custom argument names, JS-side `JSON.stringify` wrappers, full return type override), add `@[Lune::BindOverride]` on the same method — see [Bindings](./bindings) for the full table.
+For TS-side overrides on the generated stub (per-arg TS types, full return type override), add `@[Lune::BindOverride]` on the same method — see [Bindings](./bindings) for the full table.
 
 ---
 
@@ -279,7 +279,7 @@ Consumers import what they need by name:
 ```js
 import { lune, MyPlugin } from "../lunejs/runtime/runtime.js";
 
-await lune.Tray.show("/assets/icon.png");
+await lune.Tray.show({ iconPath: "/assets/icon.png" });
 await MyPlugin.doStuff();
 ```
 
@@ -302,12 +302,11 @@ end
 
 **Re-entry contract**: `init_js` may be evaluated more than once if your plugin runs in multiple windows. Keep the JS idempotent — guard with `window.__lune.myPluginReady` or similar so multiple injections don't double-register listeners.
 
-### Named TypeScript types via `@[Lune::TsType]`
+### Named TypeScript types
 
-Most return types map cleanly to anonymous TS shapes — `NamedTuple(width: Int32, height: Int32)` becomes `{ width: number; height: number }`, a Crystal enum becomes a `"value" | "value"` string union. When you'd rather hand the frontend a named interface (so users can `import type { CounterState } from ".../runtime.js"` and pass the shape across functions), annotate the struct with `@[Lune::TsType]`:
+Most return types map cleanly to anonymous TS shapes — `NamedTuple(width: Int32, height: Int32)` becomes `{ width: number; height: number }`, a Crystal enum becomes a `"value" | "value"` string union. When a binding returns (or accepts) a `JSON::Serializable` struct, the generator captures it **automatically** into a named `interface` — no annotation needed — so users can `import type { CounterState } from ".../runtime.js"` and pass the shape across functions:
 
 ```crystal
-@[Lune::TsType]
 struct CounterState
   include JSON::Serializable
   getter value : Int32
@@ -329,11 +328,11 @@ class Counter < Lune::Plugin
 end
 ```
 
-The generator picks the type up the moment any `@[Lune::Bind]` method returns it, emits `export interface CounterState { value: number; step: number; at_default: boolean }` at the top of `runtime.d.ts`, and sets the binding's TS signature to `state(): Promise<CounterState>`. Field types flow through the same Crystal-to-TS mapping as binding args — nested generics, `NamedTuple` fields, enum fields all resolve recursively.
+The generator captures the type the moment any `@[Lune::Bind]` method references it, emits `export interface CounterState { value: number; step: number; at_default: boolean }` into `runtime.d.ts` (or `App.d.ts` for a user class), and sets the binding's TS signature to `state(): Promise<CounterState>`. Capture is **transitive** — a serializable struct nested inside another (or inside a `NamedTuple`, `Array(T)`, `Hash(K, V)`, or union) is captured too, and the outer interface references the inner by name. It works in argument position as well as return position. Field types flow through the same Crystal-to-TS mapping as binding signatures, honoring `@[JSON::Field(key:)]` wire-name renames.
 
-Limits in this pass: only return-position types are scanned (arg-position TsTypes still need an explicit `@[Lune::BindOverride(ts_args: [...])]`), the simple class name is used (so two TsTypes with the same basename across modules would collide — name them distinctly), and cyclic types aren't detected. None of these are blockers for the common case of "I want my binding's return to have a name."
+One limit remains: the interface uses the struct's simple (basename) name, so two structs with the same basename across different modules would collide — name them distinctly.
 
-If you need an inline shape with no named interface (e.g. to widen a Crystal `String` to a TS literal union), keep using `@[Lune::BindOverride(ts_return_type: ...)]` — `BindOverride` still wins over the auto-derived `TsType` reference.
+If you need an inline shape with no named interface (e.g. to widen a Crystal `String` to a TS literal union), use `@[Lune::BindOverride(ts_return_type: ...)]` — an explicit override always wins, and its return type is left exactly as written (the struct isn't also emitted as an interface).
 
 ---
 

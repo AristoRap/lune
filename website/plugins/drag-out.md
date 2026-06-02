@@ -21,19 +21,21 @@ DragOut lets users drag files from your app's UI to external targets — Finder,
 import { lune } from "../lunejs/runtime/runtime.js";
 
 fileCard.addEventListener("mousedown", async (e) => {
-  await lune.DragOut.start(["/path/to/file.png"]);
+  await lune.DragOut.start({ paths: ["/path/to/file.png"] });
 });
 ```
 
 Multiple paths can be dragged at once:
 
 ```js
-await lune.DragOut.start(["/exports/chart.png", "/exports/data.csv"]);
+await lune.DragOut.start({
+  paths: ["/exports/chart.png", "/exports/data.csv"],
+});
 ```
 
-| Method  | Signature                | Returns         |
-| ------- | ------------------------ | --------------- |
-| `start` | `start(paths: string[])` | `Promise<void>` |
+| Method  | Signature                          | Returns         |
+| ------- | ---------------------------------- | --------------- |
+| `start` | `start({ paths })` | `Promise<void>` |
 
 ---
 
@@ -45,7 +47,7 @@ await lune.DragOut.start(["/exports/chart.png", "/exports/data.csv"]);
 
 ```js
 try {
-  await lune.DragOut.start(["/exports/chart.png"]);
+  await lune.DragOut.start({ paths: ["/exports/chart.png"] });
 } catch (err) {
   if (err.code === "UNAVAILABLE_ON_PLATFORM") {
     // Show a fallback "Download" button, etc.

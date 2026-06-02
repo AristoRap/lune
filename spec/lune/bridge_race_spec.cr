@@ -4,26 +4,28 @@ describe "Bridge races" do
   it "bind_async resolves each sequence exactly once under concurrency" do
     fake = FakeWebview.new
 
-    bridge = Lune::Bridge.new(fake)
+    cb = ->(args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) : JSON::Any {
+      JSON::Any.new(args["n"].as_s)
+    }
 
     binding = Lune::Binding.new(
       namespace: "test",
       method: "echo",
       args: [] of String,
       return_type: "JSON",
-      callback: ->(args : Array(JSON::Any)) : JSON::Any {
-        JSON::Any.new(args[0].as_s)
-      },
       internal: false,
       async: true
     )
 
+    registry = Vow::Registry.new
+    registry.register(binding.id, &cb)
+    bridge = Lune::Bridge.new(fake, registry)
     bridge.register_bindings([binding])
 
     seqs = (0...80).map { |i| "seq-#{i}" }
 
     seqs.each do |seq|
-      fake.invoke("test.echo", seq, [JSON::Any.new(seq)])
+      fake.invoke("test.echo", seq, [JSON.parse(%({"n": #{seq.to_json}}))])
     end
 
     deadline = Time.instant + 5.seconds
@@ -43,28 +45,30 @@ describe "Bridge races" do
   it "bind_async skips all late dispatches after app close" do
     fake = FakeWebview.new
 
-    bridge = Lune::Bridge.new(fake)
-
     gate = Channel(Nil).new
     pending = 30
+
+    cb = ->(args : Hash(String, JSON::Any), _ctx : ::Vow::Context?) : JSON::Any {
+      gate.receive
+      JSON::Any.new(args["n"].as_i)
+    }
 
     binding = Lune::Binding.new(
       namespace: "test",
       method: "slow",
       args: [] of String,
       return_type: "JSON",
-      callback: ->(args : Array(JSON::Any)) : JSON::Any {
-        gate.receive
-        JSON::Any.new(args[0].as_i)
-      },
       internal: false,
       async: true
     )
 
+    registry = Vow::Registry.new
+    registry.register(binding.id, &cb)
+    bridge = Lune::Bridge.new(fake, registry)
     bridge.register_bindings([binding])
 
     pending.times do |i|
-      fake.invoke("test.slow", "seq-#{i}", [JSON::Any.new(i.to_i64)])
+      fake.invoke("test.slow", "seq-#{i}", [JSON.parse(%({"n": #{i}}))])
     end
 
     sleep 10.milliseconds

@@ -17,12 +17,38 @@ module LuneCLI
                    config: config,
                    plugins_config: runtime_config.plugins,
                    inspect_plugins: cmd.bool_flag("plugins"),
+                   output: cmd.stdout,
                  )
             raise Argy::Error.new("doctor found issues")
           end
         end
 
+        command.add_command(api_subcommand(config))
         command
+      end
+
+      # `lune doctor api` — introspect the typed RPC contract the app exposes.
+      # A subcommand (not a `--api` flag) so it owns its own output contract: the
+      # table goes to stdout, and `--json` swaps it for the raw manifest with no
+      # environment report, leaving stdout a clean pipeable stream.
+      private def api_subcommand(config : LuneCLI::Config) : Argy::Command
+        cmd = Argy::Command.new(
+          use: "api",
+          short: "Introspect the typed RPC contract the app exposes",
+          long: "Compile + run the app entry to list every procedure (name, args, return type) and the custom types its signatures reference. Slower than the base checks since it builds the app."
+        )
+        cmd.flags.bool("json", nil, false, "Print the raw Vow manifest JSON on stdout (no environment report) for piping into tooling.")
+
+        cmd.on_run do |c, _args|
+          run_api(
+            config: config,
+            json: c.bool_flag("json"),
+            output: c.stdout,
+            err: c.stderr,
+          )
+        end
+
+        cmd
       end
 
       def run(
@@ -45,6 +71,23 @@ module LuneCLI
         output.puts
         print_plugins_via_inspect(output, config.app_entry, plugins_config) if inspect_plugins && File.file?(config.app_entry)
         checks.all?(&.ok)
+      end
+
+      # Drives `lune doctor api`. In `--json` mode stdout carries only the
+      # manifest JSON (diagnostics divert to `err`); otherwise the contract table
+      # is rendered with a leading "inspecting…" line.
+      def run_api(
+        config : LuneCLI::Config,
+        json : Bool = false,
+        output : IO = STDOUT,
+        err : IO = STDERR,
+      ) : Bool
+        unless File.file?(config.app_entry)
+          err.puts "app entry not found: #{config.app_entry}"
+          return false
+        end
+
+        print_manifest_via_inspect(output, err, config.app_entry, json: json)
       end
 
       # `-Dlune_inspect` short-circuit emits the registered plugin set
@@ -108,10 +151,130 @@ module LuneCLI
         output.puts
       end
 
-      # Public alias for specs — keeps the parser exercised without exposing
-      # the rest of the class internals.
+      # Markers framing the manifest JSON emitted by `-Dlune_inspect_api` (kept
+      # in sync with `Lune::INSPECT_MANIFEST_START` / `_END`).
+      MANIFEST_START = "<<<LUNE_MANIFEST"
+      MANIFEST_END   = "LUNE_MANIFEST>>>"
+
+      # Single entry point for `doctor api`: compile + run `app_entry` with
+      # `-Dlune_inspect_api`, lift the framed `Vow::Manifest` JSON out of the
+      # captured stdout, and either render the contract table or (with `--json`)
+      # print the raw manifest straight through for tooling. Returns whether the
+      # contract was successfully introspected.
+      private def print_manifest_via_inspect(output : IO, err : IO, app_entry : String, json : Bool) : Bool
+        output.puts "  inspecting #{app_entry} (api)..." unless json
+
+        captured = IO::Memory.new
+        status = Process.run(
+          "crystal",
+          ["run", app_entry, "-Dpreview_mt", "-Dexecution_context", "-Dlune_inspect_api"],
+          output: captured,
+          error: Process::Redirect::Inherit
+        )
+
+        # In `--json` mode diagnostics go to the error stream so stdout stays a
+        # clean, pipeable JSON stream (empty on failure); otherwise they join the
+        # report on the normal output stream.
+        diag = json ? err : output
+
+        unless status.success?
+          diag.puts "    !  compile failed — fix the build error, then rerun `lune doctor api`."
+          diag.puts unless json
+          return false
+        end
+
+        manifest = parse_manifest_output(captured.to_s)
+
+        if json
+          output.puts manifest.to_json
+        else
+          output.puts
+          print_manifest_table(manifest, output)
+          output.puts
+        end
+        true
+      rescue ex : ManifestParseError
+        diag = json ? err : output
+        diag.puts "    !  #{ex.message}"
+        diag.puts unless json
+        false
+      end
+
+      # Public aliases for specs — exercise the parser and the table renderer
+      # without driving a full compile.
       def parse_inspect_output_for_spec(stdout : String)
         parse_inspect_output(stdout)
+      end
+
+      def parse_manifest_output_for_spec(stdout : String) : Vow::Manifest
+        parse_manifest_output(stdout)
+      end
+
+      def print_manifest_table_for_spec(manifest : Vow::Manifest, output : IO) : Nil
+        print_manifest_table(manifest, output)
+      end
+
+      # Raised when `doctor api` output carries no manifest block (typically a
+      # runner that didn't reach the inspect short-circuit).
+      class ManifestParseError < Exception
+      end
+
+      private def parse_manifest_output(stdout : String) : Vow::Manifest
+        in_block = false
+        json = String.build do |s|
+          stdout.each_line do |line|
+            chomped = line.chomp
+            if chomped == MANIFEST_START
+              in_block = true
+              next
+            end
+            if chomped == MANIFEST_END
+              in_block = false
+              next
+            end
+            s << chomped << '\n' if in_block
+          end
+        end
+
+        raise ManifestParseError.new("no manifest block found in app output") if json.blank?
+        Vow::Manifest.from_json(json)
+      rescue ex : JSON::ParseException
+        raise ManifestParseError.new("manifest block is not valid JSON — #{ex.message}")
+      end
+
+      # The human contract table: procedures as `name(args) -> return` (with the
+      # transport verb tag when it isn't the neutral `post` default), then the
+      # custom types — structs as `{ field: Type; … }`, enums as the
+      # string-literal union they emit on the wire.
+      private def print_manifest_table(manifest : Vow::Manifest, output : IO) : Nil
+        procs = manifest.procedures
+        output.puts "  procedures (#{procs.size}):"
+        if procs.empty?
+          output.puts "    (none — no @[Lune::Bind] surface registered)"
+        else
+          procs.each do |p|
+            args = p.args.map { |a| "#{a.name}: #{a.type}#{a.optional ? "?" : ""}" }.join(", ")
+            verb = p.verb == "post" ? "" : " [#{p.verb}]"
+            output.puts "    #{p.name}(#{args}) -> #{p.return_type}#{verb}"
+          end
+        end
+
+        output.puts
+        types = manifest.types
+        output.puts "  types (#{types.size}):"
+        if types.empty?
+          output.puts "    (none)"
+        else
+          types.each do |t|
+            if t.kind == "enum"
+              union = t.members.map { |m| m.inspect }.join(" | ")
+              output.puts "    #{t.name} = #{union}"
+            else
+              fields = t.fields.map { |f| "#{f.name}: #{f.type}" }.join("; ")
+              output.puts "    #{t.name} { #{fields} }"
+            end
+          end
+        end
       end
 
       private def parse_inspect_output(stdout : String) : Array(NamedTuple(id: String, label: String, platforms: Array(String), built_in: Bool))

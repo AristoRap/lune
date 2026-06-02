@@ -19,7 +19,7 @@ async function read() {
   readOut.value = (await Clipboard.read()) || "(empty)";
 }
 async function write() {
-  await Clipboard.write(writeIn.value);
+  await Clipboard.write({ text: writeIn.value });
   writeOut.value = `Wrote ${writeIn.value.length} char(s) to clipboard.`;
 }
 
@@ -27,7 +27,7 @@ async function readHtml() {
   htmlOut.value = (await Clipboard.readHtml()) || "(no HTML on clipboard)";
 }
 async function writeHtml() {
-  await Clipboard.writeHtml(htmlIn.value);
+  await Clipboard.writeHtml({ html: htmlIn.value });
   htmlWriteOut.value = "HTML written to clipboard.";
 }
 
@@ -46,7 +46,7 @@ async function writeImage() {
     imageOut.value = "Read an image first, then write it back.";
     return;
   }
-  await Clipboard.writeImage(imagePreview.value);
+  await Clipboard.writeImage({ dataUrl: imagePreview.value });
   imageOut.value = "Image written back to clipboard.";
 }
 </script>

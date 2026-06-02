@@ -28,7 +28,7 @@ async function runSpawn() {
 
   let pid;
   try {
-    pid = await Shell.spawn(cmd, argv);
+    pid = await Shell.spawn({ command: cmd, args: argv });
   } catch (err) {
     pushLine("stderr", `Error: ${err.message || err}`);
     running.value = false;
@@ -48,7 +48,7 @@ async function runSpawn() {
 }
 
 function killProcess() {
-  if (currentPid.value) Shell.kill(currentPid.value);
+  if (currentPid.value) Shell.kill({ pid: currentPid.value });
 }
 
 // ------- background processes (started in another window) -------
@@ -92,7 +92,7 @@ async function runOnce() {
   const cmd = runCmd.value.trim();
   const argv = runArgs.value.trim() ? runArgs.value.trim().split(/\s+/) : [];
   try {
-    runResult.value = await Shell.run(cmd, argv);
+    runResult.value = await Shell.run({ command: cmd, args: argv });
   } catch (err) {
     runResult.value = { stdout: "", stderr: err.message || String(err), code: -1 };
   }
@@ -149,7 +149,7 @@ async function runOnce() {
         <div v-for="pid in backgroundPids" :key="pid" class="bg-row">
           <span class="badge badge--live"><span class="live-dot"></span> running</span>
           <code class="bg-pid">{{ pid }}</code>
-          <button class="danger small" @click="Shell.kill(pid)">Kill</button>
+          <button class="danger small" @click="Shell.kill({ pid })">Kill</button>
         </div>
       </div>
     </div>

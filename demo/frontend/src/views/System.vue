@@ -16,7 +16,7 @@ async function loadScreen() {
   screenOut.value = JSON.stringify(await System.screenInfo(), null, 2);
 }
 async function sendNotif() {
-  await System.notify(notifTitle.value, notifBody.value);
+  await System.notify({ title: notifTitle.value, body: notifBody.value });
 }
 </script>
 

@@ -11,6 +11,7 @@ When a Crystal binding raises an exception, the JavaScript `Promise` rejects wit
 ```ts
 class LuneError extends Error {
   readonly code: string; // machine-readable error type
+  readonly hint: string | null; // optional corrective action, when the error carried one
   // err.message — inherited from Error, holds the human-readable description
 }
 ```
@@ -39,7 +40,7 @@ end
 import { LuneError } from "../lunejs/runtime/runtime.js";
 
 try {
-  await api.Math.divide(10, 0);
+  await api.Math.divide({ a: 10, b: 0 });
 } catch (err) {
   console.log(err instanceof LuneError); // true
   console.log(err.code); // "error"
@@ -68,7 +69,7 @@ In JavaScript, use `instanceof` or branch on `code`:
 import { LuneError } from "../lunejs/runtime/runtime.js";
 
 try {
-  const user = await api.Users.getUser(99);
+  const user = await api.Users.getUser({ id: 99 });
 } catch (err) {
   if (err instanceof LuneError && err.code === "not_found") {
     showNotFoundMessage();
@@ -98,6 +99,14 @@ class UnauthorizedError < Lune::Error
 end
 ```
 
+A hint is forwarded to the JS side — read it from `err.hint` (`null` when the error carried none):
+
+```js
+catch (err) {
+  if (err instanceof LuneError && err.hint) console.info(err.hint);
+}
+```
+
 ---
 
 ## Framework error subclasses
@@ -124,7 +133,7 @@ With TypeScript, `instanceof LuneError` narrows the type automatically — no cu
 import { LuneError } from "../lunejs/runtime/runtime.js";
 
 try {
-  await api.Users.getUser(99);
+  await api.Users.getUser({ id: 99 });
 } catch (err) {
   if (err instanceof LuneError) {
     // err is typed as LuneError here

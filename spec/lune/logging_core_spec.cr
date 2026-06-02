@@ -40,8 +40,7 @@ describe "Lune core logging" do
             namespace: "test",
             method: "ping",
             args: [] of String,
-            return_type: "void",
-            callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(nil) },
+            return_type: "Nil",
             internal: false,
             async: false
           ),
@@ -61,16 +60,18 @@ describe "Lune core logging" do
     with_logger(logger) do
       app = Lune::App.new
 
-      app.register(Lune::Binding.new(
+      cb = ->(_a : Hash(String, JSON::Any), _ctx : ::Vow::Context?) : JSON::Any { raise "boom" }
+      binding = Lune::Binding.new(
         namespace: "test",
         method: "boom",
         args: [] of String,
         return_type: "void",
-        callback: ->(_a : Array(JSON::Any)) { raise "boom" },
-      ))
+      )
+      app.register(binding)
+      app.registry.register(binding.id, &cb)
 
       wv = LoggingFakeWebview.new
-      bridge = Lune::Bridge.new(wv)
+      bridge = Lune::Bridge.new(wv, app.registry)
 
       bridge.register_bindings(app.bindings)
       app.bridge = bridge

@@ -5,8 +5,7 @@ private def make_bd(method = "ping", namespace = "alpha", args = [] of String, r
     method: method,
     namespace: namespace,
     args: args,
-    return_type: return_type,
-    callback: ->(_a : Array(JSON::Any)) { JSON::Any.new("ok") }
+    return_type: return_type
   )
 end
 
@@ -38,7 +37,7 @@ describe Lune::Binding do
   describe "#to_js_stub" do
     it "emits a JS function stub with the correct call ID" do
       stub = make_bd(method: "ping", namespace: "alpha").to_js_stub
-      stub.includes?("ping()").should be_true
+      stub.includes?("ping(args = {})").should be_true
       stub.includes?(%("alpha.ping")).should be_true
       stub.includes?("return __lune.call(").should be_true
     end
@@ -48,45 +47,43 @@ describe Lune::Binding do
       stub.includes?(%("alpha.beta.go")).should be_true
     end
 
-    it "falls back to arg0..argN when arg_names is empty" do
+    it "forwards the single named-args object regardless of arity" do
       stub = make_bd(method: "add", namespace: "math", args: ["Int32", "String"]).to_js_stub
-      stub.includes?("add(arg0, arg1)").should be_true
+      stub.includes?("add(args)").should be_true
     end
 
-    it "uses arg_names when provided" do
+    it "forwards the named-args object when arg_names are provided" do
       bd = Lune::Binding.new(
         method: "add",
         namespace: "math",
         args: ["Int32", "String"],
         return_type: "Int32",
-        callback: ->(_a : Array(JSON::Any)) { JSON::Any.new(0_i64) },
         arg_names: ["n", "label"]
       )
-      bd.to_js_stub.includes?("add(n, label)").should be_true
+      bd.to_js_stub.includes?("add(args)").should be_true
     end
   end
 
   describe "#to_dts_sig" do
-    it "emits a typed Promise signature with no params" do
+    it "emits a typed Promise signature with an optional empty args object" do
       sig = make_bd(method: "ping", namespace: "alpha", return_type: "String").to_dts_sig
-      sig.should eq("  ping(): Promise<string>;")
+      sig.should eq("  ping(args?: {}): Promise<string>;")
     end
 
-    it "maps Crystal args to TypeScript parameter types using arg0..argN fallback" do
+    it "maps Crystal args to a typed named-args object using arg0..argN fallback keys" do
       sig = make_bd(method: "add", namespace: "math", args: ["Int32", "String"], return_type: "Int32").to_dts_sig
-      sig.should eq("  add(arg0: number, arg1: string): Promise<number>;")
+      sig.should eq("  add(args: { arg0: number; arg1: string }): Promise<number>;")
     end
 
-    it "uses arg_names when provided" do
+    it "uses arg_names as the named-args object keys when provided" do
       bd = Lune::Binding.new(
         method: "add",
         namespace: "math",
         args: ["Int32", "String"],
         return_type: "Int32",
-        callback: ->(_a : Array(JSON::Any)) { JSON::Any.new(0_i64) },
         arg_names: ["n", "label"]
       )
-      bd.to_dts_sig.should eq("  add(n: number, label: string): Promise<number>;")
+      bd.to_dts_sig.should eq("  add(args: { n: number; label: string }): Promise<number>;")
     end
 
     it "maps Nil return to void" do
@@ -94,26 +91,40 @@ describe Lune::Binding do
     end
   end
 
+  # Type mapping is delegated to vow's strict `Vow::Codegen.crystal_to_ts`
+  # (arg position) and `return_to_ts` (return position). vow RAISES on a type it
+  # can't map honestly rather than silently widening it to `Record<string, any>`,
+  # and it understands unions, `Set`, `Char`, and `JSON::Any`.
   describe ".crystal_to_ts" do
     it "maps primitive Crystal types" do
       Lune::Generator.crystal_to_ts("String").should eq("string")
       Lune::Generator.crystal_to_ts("Bool").should eq("boolean")
-      Lune::Generator.crystal_to_ts("Nil").should eq("void")
+      Lune::Generator.crystal_to_ts("Char").should eq("string")
       Lune::Generator.crystal_to_ts("Int32").should eq("number")
       Lune::Generator.crystal_to_ts("Int64").should eq("number")
       Lune::Generator.crystal_to_ts("Float32").should eq("number")
       Lune::Generator.crystal_to_ts("Float64").should eq("number")
     end
 
-    it "maps bare collection types to permissive fallbacks" do
-      Lune::Generator.crystal_to_ts("Array").should eq("any[]")
-      Lune::Generator.crystal_to_ts("Hash").should eq("Record<string, any>")
+    it "maps JSON::Any to any (not Record<string, any>)" do
+      Lune::Generator.crystal_to_ts("JSON::Any").should eq("any")
+    end
+
+    # `Nil` is the one type whose mapping depends on position: a `Nil` argument
+    # is `null`, but a `Nil` return is `void` (`Promise<void>`).
+    it "maps Nil to null in argument position and void in return position" do
+      Lune::Generator.crystal_to_ts("Nil").should eq("null")
+      Lune::Generator.crystal_return_to_ts("Nil").should eq("void")
     end
 
     it "maps parameterized Array to a typed TS array" do
       Lune::Generator.crystal_to_ts("Array(String)").should eq("string[]")
       Lune::Generator.crystal_to_ts("Array(Int32)").should eq("number[]")
       Lune::Generator.crystal_to_ts("Array(Bool)").should eq("boolean[]")
+    end
+
+    it "maps Set to a TS array" do
+      Lune::Generator.crystal_to_ts("Set(String)").should eq("string[]")
     end
 
     it "maps parameterized Hash to Record<K, V>" do
@@ -124,6 +135,11 @@ describe Lune::Binding do
     it "maps Tuple to TS tuple syntax" do
       Lune::Generator.crystal_to_ts("Tuple(String, Int32)").should eq("[string, number]")
       Lune::Generator.crystal_to_ts("Tuple(String, Int32, Bool)").should eq("[string, number, boolean]")
+    end
+
+    it "maps unions, mapping Nil to null" do
+      Lune::Generator.crystal_to_ts("(String | Nil)").should eq("string | null")
+      Lune::Generator.crystal_to_ts("Int32 | String").should eq("number | string")
     end
 
     it "recurses through nested generics" do
@@ -137,12 +153,22 @@ describe Lune::Binding do
       Lune::Generator.crystal_to_ts("Hash( String , Int32 )").should eq("Record<string, number>")
     end
 
-    it "falls back to Record<string, any> for unknown types" do
-      Lune::Generator.crystal_to_ts("MyStruct").should eq("Record<string, any>")
+    it "raises on an unmapped identifier instead of widening to Record<string, any>" do
+      expect_raises(Vow::Codegen::UnmappableType) do
+        Lune::Generator.crystal_to_ts("MyStruct")
+      end
     end
 
-    it "falls back to Record<string, any> for unknown inner generic types" do
-      Lune::Generator.crystal_to_ts("Array(MyStruct)").should eq("Record<string, any>[]")
+    it "raises on an unmapped inner generic type" do
+      expect_raises(Vow::Codegen::UnmappableType) do
+        Lune::Generator.crystal_to_ts("Array(MyStruct)")
+      end
+    end
+
+    it "raises on bare collection types with no element type" do
+      expect_raises(Vow::Codegen::UnmappableType) { Lune::Generator.crystal_to_ts("Array") }
+      expect_raises(Vow::Codegen::UnmappableType) { Lune::Generator.crystal_to_ts("Hash") }
+      expect_raises(Vow::Codegen::UnmappableType) { Lune::Generator.crystal_to_ts("NamedTuple") }
     end
 
     it "supports extended integer / unsigned int primitives" do
@@ -172,10 +198,6 @@ describe Lune::Binding do
     it "tolerates whitespace inside NamedTuple field specs" do
       Lune::Generator.crystal_to_ts("NamedTuple( width : Int32 , height : Int32 )")
         .should eq("{ width: number; height: number }")
-    end
-
-    it "falls back to Record<string, any> for bare NamedTuple (no params)" do
-      Lune::Generator.crystal_to_ts("NamedTuple").should eq("Record<string, any>")
     end
   end
 end

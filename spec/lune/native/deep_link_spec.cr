@@ -1,11 +1,5 @@
 require "../../spec_helper"
 
-private def make_bridge
-  fake = FakeWebview.new
-  bridge = Lune::Bridge.new(fake)
-  {fake, bridge}
-end
-
 describe Lune::Native::DeepLink do
   before_each { Lune::Native::DeepLinkMock.reset }
 
@@ -37,8 +31,9 @@ describe Lune::Plugins::DeepLink do
   before_each { Lune::Native::DeepLinkMock.reset }
 
   it "forwards native deep link events to the app bridge" do
-    fake, bridge = make_bridge
+    fake = FakeWebview.new
     app = Lune::App.new
+    bridge = Lune::Bridge.new(fake, app.registry)
     app.bridge = bridge
     app.event.mark_ready
 

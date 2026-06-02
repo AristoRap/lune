@@ -12,7 +12,7 @@ module Lune
       # JS-→-Crystal event dispatch. Generated stub on `runtime.Lune.Plugins.Event.emit`
       # routes directly here; no hand-binding, no helper layer.
       @[Lune::Bind]
-      @[Lune::BindOverride(arg_names: ["name", "data"], ts_args: ["string", "unknown"] of String?, ts_return_type: "Promise<void>")]
+      @[Lune::BindOverride(ts_args: ["string", "unknown"] of String?)]
       def emit(name : String, data : JSON::Any) : Nil
         @app.event.dispatch(name, data)
       end

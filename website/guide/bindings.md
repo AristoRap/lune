@@ -33,16 +33,18 @@ app = Lune::App.new
 app.install(MathModule.new)
 ```
 
-In JavaScript:
+In JavaScript, every binding takes a **single arguments object** whose keys are the (camelCased) parameter names:
 
 ```js
 import api from "../lunejs/app/App.js";
 
-const result = await api.MathModule.add(2, 3); // 5
-const upper = await api.MathModule.toUpper("hello"); // "HELLO"
+const result = await api.MathModule.add({ a: 2, b: 3 }); // 5
+const upper = await api.MathModule.toUpper({ s: "hello" }); // "HELLO"
 ```
 
-All binding calls return a `Promise`, regardless of whether the Crystal method is synchronous.
+All binding calls return a `Promise`, regardless of whether the Crystal method is synchronous. A zero-argument binding can be called as `fn()` or `fn({})`.
+
+> **Named arguments, not positional.** Calls pass one object — `add({ a, b })`, not `add(2, 3)`. The keys are checked against the generated `.d.ts`, so a typo or missing field is caught at the call site, and adding or reordering Crystal parameters never silently shifts an argument. The shape rides over the bridge as the call's single payload.
 
 ---
 
@@ -56,7 +58,7 @@ Crystal methods use `snake_case`. Lune converts them to `camelCase` using Crysta
 | `slow_echo`     | `slowEcho`    |
 | `get_user_name` | `getUserName` |
 
-Parameter names are preserved as-is in the generated `.d.ts`. A method `def slow_echo(name : String)` produces `slowEcho(name: string)`.
+Parameter names become the keys of the arguments object in the generated `.d.ts`. A method `def slow_echo(name : String)` produces `slowEcho(args: { name: string })`, called as `slowEcho({ name: "…" })`.
 
 ---
 
@@ -76,27 +78,31 @@ end
 ```
 
 ```js
-await api.Database.Queries.findUser(42);
+await api.Database.Queries.findUser({ id: 42 });
 ```
 
 ---
 
 ## Type mapping
 
-Lune maps Crystal types to TypeScript types for the generated `.d.ts` file. The mapping is **generic-aware** — parameterised collections produce the matching parameterised TypeScript type, and the rule applies recursively:
+Lune maps Crystal types to TypeScript types for the generated `.d.ts` file, using [vow](https://github.com/AristoRap/vow)'s mapper (which lune shares). The mapping is **generic-aware** — parameterised collections produce the matching parameterised TypeScript type, and the rule applies recursively:
 
 | Crystal                                | TypeScript                                |
 | -------------------------------------- | ----------------------------------------- |
-| `String`                               | `string`                                  |
+| `String`, `Char`                       | `string`                                  |
 | `Bool`                                 | `boolean`                                 |
 | `Int32`, `Int64`, `Float32`, `Float64` | `number`                                  |
-| `Nil`                                  | `void`                                    |
-| `Array(T)`                             | `T[]` (e.g. `Array(String)` → `string[]`) |
+| `Nil`                                  | `void` (return) / `null` (argument)       |
+| `JSON::Any`                            | `any`                                     |
+| `Array(T)`, `Set(T)`                   | `T[]` (e.g. `Array(String)` → `string[]`) |
 | `Hash(K, V)`                           | `Record<K, V>`                            |
 | `Tuple(A, B, ...)`                     | `[A, B, ...]`                             |
-| Custom struct/class                    | `Record<string, any>`                     |
+| `T \| Nil` (union)                     | `T \| null`                               |
 
-Bare `Array` / `Hash` (no parameters) fall back to `any[]` / `Record<string, any>`. Use `Array(T)` / `Hash(K, V)` in signatures whenever you can — the generated `.d.ts` propagates the parameter, so frontend code keeps its types without `as` casts.
+The mapper is **strict**: it maps a type accurately or fails the build — it never silently widens an unknown type to `Record<string, any>`. So:
+
+- A **`JSON::Serializable` struct/class** is captured automatically into a named `interface` (transitively, including nested structs) — return it or accept it from a binding and the generated `.d.ts` references it by name. A struct that is _not_ `JSON::Serializable` (and isn't given an explicit `@[Lune::BindOverride(ts_return_type: ...)]` / `ts_args:`) is a generation error, not a misleading `Record<string, any>`.
+- **Bare `Array` / `Hash` / `NamedTuple`** (no type parameters) are an error too — always write `Array(T)` / `Hash(K, V)` so the generated `.d.ts` keeps its parameter and frontend code needs no `as` casts.
 
 Custom types must be JSON-serializable. Add `include JSON::Serializable` to your structs:
 
@@ -193,7 +199,7 @@ The default export is `api`, an object containing all registered namespaces:
 ```js
 import api from "../lunejs/app/App.js";
 
-await api.GreetModule.greet("world");
+await api.GreetModule.greet({ name: "world" });
 ```
 
 Named exports are also available for each top-level namespace, which can be more convenient:
@@ -201,8 +207,8 @@ Named exports are also available for each top-level namespace, which can be more
 ```js
 import { GreetModule, MathModule } from "../lunejs/app/App.js";
 
-await GreetModule.greet("world");
-await MathModule.add(1, 2);
+await GreetModule.greet({ name: "world" });
+await MathModule.add({ a: 1, b: 2 });
 ```
 
 Both import styles refer to the same underlying stubs.
@@ -247,18 +253,19 @@ class MyPlugin
   include Lune::Installable
 
   def install(app : Lune::App)
-    app.bind(
+    binding = Lune::Binding.new(
       namespace: "MyPlugin",
       method: "ping",
       args: [] of String,
       return_type: "String",
-      async: false,
-      arg_names: [] of String,
-    ) do |_args|
-      JSON.parse("\"pong\"")
+    )
+
+    app.register(binding)
+    app.registry.register(binding.id) do |_args, _ctx|
+      JSON::Any.new("pong")
     end
   end
 end
 ```
 
-This is rarely needed for application code — prefer `Lune::Bindable` for most cases.
+This is rarely needed for application code — prefer `Lune::Bindable` for most cases, which wires both steps for you.

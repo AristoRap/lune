@@ -47,7 +47,6 @@ describe Lune::App do
         method: "sum",
         args: ["a", "b"],
         return_type: "number",
-        callback: ->(args : Array(JSON::Any)) { JSON::Any.new(args[0].as_i + args[1].as_i) },
       ))
 
       app.bindings.size.should eq(1)
@@ -70,30 +69,9 @@ describe Lune::App do
         args: ["url"],
         return_type: "object",
         async: true,
-        callback: ->(_a : Array(JSON::Any)) { JSON.parse(%({"ok": true})) },
       ))
 
       app.bindings.first.async.should be_true
-    end
-
-    it "stores the callback block" do
-      app = Lune::App.new
-
-      app.register(Lune::Binding.new(
-        namespace: "util",
-        method: "echo",
-        args: ["value"],
-        return_type: "string",
-        callback: ->(args : Array(JSON::Any)) { JSON::Any.new(args.first.as_s) },
-      ))
-
-      binding = app.bindings.first
-
-      result = binding.callback.call([
-        JSON::Any.new("hello"),
-      ])
-
-      result.as_s.should eq("hello")
     end
 
     it "accepts a pre-built internal binding directly" do
@@ -104,7 +82,6 @@ describe Lune::App do
         method: "test.ping",
         args: [] of String,
         return_type: "String",
-        callback: ->(_a : Array(JSON::Any)) { JSON::Any.new("ok") },
         internal: true,
       )
 
@@ -497,7 +474,7 @@ class MockBridge < Lune::Bridge
 
   def initialize
     @webview = MockWebview.new
-    super(@webview)
+    super(@webview, Vow::Registry.new)
   end
 
   def last_eval

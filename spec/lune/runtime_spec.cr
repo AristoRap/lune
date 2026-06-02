@@ -1,10 +1,14 @@
 require "../spec_helper"
 require "file_utils"
 
-private def runtime_bindings
+private def runtime_app
   app = Lune::App.new
   Lune::Plugins::Registry.new(Pointer(Void).null, Lune::Options.new).all.each { |plugin| app.install(plugin) }
-  app.bindings.select(&.internal?)
+  app
+end
+
+private def runtime_bindings
+  runtime_app.bindings.select(&.internal?)
 end
 
 private def event_plugins
@@ -52,6 +56,14 @@ describe Lune::Generator do
     dts.includes?("readonly code: string").should be_true
   end
 
+  it "carries a hint on LuneError (runtime + d.ts)" do
+    js = Lune::Generator.generate_runtime_js([] of Lune::Binding)
+    js.includes?("this.hint = hint").should be_true
+
+    dts = Lune::Generator.generate_runtime_dts([] of Lune::Binding)
+    dts.includes?("readonly hint: string | null").should be_true
+  end
+
   it "exports Event namespace with on, once, off helpers" do
     js = Lune::Generator.generate_runtime_js([] of Lune::Binding, event_plugins)
 
@@ -72,7 +84,7 @@ describe Lune::Generator do
     app.install(event)
     js = Lune::Generator.generate_runtime_js(app.bindings.select(&.internal?), event_plugins)
 
-    js.includes?("emit(name, data)").should be_true
+    js.includes?("emit(args)").should be_true
     js.includes?(%("Lune.Plugins.Event.emit")).should be_true
   end
 
@@ -82,7 +94,7 @@ describe Lune::Generator do
     app.install(event)
     dts = Lune::Generator.generate_runtime_dts(app.bindings.select(&.internal?), event_plugins)
 
-    dts.includes?("emit(name: string").should be_true
+    dts.includes?("emit(args: { name: string; data: unknown })").should be_true
   end
 
   it "exports System namespace with quit, openUrl, environment" do
@@ -90,53 +102,60 @@ describe Lune::Generator do
 
     js.includes?("export const Lune").should be_true
     js.includes?("System:").should be_true
-    js.includes?("quit()").should be_true
-    js.includes?("openUrl(").should be_true
-    js.includes?("environment()").should be_true
+    js.includes?("quit(args = {})").should be_true
+    js.includes?("openUrl(args)").should be_true
+    js.includes?("environment(args = {})").should be_true
     js.includes?("Lune.Plugins.System.quit").should be_true
-    js.includes?("Lune.Plugins.System.open_url").should be_true
+    js.includes?("Lune.Plugins.System.openUrl").should be_true
     js.includes?("Lune.Plugins.System.environment").should be_true
   end
 
   it "generates runtime.d.ts with typed namespace interfaces" do
-    dts = Lune::Generator.generate_runtime_dts(runtime_bindings, event_plugins)
+    app = runtime_app
+    known = Lune::Generator.known_types(app.manifest.types)
+    dts = Lune::Generator.generate_runtime_dts(app.bindings.select(&.internal?), event_plugins, known: known, types: app.plugin_types)
 
     dts.includes?("export declare const Lune").should be_true
     dts.includes?("System: {").should be_true
     dts.includes?("Event: {").should be_true
-    dts.includes?("quit()").should be_true
-    dts.includes?("openUrl(").should be_true
-    dts.includes?("environment()").should be_true
+    dts.includes?("quit(args?: {})").should be_true
+    dts.includes?("openUrl(args:").should be_true
+    dts.includes?("environment(args?: {})").should be_true
     dts.includes?("on(name: string").should be_true
     dts.includes?("once(name: string").should be_true
     dts.includes?("off(name: string").should be_true
   end
 
-  it "inlines structural shapes instead of carrying hand-written interfaces" do
-    dts = Lune::Generator.generate_runtime_dts(runtime_bindings, event_plugins)
+  it "inlines structural shapes and emits an enum as a string-union type alias" do
+    app = runtime_app
+    known = Lune::Generator.known_types(app.manifest.types)
+    dts = Lune::Generator.generate_runtime_dts(app.bindings.select(&.internal?), event_plugins, known: known, types: app.plugin_types)
 
-    # No named-type carryovers in the d.ts header — every shape is either
+    # No named-type carryovers in the d.ts header — every struct shape is either
     # derived from the Crystal type or inlined into the binding's ts_return_type.
     dts.includes?("LuneEnvironment").should be_false
     dts.includes?("ScreenInfo").should be_false
     dts.includes?("TrayMenuItem").should be_false
     dts.includes?("ContextMenuItem").should be_false
 
-    # environment() keeps the os string-literal union via an inlined BindOverride
-    dts.includes?(%(os: "darwin" | "linux" | "windows")).should be_true
+    # environment() references the captured OS enum, emitted as a string-literal
+    # union alias derived from the members' serialized values (vow capture, no
+    # BindOverride). Crystal's default Enum#to_json lowercases.
+    dts.includes?("os: OS;").should be_true
+    dts.includes?(%(export type OS = "darwin" | "linux" | "windows";)).should be_true
     # screen_info() is auto-derived from its NamedTuple return type
     dts.includes?("width: number; height: number; scale: number").should be_true
   end
 
-  it "exports DragOut namespace with start binding (paths JSON-stringified)" do
+  it "exports DragOut namespace with start binding (paths in the named-args object)" do
     bindings, plugins = drag_out_setup
     js = Lune::Generator.generate_runtime_js(bindings, plugins)
 
     js.includes?("export const Lune").should be_true
     js.includes?("DragOut:").should be_true
-    js.includes?("start(paths)").should be_true
-    js.includes?("JSON.stringify(paths || [])").should be_true
-    js.scan(/start\(paths\)/).size.should eq(1)
+    js.includes?("start(args)").should be_true
+    js.includes?(%(__lune.call("Lune.Plugins.DragOut.start", args))).should be_true
+    js.scan(/start\(args\)/).size.should eq(1)
   end
 
   it "declares DragOut interface in runtime.d.ts" do
@@ -144,8 +163,8 @@ describe Lune::Generator do
     dts = Lune::Generator.generate_runtime_dts(bindings, plugins)
 
     dts.includes?("DragOut: {").should be_true
-    dts.includes?("start(paths: string[])").should be_true
-    dts.scan(/start\(paths: string\[\]\)/).size.should eq(1)
+    dts.includes?("start(args: { paths: string[] })").should be_true
+    dts.scan(/start\(args: \{ paths: string\[\] \}\)/).size.should eq(1)
   end
 
   describe "platform-unavailable stubs" do
@@ -170,7 +189,7 @@ describe Lune::Generator do
       )
 
       dts.includes?("DragOut: {").should be_true
-      dts.includes?("start(paths: string[]): Promise<void>").should be_true
+      dts.includes?("start(args: { paths: string[] }): Promise<void>").should be_true
     end
 
     it "does not duplicate a namespace when both live and unavailable lists name it" do
@@ -193,7 +212,6 @@ describe Lune::Generator do
         method: "greet",
         args: [] of String,
         return_type: "String",
-        callback: ->(_args : Array(JSON::Any)) { JSON::Any.new("ok") },
         internal: false,
         async: false
       ),
@@ -201,8 +219,7 @@ describe Lune::Generator do
         namespace: "counter",
         method: "inc",
         args: [] of String,
-        return_type: "Number",
-        callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(1_i64) },
+        return_type: "Int32",
         internal: false,
         async: false
       ),
@@ -216,22 +233,25 @@ describe Lune::Generator do
     dts.includes?("inc(").should be_true
   end
 
-  it "maps JSON::Serializable struct args to Record<string, any> in App.d.ts" do
+  # vow's strict mapper refuses to silently widen an unknown struct arg to
+  # `Record<string, any>`. Until the manifest captures the type (Phase 1), an
+  # unmapped struct arg is a loud `UnmappableType` at generation time, not a lie
+  # in the emitted `.d.ts`.
+  it "raises on an unmappable struct arg type instead of widening it in App.d.ts" do
     bindings = [
       Lune::Binding.new(
         namespace: "math",
         method: "add",
         args: ["AddArgs"],
         return_type: "Int32",
-        callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(0_i64) },
         internal: false,
         async: false
       ),
     ]
 
-    dts = Lune::Generator.generate_app_dts(bindings)
-
-    dts.includes?("arg0: Record<string, any>").should be_true
+    expect_raises(Vow::Codegen::UnmappableType) do
+      Lune::Generator.generate_app_dts(bindings)
+    end
   end
 
   it "writes .d.ts files alongside the JS files" do
@@ -244,7 +264,6 @@ describe Lune::Generator do
           method: "greet",
           args: [] of String,
           return_type: "String",
-          callback: ->(_args : Array(JSON::Any)) { JSON::Any.new("ok") },
           internal: false,
           async: false
         ),
@@ -264,7 +283,6 @@ describe Lune::Generator do
         method: "zeta",
         args: [] of String,
         return_type: "String",
-        callback: ->(_args : Array(JSON::Any)) { JSON::Any.new("ok") },
         internal: false,
         async: false
       ),
@@ -273,7 +291,6 @@ describe Lune::Generator do
         method: "alpha",
         args: [] of String,
         return_type: "String",
-        callback: ->(_args : Array(JSON::Any)) { JSON::Any.new("ok") },
         internal: false,
         async: false
       ),
@@ -286,8 +303,8 @@ describe Lune::Generator do
 
     js.includes?("export const alpha = {").should be_true
     js.includes?("export const counter = {").should be_true
-    js.includes?("zeta()").should be_true
-    js.includes?("alpha()").should be_true
+    js.includes?("zeta(args = {})").should be_true
+    js.includes?("alpha(args = {})").should be_true
   end
 
   it "includes namespace objects and a default export" do
@@ -297,7 +314,6 @@ describe Lune::Generator do
         method: "ping",
         args: [] of String,
         return_type: "String",
-        callback: ->(_args : Array(JSON::Any)) { JSON::Any.new("ok") },
         internal: false,
         async: false
       ),
@@ -306,7 +322,6 @@ describe Lune::Generator do
         method: "sum",
         args: [] of String,
         return_type: "Int32",
-        callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(0_i64) },
         internal: false,
         async: false
       ),
@@ -332,7 +347,6 @@ describe Lune::Generator do
         method: "ping",
         args: [] of String,
         return_type: "String",
-        callback: ->(_args : Array(JSON::Any)) { JSON::Any.new("ok") },
         internal: false,
         async: false
       ),
@@ -341,7 +355,6 @@ describe Lune::Generator do
         method: "sum",
         args: [] of String,
         return_type: "Int32",
-        callback: ->(_args : Array(JSON::Any)) { JSON::Any.new(0_i64) },
         internal: false,
         async: false
       ),
@@ -379,7 +392,6 @@ describe Lune::Generator do
           method: "hello",
           args: [] of String,
           return_type: "String",
-          callback: ->(_args : Array(JSON::Any)) { JSON::Any.new("ok") },
           internal: false,
           async: false
         ),
@@ -406,7 +418,6 @@ describe Lune::Generator do
           method: "ping",
           args: [] of String,
           return_type: "String",
-          callback: ->(_args : Array(JSON::Any)) { JSON::Any.new("ok") },
           internal: false,
           async: false
         ),
@@ -423,7 +434,6 @@ describe Lune::Generator do
           method: "ping",
           args: [] of String,
           return_type: "String",
-          callback: ->(_args : Array(JSON::Any)) { JSON::Any.new("ok") },
           internal: false,
           async: false
         ),
@@ -444,7 +454,6 @@ describe Lune::Generator do
           method: "ping",
           args: [] of String,
           return_type: "String",
-          callback: ->(_args : Array(JSON::Any)) { JSON::Any.new("ok") },
           internal: false,
           async: false
         ),
@@ -461,7 +470,6 @@ describe Lune::Generator do
           method: "ping",
           args: [] of String,
           return_type: "String",
-          callback: ->(_args : Array(JSON::Any)) { JSON::Any.new("ok") },
           internal: false,
           async: false
         ),
@@ -470,7 +478,6 @@ describe Lune::Generator do
           method: "pong",
           args: [] of String,
           return_type: "String",
-          callback: ->(_args : Array(JSON::Any)) { JSON::Any.new("ok") },
           internal: false,
           async: false
         ),
@@ -480,7 +487,7 @@ describe Lune::Generator do
 
       mtime_after.should_not eq(mtime_before)
       File.read(app_path).includes?("export const alpha = {").should be_true
-      File.read(app_path).includes?("pong()").should be_true
+      File.read(app_path).includes?("pong(args = {})").should be_true
     end
   end
 end

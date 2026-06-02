@@ -97,7 +97,6 @@ module Lune
       # async for the same reason as `read_image` — Win32 path shells out to
       # PowerShell (System.Windows.Forms.Clipboard.SetImage).
       @[Lune::Bind(async: true)]
-      @[Lune::BindOverride(arg_names: ["dataUrl"])]
       def write_image(data_url : String) : Nil
         @on_write_image.call(data_url)
       end

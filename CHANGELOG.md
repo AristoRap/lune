@@ -1,6 +1,27 @@
 # Changelog
 
-## [Unreleased]
+## [0.17.0] - 2026-06-02
+
+### Added
+
+- **`lune doctor api` introspects the RPC contract.** Prints every procedure (`name(args) -> return`) and the custom types (structs, enums) its signatures reference — the exact contract the generated client was built against. Add `--json` to dump the raw [vow](https://github.com/AristoRap/vow) manifest JSON on stdout (no environment report) for piping into your own tooling.
+- **`Introspection` plugin** exposes the live RPC manifest to the frontend. `lune.Introspection.manifest()` returns the typed `Manifest` (procedures + custom types) like any plugin binding; the plugin also injects a `window.__lune.manifest()` convenience wrapper, but only when devtools are on. Enabled by default; disable in `lune.yml` (`plugins.disabled: [introspection]`) like any built-in.
+- **Per-call window context.** A `@[Lune::Bind]` method can declare a leading `ctx : Lune::WindowContext` parameter to receive the calling webview and the call's sequence id. The bridge injects it at dispatch, and it's kept out of the wire arguments, the manifest, and the generated client signature — so the JS call site is unchanged. Bindings that don't declare it are unaffected.
+- **Enums map to TypeScript string-literal unions.** A binding that returns or accepts a Crystal `enum` — directly or nested inside a `NamedTuple` / struct / `Array` — generates `type X = "a" | "b"` (captured generically by [vow](https://github.com/AristoRap/vow), emitted as a `.d.ts` `type` alias). The union is derived from the values each member **serializes to** (`Enum#to_json`), so it always matches the wire: Crystal's default lowercases (`Pending` → `"pending"`), and a custom `to_json` is reflected. `System.environment().os` now rides on a `Lune::Plugins::System::OS` enum — same `"darwin" | "linux" | "windows"` contract as before, now carried by the enum instead of a hand-written `@[Lune::BindOverride]`.
+- **Error hints reach the client.** A `Lune::Error` raised with a hint now carries it onto the wire (`{ code, error, hint }`) and into the generated `LuneError` (`readonly hint: string | null`), so the frontend can surface the corrective action you wrote in Crystal.
+
+### Changed
+
+- **Depends on [vow](https://github.com/AristoRap/vow) `~> 0.3.0`** — marker-driven dispatch registration (lune keeps its own `@[Lune::Bind]` annotation while reusing vow's decode/invoke/encode), generic enum capture, "did you mean?" diagnostics, and a manifest whose JS-facing JSON keys are camelCase (`returnType`, `crystalName`) so the `Introspection.manifest()` contract reads consistently in JS/TS.
+- **Binding calls now take a single named-arguments object** _(breaking)_. A positional call like `api.Demo.greet(name)` becomes `api.Demo.greet({ name })` — the keys are the camelCased Crystal parameter names, typed by the generated `.d.ts`, so a missing or misspelled argument is caught at the call site instead of silently shifting. Zero-argument bindings stay callable as `fn()`.
+- **Dispatch now runs through [vow](https://github.com/AristoRap/vow)'s `Vow::Registry`.** The webview Bridge is a thin transport over `registry.dispatch`: arguments are decoded into their declared Crystal types, and a malformed or missing argument raises a typed `Vow::Error` (`bad_input`) mapped onto lune's `{ code, error }` reply envelope.
+- **`Dialogs` / `Tray` / `DragOut` now take real typed arguments.** `Dialogs.openFile` / `openFiles` / `saveFile` accept `Array(FileFilter)`, `Tray.setMenu` accepts `Array(TrayMenuItem)`, and `DragOut.start` accepts `Array(String)` — no more `_json : String` smuggling or client-side `JSON.stringify` for these plugins. A `NamedTuple` argument type (including an alias like `FileFilter`) is captured and inlined into the generated `.d.ts` automatically.
+- **TypeScript type generation now runs on [vow](https://github.com/AristoRap/vow)'s strict mapper** (the typed-RPC core extracted out of lune). `JSON::Any` maps to `any` (was `Record<string, any>`), and union / `Set` / `Char` types now map accurately. The mapper is fail-loud: a Crystal type it can't represent honestly is a generation error (`Vow::Codegen::UnmappableType`) instead of a silent `Record<string, any>`.
+- **`JSON::Serializable` struct returns and arguments are captured automatically as named TypeScript `interface`s** — transitively, including nested structs and structs inside `NamedTuple` / `Array` / `Hash` / unions, scoped to the file (`runtime.d.ts` vs `App.d.ts`) that references them. Returning or accepting a serializable struct from a `@[Lune::Bind]` method is all that's needed; use `@[Lune::BindOverride(ts_return_type: ...)]` for an inline shape (e.g. a string-literal union).
+
+### Removed
+
+- **`@[Lune::TsType]` and `Lune.register_ts_type`** — superseded by automatic struct capture (above). Drop the annotation; the struct is captured the same way by being returned from (or passed to) a binding.
 
 ## [0.16.1] - 2026-06-01
 

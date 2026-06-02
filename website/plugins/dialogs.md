@@ -23,17 +23,20 @@ All methods return a `Promise` and block until the user dismisses the dialog.
 import { lune } from "../lunejs/runtime/runtime.js";
 
 // Single file
-const path = await lune.Dialogs.openFile("Select a config file");
+const path = await lune.Dialogs.openFile({ prompt: "Select a config file" });
 if (path) loadConfig(path);
 
 // Directory
-const dir = await lune.Dialogs.openDir("Choose output folder");
+const dir = await lune.Dialogs.openDir({ prompt: "Choose output folder" });
 
 // Multiple files
-const paths = await lune.Dialogs.openFiles("Select images");
+const paths = await lune.Dialogs.openFiles({ prompt: "Select images" });
 
 // Save dialog
-const dest = await lune.Dialogs.saveFile("Save as", "output.csv");
+const dest = await lune.Dialogs.saveFile({
+  prompt: "Save as",
+  filename: "output.csv",
+});
 ```
 
 File pickers return an empty string (or empty array for `openFiles`) when the user cancels.
@@ -43,19 +46,27 @@ File pickers return an empty string (or empty array for `openFiles`) when the us
 `openFile`, `openFiles`, and `saveFile` accept an optional `filters` array that constrains the picker to specific extensions:
 
 ```js
-const path = await lune.Dialogs.openFile("Choose an icon", [
-  { name: "Tray icons", extensions: ["ico", "icns", "png", "svg"] },
-]);
+const path = await lune.Dialogs.openFile({
+  prompt: "Choose an icon",
+  filters: [{ name: "Tray icons", extensions: ["ico", "icns", "png", "svg"] }],
+});
 
-const paths = await lune.Dialogs.openFiles("Pick images", [
-  { name: "Raster", extensions: ["png", "jpg", "jpeg"] },
-  { name: "Vector", extensions: ["svg"] },
-]);
+const paths = await lune.Dialogs.openFiles({
+  prompt: "Pick images",
+  filters: [
+    { name: "Raster", extensions: ["png", "jpg", "jpeg"] },
+    { name: "Vector", extensions: ["svg"] },
+  ],
+});
 
-const dest = await lune.Dialogs.saveFile("Export", "data.csv", [
-  { name: "CSV", extensions: ["csv"] },
-  { name: "JSON", extensions: ["json"] },
-]);
+const dest = await lune.Dialogs.saveFile({
+  prompt: "Export",
+  filename: "data.csv",
+  filters: [
+    { name: "CSV", extensions: ["csv"] },
+    { name: "JSON", extensions: ["json"] },
+  ],
+});
 ```
 
 Each filter is `{ name: string, extensions: string[] }` — pass extensions WITHOUT the leading dot (`"png"`, not `".png"`). Omitted or empty array = no filtering. Behaviour per platform:
@@ -67,24 +78,24 @@ Each filter is `{ name: string, extensions: string[] }` — pass extensions WITH
 ### Message dialogs
 
 ```js
-await lune.Dialogs.messageInfo(
-  "Update available",
-  "Version 2.0 is ready to install.",
-);
-await lune.Dialogs.messageWarning(
-  "Low disk space",
-  "Less than 1 GB remaining.",
-);
-await lune.Dialogs.messageError(
-  "Export failed",
-  "Could not write to the destination.",
-);
+await lune.Dialogs.messageInfo({
+  title: "Update available",
+  message: "Version 2.0 is ready to install.",
+});
+await lune.Dialogs.messageWarning({
+  title: "Low disk space",
+  message: "Less than 1 GB remaining.",
+});
+await lune.Dialogs.messageError({
+  title: "Export failed",
+  message: "Could not write to the destination.",
+});
 
 // Question — returns the label of the clicked button
-const answer = await lune.Dialogs.messageQuestion(
-  "Confirm",
-  "Delete all files?",
-);
+const answer = await lune.Dialogs.messageQuestion({
+  title: "Confirm",
+  message: "Delete all files?",
+});
 if (answer === "OK") deleteAll();
 ```
 
@@ -92,16 +103,16 @@ if (answer === "OK") deleteAll();
 
 ## Full API reference
 
-| Method            | Signature                              | Returns                          |
-| ----------------- | -------------------------------------- | -------------------------------- |
-| `openFile`        | `openFile(prompt, filters?)`           | `Promise<string>` — path or `""` |
-| `openDir`         | `openDir(prompt)`                      | `Promise<string>` — path or `""` |
-| `openFiles`       | `openFiles(prompt, filters?)`          | `Promise<string[]>`              |
-| `saveFile`        | `saveFile(prompt, filename, filters?)` | `Promise<string>` — path or `""` |
-| `messageInfo`     | `messageInfo(title, message)`          | `Promise<void>`                  |
-| `messageWarning`  | `messageWarning(title, message)`       | `Promise<void>`                  |
-| `messageError`    | `messageError(title, message)`         | `Promise<void>`                  |
-| `messageQuestion` | `messageQuestion(title, message)`      | `Promise<string>` — button label |
+| Method            | Signature                                  | Returns                          |
+| ----------------- | ------------------------------------------ | -------------------------------- |
+| `openFile`        | `openFile({ prompt, filters? })`           | `Promise<string>` — path or `""` |
+| `openDir`         | `openDir({ prompt })`                      | `Promise<string>` — path or `""` |
+| `openFiles`       | `openFiles({ prompt, filters? })`          | `Promise<string[]>`              |
+| `saveFile`        | `saveFile({ prompt, filename, filters? })` | `Promise<string>` — path or `""` |
+| `messageInfo`     | `messageInfo({ title, message })`          | `Promise<void>`                  |
+| `messageWarning`  | `messageWarning({ title, message })`       | `Promise<void>`                  |
+| `messageError`    | `messageError({ title, message })`         | `Promise<void>`                  |
+| `messageQuestion` | `messageQuestion({ title, message })`      | `Promise<string>` — button label |
 
 `filters` is `{ name: string; extensions: string[] }[]`. Omitted or `[]` = no filter.
 

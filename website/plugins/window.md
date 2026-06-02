@@ -24,17 +24,17 @@ await lune.Window.minimize();
 await lune.Window.maximize();
 await lune.Window.center();
 
-await lune.Window.setTitle("My App — Unsaved");
-await lune.Window.setSize(1440, 900);
+await lune.Window.setTitle({ title: "My App — Unsaved" });
+await lune.Window.setSize({ width: 1440, height: 900 });
 ```
 
-| Method     | Signature                | Returns         |
-| ---------- | ------------------------ | --------------- |
-| `minimize` | `minimize()`             | `Promise<void>` |
-| `maximize` | `maximize()`             | `Promise<void>` |
-| `center`   | `center()`               | `Promise<void>` |
-| `setTitle` | `setTitle(title)`        | `Promise<void>` |
-| `setSize`  | `setSize(width, height)` | `Promise<void>` |
+| Method     | Signature                    | Returns         |
+| ---------- | ---------------------------- | --------------- |
+| `minimize` | `minimize()`                 | `Promise<void>` |
+| `maximize` | `maximize()`                 | `Promise<void>` |
+| `center`   | `center()`                   | `Promise<void>` |
+| `setTitle` | `setTitle({ title })`        | `Promise<void>` |
+| `setSize`  | `setSize({ width, height })` | `Promise<void>` |
 
 `lune.Window.startDrag` is also exposed but is invoked by the auto-injected mousedown listener — application code rarely calls it directly.
 

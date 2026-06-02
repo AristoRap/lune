@@ -16,6 +16,16 @@ module Lune
       @databases = {} of String => DB::Database
       @mu = Mutex.new
 
+      struct ExecResult
+        include JSON::Serializable
+        getter changes : Int64
+        @[JSON::Field(key: "lastInsertId")]
+        getter last_insert_id : Int64
+
+        def initialize(@changes, @last_insert_id)
+        end
+      end
+
       @[Lune::Bind(async: true)]
       def open(path : String) : String
         uri = path == ":memory:" ? "sqlite3::memory:" : "sqlite3:#{path}"
@@ -26,30 +36,28 @@ module Lune
       end
 
       @[Lune::Bind(async: true)]
-      @[Lune::BindOverride(arg_names: ["db"])]
-      def close(db_id : String) : Nil
-        database = @mu.synchronize { @databases.delete(db_id) }
+      def close(db : String) : Nil
+        database = @mu.synchronize { @databases.delete(db) }
         database.try(&.close)
       end
 
       @[Lune::Bind(async: true)]
-      @[Lune::BindOverride(arg_names: ["db", "sql", "params"], ts_return_type: "Promise<{ changes: number; lastInsertId: number }>")]
-      def exec(db_id : String, sql : String, params : Array(JSON::Any)) : NamedTuple(changes: Int64, lastInsertId: Int64)
-        database = @mu.synchronize { @databases[db_id]? }
-        raise Lune::Error.new("sqlite_not_open", "No open database with id \"#{db_id}\"") unless database
+      def exec(db : String, sql : String, params : Array(JSON::Any)) : ExecResult
+        database = @mu.synchronize { @databases[db]? }
+        raise Lune::Error.new("sqlite_not_open", "No open database with id \"#{db}\"") unless database
         begin
           result = database.exec(sql, args: to_db_args(params))
-          {changes: result.rows_affected, lastInsertId: result.last_insert_id}
+          ExecResult.new(result.rows_affected, result.last_insert_id)
         rescue ex : SQLite3::Exception | DB::Error
           raise Lune::Error.new("sqlite_error", ex.message || "SQLite error")
         end
       end
 
       @[Lune::Bind(async: true)]
-      @[Lune::BindOverride(arg_names: ["db", "sql", "params"], ts_return_type: "Promise<Record<string, unknown>[]>")]
-      def query(db_id : String, sql : String, params : Array(JSON::Any)) : Array(Hash(String, JSON::Any))
-        database = @mu.synchronize { @databases[db_id]? }
-        raise Lune::Error.new("sqlite_not_open", "No open database with id \"#{db_id}\"") unless database
+      @[Lune::BindOverride(ts_return_type: "Promise<Record<string, unknown>[]>")]
+      def query(db : String, sql : String, params : Array(JSON::Any)) : Array(Hash(String, JSON::Any))
+        database = @mu.synchronize { @databases[db]? }
+        raise Lune::Error.new("sqlite_not_open", "No open database with id \"#{db}\"") unless database
         begin
           rows = [] of Hash(String, JSON::Any)
           database.query(sql, args: to_db_args(params)) do |rs|

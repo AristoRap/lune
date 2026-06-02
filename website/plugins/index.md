@@ -53,28 +53,29 @@ Two plugins are marked **core**: `event` and `stream`. They are enabled by defau
 
 ## Plugin matrix
 
-| Plugin                            | Config key       | JS namespace  | Core    | Phases                   | Hard deps | Soft deps | Platforms                             |
-| --------------------------------- | ---------------- | ------------- | ------- | ------------------------ | --------- | --------- | ------------------------------------- |
-| [Event](./event)                  | `event`          | `Event`       | **Yes** | WebviewInject            | —         | —         | all                                   |
-| [Stream](./stream)                | `stream`         | `Stream`      | **Yes** | WebviewInject            | —         | —         | all                                   |
-| [Clipboard](./clipboard)          | `clipboard`      | `Clipboard`   | No      | Bindable                 | —         | —         | all (image: no Win32)                 |
-| [ContextMenu](./context-menu)     | `context_menu`   | `ContextMenu` | No      | Bindable · WebviewInject | `event`   | —         | macOS (Windows/Linux: planned)        |
-| [DeepLink](./deep-link)           | `deep_link`      | `DeepLink`    | No      | Bindable                 | `event`   | —         | macOS · Linux · Windows²              |
-| [Dialogs](./dialogs)              | `dialogs`        | `Dialogs`     | No      | Bindable                 | —         | —         | all                                   |
-| [DragOut](./drag-out)             | `drag_out`       | `DragOut`     | No      | Bindable                 | —         | —         | macOS                                 |
-| [EditShortcuts](./edit-shortcuts) | `edit_shortcuts` | —             | No      | WebviewInject            | —         | —         | all                                   |
-| [FileDrop](./file-drop)           | `file_drop`      | `FileDrop`    | No      | WebviewInject            | `event`   | —         | macOS · Linux                         |
-| [FileWatch](./file-watch)         | `file_watch`     | `FileWatch`   | No      | Bindable · Lifecycle     | `event`   | —         | macOS · Linux                         |
-| [Filesystem](./filesystem)        | `filesystem`     | `Filesystem`  | No      | Bindable                 | —         | —         | all                                   |
-| [Hotkeys](./hotkeys)              | `hotkeys`        | `Hotkeys`     | No      | Bindable                 | —         | `event`   | macOS · Linux · Windows               |
-| [Navigation](./navigation)        | `navigation`     | —             | No      | WebviewInject            | —         | —         | all                                   |
-| [Kv](./kv)                        | `kv`             | `Kv`          | No      | Bindable · Lifecycle     | —         | —         | all                                   |
-| [Shell](./shell)                  | `shell`          | `Shell`       | No      | Bindable · Lifecycle     | `stream`  | —         | macOS · Linux · Windows³              |
-| [Sqlite](./sqlite)                | `sqlite`         | `Sqlite`      | No      | Bindable · Lifecycle     | —         | —         | all                                   |
-| [System](./system)                | `system`         | `System`      | No      | Bindable                 | —         | —         | all (includes `screenInfo`, `notify`) |
-| [Tray](./tray)                    | `tray`           | `Tray`        | No      | Bindable                 | —         | `event`   | macOS · Linux¹ · Windows⁴             |
-| [Window](./window)                | `window`         | `Window`      | No      | Bindable · WebviewInject | —         | —         | all (chrome opts + drag_zone macOS)   |
-| [Windows](./windows)              | `windows`        | `Windows`     | No      | Bindable · Lifecycle     | —         | —         | all                                   |
+| Plugin                            | Config key       | JS namespace    | Core    | Phases                   | Hard deps | Soft deps | Platforms                             |
+| --------------------------------- | ---------------- | --------------- | ------- | ------------------------ | --------- | --------- | ------------------------------------- |
+| [Event](./event)                  | `event`          | `Event`         | **Yes** | WebviewInject            | —         | —         | all                                   |
+| [Stream](./stream)                | `stream`         | `Stream`        | **Yes** | WebviewInject            | —         | —         | all                                   |
+| [Clipboard](./clipboard)          | `clipboard`      | `Clipboard`     | No      | Bindable                 | —         | —         | all (image: no Win32)                 |
+| [ContextMenu](./context-menu)     | `context_menu`   | `ContextMenu`   | No      | Bindable · WebviewInject | `event`   | —         | macOS (Windows/Linux: planned)        |
+| [DeepLink](./deep-link)           | `deep_link`      | `DeepLink`      | No      | Bindable                 | `event`   | —         | macOS · Linux · Windows²              |
+| [Dialogs](./dialogs)              | `dialogs`        | `Dialogs`       | No      | Bindable                 | —         | —         | all                                   |
+| [DragOut](./drag-out)             | `drag_out`       | `DragOut`       | No      | Bindable                 | —         | —         | macOS                                 |
+| [EditShortcuts](./edit-shortcuts) | `edit_shortcuts` | —               | No      | WebviewInject            | —         | —         | all                                   |
+| [FileDrop](./file-drop)           | `file_drop`      | `FileDrop`      | No      | WebviewInject            | `event`   | —         | macOS · Linux                         |
+| [FileWatch](./file-watch)         | `file_watch`     | `FileWatch`     | No      | Bindable · Lifecycle     | `event`   | —         | macOS · Linux                         |
+| [Filesystem](./filesystem)        | `filesystem`     | `Filesystem`    | No      | Bindable                 | —         | —         | all                                   |
+| [Hotkeys](./hotkeys)              | `hotkeys`        | `Hotkeys`       | No      | Bindable                 | —         | `event`   | macOS · Linux · Windows               |
+| [Introspection](./introspection)  | `introspection`  | `Introspection` | No      | Bindable · WebviewInject | —         | —         | all                                   |
+| [Navigation](./navigation)        | `navigation`     | —               | No      | WebviewInject            | —         | —         | all                                   |
+| [Kv](./kv)                        | `kv`             | `Kv`            | No      | Bindable · Lifecycle     | —         | —         | all                                   |
+| [Shell](./shell)                  | `shell`          | `Shell`         | No      | Bindable · Lifecycle     | `stream`  | —         | macOS · Linux · Windows³              |
+| [Sqlite](./sqlite)                | `sqlite`         | `Sqlite`        | No      | Bindable · Lifecycle     | —         | —         | all                                   |
+| [System](./system)                | `system`         | `System`        | No      | Bindable                 | —         | —         | all (includes `screenInfo`, `notify`) |
+| [Tray](./tray)                    | `tray`           | `Tray`          | No      | Bindable                 | —         | `event`   | macOS · Linux¹ · Windows⁴             |
+| [Window](./window)                | `window`         | `Window`        | No      | Bindable · WebviewInject | —         | —         | all (chrome opts + drag_zone macOS)   |
+| [Windows](./windows)              | `windows`        | `Windows`       | No      | Bindable · Lifecycle     | —         | —         | all                                   |
 
 ¹ Requires XWayland on Wayland compositors.
 ² Windows: cold-start (ARGV) only — no warm-start forwarding yet (Linux has Unix-socket warm-start).

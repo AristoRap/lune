@@ -63,6 +63,18 @@ describe Lune::Plugins::Window do
         plugin.init_js.not_nil!.should contain("mousedown")
         plugin.init_js.not_nil!.should contain("--lune-draggable")
       end
+
+      # The listener must invoke the binding by its actual dispatch id, which
+      # camelCases the method leaf (`start_drag` → `startDrag`) — the same id the
+      # bridge binds. A snake-case id here calls an undefined window fn (drag
+      # silently dead).
+      it "invokes the start_drag binding by its camelCased dispatch id" do
+        plugin = Lune::Plugins::Window.new
+        plugin.config.drag_zone = "--lune-draggable"
+        js = plugin.init_js.not_nil!
+        js.should contain(%(window["Lune.Plugins.Window.startDrag"]))
+        js.should_not contain("start_drag")
+      end
     {% else %}
       it "returns nil even when drag_zone is set on Linux" do
         plugin = Lune::Plugins::Window.new

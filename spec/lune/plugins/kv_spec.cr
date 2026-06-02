@@ -60,7 +60,7 @@ describe Lune::Plugins::Kv do
       app = Lune::App.new
       app.install(plugin)
       get_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.get" }.not_nil!
-      result = get_b.callback.call([JSON::Any.new("missing")])
+      result = JSON.parse(app.registry.dispatch(get_b.id, ({"key" => JSON::Any.new("missing")}).to_json, nil))
       result.raw.should be_nil
     end
 
@@ -70,8 +70,8 @@ describe Lune::Plugins::Kv do
       app.install(plugin)
       set_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.set" }.not_nil!
       get_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.get" }.not_nil!
-      set_b.callback.call([JSON::Any.new("name"), JSON::Any.new("alice")])
-      result = get_b.callback.call([JSON::Any.new("name")])
+      JSON.parse(app.registry.dispatch(set_b.id, ({"key" => JSON::Any.new("name"), "value" => JSON::Any.new("alice")}).to_json, nil))
+      result = JSON.parse(app.registry.dispatch(get_b.id, ({"key" => JSON::Any.new("name")}).to_json, nil))
       result.as_s.should eq("alice")
     end
 
@@ -81,8 +81,8 @@ describe Lune::Plugins::Kv do
       app.install(plugin)
       set_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.set" }.not_nil!
       get_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.get" }.not_nil!
-      set_b.callback.call([JSON::Any.new("count"), JSON::Any.new(42_i64)])
-      result = get_b.callback.call([JSON::Any.new("count")])
+      JSON.parse(app.registry.dispatch(set_b.id, ({"key" => JSON::Any.new("count"), "value" => JSON::Any.new(42_i64)}).to_json, nil))
+      result = JSON.parse(app.registry.dispatch(get_b.id, ({"key" => JSON::Any.new("count")}).to_json, nil))
       result.as_i64.should eq(42)
     end
 
@@ -91,7 +91,7 @@ describe Lune::Plugins::Kv do
       app = Lune::App.new
       app.install(plugin)
       has_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.has" }.not_nil!
-      has_b.callback.call([JSON::Any.new("nope")]).as_bool.should be_false
+      JSON.parse(app.registry.dispatch(has_b.id, ({"key" => JSON::Any.new("nope")}).to_json, nil)).as_bool.should be_false
     end
 
     it "has returns true after set" do
@@ -100,8 +100,8 @@ describe Lune::Plugins::Kv do
       app.install(plugin)
       set_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.set" }.not_nil!
       has_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.has" }.not_nil!
-      set_b.callback.call([JSON::Any.new("x"), JSON::Any.new("y")])
-      has_b.callback.call([JSON::Any.new("x")]).as_bool.should be_true
+      JSON.parse(app.registry.dispatch(set_b.id, ({"key" => JSON::Any.new("x"), "value" => JSON::Any.new("y")}).to_json, nil))
+      JSON.parse(app.registry.dispatch(has_b.id, ({"key" => JSON::Any.new("x")}).to_json, nil)).as_bool.should be_true
     end
 
     it "keys returns all set keys" do
@@ -110,9 +110,9 @@ describe Lune::Plugins::Kv do
       app.install(plugin)
       set_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.set" }.not_nil!
       keys_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.keys" }.not_nil!
-      set_b.callback.call([JSON::Any.new("a"), JSON::Any.new("1")])
-      set_b.callback.call([JSON::Any.new("b"), JSON::Any.new("2")])
-      keys = keys_b.callback.call([] of JSON::Any).as_a.map(&.as_s)
+      JSON.parse(app.registry.dispatch(set_b.id, ({"key" => JSON::Any.new("a"), "value" => JSON::Any.new("1")}).to_json, nil))
+      JSON.parse(app.registry.dispatch(set_b.id, ({"key" => JSON::Any.new("b"), "value" => JSON::Any.new("2")}).to_json, nil))
+      keys = JSON.parse(app.registry.dispatch(keys_b.id, ({} of String => JSON::Any).to_json, nil)).as_a.map(&.as_s)
       keys.should contain("a")
       keys.should contain("b")
     end
@@ -124,9 +124,9 @@ describe Lune::Plugins::Kv do
       set_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.set" }.not_nil!
       del_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.delete" }.not_nil!
       has_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.has" }.not_nil!
-      set_b.callback.call([JSON::Any.new("tmp"), JSON::Any.new("val")])
-      del_b.callback.call([JSON::Any.new("tmp")])
-      has_b.callback.call([JSON::Any.new("tmp")]).as_bool.should be_false
+      JSON.parse(app.registry.dispatch(set_b.id, ({"key" => JSON::Any.new("tmp"), "value" => JSON::Any.new("val")}).to_json, nil))
+      JSON.parse(app.registry.dispatch(del_b.id, ({"key" => JSON::Any.new("tmp")}).to_json, nil))
+      JSON.parse(app.registry.dispatch(has_b.id, ({"key" => JSON::Any.new("tmp")}).to_json, nil)).as_bool.should be_false
     end
 
     it "clear empties the store" do
@@ -136,10 +136,10 @@ describe Lune::Plugins::Kv do
       set_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.set" }.not_nil!
       clear_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.clear" }.not_nil!
       keys_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.keys" }.not_nil!
-      set_b.callback.call([JSON::Any.new("k1"), JSON::Any.new("v1")])
-      set_b.callback.call([JSON::Any.new("k2"), JSON::Any.new("v2")])
-      clear_b.callback.call([] of JSON::Any)
-      keys_b.callback.call([] of JSON::Any).as_a.should be_empty
+      JSON.parse(app.registry.dispatch(set_b.id, ({"key" => JSON::Any.new("k1"), "value" => JSON::Any.new("v1")}).to_json, nil))
+      JSON.parse(app.registry.dispatch(set_b.id, ({"key" => JSON::Any.new("k2"), "value" => JSON::Any.new("v2")}).to_json, nil))
+      JSON.parse(app.registry.dispatch(clear_b.id, ({} of String => JSON::Any).to_json, nil))
+      JSON.parse(app.registry.dispatch(keys_b.id, ({} of String => JSON::Any).to_json, nil)).as_a.should be_empty
     end
   end
 
@@ -163,7 +163,7 @@ describe Lune::Plugins::Kv do
       app = Lune::App.new
       app.install(plugin)
       dts = Lune::Generator.generate_runtime_dts(app.bindings, [plugin] of Lune::Plugin)
-      dts.should contain("keys(): Promise<string[]>")
+      dts.should contain("keys(args?: {}): Promise<string[]>")
     end
 
     it "emits has(key) as Promise<boolean>" do
@@ -171,7 +171,7 @@ describe Lune::Plugins::Kv do
       app = Lune::App.new
       app.install(plugin)
       dts = Lune::Generator.generate_runtime_dts(app.bindings, [plugin] of Lune::Plugin)
-      dts.should contain("has(key: string): Promise<boolean>")
+      dts.should contain("has(args: { key: string }): Promise<boolean>")
     end
   end
 end

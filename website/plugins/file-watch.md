@@ -35,23 +35,23 @@ Or omit `plugins:` entirely.
 ```js
 import { lune } from "../lunejs/runtime/runtime.js";
 
-lune.FileWatch.watch("/tmp/config.json");
+lune.FileWatch.watch({ path: "/tmp/config.json" });
 
 lune.FileWatch.on((event) => {
   console.log(event.path, event.kind);
   // e.g. "/tmp/config.json", "modified"
 });
 
-lune.FileWatch.unwatch("/tmp/config.json");
+lune.FileWatch.unwatch({ path: "/tmp/config.json" });
 ```
 
-| Method    | Signature       | Description                               |
-| --------- | --------------- | ----------------------------------------- |
-| `watch`   | `watch(path)`   | Start watching a file or directory        |
-| `unwatch` | `unwatch(path)` | Stop watching a path                      |
-| `on`      | `on(cb)`        | Persistent listener                       |
-| `once`    | `once(cb)`      | One-shot listener                         |
-| `off`     | `off(cb?)`      | Remove a listener, or all if `cb` omitted |
+| Method    | Signature           | Description                               |
+| --------- | ------------------- | ----------------------------------------- |
+| `watch`   | `watch({ path })`   | Start watching a file or directory        |
+| `unwatch` | `unwatch({ path })` | Stop watching a path                      |
+| `on`      | `on(cb)`            | Persistent listener                       |
+| `once`    | `once(cb)`          | One-shot listener                         |
+| `off`     | `off(cb?)`          | Remove a listener, or all if `cb` omitted |
 
 ---
 

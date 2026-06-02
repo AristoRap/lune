@@ -33,7 +33,7 @@ Optionally set a custom icon from JavaScript once the app has mounted:
 import { lune } from "../lunejs/runtime/runtime.js";
 
 // Falls back to ● if not called
-await lune.Tray.setIcon("/absolute/path/to/icon.png");
+await lune.Tray.setIcon({ path: "/absolute/path/to/icon.png" });
 ```
 
 ---
@@ -102,11 +102,13 @@ Set a context menu with `lune.Tray.setMenu`. With no `toggle_window_on` set, bot
 ```js
 import { lune } from "../lunejs/runtime/runtime.js";
 
-lune.Tray.setMenu([
-  { id: "show", label: "Open Window" },
-  { id: "---", label: "" },
-  { id: "quit", label: "Quit" },
-]);
+lune.Tray.setMenu({
+  items: [
+    { id: "show", label: "Open Window" },
+    { id: "---", label: "" },
+    { id: "quit", label: "Quit" },
+  ],
+});
 
 lune.Event.on("trayEvent", (id) => {
   if (id === "show") lune.Window.show();
@@ -175,8 +177,8 @@ opts.height = 500
 
 ## Platform support
 
-| Platform | Status                                                                                                       |
-| -------- | ------------------------------------------------------------------------------------------------------------ |
-| macOS    | Supported                                                                                                    |
-| Windows  | Supported — `WS_EX_TOOLWINDOW` hides from taskbar + Alt+Tab; `WM_ACTIVATEAPP` triggers auto-hide on blur     |
-| Linux    | Not yet wired — `opts.menubar_mode = true` is silently ignored                                               |
+| Platform | Status                                                                                                   |
+| -------- | -------------------------------------------------------------------------------------------------------- |
+| macOS    | Supported                                                                                                |
+| Windows  | Supported — `WS_EX_TOOLWINDOW` hides from taskbar + Alt+Tab; `WM_ACTIVATEAPP` triggers auto-hide on blur |
+| Linux    | Not yet wired — `opts.menubar_mode = true` is silently ignored                                           |

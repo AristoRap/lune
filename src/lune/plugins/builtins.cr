@@ -14,7 +14,7 @@ module Lune
         Clipboard.new, Window.new, Dialogs.new, Tray.new,
         ContextMenu.new, DragOut.new, DeepLink.new, FileWatch.new,
         Shell.new, Hotkeys.new, Sqlite.new, Kv.new, Windows.new,
-        EditShortcuts.new, Navigation.new,
+        EditShortcuts.new, Navigation.new, Introspection.new,
       ] of ::Lune::Plugin
       builtins.each do |p|
         ::Lune._bless_builtin(p.class.name)

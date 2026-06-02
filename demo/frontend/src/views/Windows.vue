@@ -16,7 +16,7 @@ function addLog(msg) {
 
 async function openWindow(opts) {
   try {
-    const id = await Windows.open(opts);
+    const id = await Windows.open({ opts });
     openWindows.value.push({ id, title: opts.title || "Window" });
     addLog(`opened "${opts.title || "Window"}" → ${id}`);
   } catch (err) {
@@ -26,7 +26,7 @@ async function openWindow(opts) {
 
 async function closeWindow(id) {
   try {
-    await Windows.close(id);
+    await Windows.close({ id });
     openWindows.value = openWindows.value.filter((w) => w.id !== id);
     addLog(`closed ${id}`);
   } catch (err) {

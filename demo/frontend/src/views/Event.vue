@@ -60,7 +60,7 @@ async function sendPing() {
     ms: 0,
   });
   scrollRoundsToBottom();
-  await Event.emit("ping", pingValue.value);
+  await Event.emit({ name: "ping", data: pingValue.value });
 }
 
 function fmtVal(v) {
@@ -70,10 +70,10 @@ function fmtVal(v) {
 }
 
 async function pickAndProcess() {
-  const paths = await Dialogs.openFiles("Select files to process");
+  const paths = await Dialogs.openFiles({ prompt: "Select files to process" });
   if (!paths.length) return;
   progress.value = null;
-  await api.Demo.processFiles(paths);
+  await api.Demo.processFiles({ paths });
 }
 </script>
 

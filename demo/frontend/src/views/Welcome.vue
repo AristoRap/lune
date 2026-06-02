@@ -57,7 +57,7 @@ const features = [
           and a custom menu bar. This app is a live tour of every piece.
         </p>
         <div class="hero-actions">
-          <button class="btn-link primary" @click="System.openUrl('https://github.com/aristorap/lune')">
+          <button class="btn-link primary" @click="System.openUrl({ url: 'https://github.com/aristorap/lune' })">
             <Icon name="code" :size="14" /> Source on GitHub
           </button>
           <span class="chip">
