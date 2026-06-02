@@ -49,7 +49,16 @@ module Lune
     def dispatch_eval(js : String)
       return if @closed.get
       wv = @wv
-      wv.dispatch { wv.eval(js) }
+      # Re-check `@closed` inside the queued block: between enqueue and drain the
+      # bridge may be closed and the webview engine torn down. On Win32 the
+      # engine's destructor still drains pending dispatches via
+      # `deplete_run_loop_event_queue`, so a stale `eval` here calls into a
+      # half-destroyed engine and SEGVs. `@closed` is read through `self` (Crystal
+      # `Atomic` is a struct — a local copy wouldn't see the bridge's flag flip).
+      wv.dispatch do
+        next if @closed.get
+        wv.eval(js)
+      end
     end
 
     # -----------------------------------
