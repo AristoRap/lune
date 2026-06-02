@@ -24,12 +24,9 @@ demo/.lune-dev
 demo/*.dwarf
 demo/frontend/node_modules/
 demo/frontend/dist/
-demo/frontend/lunejs/
 
 # VitePress
 /node_modules/
 /website/.vitepress/dist/
 /website/.vitepress/cache/
 demo/frontend/package-lock.json
-
-
