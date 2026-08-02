@@ -113,7 +113,7 @@ module LuneCLI
             stderr_buf = IO::Memory.new
             compiled = Process.run(
               "crystal",
-              ["build", app_entry, "-o", DEV_BINARY, "-Dpreview_mt", "-Dexecution_context", "-Dlune_dev"],
+              ["build", app_entry, "-o", DEV_BINARY, "-Dlune_dev"],
               env: env,
               input: Process::Redirect::Close,
               output: Process::Redirect::Inherit,

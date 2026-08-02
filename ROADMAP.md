@@ -33,15 +33,9 @@ Structural improvements that unlock whole categories of apps.
 ## Shipping & DX
 
 - [ ] **Auto-updater** — in-app update checks and installs driven by a manifest URL; Sparkle on macOS, equivalent on Linux / Windows.
-- [ ] **Windows release artifact** — `release.yml` matrix is Linux + macOS arm64 only. Adding `windows-latest` needs the Windows prep `specs.yml` already has (MSVC, `LibC::PidT` stdlib patch, WebView2 SDK headers, sqlite3.lib + webview.lib builds, LIB / PATH / CPATH env wiring) plus a real `shards build --release` — specs only `--no-codegen` type-check the Win32 paths today, so the first real link may surface errors. Product decision: ship `lune.exe` bare and document the `webview.dll` / `sqlite3.dll` runtime prerequisites, or zip the artifact with sidecar DLLs.
+- [ ] **Windows release artifact** — `release.yml` is Linux + macOS arm64 only. Windows CI now performs a full MSVC build and link with Crystal 1.21 plus the required WebView2/sqlite native libraries. The remaining product decision is whether to ship `lune.exe` bare and document the `webview.dll` / `sqlite3.dll` runtime prerequisites, or zip it with the sidecar DLLs.
 - [ ] **Splash screen** — show a configurable loading view while the Crystal runtime and frontend initialise.
 - [ ] **Additional templates** — Svelte, React + TypeScript.
-
-## Blocked on upstream
-
-Items the project can't pursue until external dependencies move. Each entry names the dependency.
-
-- [ ] **Win32 toolchain — vanilla Crystal ≥ 1.21.** Crystal 1.20.x can't compile a runnable binary on MSVC (`LibC::PidT` missing in `Process.initialize`; fixed in [crystal#16933](https://github.com/crystal-lang/crystal/pull/16933)). Local builds work with a one-line stdlib patch; promote to a supported toolchain (CI matrix without the patch) once 1.21 ships.
 
 ---
 

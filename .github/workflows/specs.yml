@@ -30,11 +30,8 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            spec_flags: "-Dpreview_mt -Dexecution_context"
           - os: macos-latest
-            spec_flags: "-Dpreview_mt -Dexecution_context"
           - os: windows-latest
-            spec_flags: "-Dpreview_mt -Dexecution_context"
 
     steps:
       - name: Checkout
@@ -42,6 +39,8 @@ jobs:
 
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
+        with:
+          crystal: 1.21.0
 
       - name: Install Linux system dependencies
         if: runner.os == 'Linux'
@@ -49,42 +48,16 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libnotify-dev
 
-      # ─── Windows: stage native deps + patch Crystal stdlib ──────────────
-      # Three things `crystal spec` needs on Windows that aren't available
+      # ─── Windows: stage native deps ──────────────────────────────────────
+      # Two things `crystal spec` needs on Windows that aren't available
       # out of the box on `windows-latest`:
       #   1. WebView2 SDK headers (CPATH)
       #   2. sqlite3.lib + webview.lib (LIB) — for the linker
-      #   3. Crystal stdlib patch for Process.initialize PidT (until 1.21)
       # All of this lives in WINDOWS_SETUP.md; the steps below automate it.
 
       - name: Setup MSVC environment (Windows)
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
-
-      - name: Patch Crystal stdlib for LibC::PidT (Windows, pre-1.21)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          # Crystal 1.20.x MSVC stdlib references LibC::PidT in
-          # Process.initialize, which doesn't exist on Windows. Fixed upstream
-          # in crystal-lang/crystal#16933 (Crystal 1.21.0). Until that ships,
-          # patch the installed stdlib by dropping the type annotation.
-          # Idempotent — re-running on a patched / future-fixed stdlib is a no-op.
-          $stdlib = (& crystal env CRYSTAL_PATH).Split(';') | Where-Object { $_ -and (Test-Path (Join-Path $_ "process.cr")) } | Select-Object -First 1
-          if (-not $stdlib) {
-            Write-Error "Could not locate Crystal stdlib via 'crystal env CRYSTAL_PATH'"
-            exit 1
-          }
-          $processFile = Join-Path $stdlib "process.cr"
-          Write-Host "Patching $processFile"
-          $content = Get-Content $processFile -Raw
-          $patched = $content -replace 'def initialize\(pid : LibC::PidT\)', 'def initialize(pid)'
-          if ($content -ne $patched) {
-            Set-Content -Path $processFile -Value $patched -NoNewline
-            Write-Host "Applied LibC::PidT workaround"
-          } else {
-            Write-Host "Stdlib already patched (or Crystal >= 1.21) — skipping"
-          }
 
       - name: Install WebView2 SDK headers (Windows)
         if: runner.os == 'Windows'
@@ -129,7 +102,7 @@ jobs:
         # webview.h are in `lib/webview/ext/`. Compile with cl.exe +
         # /DWEBVIEW_STATIC so WEBVIEW_API resolves to `extern` (default
         # is `inline` for C++, which produces a symbol-less .lib), then
-        # archive into webview.lib. Mirrors WINDOWS_SETUP.md step 4b.
+        # archive into webview.lib. Mirrors WINDOWS_SETUP.md step 3b.
         run: |
           $ext = "$env:GITHUB_WORKSPACE\lib\webview\ext"
           Push-Location $ext
@@ -161,12 +134,11 @@ jobs:
           "LIB=$env:SQLITE_LIB_DIR;$ext;$env:LIB" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Run all specs
-        run: crystal spec -Dlune_native_test_mock ${{ matrix.spec_flags }}
+        run: crystal spec -Dlune_native_test_mock
 
       # The spec run uses `lune_native_test_mock`, which short-circuits the
-      # native Win32 paths in src/lune/native/*. To make sure the real native
-      # code still type-checks (i.e. nobody broke a win32 macro branch by
-      # accident), do a `--no-codegen` build of the CLI without the mock flag.
-      - name: Type-check real Windows build
+      # native Win32 paths in src/lune/native/*. Build and link the real CLI
+      # without the mock flag so CI covers the full MSVC path.
+      - name: Build real Windows CLI
         if: runner.os == 'Windows'
-        run: crystal build src/lune_cli.cr ${{ matrix.spec_flags }} --no-codegen
+        run: shards build

@@ -19,7 +19,6 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $RepoRoot = $PSScriptRoot
-$CrystalFlags = @('-Dpreview_mt', '-Dexecution_context')
 $LuneExe = Join-Path $RepoRoot 'bin\lune.exe'
 $DemoDir = Join-Path $RepoRoot 'demo'
 $WebDir  = Join-Path $RepoRoot 'website'
@@ -153,7 +152,7 @@ function Invoke-Test {
     Assert-NativeDeps
     Push-Location $RepoRoot
     try {
-        crystal spec -Dlune_native_test_mock @CrystalFlags
+        crystal spec -Dlune_native_test_mock
         if ($LASTEXITCODE -ne 0) { throw "specs failed (exit $LASTEXITCODE)" }
     } finally { Pop-Location }
 }
@@ -164,8 +163,8 @@ function Invoke-Build([switch]$Release) {
     Initialize-LuneEnv
     Push-Location $RepoRoot
     try {
-        $args = @() + $CrystalFlags
-        if ($Release) { $args = @('--release') + $args }
+        $args = @()
+        if ($Release) { $args = @('--release') }
         shards build @args
         if ($LASTEXITCODE -ne 0) { throw "shards build failed (exit $LASTEXITCODE)" }
     } finally { Pop-Location }
