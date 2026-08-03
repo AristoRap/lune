@@ -115,7 +115,7 @@ module LuneCLI
         captured = IO::Memory.new
         status = Process.run(
           "crystal",
-          ["run", app_entry, "-Dpreview_mt", "-Dexecution_context", "-Dlune_inspect"],
+          ["run", app_entry, "-Dlune_inspect"],
           output: captured,
           error: Process::Redirect::Inherit
         )
@@ -167,7 +167,7 @@ module LuneCLI
         captured = IO::Memory.new
         status = Process.run(
           "crystal",
-          ["run", app_entry, "-Dpreview_mt", "-Dexecution_context", "-Dlune_inspect_api"],
+          ["run", app_entry, "-Dlune_inspect_api"],
           output: captured,
           error: Process::Redirect::Inherit
         )
@@ -355,7 +355,7 @@ module LuneCLI
 
       private record Check, label : String, ok : Bool, detail : String
 
-      CRYSTAL_MIN = SemanticVersion.parse("1.20.1")
+      CRYSTAL_MIN = SemanticVersion.parse("1.21.0")
 
       private def check_crystal : Check
         output = IO::Memory.new
@@ -368,7 +368,7 @@ module LuneCLI
 
         installed = SemanticVersion.parse(version_str)
         ok = installed >= CRYSTAL_MIN
-        detail = ok ? version_line : "#{version_line} — Lune requires >= #{CRYSTAL_MIN} (-Dexecution_context)"
+        detail = ok ? version_line : "#{version_line} — Lune requires >= #{CRYSTAL_MIN}"
         Check.new(label: "crystal", ok: ok, detail: detail)
       rescue File::NotFoundError
         Check.new(label: "crystal", ok: false, detail: "not found")

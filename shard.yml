@@ -5,7 +5,7 @@ description: Build native desktop apps with Crystal and a web frontend.
 authors:
   - Aristotelis Rapai <aristorap.dev@gmail.com>
 
-crystal: ">= 1.20.1"
+crystal: ">= 1.21.0"
 
 license: MIT
 

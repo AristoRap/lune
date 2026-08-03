@@ -30,6 +30,8 @@ jobs:
 
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
+        with:
+          crystal: 1.21.0
 
       - name: Install Linux system dependencies
         if: runner.os == 'Linux'
@@ -41,7 +43,7 @@ jobs:
         run: shards install
 
       - name: Build release binary
-        run: shards build --release -Dpreview_mt -Dexecution_context
+        run: shards build --release
 
       - name: Stage artifact
         run: cp bin/lune ${{ matrix.artifact }}

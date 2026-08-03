@@ -37,7 +37,7 @@ module LuneCLI
       def run(config : LuneCLI::Config) : Bool
         Process.run(
           "crystal",
-          ["build", config.app_entry, "-Dpreview_mt", "--no-codegen", "-Dexecution_context"],
+          ["build", config.app_entry, "--no-codegen"],
           input: Process::Redirect::Inherit,
           output: Process::Redirect::Inherit,
           error: Process::Redirect::Inherit

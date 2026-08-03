@@ -28,16 +28,14 @@ help:
 setup:
 	shards install
 
-CRYSTAL_FLAGS := -Dpreview_mt -Dexecution_context
-
 test:
-	crystal spec -Dlune_native_test_mock $(CRYSTAL_FLAGS)
+	crystal spec -Dlune_native_test_mock
 
 build:
-	$(MAKE) test && shards build $(CRYSTAL_FLAGS)
+	$(MAKE) test && shards build
 
 release:
-	$(MAKE) test && shards build --release $(CRYSTAL_FLAGS)
+	$(MAKE) test && shards build --release
 
 copy:
 	cp ./bin/lune /usr/local/bin/lune

@@ -2,20 +2,11 @@
 
 ## Prerequisites
 
-- **Crystal** >= 1.20.1 — [install](https://crystal-lang.org/install/)
+- **Crystal** >= 1.21.0 — [install](https://crystal-lang.org/install/)
 - **Node.js** >= 18 and **npm** — [install](https://nodejs.org/)
 - **shards** — ships with Crystal
 
-::: warning Experimental Crystal flags required
-Lune compiles with `-Dpreview_mt -Dexecution_context`. These flags enable Crystal's multi-threading execution context API, which Lune uses to run `async:` bindings on real OS threads without blocking the native GUI event loop.
-
-The `lune` CLI passes both flags automatically for `lune dev` and `lune build`. If you ever invoke `crystal build` directly, add both flags yourself:
-
-```sh
-crystal build src/main.cr -Dpreview_mt -Dexecution_context -o build/my_app
-```
-
-:::
+Crystal 1.21 enables execution contexts by default, so `lune dev`, `lune build`, and direct `crystal build` invocations need no experimental compiler flags.
 
 **macOS only:** Xcode Command Line Tools are required for the native WebView headers.
 
@@ -29,7 +20,7 @@ sudo apt install libwebkit2gtk-4.1-dev
 sudo dnf install webkit2gtk4.1-devel
 ```
 
-**Windows only:** WebView2 is bundled with Windows 10/11. Until Crystal 1.21 ships, the Windows build path requires a one-line stdlib patch — see [WINDOWS_SETUP.md](https://github.com/AristoRap/lune/blob/main/WINDOWS_SETUP.md) for the exact command. Once patched, `lune dev` / `lune build` work end-to-end; per-plugin Windows status is on each [plugin page](./plugins/).
+**Windows only:** WebView2 is bundled with Windows 10/11. Use Crystal 1.21+ and follow [WINDOWS_SETUP.md](https://github.com/AristoRap/lune/blob/main/WINDOWS_SETUP.md) for the native library setup; per-plugin Windows status is on each [plugin page](./plugins/).
 
 ---
 
@@ -44,7 +35,7 @@ Pre-built binaries are attached to each [GitHub release](https://github.com/Aris
 
 > **macOS Intel (x86_64):** No pre-built binary is available — the GitHub Actions Intel runner is currently unreliable. Build from source instead (see below).
 
-> **Windows:** No pre-built binary yet — build from source per [WINDOWS_SETUP.md](https://github.com/AristoRap/lune/blob/main/WINDOWS_SETUP.md), which covers the Crystal stdlib patch needed on 1.20.x.
+> **Windows:** No pre-built binary yet — build from source per [WINDOWS_SETUP.md](https://github.com/AristoRap/lune/blob/main/WINDOWS_SETUP.md).
 
 Download the binary for your platform, make it executable, and put it on your PATH:
 

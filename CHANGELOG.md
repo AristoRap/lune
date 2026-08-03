@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- **Crystal 1.21.0+ is now required.** Execution contexts are enabled by default, so Lune no longer passes or documents explicit `-Dpreview_mt -Dexecution_context` flags.
+- **Windows uses the vanilla Crystal toolchain.** Removed the `LibC::PidT` stdlib patch now that [crystal#16933](https://github.com/crystal-lang/crystal/pull/16933) ships in 1.21. Windows CI now performs a full native CLI build and link instead of stopping at `--no-codegen`.
+
 ## [0.18.0] - 2026-06-02
 
 ### Changed
