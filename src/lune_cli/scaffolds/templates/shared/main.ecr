@@ -11,9 +11,9 @@ class Welcome
   include Lune::Bindable
 
   @[Lune::Bind]
-  def greet(msg : String) : String
-    msg = msg.empty? ? "stranger" : msg
-    "Hello, #{msg}!"
+  def greet(name : String) : String
+    name = name.empty? ? "stranger" : name
+    "Hello, #{name}!"
   end
 end
 

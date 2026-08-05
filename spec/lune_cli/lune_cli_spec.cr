@@ -446,6 +446,18 @@ describe LuneCLI do
         main.should match(/def #{method}\b/)
       end
     end
+
+    it "passes named argument objects to scaffold bindings" do
+      main = LuneCLI::Scaffolds::CrystalMain.new(ctx).to_h[:rendered]
+      vue = LuneCLI::Scaffolds::VueApp.new(ctx).to_h[:rendered]
+      vanilla = LuneCLI::Scaffolds::VanillaJS.new(ctx).to_h[:rendered]
+
+      main.should contain("def greet(name : String)")
+      vue.should contain("api.Welcome.greet({ name: name.value.trim() })")
+      vue.should contain("api.Counter.inc({ value: count.value })")
+      vue.should contain("api.Counter.dec({ value: count.value })")
+      vanilla.should contain("api.Welcome.greet({ name })")
+    end
   end
 
   describe "dist command" do
