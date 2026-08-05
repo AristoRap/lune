@@ -23,6 +23,13 @@ dependencies:
     github: crystal-lang/crystal-sqlite3
     version: ~> 0.23
 
+development_dependencies:
+  ameba:
+    github: crystal-ameba/ameba
+    branch: master
+
 targets:
   lune:
     main: bin/lune.cr
+  ameba:
+    main: lib/ameba/bin/ameba.cr

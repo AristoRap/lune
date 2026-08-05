@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## [0.19.1] - 2026-08-05
+
+### Fixed
+
+- **Generated JavaScript and Vue starters now call bindings with named-argument objects.** `Welcome.greet` and the Vue counter actions use the `{ name }` / `{ value }` call shape introduced in 0.17.0 instead of passing positional values. The shared Crystal scaffold now names the greeting parameter `name` to match the generated clients, and scaffold specs cover the complete contract.
+
+## [0.19.0] - 2026-08-03
+
 ### Changed
 
 - **Crystal 1.21.0+ is now required.** Execution contexts are enabled by default, so Lune no longer passes or documents explicit `-Dpreview_mt -Dexecution_context` flags.
