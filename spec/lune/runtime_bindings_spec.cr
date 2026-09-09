@@ -528,14 +528,15 @@ describe "Lune::Plugins" do
       # (all cross-platform) and Window.start_drag (darwin + win32; Linux still
       # needs _NET_WM_MOVERESIZE so the binding stays compiled out via
       # {% if flag?(:darwin) || flag?(:win32) %} on the Window plugin).
-      #   darwin = 64 baseline (Event.emit + Navigation.changed + Introspection.manifest + Window.start_drag)
-      #   linux  = 64 - DragOut(1) - Window.start_drag(1)  = 62
-      #   win32  = 64 - DragOut(1)                         = 63
+      # Includes Shell.snapshot, Shell.retained, and Shell.forget.
+      #   darwin = 67 baseline
+      #   linux  = 67 - DragOut(1) - Window.start_drag(1)  = 65
+      #   win32  = 67 - DragOut(1)                         = 66
       expected = case Lune::Plugins::CURRENT_PLATFORM
-                 when :darwin then 64
-                 when :linux  then 62
-                 when :win32  then 63
-                 else              64
+                 when :darwin then 67
+                 when :linux  then 65
+                 when :win32  then 66
+                 else              67
                  end
 
       app.bindings.size.should eq(expected)
