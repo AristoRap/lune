@@ -2,8 +2,6 @@
 
 ## Unreleased
 
-<<<<<<< HEAD
-=======
 ### Added
 
 - **Shell execution context.** `Shell.spawn` and `Shell.run` accept optional `cwd` and `env` fields. Each child inherits the app's environment with per-variable overrides; `null` removes a variable. Startup failures expose typed Shell error codes.
@@ -13,7 +11,6 @@
 - **Independent Shell subscriptions.** `Shell.listen` returns an idempotent disposer and cleans up its own callbacks on received completion, including stdout-only listeners. Other listeners remain independent; `Shell.unlisten(pid)` retains its broad removal behavior.
 - **Optional and nullable binding signatures.** Generated TypeScript and manifests now preserve Crystal argument defaults, nullable argument/return types compile correctly, and return types are resolved consistently with argument types. Bindings whose arguments all have defaults also accept an omitted argument object.
 
->>>>>>> b450485e359e9df986bd973d0755bf78b8d8f7bd
 ## [0.19.1] - 2026-08-05
 
 ### Fixed
