@@ -86,10 +86,15 @@ module Lune
                   # Struct args stay matchable — `known` is keyed by resolved
                   # crystal_name as well as basename.
                   args: {{ payload.map(&.restriction.resolve.stringify) }} of String,
-                  return_type: {{ m.return_type.stringify }},
+                  return_type: {{ has_explicit_return ? m.return_type.stringify : m.return_type.resolve.stringify }},
                   internal: {{ is_plugin }},
                   async: {{ async }},
                   arg_names: {{ payload.map(&.name.stringify) }} of String,
+                  arg_optional: [
+                    {% for arg in payload %}
+                      {{ !arg.default_value.is_a?(Nop) }},
+                    {% end %}
+                  ] of Bool,
                   {% if override_ann && override_ann[:ts_args] %}ts_args: {{ override_ann[:ts_args] }},{% end %}
                   {% if override_ann && override_ann[:ts_return_type] %}
                     ts_return_type: {{ override_ann[:ts_return_type] }},
@@ -103,7 +108,9 @@ module Lune
                 {% unless has_explicit_return %}
                   {% rr = m.return_type.resolve %}
                   {% if rr.union? %}
-                    {% for u in rr.union_types %}::Vow::Codegen.collect(__vow_types, {{ u }}, ""){% end %}
+                    {% for u in rr.union_types %}
+                      ::Vow::Codegen.collect(__vow_types, {{ u }}, "")
+                    {% end %}
                   {% else %}
                     ::Vow::Codegen.collect(__vow_types, {{ rr }}, "")
                   {% end %}
@@ -111,7 +118,9 @@ module Lune
                 {% for arg in payload %}
                   {% ar = arg.restriction.resolve %}
                   {% if ar.union? %}
-                    {% for u in ar.union_types %}::Vow::Codegen.collect(__vow_types, {{ u }}, ""){% end %}
+                    {% for u in ar.union_types %}
+                      ::Vow::Codegen.collect(__vow_types, {{ u }}, "")
+                    {% end %}
                   {% else %}
                     ::Vow::Codegen.collect(__vow_types, {{ ar }}, "")
                   {% end %}

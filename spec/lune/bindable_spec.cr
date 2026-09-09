@@ -97,7 +97,38 @@ private class PickerModule
   end
 end
 
+private class OptionalModule
+  include Lune::Bindable
+
+  @[Lune::Bind]
+  def nullable(required : String?, value : String? = nil, enabled : Bool = false) : String?
+    enabled ? (value || required) : nil
+  end
+
+  @[Lune::Bind]
+  def defaulted(value : String = "fallback") : String
+    value
+  end
+end
+
 describe "Lune::Bindable + App bindings" do
+  it "keeps nullable types and defaulted arguments consistent in dispatch, declarations and manifest" do
+    app = Lune::App.new
+    app.install(OptionalModule.new)
+    binding = app.bindings.find { |b| b.method == "nullable" }.not_nil!
+    binding.to_dts_sig.should contain("args: { required: string | null; value?: string | null; enabled?: boolean }")
+    binding.to_dts_sig.should contain("Promise<string | null>")
+    binding.to_vow_descriptor.args.map(&.optional).should eq([false, true, true])
+    JSON.parse(app.registry.dispatch(binding.id, %({"required":"hello"}), nil)).raw.should be_nil
+    JSON.parse(app.registry.dispatch(binding.id, %({"required":"hello","enabled":true}), nil)).as_s.should eq("hello")
+    JSON.parse(app.registry.dispatch(binding.id, %({"required":null,"value":"override","enabled":true}), nil)).as_s.should eq("override")
+
+    defaulted = app.bindings.find { |b| b.method == "defaulted" }.not_nil!
+    defaulted.to_dts_sig.should contain("args?: { value?: string }")
+    defaulted.to_js_stub.should contain("defaulted(args = {})")
+    JSON.parse(app.registry.dispatch(defaulted.id, "{}", nil)).as_s.should eq("fallback")
+  end
+
   it "deserializes a JSON::Serializable struct arg and returns the correct result" do
     fake = FakeWebview.new
 
