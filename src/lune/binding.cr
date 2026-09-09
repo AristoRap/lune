@@ -21,6 +21,7 @@ module Lune
       @arg_names : Array(String) = [] of String,
       @ts_args : Array(String?) = [] of String?,
       @ts_return_type : String? = nil,
+      @arg_optional : Array(Bool) = [] of Bool,
     )
       @internal = internal
       @async = async
@@ -46,9 +47,9 @@ module Lune
     end
 
     def to_js_stub : String
-      # The single named-args object is forwarded as-is; its keys are typed by
-      # the `.d.ts`. A zero-arg stub defaults it to `{}` so `fn()` stays callable.
-      param = @args.empty? ? "args = {}" : "args"
+      # Default the object when every argument has a Crystal default (including
+      # zero-arg bindings); dispatch applies the actual per-argument defaults.
+      param = all_args_optional? ? "args = {}" : "args"
       bm = Lune::Plugin::BRIDGE_MARKER
       "  #{js_func_name}(#{param}) {\n    return #{bm}.call(#{id.inspect}, args);\n  },"
     end
@@ -89,27 +90,26 @@ module Lune
       Lune::Generator.crystal_return_to_ts(@return_type, known)
     end
 
-    # The static `Vow::ProcedureDescriptor` for this binding. `optional` is
-    # always false (lune's positional bindings carry no per-arg default info),
-    # and `opts` is left empty — the webview transport has no verb/opt notion.
+    # Defaults determine optionality, independently of whether a type is nullable.
+    # `opts` is left empty — the webview transport has no verb/opt notion.
     def to_vow_descriptor : Vow::ProcedureDescriptor
       keys = arg_keys
       args = @args.map_with_index do |type, i|
-        Vow::ArgDescriptor.new(keys[i], type, false)
+        Vow::ArgDescriptor.new(keys[i], type, @arg_optional[i]? || false)
       end
       Vow::ProcedureDescriptor.new(name: id, args: args, return_type: @return_type)
     end
 
     # The TS type of the single named-args object: `args: { camelKey: T; … }`,
-    # or `args?: {}` for a zero-arg binding (so `fn()` stays callable).
+    # optional when every argument has a default (including zero-arg bindings).
     def dts_params(known : Hash(String, String) = {} of String => String)
       return "args?: {}" if @args.empty?
       keys = arg_keys
       fields = @args.each_with_index.map { |type, i|
         ts = @ts_args[i]? || Lune::Generator.crystal_to_ts(type, known)
-        "#{keys[i]}: #{ts}"
+        "#{keys[i]}#{@arg_optional[i]? ? "?" : ""}: #{ts}"
       }
-      "args: { #{fields.join("; ")} }"
+      "args#{all_args_optional? ? "?" : ""}: { #{fields.join("; ")} }"
     end
 
     def internal?
@@ -118,6 +118,10 @@ module Lune
 
     protected def resolved_arg_names : Array(String)
       @arg_names.empty? ? Array(String).new(@args.size) { |i| "arg#{i}" } : @arg_names
+    end
+
+    private def all_args_optional? : Bool
+      @args.each_index.all? { |i| @arg_optional[i]? || false }
     end
   end
 end

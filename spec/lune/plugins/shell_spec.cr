@@ -23,7 +23,149 @@ private def shell_spec_json_args(args : Array(String)) : Array(JSON::Any)
   args.map { |a| JSON::Any.new(a) }
 end
 
+# Use an executable (not a shell) to inspect the exact argv and environment on
+# every platform. Node is also required by Lune's frontend tooling.
+private def shell_context_args
+  ["-e", <<-JS, "spaces and 'quotes' \"double\" ; $HOME & | *"]
+    setTimeout(() => {
+      console.log(JSON.stringify({cwd: process.cwd(), path: process.env.PATH ?? null,
+        value: process.env.LUNE_SHELL_SPEC_VALUE, args: process.argv.slice(1)}));
+      console.error('context stderr');
+      process.exitCode = 7;
+    }, 30);
+    JS
+end
+
+private def shell_context_payload(dir : String, value : String, unset_path = false)
+  env = {"LUNE_SHELL_SPEC_VALUE" => value.as(String?)}
+  env["PATH"] = nil if unset_path
+  {command: Process.find_executable("node").not_nil!, args: shell_context_args, cwd: dir, env: env}.to_json
+end
+
+private def assert_shell_context(raw : String, dir : String, value : String, unset_path = false)
+  data = JSON.parse(raw)
+  File.realpath(data["cwd"].as_s).should eq(File.realpath(dir))
+  data["value"].as_s.should eq(value)
+  data["args"].as_a.map(&.as_s).should eq([shell_context_args.last])
+  data["path"].as_s?.should eq(unset_path ? nil : ENV["PATH"]?)
+end
+
 describe Lune::Plugins::Shell do
+  describe "execution context" do
+    it "runs concurrent commands with isolated cwd/env and preserves literal arguments" do
+      with_tempdir do |root|
+        app = Lune::App.new
+        app.install(Lune::Plugins::Shell.new)
+        parent_cwd = Dir.current
+        results = Channel({String, String, JSON::Any} | Exception).new(2)
+        2.times do |i|
+          dir = File.join(root, "project #{i}")
+          Dir.mkdir(dir)
+          value = "value #{i} with 'quotes' & symbols"
+          payload = shell_context_payload(dir, value, unset_path: i == 1)
+          spawn do
+            begin
+              result = JSON.parse(app.registry.dispatch("Lune.Plugins.Shell.run", payload, nil))
+              results.send({dir, value, result})
+            rescue ex
+              results.send(ex)
+            end
+          end
+        end
+        2.times do
+          result = results.receive
+          raise result if result.is_a?(Exception)
+          dir, value, data = result
+          assert_shell_context(data["stdout"].as_s, dir, value, unset_path: dir.ends_with?("1"))
+          data["stderr"].as_s.strip.should eq("context stderr")
+          data["code"].as_i.should eq(7)
+        end
+        Dir.current.should eq(parent_cwd)
+        ENV["LUNE_SHELL_SPEC_VALUE"]?.should be_nil
+      end
+    end
+
+    it "spawns concurrent commands with isolated contexts and captures both streams before exit" do
+      with_tempdir do |root|
+        app = Lune::App.new
+        plugin = Lune::Plugins::Shell.new
+        app.install(plugin)
+        events = Channel({String, String}).new(16)
+        app.stream.sender = ->(name : String, data : String) { events.send({name, data}) }
+        contexts = {} of String => {String, String}
+        parent_cwd = Dir.current
+        begin
+          2.times do |i|
+            dir = File.join(root, "project #{i}")
+            Dir.mkdir(dir)
+            value = "spawn #{i}"
+            pid = JSON.parse(app.registry.dispatch("Lune.Plugins.Shell.spawn", shell_context_payload(dir, value, unset_path: i == 1), nil)).as_s
+            contexts[pid] = {dir, value}
+          end
+          outputs = {} of String => Set(String)
+          6.times do
+            select
+            when event = events.receive
+              name, raw = event
+              _, pid, stream = name.split(':')
+              dir, value = contexts[pid]
+              data = JSON.parse(raw)
+              seen = outputs[pid] ||= Set(String).new
+              case stream
+              when "stdout"
+                assert_shell_context(data["line"].as_s, dir, value, unset_path: dir.ends_with?("1"))
+              when "stderr"
+                data["line"].as_s.should eq("context stderr")
+              when "exit"
+                seen.should eq(Set{"stdout", "stderr"})
+                data["code"].as_i.should eq(7)
+              end
+              seen << stream
+            when timeout(5.seconds)
+              fail "Timed out waiting for Shell output/exit"
+            end
+          end
+          plugin.list.should be_empty
+          Dir.current.should eq(parent_cwd)
+        ensure
+          plugin.shutdown
+        end
+      end
+    end
+
+    it "reports invalid directories as typed errors for both APIs" do
+      with_tempdir do |dir|
+        file = File.join(dir, "a file")
+        File.write(file, "not a directory")
+        app = Lune::App.new
+        app.install(Lune::Plugins::Shell.new)
+        [file, File.join(dir, "missing")].each do |cwd|
+          ["spawn", "run"].each do |method|
+            ex = expect_raises(Lune::Error, /Working directory/) do
+              app.registry.dispatch("Lune.Plugins.Shell.#{method}", shell_context_payload(cwd, "unused"), nil)
+            end
+            ex.code.should eq("shell_invalid_cwd")
+            ex.message.not_nil!.should contain(cwd)
+          end
+        end
+      end
+    end
+
+    {% unless flag?(:win32) %}
+      it "reports missing executables as typed errors for both APIs" do
+        app = Lune::App.new
+        app.install(Lune::Plugins::Shell.new)
+        ["spawn", "run"].each do |method|
+          ex = expect_raises(Lune::Error) do
+            app.registry.dispatch("Lune.Plugins.Shell.#{method}", {command: "/lune-nonexistent-executable", args: [] of String}.to_json, nil)
+          end
+          ex.code.should eq("shell_command_not_found")
+          ex.message.not_nil!.should contain("/lune-nonexistent-executable")
+        end
+      end
+    {% end %}
+  end
+
   describe "descriptor" do
     it "has correct id and label" do
       d = Lune::Plugins::Shell::DESCRIPTOR
@@ -165,6 +307,19 @@ describe Lune::Plugins::Shell do
   end
 
   describe "js_helpers" do
+    it "disposes subscriptions independently and cleans up on completion" do
+      plugin = Lune::Plugins::Shell.new
+      app = Lune::App.new
+      app.install(plugin)
+      input = {
+        helpers: plugin.js_helpers,
+        marker:  Lune::Plugins::Shell::BRIDGE_MARKER,
+        runtime: Lune::Generator.generate_runtime_js(app.bindings, [plugin] of Lune::Plugin),
+      }.to_json
+      output = IO::Memory.new
+      status = Process.run("node", [File.expand_path("../../support/shell_listen_test.js", __DIR__)], input: IO::Memory.new(input), output: output, error: output)
+      status.success?.should be_true, output.to_s
+    end
     it "exposes listen" do
       Lune::Plugins::Shell.new.js_helpers.should contain("listen(")
     end
@@ -253,6 +408,19 @@ describe Lune::Plugins::Shell do
   end
 
   describe "runtime.d.ts signatures" do
+    it "emits optional context arguments and a subscription disposer" do
+      plugin = Lune::Plugins::Shell.new
+      app = Lune::App.new
+      app.install(plugin)
+      dts = Lune::Generator.generate_runtime_dts(app.bindings, [plugin] of Lune::Plugin)
+      ["spawn", "run"].each do |method|
+        signature = dts.lines.find(&.includes?("#{method}(args:")).not_nil!
+        signature.should contain("cwd?: string | null")
+        signature.should contain("env?: Record<string, string | null> | null")
+      end
+      dts.should contain("}): () => void;")
+    end
+
     it "emits list() as Promise<string[]>" do
       plugin = Lune::Plugins::Shell.new
       app = Lune::App.new
