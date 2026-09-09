@@ -4,10 +4,12 @@
 
 ### Added
 
+- **Recoverable Shell output.** `Shell.snapshot({ pid, after? })` returns bounded output with sequence cursors, explicit eviction gaps, read errors, and retained exit status. `retained` discovers running and recent completed processes; `forget` releases completed histories. Configurable byte, record, line, and completed-process limits bound `spawn` output retention.
 - **Shell execution context.** `Shell.spawn` and `Shell.run` accept optional `cwd` and `env` fields. Each child inherits the app's environment with per-variable overrides; `null` removes a variable. Startup failures expose typed Shell error codes.
 
 ### Fixed
 
+- **Reliable Shell output pumps.** Spawned-process readers always close their pipe and signal completion, including on read failure. Failed live delivery no longer prevents output capture or reaping. Oversized lines retain a marked prefix while excess bytes are drained; final partial lines and UTF-8 split across reads are preserved.
 - **Independent Shell subscriptions.** `Shell.listen` returns an idempotent disposer and cleans up its own callbacks on received completion, including stdout-only listeners. Other listeners remain independent; `Shell.unlisten(pid)` retains its broad removal behavior.
 - **Optional and nullable binding signatures.** Generated TypeScript and manifests now preserve Crystal argument defaults, nullable argument/return types compile correctly, and return types are resolved consistently with argument types. Bindings whose arguments all have defaults also accept an omitted argument object.
 

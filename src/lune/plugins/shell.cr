@@ -1,3 +1,5 @@
+require "./shell/output"
+
 module Lune
   module Plugins
     class Shell < Lune::Plugin
@@ -10,8 +12,17 @@ module Lune
         DESCRIPTOR
       end
 
+      config do
+        property output_records : Int32 = 4096
+        property output_bytes : Int32 = 1024 * 1024
+        property line_bytes : Int32 = 64 * 1024
+        property completed_processes : Int32 = 32
+      end
+
       @processes = {} of String => Process
       @stdins = {} of String => IO::FileDescriptor
+      @history = {} of String => OutputHistory
+      @completed = Deque(String).new
       @mu = Mutex.new
 
       # spawn calls @app.async three times to start the stdout/stderr/wait
@@ -44,6 +55,32 @@ module Lune
       @[Lune::Bind(async: true)]
       def list : Array(String)
         @mu.synchronize { @processes.keys }
+      end
+
+      # Authoritative, atomic recovery endpoint. Consumers poll with the last
+      # returned cursor; no Stream subscription is needed for correctness.
+      @[Lune::Bind(async: true)]
+      def snapshot(pid : String, after : Int64 = 0_i64) : Snapshot
+        @mu.synchronize do
+          history = @history[pid]? || raise Lune::Error.new("shell_process_not_found", "No retained process with id #{pid}; it may have expired or the app restarted")
+          history.snapshot(pid, after)
+        end
+      end
+
+      @[Lune::Bind(async: true)]
+      def retained : Array(String)
+        @mu.synchronize { @history.keys }
+      end
+
+      @[Lune::Bind(async: true)]
+      def forget(pid : String) : Nil
+        @mu.synchronize do
+          if @history[pid]?.try(&.running)
+            raise Lune::Error.new("shell_process_running", "Cannot forget running process #{pid}")
+          end
+          @history.delete(pid)
+          @completed.delete(pid)
+        end
       end
 
       # Blocking async binding — collects all output then resolves.
@@ -125,7 +162,7 @@ module Lune
 
       def dts_helpers : String
         <<-DTS
-          listen(pid: string, opts: { stdout?: (data: { line: string }) => void; stderr?: (data: { line: string }) => void; exit?: (data: { code: number }) => void }): () => void;
+          listen(pid: string, opts: { stdout?: (data: { line: string; truncated: boolean }) => void; stderr?: (data: { line: string; truncated: boolean }) => void; exit?: (data: { code: number }) => void }): () => void;
           unlisten(pid: string): void;
         DTS
       end
@@ -145,6 +182,11 @@ module Lune
       end
 
       private def spawn_proc(app : Lune::App, cmd : String, argv : Array(String), cwd : String?, env : Hash(String, String?)?) : String
+        limits = {@config.output_records, @config.output_bytes, @config.line_bytes, @config.completed_processes}
+        unless limits.all? { |limit| limit > 0 }
+          raise Lune::Error.new("shell_invalid_limits", "Shell output and completed-process limits must be positive")
+        end
+        max_records, max_bytes, max_line, max_completed = limits
         pid = Random.new.hex(8)
         process = Shell.with_win32_cmd_fallback(cmd, argv) do |c, a|
           Process.new(c, args: a, chdir: cwd, env: env, input: :pipe, output: :pipe, error: :pipe)
@@ -152,6 +194,7 @@ module Lune
         @mu.synchronize do
           @processes[pid] = process
           @stdins[pid] = process.input
+          @history[pid] = OutputHistory.new(max_records, max_bytes)
         end
 
         stdout_io = process.output
@@ -159,31 +202,58 @@ module Lune
         done = ::Channel(Nil).new(2)
 
         app.async("shell-#{pid}-out") do
-          while line = stdout_io.gets
-            app.stream.send("shell:#{pid}:stdout", {"line" => line})
-          end
-          done.send(nil)
+          pump_output(app, pid, "stdout", stdout_io, max_line, done)
         end
 
         app.async("shell-#{pid}-err") do
-          while line = stderr_io.gets
-            app.stream.send("shell:#{pid}:stderr", {"line" => line})
-          end
-          done.send(nil)
+          pump_output(app, pid, "stderr", stderr_io, max_line, done)
         end
 
         app.async("shell-#{pid}-wait") do
           2.times { done.receive }
           status = process.wait
+          code = status.exit_code? || -1
           @mu.synchronize do
             @processes.delete(pid)
             @stdins.delete(pid).try { |io| io.close rescue nil }
+            history = @history[pid]
+            history.code = code
+            history.running = false
+            @completed << pid
+            while @completed.size > max_completed
+              @history.delete(@completed.shift)
+            end
           end
           # exit_code? returns nil for signal-terminated processes (e.g. SIGTERM from kill)
-          app.stream.send("shell:#{pid}:exit", {"code" => (status.exit_code? || -1)})
+          begin
+            app.stream.send("shell:#{pid}:exit", {"code" => code})
+          rescue ex
+            Lune.logger.warn { "Shell #{pid} exit delivery failed: #{ex.message}" }
+          end
         end
 
         pid
+      end
+
+      private def pump_output(app : Lune::App, pid : String, stream : String, io : IO, max_line : Int32, done : ::Channel(Nil)) : Nil
+        delivery_failed = false
+        OutputReader.each_line(io, max_line) do |line, truncated|
+          @mu.synchronize { @history[pid].append(stream, line, truncated) }
+          unless delivery_failed
+            begin
+              app.stream.send("shell:#{pid}:#{stream}", {line: line, truncated: truncated})
+            rescue ex
+              delivery_failed = true
+              Lune.logger.warn { "Shell #{pid} #{stream} delivery failed; output remains available via snapshot: #{ex.message}" }
+            end
+          end
+        end
+      rescue ex
+        @mu.synchronize { @history[pid].errors << "#{stream}: #{ex.message.to_s[0, 512]}" }
+        Lune.logger.warn { "Shell #{pid} #{stream} read failed: #{ex.message}" }
+      ensure
+        io.close rescue nil
+        done.send(nil)
       end
     end
   end

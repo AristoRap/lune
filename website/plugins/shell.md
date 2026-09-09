@@ -51,7 +51,67 @@ lune.Shell.listen(pid, {
 
 `listen` returns a disposer and removes its own callbacks when it receives an exit event, even if you omit `exit`. Other subscriptions are independent.
 
-Output is live-only: a process can produce output or exit before `listen` attaches. Use `run` for short commands whose complete output you need. Subscribing after exit or reconnecting does not replay missed events; dispose subscriptions when your view unmounts.
+`listen` is live-only: a process can produce output or exit before it attaches. Use `snapshot` below to recover missed output, or `run` for short commands whose complete output you need. Dispose live subscriptions when your view unmounts.
+
+## Recovering output and completion
+
+Every process started with `spawn` retains a bounded output history and its exit status in the backend. `snapshot({ pid, after })` atomically returns the records after a cursor, together with the current status. It works even if the process finished before `spawn` resolved or the frontend reloaded.
+
+```js
+const pid = await lune.Shell.spawn({ command: "npm", args: ["run", "build"] });
+let cursor = 0;
+
+while (true) {
+  const state = await lune.Shell.snapshot({ pid, after: cursor });
+  if (state.gap) console.warn("Older output was evicted");
+  for (const record of state.records) {
+    console.log(record.stream, record.line);
+    if (record.truncated) console.warn("This line was truncated");
+  }
+  cursor = state.cursor;
+  if (!state.running) {
+    for (const error of state.errors) console.error(error);
+    console.log("exited with", state.code);
+    break;
+  }
+  await new Promise((resolve) => setTimeout(resolve, 250));
+}
+```
+
+For a mounted view, stop the loop on unmount and ignore any in-flight response after disposal. Keep refreshes serialized. Store the **pid and cursor together**, and only advance the cursor after processing the returned records. Start at `0` to rebuild a cleared view; resume from a saved cursor only if you also kept the corresponding displayed output.
+
+The recovery contract is:
+
+- Each record has `{ seq, stream, line, truncated }`. `seq` increases across both streams for that pid; `stream` is `"stdout"` or `"stderr"`. This is backend observation order, not a guarantee of the child's chronological order between two independent pipes.
+- `cursor` is the latest output sequence at snapshot time. Repeating a request returns the same retained records; independent readers maintain their own cursors. There is no server-side consume operation.
+- `gap: true` means at least one record after your cursor was evicted. Process the remaining records, display the gap, and advance to the returned cursor, even if the records array is empty.
+- `running: false` and a non-null `code` appear only after both output pumps finish and the child is reaped. Process the records in that same response before completion. `errors` reports output-read failures, which may make captured output incomplete. Signal termination uses code `-1`.
+- Unknown, forgotten, or evicted pids reject with `shell_process_not_found`. Backend restart also invalidates old pids. Negative cursors and cursors beyond that pid's current output reject with `shell_invalid_cursor`.
+
+Polling snapshots alone provides recovery without a replay-to-live handoff. Output arriving during a request appears in the next snapshot. Stream callbacks may be used to request an earlier refresh, but keep periodic polling to cover disconnection and missed events. Render from snapshots consistently; mixing live lines into the same view would duplicate output.
+
+`await lune.Shell.retained()` returns all retained pids, including running processes and recent completions, so a reloaded frontend can rediscover them. `list()` continues to return only active pids. Call `await lune.Shell.forget({ pid })` to release a completed history immediately; repeating it is harmless. Forgetting a running process rejects with `shell_process_running`.
+
+## Output limits
+
+Configure limits in Crystal before starting processes:
+
+```crystal
+Lune.run do |opts|
+  opts.shell.output_records = 4096       # records per process
+  opts.shell.output_bytes = 1024 * 1024  # retained UTF-8 text bytes per process
+  opts.shell.line_bytes = 64 * 1024      # input bytes kept per line
+  opts.shell.completed_processes = 32   # completed histories, oldest completion first
+end
+```
+
+These are the defaults; each must be positive. Invalid limits reject `spawn` with `shell_invalid_limits`. Configure them before the first spawn and keep them fixed while processes are running.
+
+Both the record and byte limits apply. Oldest records are evicted until both limits are met; an individual record larger than the byte budget is also evicted. Exit status remains available independently of output eviction. Running histories are never evicted as a whole; the completed-history limit applies across the plugin. There is no time-based expiry. Total retained memory scales with the number of running processes plus retained completions, with additional record and pipe-buffer overhead.
+
+Lines exceeding `line_bytes` keep their prefix and set `truncated: true`; the rest of that line is drained and discarded. This also applies to live `listen` output. Newlines are removed as before, and final text without a newline is preserved. UTF-8 characters split between reads are preserved; invalid UTF-8 and an incomplete character at a truncation boundary become U+FFFD. Replacement characters can expand the decoded text, which is then subject to `output_bytes`.
+
+History is in memory for the lifetime of the backend. These limits apply to `spawn`; `run` still collects output without a size limit and should be used for commands with bounded output.
 
 ---
 
@@ -172,6 +232,9 @@ dispose(); // safe to call more than once
 | `run`        | `({ command, args, cwd?, env? }) → Promise<{stdout, stderr, code}>` | Spawn and collect all output              |
 | `kill`       | `({ pid }) → Promise<void>`                                         | Send SIGTERM to a running process         |
 | `list`       | `() → Promise<string[]>`                                            | List pids of all currently live processes |
+| `snapshot`   | `({ pid, after? }) → Promise<Snapshot>`                             | Recover output and status after a cursor  |
+| `retained`   | `() → Promise<string[]>`                                            | List running and retained completed pids  |
+| `forget`     | `({ pid }) → Promise<void>`                                         | Release a completed history               |
 | `write`      | `({ pid, text }) → Promise<void>`                                   | Write text to a process's stdin           |
 | `closeStdin` | `({ pid }) → Promise<void>`                                         | Close stdin, sending EOF to the process   |
 | `listen`     | `(pid, opts) → (() → void)`                                         | Subscribe and return a disposer           |
@@ -179,11 +242,11 @@ dispose(); // safe to call more than once
 
 `listen` options:
 
-| Key      | Type                               | Description                                                 |
-| -------- | ---------------------------------- | ----------------------------------------------------------- |
-| `stdout` | `(data: { line: string }) => void` | Called per stdout line                                      |
-| `stderr` | `(data: { line: string }) => void` | Called per stderr line                                      |
-| `exit`   | `(data: { code: number }) => void` | Called on received exit after this subscription is disposed |
+| Key      | Type                                                   | Description                                                 |
+| -------- | ------------------------------------------------------ | ----------------------------------------------------------- |
+| `stdout` | `(data: { line: string; truncated: boolean }) => void` | Called per stdout line                                      |
+| `stderr` | `(data: { line: string; truncated: boolean }) => void` | Called per stderr line                                      |
+| `exit`   | `(data: { code: number }) => void`                     | Called on received exit after this subscription is disposed |
 
 ---
 
@@ -195,7 +258,7 @@ Each spawned process gets three Stream channels keyed by its pid:
 - `shell:<pid>:stderr` — one message per stderr line
 - `shell:<pid>:exit` — single message with `{ code }` after both pipes are drained
 
-Crystal reads `stdout` and `stderr` in parallel async fibers, then waits for both to close before sending the exit event — so the exit message always arrives after all output.
+Crystal reads `stdout` and `stderr` in parallel async fibers, retaining each record before attempting live delivery. Both pumps signal completion even after a read failure. The waiter reaps the child and stores its exit status before attempting the live exit event. If live delivery fails, snapshots still recover the retained data and status.
 
 ---
 

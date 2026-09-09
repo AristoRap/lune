@@ -352,7 +352,7 @@ describe Lune::Plugins::Shell do
       plugin = Lune::Plugins::Shell.new
       app = Lune::App.new
       app.install(plugin)
-      dts = Lune::Generator.generate_runtime_dts(app.bindings, [plugin] of Lune::Plugin)
+      dts = Lune::Generator.generate_runtime_dts(app.bindings, [plugin] of Lune::Plugin, known: Lune::Generator.known_types(app.plugin_types), types: app.plugin_types)
       dts.scan(/write\(args: \{ pid: string/).size.should eq(1)
       dts.scan(/closeStdin\(args: \{ pid: string/).size.should eq(1)
       plugin.dts_helpers.should_not contain("write(args: { pid: string")
@@ -412,7 +412,7 @@ describe Lune::Plugins::Shell do
       plugin = Lune::Plugins::Shell.new
       app = Lune::App.new
       app.install(plugin)
-      dts = Lune::Generator.generate_runtime_dts(app.bindings, [plugin] of Lune::Plugin)
+      dts = Lune::Generator.generate_runtime_dts(app.bindings, [plugin] of Lune::Plugin, known: Lune::Generator.known_types(app.plugin_types), types: app.plugin_types)
       ["spawn", "run"].each do |method|
         signature = dts.lines.find(&.includes?("#{method}(args:")).not_nil!
         signature.should contain("cwd?: string | null")
@@ -425,7 +425,7 @@ describe Lune::Plugins::Shell do
       plugin = Lune::Plugins::Shell.new
       app = Lune::App.new
       app.install(plugin)
-      dts = Lune::Generator.generate_runtime_dts(app.bindings, [plugin] of Lune::Plugin)
+      dts = Lune::Generator.generate_runtime_dts(app.bindings, [plugin] of Lune::Plugin, known: Lune::Generator.known_types(app.plugin_types), types: app.plugin_types)
       dts.should contain("list(args?: {}): Promise<string[]>")
     end
   end
