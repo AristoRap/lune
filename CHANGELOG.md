@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+### Added
+
+- **Shell execution context.** `Shell.spawn` and `Shell.run` accept optional `cwd` and `env` fields. Each child inherits the app's environment with per-variable overrides; `null` removes a variable. Startup failures expose typed Shell error codes.
+
+### Fixed
+
+- **Independent Shell subscriptions.** `Shell.listen` returns an idempotent disposer and cleans up its own callbacks on received completion, including stdout-only listeners. Other listeners remain independent; `Shell.unlisten(pid)` retains its broad removal behavior.
+- **Optional and nullable binding signatures.** Generated TypeScript and manifests now preserve Crystal argument defaults, nullable argument/return types compile correctly, and return types are resolved consistently with argument types. Bindings whose arguments all have defaults also accept an omitted argument object.
+
+## [0.19.1] - 2026-08-05
+
+### Fixed
+
+- **Generated JavaScript and Vue starters now call bindings with named-argument objects.** `Welcome.greet` and the Vue counter actions use the `{ name }` / `{ value }` call shape introduced in 0.17.0 instead of passing positional values. The shared Crystal scaffold now names the greeting parameter `name` to match the generated clients, and scaffold specs cover the complete contract.
+
+## [0.19.0] - 2026-08-03
+
 ### Changed
 
 - **Crystal 1.21.0+ is now required.** Execution contexts are enabled by default, so Lune no longer passes or documents explicit `-Dpreview_mt -Dexecution_context` flags.

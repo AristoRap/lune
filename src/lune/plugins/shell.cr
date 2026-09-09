@@ -19,8 +19,8 @@ module Lune
       # scheduler — illegal from the webview Isolated thread. async routes
       # the callback through @async_pool so the spawn is safe.
       @[Lune::Bind(async: true)]
-      def spawn(command : String, args : Array(String)) : String
-        spawn_proc(@app, command, args)
+      def spawn(command : String, args : Array(String), cwd : String? = nil, env : Hash(String, String?)? = nil) : String
+        with_execution_context(command, cwd) { spawn_proc(@app, command, args, cwd, env) }
       end
 
       @[Lune::Bind]
@@ -50,11 +50,13 @@ module Lune
       # Avoids the Stream listener race that occurs when a process exits
       # before the JS .then() callback can register Stream handlers.
       @[Lune::Bind(async: true)]
-      def run(command : String, args : Array(String)) : NamedTuple(stdout: String, stderr: String, code: Int32)
+      def run(command : String, args : Array(String), cwd : String? = nil, env : Hash(String, String?)? = nil) : NamedTuple(stdout: String, stderr: String, code: Int32)
         out_buf = IO::Memory.new
         err_buf = IO::Memory.new
-        status = Shell.with_win32_cmd_fallback(command, args) do |c, a|
-          Process.run(c, args: a, output: out_buf, error: err_buf)
+        status = with_execution_context(command, cwd) do
+          Shell.with_win32_cmd_fallback(command, args) do |c, a|
+            Process.run(c, args: a, chdir: cwd, env: env, output: out_buf, error: err_buf)
+          end
         end
         code = status.exit_code? || -1
         {stdout: out_buf.to_s, stderr: err_buf.to_s, code: code}
@@ -90,18 +92,27 @@ module Lune
         <<-JS
           listen(pid, opts) {
             var b = window.#{bm};
-            if (!opts) return;
-            if (opts.stdout) b.stOn("shell:" + pid + ":stdout", opts.stdout);
-            if (opts.stderr) b.stOn("shell:" + pid + ":stderr", opts.stderr);
-            if (opts.exit) {
-              var _wrap = function(d) {
-                b.stOff("shell:" + pid + ":stdout");
-                b.stOff("shell:" + pid + ":stderr");
-                b.stOff("shell:" + pid + ":exit");
-                opts.exit(d);
-              };
-              b.stOn("shell:" + pid + ":exit", _wrap);
+            opts = opts || {};
+            var stdout = opts.stdout, stderr = opts.stderr, exit = opts.exit;
+            var prefix = "shell:" + pid + ":", disposed = false;
+            function onStdout(d) { if (!disposed) stdout(d); }
+            function onStderr(d) { if (!disposed) stderr(d); }
+            function dispose() {
+              if (disposed) return;
+              disposed = true;
+              if (stdout) b.stOff(prefix + "stdout", onStdout);
+              if (stderr) b.stOff(prefix + "stderr", onStderr);
+              b.stOff(prefix + "exit", onExit);
             }
+            function onExit(d) {
+              if (disposed) return;
+              dispose();
+              if (exit) exit(d);
+            }
+            if (stdout) b.stOn(prefix + "stdout", onStdout);
+            if (stderr) b.stOn(prefix + "stderr", onStderr);
+            b.stOn(prefix + "exit", onExit);
+            return dispose;
           },
           unlisten(pid) {
             var b = window.#{bm};
@@ -114,15 +125,29 @@ module Lune
 
       def dts_helpers : String
         <<-DTS
-          listen(pid: string, opts: { stdout?: (data: { line: string }) => void; stderr?: (data: { line: string }) => void; exit?: (data: { code: number }) => void }): void;
+          listen(pid: string, opts: { stdout?: (data: { line: string }) => void; stderr?: (data: { line: string }) => void; exit?: (data: { code: number }) => void }): () => void;
           unlisten(pid: string): void;
         DTS
       end
 
-      private def spawn_proc(app : Lune::App, cmd : String, argv : Array(String)) : String
+      # Validate cwd before the Windows command fallback so a missing directory
+      # is not mistaken for a missing executable. Process still checks it at spawn
+      # time in case it changes after this check.
+      private def with_execution_context(command : String, cwd : String?, &)
+        if cwd && !Dir.exists?(cwd)
+          raise Lune::Error.new("shell_invalid_cwd", "Working directory does not exist or is not a directory: #{cwd}")
+        end
+        yield
+      rescue ex : File::NotFoundError
+        raise Lune::Error.new("shell_command_not_found", "Could not start #{command.inspect}: #{ex.message}")
+      rescue ex : IO::Error
+        raise Lune::Error.new("shell_spawn_failed", "Could not run #{command.inspect} in #{cwd || Dir.current}: #{ex.message}")
+      end
+
+      private def spawn_proc(app : Lune::App, cmd : String, argv : Array(String), cwd : String?, env : Hash(String, String?)?) : String
         pid = Random.new.hex(8)
         process = Shell.with_win32_cmd_fallback(cmd, argv) do |c, a|
-          Process.new(c, args: a, input: :pipe, output: :pipe, error: :pipe)
+          Process.new(c, args: a, chdir: cwd, env: env, input: :pipe, output: :pipe, error: :pipe)
         end
         @mu.synchronize do
           @processes[pid] = process

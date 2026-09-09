@@ -49,7 +49,9 @@ lune.Shell.listen(pid, {
 });
 ```
 
-`listen` auto-unsubscribes all three channels once the exit event fires.
+`listen` returns a disposer and removes its own callbacks when it receives an exit event, even if you omit `exit`. Other subscriptions are independent.
+
+Output is live-only: a process can produce output or exit before `listen` attaches. Use `run` for short commands whose complete output you need. Subscribing after exit or reconnecting does not replay missed events; dispose subscriptions when your view unmounts.
 
 ---
 
@@ -64,6 +66,26 @@ const { stdout, stderr, code } = await lune.Shell.run({
 });
 console.log(stdout); // Darwin …
 ```
+
+## Working directory and environment
+
+Both `spawn` and `run` accept optional `cwd` and `env` fields:
+
+```js
+const result = await lune.Shell.run({
+  command: "git",
+  args: ["status", "--short"],
+  cwd: "/Users/me/My Project",
+  env: { GIT_OPTIONAL_LOCKS: "0", GIT_DIR: null },
+});
+```
+
+- Omitting `cwd` (or passing `null`) inherits the app's working directory. Relative paths resolve from that directory. The app's directory is never changed.
+- Omitting `env` (or passing `null` or `{}`) inherits the app's environment. String values override individual variables; `null` removes a variable from the child. There is no whole-environment replacement option.
+- These options are per process, so concurrent commands can use different contexts without changing the app's environment.
+- Executable lookup follows Crystal's process API and uses the parent process's `PATH`. Pass an absolute executable path when you need a binary from a custom location; setting the child's `PATH` controls its subsequent command lookups.
+
+Startup errors reject with a `LuneError`: `shell_invalid_cwd` for a missing directory or a file used as `cwd`, `shell_command_not_found` for a missing executable, and `shell_spawn_failed` for other process I/O failures. On Windows, the existing `cmd /c` fallback still applies: an unknown command handled by `cmd` is reported through stderr and a nonzero exit code.
 
 ---
 
@@ -132,34 +154,36 @@ const pid = await lune.Shell.spawn({
   command: "tail",
   args: ["-f", "/var/log/system.log"],
 });
-lune.Shell.listen(pid, { stdout: ({ line }) => render(line) });
+const dispose = lune.Shell.listen(pid, { stdout: ({ line }) => render(line) });
 
-// Stop receiving output but let the process keep running
-lune.Shell.unlisten(pid);
+// Remove this subscription while the process keeps running.
+dispose(); // safe to call more than once
 ```
+
+`lune.Shell.unlisten(pid)` remains available to remove **all** subscriptions for that pid in the current JavaScript runtime. Prefer the disposer when multiple views or callers listen to the same process.
 
 ---
 
 ## JavaScript API
 
-| Method       | Signature                                            | Description                               |
-| ------------ | ---------------------------------------------------- | ----------------------------------------- |
-| `spawn`      | `({ command, args }) → Promise<string>`                  | Start a process; returns pid              |
-| `run`        | `({ command, args? }) → Promise<{stdout, stderr, code}>` | Spawn and collect all output              |
-| `kill`       | `({ pid }) → Promise<void>`                              | Send SIGTERM to a running process         |
-| `list`       | `() → Promise<string[]>`                                 | List pids of all currently live processes |
-| `write`      | `({ pid, text }) → Promise<void>`                        | Write text to a process's stdin           |
-| `closeStdin` | `({ pid }) → Promise<void>`                              | Close stdin, sending EOF to the process   |
-| `listen`     | `(pid, opts) → void`                                 | Subscribe to output channels              |
-| `unlisten`   | `(pid) → void`                                       | Remove all listeners for a pid            |
+| Method       | Signature                                                           | Description                               |
+| ------------ | ------------------------------------------------------------------- | ----------------------------------------- |
+| `spawn`      | `({ command, args, cwd?, env? }) → Promise<string>`                 | Start a process; returns pid              |
+| `run`        | `({ command, args, cwd?, env? }) → Promise<{stdout, stderr, code}>` | Spawn and collect all output              |
+| `kill`       | `({ pid }) → Promise<void>`                                         | Send SIGTERM to a running process         |
+| `list`       | `() → Promise<string[]>`                                            | List pids of all currently live processes |
+| `write`      | `({ pid, text }) → Promise<void>`                                   | Write text to a process's stdin           |
+| `closeStdin` | `({ pid }) → Promise<void>`                                         | Close stdin, sending EOF to the process   |
+| `listen`     | `(pid, opts) → (() → void)`                                         | Subscribe and return a disposer           |
+| `unlisten`   | `(pid) → void`                                                      | Remove all listeners for a pid            |
 
 `listen` options:
 
-| Key      | Type                               | Description                                          |
-| -------- | ---------------------------------- | ---------------------------------------------------- |
-| `stdout` | `(data: { line: string }) => void` | Called per stdout line                               |
-| `stderr` | `(data: { line: string }) => void` | Called per stderr line                               |
-| `exit`   | `(data: { code: number }) => void` | Called once on exit; auto-unsubscribes all listeners |
+| Key      | Type                               | Description                                                 |
+| -------- | ---------------------------------- | ----------------------------------------------------------- |
+| `stdout` | `(data: { line: string }) => void` | Called per stdout line                                      |
+| `stderr` | `(data: { line: string }) => void` | Called per stderr line                                      |
+| `exit`   | `(data: { code: number }) => void` | Called on received exit after this subscription is disposed |
 
 ---
 
@@ -179,7 +203,7 @@ Crystal reads `stdout` and `stderr` in parallel async fibers, then waits for bot
 
 - **Output is line-buffered.** Each `{ line }` payload is one line. Processes that don't flush until exit produce no output until they exit or flush.
 - **Shell metacharacters are not expanded.** Pass the binary as the first argument and flags as separate array elements. For pipes or globs: `spawn({ command: "/bin/sh", args: ["-c", "ls | grep foo"] })`.
-- **Auto-cleanup on window close.** The `Lifecycle` shutdown hook sends SIGTERM to all running processes when the app quits.
+- **Shutdown currently targets direct children started with `spawn`.** It does not manage descendant process trees or commands started with `run`. On POSIX it sends SIGTERM without force escalation.
 - **Windows cmd builtins and `.cmd`/`.bat` shims work transparently.** When `CreateProcess` raises `File::NotFoundError` for a name like `echo`, `dir`, `type`, `npm.cmd`, or `yarn.cmd`, the plugin auto-retries via `cmd /c <name> …`. No manual wrapping required.
 
 ---
