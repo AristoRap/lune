@@ -31,5 +31,5 @@ development_dependencies:
 targets:
   lune:
     main: bin/lune.cr
-  ameba:
-    main: lib/ameba/bin/ameba.cr
+  # ameba:
+  #   main: lib/ameba/bin/ameba.cr
