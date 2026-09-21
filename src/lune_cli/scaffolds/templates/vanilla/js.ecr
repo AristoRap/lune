@@ -32,7 +32,7 @@ const greetResult = document.getElementById("greet-result");
 nameEl?.focus();
 
 document.getElementById("greet-btn")?.addEventListener("click", async () => {
-  const name = nameEl?.value?.trim();
+  const name = nameEl?.value?.trim() ?? "";
 
   try {
     const msg = await api.Welcome.greet({ name });

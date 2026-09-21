@@ -63,7 +63,7 @@ Add it to your `shard.yml`:
 dependencies:
   lune:
     github: AristoRap/lune
-    version: ~> 0.19.1
+    version: ~> 0.20.0
 ```
 
 Then install:
@@ -79,6 +79,7 @@ shards install
 ```sh
 lune init my_app                          # defaults to vanilla template
 lune init my_app --template vue           # Vue 3 + Vite
+lune init my_app --template svelte        # Svelte 5 + Vite
 lune init my_app --template vanilla       # Vanilla JS + Vite
 ```
 

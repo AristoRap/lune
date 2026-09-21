@@ -457,6 +457,11 @@ describe LuneCLI do
       vue.should contain("api.Counter.inc({ value: count.value })")
       vue.should contain("api.Counter.dec({ value: count.value })")
       vanilla.should contain("api.Welcome.greet({ name })")
+
+      svelte = LuneCLI::Scaffolds::SvelteApp.new(ctx).to_h[:rendered]
+      svelte.should contain("api.Welcome.greet({ name: name.trim() })")
+      svelte.should contain("api.Counter.inc({ value: count })")
+      svelte.should contain("api.Counter.dec({ value: count })")
     end
   end
 

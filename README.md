@@ -29,8 +29,9 @@ Full docs live at the project `website` folder
 ## Quick start
 
 ```sh
-lune init my_app                  # vanilla JS + Vite
-lune init my_app --template vue   # Vue 3 + Vite
+lune init my_app                     # vanilla JS + Vite
+lune init my_app --template vue      # Vue 3 + Vite
+lune init my_app --template svelte   # Svelte 5 + Vite
 cd my_app
 lune dev
 ```

@@ -1,0 +1,51 @@
+<script>
+  import api from "../lunejs/app/App.js";
+  import luneSrc from "./assets/images/lune.svg";
+  import svelteSrc from "./assets/images/svelte.svg";
+
+  let name = $state("");
+  let greetResult = $state("");
+  let count = $state(0);
+
+  async function greet() {
+    greetResult = await api.Welcome.greet({ name: name.trim() });
+  }
+
+  async function inc() {
+    count = await api.Counter.inc({ value: count });
+  }
+
+  async function dec() {
+    count = await api.Counter.dec({ value: count });
+  }
+</script>
+
+<div class="logos">
+  <a href="https://github.com/aristorap/lune" target="_blank">
+    <img src={luneSrc} class="logo lune" alt="Lune" />
+  </a>
+  <a href="https://svelte.dev" target="_blank">
+    <img src={svelteSrc} class="logo svelte" alt="Svelte" />
+  </a>
+</div>
+
+<h1><%= @ctx.app_name %></h1>
+
+<div class="card">
+  <div class="input-row">
+    <input bind:value={name} type="text" placeholder="Your name…" autocomplete="off" />
+    <button class="primary" onclick={greet}>Greet</button>
+  </div>
+  <p class="greet-result">{greetResult}</p>
+</div>
+
+<hr />
+
+<div class="card">
+  <p class="card-label">Counter</p>
+  <div class="counter-row">
+    <button onclick={dec}>−</button>
+    <span class="counter-value">{count}</span>
+    <button onclick={inc}>+</button>
+  </div>
+</div>

@@ -9,7 +9,6 @@ const greetResult = ref("");
 const count = ref(0);
 
 async function greet() {
-  if (!name.value.trim()) return;
   greetResult.value = await api.Welcome.greet({ name: name.value.trim() });
 }
 

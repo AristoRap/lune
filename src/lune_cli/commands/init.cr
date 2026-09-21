@@ -2,6 +2,7 @@ require "yaml"
 require "../scaffolds/shared"
 require "../scaffolds/vanilla"
 require "../scaffolds/vue"
+require "../scaffolds/svelte"
 require "../context"
 
 module LuneCLI
@@ -14,7 +15,7 @@ module LuneCLI
           long: "Initialize a new Lune app in the current directory."
         )
         command.flags.bool("skip-install", 's', false, "Skip running shards install and npm install")
-        command.flags.string("template", 't', "vanilla", "Template to use [vanilla|vue]")
+        command.flags.string("template", 't', "vanilla", "Template to use [vanilla|vue|svelte]")
         command.flags.bool("force", 'f', false, "Delete the app directory and reinitialize from scratch")
         command.flags.bool("skip-existing", 'k', false, "Skip existing files instead of failing")
 
@@ -139,6 +140,7 @@ module LuneCLI
         template_scaffolds = case ctx.template
                              when "vanilla" then LuneCLI::Scaffolds::Vanilla.new(ctx)
                              when "vue"     then LuneCLI::Scaffolds::Vue.new(ctx)
+                             when "svelte"  then LuneCLI::Scaffolds::Svelte.new(ctx)
                              else
                                raise Argy::Error.new("Unknown template: #{ctx.template}")
                              end

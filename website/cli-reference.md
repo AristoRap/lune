@@ -34,7 +34,7 @@ lune init <APP_NAME> [flags]
 
 | Flag              | Short | Default   | Description                                                       |
 | ----------------- | ----- | --------- | ----------------------------------------------------------------- |
-| `--template`      | `-t`  | `vanilla` | Frontend template to use. Options: `vanilla`, `vue`               |
+| `--template`      | `-t`  | `vanilla` | Frontend template to use. Options: `vanilla`, `vue`, `svelte`     |
 | `--force`         | `-f`  | `false`   | Delete and reinitialize the app directory from scratch            |
 | `--skip-existing` | `-k`  | `false`   | Skip files that already exist instead of failing                  |
 | `--skip-install`  | `-s`  | `false`   | Skip running `shards install` and `npm install` after scaffolding |
@@ -47,6 +47,9 @@ lune init my_app
 
 # Scaffold with Vue 3 template
 lune init my_app --template vue
+
+# Scaffold with Svelte 5 template
+lune init my_app --template svelte
 
 # Re-scaffold over an existing directory
 lune init my_app --force

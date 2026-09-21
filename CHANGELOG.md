@@ -2,8 +2,11 @@
 
 ## Unreleased
 
+## [0.20.0] - 2026-09-21
+
 ### Added
 
+- **Svelte starter template.** `lune init my_app --template svelte` scaffolds a Svelte 5 + Vite frontend that mirrors the Vue starter (greet + counter bindings).
 - **Recoverable Shell output.** `Shell.snapshot({ pid, after? })` returns bounded output with sequence cursors, explicit eviction gaps, read errors, and retained exit status. `retained` discovers running and recent completed processes; `forget` releases completed histories. Configurable byte, record, line, and completed-process limits bound `spawn` output retention.
 - **Shell execution context.** `Shell.spawn` and `Shell.run` accept optional `cwd` and `env` fields. Each child inherits the app's environment with per-variable overrides; `null` removes a variable. Startup failures expose typed Shell error codes.
 
