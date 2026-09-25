@@ -1,26 +1,18 @@
 # Window Configuration
 
-Window properties can be set in two places:
-
-1. **`lune.yml`** — declare defaults for the project (shared via version control)
-2. **The opts block in `Lune.run`** — override at the code level (takes priority)
-
-```yaml
-# lune.yml
-window:
-  title: My App
-  width: 1440
-  height: 900
-```
+Set window properties in the options block passed to `Lune.run` in your Crystal entrypoint:
 
 ```crystal
-# src/main.cr — opts block overrides lune.yml values
+# src/main.cr
 Lune.run(app, assets: "frontend/dist") do |opts|
-  opts.devtools = true   # override just this one
+  opts.title = "My App"
+  opts.width = 1440
+  opts.height = 900
+  opts.devtools = true
 end
 ```
 
-If a property is set in both, the opts block wins. Properties not set in either use the built-in defaults.
+Properties you omit use the built-in defaults.
 
 ---
 
@@ -215,13 +207,6 @@ Lune.run(app) do |opts|
 end
 ```
 
-Or in `lune.yml`:
-
-```yaml
-window:
-  remember_frame: true
-```
-
 When `false` (the default), Lune ignores any previously saved state and opens the window at `opts.width` / `opts.height` every launch. In menubar mode (`opts.menubar_mode = true`), persistence is always disabled regardless of this flag — the window position is derived from the tray icon on each toggle.
 
 ### Storage location
@@ -237,7 +222,7 @@ The state file is stored under the app's config directory, derived from the wind
 
 ### First launch
 
-On the first launch no file exists yet, so the window opens at the size and position specified by `opts.width` / `opts.height` (or the `lune.yml` defaults). After the window is closed for the first time, persistence kicks in on every subsequent launch.
+On the first launch no file exists yet, so the window opens at the size and position specified by `opts.width` / `opts.height`. After the window is closed for the first time, persistence kicks in on every subsequent launch.
 
 ### Example
 

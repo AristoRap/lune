@@ -4,8 +4,6 @@ module Lune
   struct Config
     include YAML::Serializable
 
-    getter window : Window = Window.new
-
     @[YAML::Field(key: "plugins")]
     @yaml_plugins : Plugins? = nil
 
@@ -30,23 +28,6 @@ module Lune
       from_yaml(File.read(path))
     rescue YAML::ParseException
       new
-    end
-
-    struct Window
-      include YAML::Serializable
-
-      property title : String? = nil
-      property width : Int32? = nil
-      property height : Int32? = nil
-      property min_width : Int32? = nil
-      property min_height : Int32? = nil
-      property max_width : Int32? = nil
-      property max_height : Int32? = nil
-      property resizable : Bool? = nil
-      property devtools : Bool? = nil
-      property remember_frame : Bool? = nil
-
-      def initialize; end
     end
 
     struct Plugins

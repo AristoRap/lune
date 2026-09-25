@@ -92,38 +92,5 @@ module Lune
     end
 
     def initialize; end
-
-    def apply(window : Config::Window)
-      if t = window.title
-        @title = t
-      end
-      if w = window.width
-        @width = w
-      end
-      if h = window.height
-        @height = h
-      end
-      if v = window.min_width
-        @min_width = v
-      end
-      if v = window.min_height
-        @min_height = v
-      end
-      if v = window.max_width
-        @max_width = v
-      end
-      if v = window.max_height
-        @max_height = v
-      end
-      unless (r = window.resizable).nil?
-        @resizable = r
-      end
-      unless (d = window.devtools).nil?
-        @devtools = d
-      end
-      unless (r = window.remember_frame).nil?
-        @remember_frame = r
-      end
-    end
   end
 end

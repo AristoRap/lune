@@ -8,7 +8,6 @@ module Lune
       @lunejs_dir = File.join(ENV.fetch(Lune::ENV_FRONTEND_DIR, Lune::DEFAULT_FRONTEND_DIR), Lune::LUNEJS_SUBDIR)
       @config = Config.load
       @options = Options.new
-      @options.apply(@config.window)
       block.call(@options)
     end
 

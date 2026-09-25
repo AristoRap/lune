@@ -2,6 +2,8 @@
 
 Lune reads an optional `lune.yml` file from the root of your project. All keys have sensible defaults so the file can be omitted entirely for simple projects.
 
+Configure window properties in the `Lune.run` options block in Crystal. See [Window Configuration](./guide/window).
+
 ---
 
 ## Full reference
@@ -296,27 +298,6 @@ lune.DeepLink.on((url) => {
 ```
 
 See [Deep Link plugin](./plugins/deep-link) for the full guide.
-
----
-
-### `window`
-
-All `Lune::Options` properties can also be declared here. Values set in `lune.yml` become the defaults for the window; the opts block in your Crystal code can still override any of them.
-
-```yaml
-window:
-  title: My App # String   — window title bar text
-  width: 1440 # Int      — initial width in logical pixels
-  height: 900 # Int      — initial height in logical pixels
-  min_width: 900 # Int      — minimum resizable width
-  min_height: 600 # Int      — minimum resizable height
-  max_width: 1920 # Int      — maximum resizable width
-  max_height: 1080 # Int      — maximum resizable height
-  resizable: true # Bool     — whether the window can be resized
-  devtools: false # Bool     — enable WebView devtools (right-click → Inspect)
-```
-
-All keys are optional. Omitted keys fall back to the `Lune::Options` defaults (`title: "Lune"`, `width: 1200`, `height: 800`, `resizable: true`, `devtools: false`).
 
 ---
 
