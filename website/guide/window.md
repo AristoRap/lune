@@ -480,6 +480,33 @@ opts.mac do |m|
 end
 ```
 
+#### `mac.toolbar_style`
+
+**Type:** `Lune::Options::Mac::ToolbarStyle?` — **Default:** `nil`
+
+Set a style to attach an empty native `NSToolbar`. Leaving this unset preserves the existing window chrome. AppKit manages the toolbar geometry, window corners, and traffic-light layout.
+
+```crystal
+opts.mac do |m|
+  m.toolbar_style = Lune::Options::Mac::ToolbarStyle::UnifiedCompact
+  m.hide_title = true
+end
+```
+
+Available styles follow [AppKit's toolbar styles](https://developer.apple.com/documentation/appkit/nswindow/toolbarstyle-swift.enum):
+
+| Style            | Layout                                       |
+| ---------------- | -------------------------------------------- |
+| `Automatic`      | macOS chooses the layout                     |
+| `Expanded`       | Toolbar below the title                      |
+| `Preference`     | Toolbar below the title, with centered items |
+| `Unified`        | Toolbar alongside the title                  |
+| `UnifiedCompact` | Unified layout with reduced margins          |
+
+Explicit styles require macOS 11 or later. Older macOS versions receive a toolbar with the system's default layout. This option is ignored on Linux and Windows.
+
+The toolbar starts empty; this option does not define native toolbar items. It can be combined with `hide_title`, `hide_traffic_lights`, and `full_size_content`. With full-size content, reserve space in your HTML header for the native controls. Exact spacing and corner appearance depend on macOS and should be checked visually on your target versions; this option does not specify a corner radius or custom button offsets.
+
 #### `mac.full_size_content`
 
 **Type:** `Bool` — **Default:** `false`

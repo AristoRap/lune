@@ -7,6 +7,9 @@
         @@last_size : Tuple(Int32, Int32)? = nil
         @@last_frame : Tuple(Int32, Int32, Int32, Int32)? = nil
         @@mock_frame : Tuple(Int32, Int32, Int32, Int32) = {0, 0, 1200, 800}
+        @@last_toolbar_style : Int32? = nil
+        class_getter last_toolbar_style
+
         @@last_full_size_content : Bool? = nil
 
         class_getter calls, last_title, last_size, last_frame, mock_frame, last_full_size_content
@@ -18,6 +21,7 @@
           @@last_frame = nil
           @@mock_frame = {0, 0, 1200, 800}
           @@last_full_size_content = nil
+          @@last_toolbar_style = nil
           @@last_appearance = nil
           @@last_drop_cb = nil
           @@last_drag_out_paths = nil
@@ -25,6 +29,11 @@
 
         def self.mock_frame=(f : Tuple(Int32, Int32, Int32, Int32))
           @@mock_frame = f
+        end
+
+        def self.record_set_toolbar_style(style : Int32)
+          @@calls << :set_toolbar_style
+          @@last_toolbar_style = style
         end
 
         def self.record_minimize
@@ -155,9 +164,17 @@
           WindowMock.record_start_drag_out(paths)
         end
 
-        def self.minimize(handle : Void*); WindowMock.record_minimize; end
-        def self.maximize(handle : Void*); WindowMock.record_maximize; end
-        def self.center(handle : Void*); WindowMock.record_center; end
+        def self.minimize(handle : Void*)
+          WindowMock.record_minimize
+        end
+
+        def self.maximize(handle : Void*)
+          WindowMock.record_maximize
+        end
+
+        def self.center(handle : Void*)
+          WindowMock.record_center
+        end
 
         def self.set_title(handle : Void*, title : String)
           WindowMock.record_set_title(title)
@@ -195,8 +212,17 @@
           WindowMock.record_start_window_drag
         end
 
-        def self.hide_title(handle : Void*); WindowMock.record_hide_title; end
-        def self.hide_traffic_lights(handle : Void*); WindowMock.record_hide_traffic_lights; end
+        def self.set_toolbar_style(handle : Void*, style : Int32)
+          WindowMock.record_set_toolbar_style(style)
+        end
+
+        def self.hide_title(handle : Void*)
+          WindowMock.record_hide_title
+        end
+
+        def self.hide_traffic_lights(handle : Void*)
+          WindowMock.record_hide_traffic_lights
+        end
 
         def self.set_appearance(handle : Void*, mode : Int32)
           WindowMock.record_set_appearance(mode)
@@ -216,8 +242,13 @@
           WindowMock.record_set_activation_policy_accessory
         end
 
-        def self.hide(handle : Void*); WindowMock.record_hide; end
-        def self.show(handle : Void*); WindowMock.record_show; end
+        def self.hide(handle : Void*)
+          WindowMock.record_hide
+        end
+
+        def self.show(handle : Void*)
+          WindowMock.record_show
+        end
 
         def self.visible?(handle : Void*) : Bool
           WindowMock.last_visible

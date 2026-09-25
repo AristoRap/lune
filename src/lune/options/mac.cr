@@ -8,6 +8,20 @@ module Lune
         Light
       end
 
+      # Native toolbar layouts (macOS 11+). Values are mapped in the native bridge.
+      enum ToolbarStyle
+        Automatic      = 0
+        Expanded       = 1
+        Preference     = 2
+        Unified        = 3
+        UnifiedCompact = 4
+      end
+
+      # Attaches an empty NSToolbar using the requested native layout.
+      # nil preserves the existing window without adding a toolbar.
+      # On macOS before 11, attaches a toolbar with the system's default layout.
+      property toolbar_style : ToolbarStyle? = nil
+
       # Extends the content view to fill the entire window including under the title bar,
       # and makes the title bar itself transparent. The traffic lights remain visible.
       property full_size_content : Bool = false

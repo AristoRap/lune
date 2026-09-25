@@ -23,6 +23,7 @@
         fun set_background_transparent(window : Void*) : Void
         fun setup_drag_monitor : Void
         fun start_window_drag(window : Void*) : Void
+        fun lune_set_toolbar_style(window : Void*, style : LibC::Int) : Void
         fun hide_title(window : Void*) : Void
         fun hide_traffic_lights(window : Void*) : Void
         fun set_appearance(window : Void*, mode : LibC::Int) : Void
@@ -135,6 +136,10 @@
 
         def self.start_window_drag(handle : Void*)
           LibNativeWindow.start_window_drag(handle)
+        end
+
+        def self.set_toolbar_style(handle : Void*, style : Int32)
+          LibNativeWindow.lune_set_toolbar_style(handle, style)
         end
 
         def self.hide_title(handle : Void*)

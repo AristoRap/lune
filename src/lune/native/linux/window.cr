@@ -101,6 +101,8 @@
         def self.set_background_transparent(handle : Void*); end
         def self.setup_drag_monitor; end
         def self.start_window_drag(handle : Void*); end
+        def self.set_toolbar_style(handle : Void*, style : Int32); end
+
         def self.hide_title(handle : Void*); end
         def self.hide_traffic_lights(handle : Void*); end
         def self.set_appearance(handle : Void*, mode : Int32); end

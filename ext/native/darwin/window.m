@@ -31,6 +31,30 @@ void set_background_transparent(void *window) {
 
 // ── Title bar ─────────────────────────────────────────────────────────────────
 
+// style matches Options::Mac::ToolbarStyle. Keep a separate toolbar per window;
+// NSWindow retains it, so no global ownership or delegate is needed.
+void lune_set_toolbar_style(void *window, int style) {
+    NSWindow *w = (__bridge NSWindow *)window;
+    run_on_main(^{
+        if (!w.toolbar) {
+            NSToolbar *toolbar = [[NSToolbar alloc] initWithIdentifier:@"LuneWindowToolbar"];
+            toolbar.allowsUserCustomization = NO;
+            toolbar.autosavesConfiguration = NO;
+            w.toolbar = toolbar;
+        }
+        w.toolbar.visible = YES;
+        if (@available(macOS 11.0, *)) {
+            switch (style) {
+                case 1: w.toolbarStyle = NSWindowToolbarStyleExpanded; break;
+                case 2: w.toolbarStyle = NSWindowToolbarStylePreference; break;
+                case 3: w.toolbarStyle = NSWindowToolbarStyleUnified; break;
+                case 4: w.toolbarStyle = NSWindowToolbarStyleUnifiedCompact; break;
+                default: w.toolbarStyle = NSWindowToolbarStyleAutomatic; break;
+            }
+        }
+    });
+}
+
 void hide_title(void *window) {
     NSWindow *w = (__bridge NSWindow *)window;
     w.titleVisibility = NSWindowTitleHidden;

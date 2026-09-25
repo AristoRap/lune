@@ -32,9 +32,9 @@
         WM_COMMAND       = 0x0111_u32
         WM_NCLBUTTONDOWN = 0x00A1_u32
 
-        GWL_EXSTYLE        = -20
-        WS_EX_TOOLWINDOW   = 0x0000_0080_u32
-        WS_EX_APPWINDOW    = 0x0004_0000_u32
+        GWL_EXSTYLE      =             -20
+        WS_EX_TOOLWINDOW = 0x0000_0080_u32
+        WS_EX_APPWINDOW  = 0x0004_0000_u32
 
         HTCAPTION = 2_u64
 
@@ -137,7 +137,9 @@
         # All of these are darwin-specific (NSWindow / NSApplication vocabulary);
         # Win32 silently does nothing to preserve a uniform API.
         def self.set_titlebar_transparent(handle : Void*, full_size_content : Bool); end
+
         def self.set_background_transparent(handle : Void*); end
+
         def self.setup_drag_monitor; end
 
         # CSS-driven window drag. Called from the `mousedown`-bound JS binding
@@ -153,11 +155,19 @@
           LibUser32.send_message_w(handle, LibUser32::WM_NCLBUTTONDOWN,
             LibC::UIntPtrT.new(LibUser32::HTCAPTION), LibC::IntPtrT.new(0))
         end
+
+        def self.set_toolbar_style(handle : Void*, style : Int32); end
+
         def self.hide_title(handle : Void*); end
+
         def self.hide_traffic_lights(handle : Void*); end
+
         def self.set_appearance(handle : Void*, mode : Int32); end
+
         def self.set_content_protection(handle : Void*, enabled : Bool); end
+
         def self.set_always_on_top(handle : Void*, enabled : Bool); end
+
         def self.set_activation_policy_accessory; end
 
         def self.hide(handle : Void*)

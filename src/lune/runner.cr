@@ -158,6 +158,9 @@ module Lune
       mac = @options.mac
       Native::Window.set_titlebar_transparent(handle, true) if mac.full_size_content
       Native::Window.set_background_transparent(handle) if mac.transparent
+      if style = mac.toolbar_style
+        Native::Window.set_toolbar_style(handle, style.value)
+      end
       Native::Window.hide_title(handle) if mac.hide_title
       Native::Window.hide_traffic_lights(handle) if mac.hide_traffic_lights
       Native::Window.set_appearance(handle, mac.appearance.value) unless mac.appearance.auto?
