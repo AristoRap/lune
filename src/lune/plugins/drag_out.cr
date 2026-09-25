@@ -27,13 +27,13 @@ module Lune
         msg = "#{ns}.start is not available on #{platform}"
         <<-JS
           start(args) { return Promise.reject(new LuneError("UNAVAILABLE_ON_PLATFORM", #{msg.inspect})); },
-        JS
+          JS
       end
 
       def unavailable_dts_stub : String?
         <<-DTS
           start(args: { paths: string[] }): Promise<void>;
-        DTS
+          DTS
       end
     end
   end

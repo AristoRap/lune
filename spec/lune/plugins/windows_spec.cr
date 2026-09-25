@@ -60,7 +60,7 @@ describe Lune::Plugins::Windows do
       plugin = Lune::Plugins::Windows.new
       app = Lune::App.new
       app.install(plugin)
-      list_b = app.bindings.find { |b| b.id == "Lune.Plugins.Windows.list" }.not_nil!
+      list_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Windows.list" }
       result = JSON.parse(app.registry.dispatch(list_b.id, ({} of String => JSON::Any).to_json, nil))
       result.as_a.should be_empty
     end

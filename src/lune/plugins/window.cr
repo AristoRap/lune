@@ -52,7 +52,7 @@ module Lune
       end
 
       def init_js : String?
-        return nil if @config.drag_zone.empty?
+        return if @config.drag_zone.empty?
         {% if flag?(:darwin) || flag?(:win32) %}
           # camelCased to match the binding's dispatch id (`Binding#id`
           # camelCases the method leaf), which is what the bridge binds.

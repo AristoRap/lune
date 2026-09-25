@@ -3,7 +3,7 @@ require "../spec_helper"
 private class TestFileMenu < Lune::Options::Menu::Group
   def initialize
     super("File")
-    item("New",  shortcut: "cmd+n") { }
+    item("New", shortcut: "cmd+n") { }
     separator
     item("Quit", shortcut: "cmd+q") { }
   end
@@ -252,8 +252,8 @@ describe Lune::Options::Menu::Group do
 
     it "submenu(group) overload uses group label and items" do
       parent = Lune::Options::Menu::Group.new("Top")
-      child  = TestFileMenu.new
-      sub    = parent.submenu(child)
+      child = TestFileMenu.new
+      sub = parent.submenu(child)
       sub.kind.should eq(Lune::Options::Menu::Item::Kind::Submenu)
       sub.label.should eq("File")
       sub.children.size.should eq(3)

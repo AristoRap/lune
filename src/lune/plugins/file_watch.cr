@@ -56,7 +56,7 @@ module Lune
           on(cb)   { window.#{bm}.on("file_watch", cb, -1); },
           once(cb) { window.#{bm}.on("file_watch", cb, 1); },
           off(cb)  { window.#{bm}.off("file_watch", cb); },
-        JS
+          JS
       end
 
       def dts_helpers : String
@@ -64,7 +64,7 @@ module Lune
           on(cb: (event: { path: string; kind: "modified" | "created" | "deleted" | "renamed" }) => void): void;
           once(cb: (event: { path: string; kind: "modified" | "created" | "deleted" | "renamed" }) => void): void;
           off(cb?: (event: { path: string; kind: "modified" | "created" | "deleted" | "renamed" }) => void): void;
-        DTS
+          DTS
       end
 
       # On unsupported platforms `watch`/`unwatch` reject loudly (they're real
@@ -83,7 +83,7 @@ module Lune
           on(cb)        { this._warn(#{msg.call("on").inspect}); },
           once(cb)      { this._warn(#{msg.call("once").inspect}); },
           off(cb)       { },
-        JS
+          JS
       end
 
       def unavailable_dts_stub : String?
@@ -93,7 +93,7 @@ module Lune
           on(cb: (event: { path: string; kind: "modified" | "created" | "deleted" | "renamed" }) => void): void;
           once(cb: (event: { path: string; kind: "modified" | "created" | "deleted" | "renamed" }) => void): void;
           off(cb?: (event: { path: string; kind: "modified" | "created" | "deleted" | "renamed" }) => void): void;
-        DTS
+          DTS
       end
     end
   end

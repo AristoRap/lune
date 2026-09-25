@@ -24,7 +24,7 @@ describe Lune::WindowContext do
     app.install(CtxModule.new)
     ctx = Lune::WindowContext.new(seq: "seq-9", webview: FakeWebview.new)
 
-    b = app.bindings.find { |x| x.id == "CtxModule.whoami" }.not_nil!
+    b = app.bindings.find! { |x| x.id == "CtxModule.whoami" }
     JSON.parse(app.registry.dispatch(b.id, "{}", ctx)).as_s.should eq("seq-9")
   end
 
@@ -33,7 +33,7 @@ describe Lune::WindowContext do
     app.install(CtxModule.new)
     ctx = Lune::WindowContext.new(seq: "seq-3", webview: FakeWebview.new)
 
-    b = app.bindings.find { |x| x.id == "CtxModule.echo" }.not_nil!
+    b = app.bindings.find! { |x| x.id == "CtxModule.echo" }
     JSON.parse(app.registry.dispatch(b.id, %({"value": "hi"}), ctx)).as_s.should eq("seq-3:hi")
   end
 
@@ -45,13 +45,13 @@ describe Lune::WindowContext do
     app = Lune::App.new
     app.install(CtxModule.new)
 
-    whoami = app.manifest.procedures.find { |p| p.name == "CtxModule.whoami" }.not_nil!
+    whoami = app.manifest.procedures.find! { |p| p.name == "CtxModule.whoami" }
     whoami.args.should be_empty
 
-    echo = app.manifest.procedures.find { |p| p.name == "CtxModule.echo" }.not_nil!
+    echo = app.manifest.procedures.find! { |p| p.name == "CtxModule.echo" }
     echo.args.map(&.name).should eq(["value"])
 
-    b = app.bindings.find { |x| x.id == "CtxModule.whoami" }.not_nil!
+    b = app.bindings.find! { |x| x.id == "CtxModule.whoami" }
     b.to_dts_sig.should eq("  whoami(args?: {}): Promise<string>;")
   end
 end

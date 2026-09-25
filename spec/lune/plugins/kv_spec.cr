@@ -59,7 +59,7 @@ describe Lune::Plugins::Kv do
       plugin = Lune::Plugins::Kv.new
       app = Lune::App.new
       app.install(plugin)
-      get_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.get" }.not_nil!
+      get_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Kv.get" }
       result = JSON.parse(app.registry.dispatch(get_b.id, ({"key" => JSON::Any.new("missing")}).to_json, nil))
       result.raw.should be_nil
     end
@@ -68,8 +68,8 @@ describe Lune::Plugins::Kv do
       plugin = Lune::Plugins::Kv.new
       app = Lune::App.new
       app.install(plugin)
-      set_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.set" }.not_nil!
-      get_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.get" }.not_nil!
+      set_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Kv.set" }
+      get_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Kv.get" }
       JSON.parse(app.registry.dispatch(set_b.id, ({"key" => JSON::Any.new("name"), "value" => JSON::Any.new("alice")}).to_json, nil))
       result = JSON.parse(app.registry.dispatch(get_b.id, ({"key" => JSON::Any.new("name")}).to_json, nil))
       result.as_s.should eq("alice")
@@ -79,8 +79,8 @@ describe Lune::Plugins::Kv do
       plugin = Lune::Plugins::Kv.new
       app = Lune::App.new
       app.install(plugin)
-      set_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.set" }.not_nil!
-      get_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.get" }.not_nil!
+      set_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Kv.set" }
+      get_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Kv.get" }
       JSON.parse(app.registry.dispatch(set_b.id, ({"key" => JSON::Any.new("count"), "value" => JSON::Any.new(42_i64)}).to_json, nil))
       result = JSON.parse(app.registry.dispatch(get_b.id, ({"key" => JSON::Any.new("count")}).to_json, nil))
       result.as_i64.should eq(42)
@@ -90,7 +90,7 @@ describe Lune::Plugins::Kv do
       plugin = Lune::Plugins::Kv.new
       app = Lune::App.new
       app.install(plugin)
-      has_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.has" }.not_nil!
+      has_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Kv.has" }
       JSON.parse(app.registry.dispatch(has_b.id, ({"key" => JSON::Any.new("nope")}).to_json, nil)).as_bool.should be_false
     end
 
@@ -98,8 +98,8 @@ describe Lune::Plugins::Kv do
       plugin = Lune::Plugins::Kv.new
       app = Lune::App.new
       app.install(plugin)
-      set_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.set" }.not_nil!
-      has_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.has" }.not_nil!
+      set_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Kv.set" }
+      has_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Kv.has" }
       JSON.parse(app.registry.dispatch(set_b.id, ({"key" => JSON::Any.new("x"), "value" => JSON::Any.new("y")}).to_json, nil))
       JSON.parse(app.registry.dispatch(has_b.id, ({"key" => JSON::Any.new("x")}).to_json, nil)).as_bool.should be_true
     end
@@ -108,8 +108,8 @@ describe Lune::Plugins::Kv do
       plugin = Lune::Plugins::Kv.new
       app = Lune::App.new
       app.install(plugin)
-      set_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.set" }.not_nil!
-      keys_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.keys" }.not_nil!
+      set_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Kv.set" }
+      keys_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Kv.keys" }
       JSON.parse(app.registry.dispatch(set_b.id, ({"key" => JSON::Any.new("a"), "value" => JSON::Any.new("1")}).to_json, nil))
       JSON.parse(app.registry.dispatch(set_b.id, ({"key" => JSON::Any.new("b"), "value" => JSON::Any.new("2")}).to_json, nil))
       keys = JSON.parse(app.registry.dispatch(keys_b.id, ({} of String => JSON::Any).to_json, nil)).as_a.map(&.as_s)
@@ -121,9 +121,9 @@ describe Lune::Plugins::Kv do
       plugin = Lune::Plugins::Kv.new
       app = Lune::App.new
       app.install(plugin)
-      set_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.set" }.not_nil!
-      del_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.delete" }.not_nil!
-      has_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.has" }.not_nil!
+      set_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Kv.set" }
+      del_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Kv.delete" }
+      has_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Kv.has" }
       JSON.parse(app.registry.dispatch(set_b.id, ({"key" => JSON::Any.new("tmp"), "value" => JSON::Any.new("val")}).to_json, nil))
       JSON.parse(app.registry.dispatch(del_b.id, ({"key" => JSON::Any.new("tmp")}).to_json, nil))
       JSON.parse(app.registry.dispatch(has_b.id, ({"key" => JSON::Any.new("tmp")}).to_json, nil)).as_bool.should be_false
@@ -133,9 +133,9 @@ describe Lune::Plugins::Kv do
       plugin = Lune::Plugins::Kv.new
       app = Lune::App.new
       app.install(plugin)
-      set_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.set" }.not_nil!
-      clear_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.clear" }.not_nil!
-      keys_b = app.bindings.find { |b| b.id == "Lune.Plugins.Kv.keys" }.not_nil!
+      set_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Kv.set" }
+      clear_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Kv.clear" }
+      keys_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Kv.keys" }
       JSON.parse(app.registry.dispatch(set_b.id, ({"key" => JSON::Any.new("k1"), "value" => JSON::Any.new("v1")}).to_json, nil))
       JSON.parse(app.registry.dispatch(set_b.id, ({"key" => JSON::Any.new("k2"), "value" => JSON::Any.new("v2")}).to_json, nil))
       JSON.parse(app.registry.dispatch(clear_b.id, ({} of String => JSON::Any).to_json, nil))

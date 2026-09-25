@@ -21,57 +21,57 @@ module LuneCLI
         escaped = HTML.escape(error_text)
 
         <<-HTML
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
 
-          <style>
-            :root {
-              --bg: #0f0f12;
-              --panel: #16161c;
-              --border: #2a2a35;
-              --text: #e5e7eb;
-              --muted: #9ca3af;
-              --error: #f87171;
-            }
+            <style>
+              :root {
+                --bg: #0f0f12;
+                --panel: #16161c;
+                --border: #2a2a35;
+                --text: #e5e7eb;
+                --muted: #9ca3af;
+                --error: #f87171;
+              }
 
-            * {
-              box-sizing: border-box;
-            }
+              * {
+                box-sizing: border-box;
+              }
 
-            body {
-              margin: 0;
-              background: var(--bg);
-              color: var(--text);
-              font: 13px/1.55 ui-monospace, SFMono-Regular,
-                    Menlo, Consolas, monospace;
-            }
+              body {
+                margin: 0;
+                background: var(--bg);
+                color: var(--text);
+                font: 13px/1.55 ui-monospace, SFMono-Regular,
+                      Menlo, Consolas, monospace;
+              }
 
-            header {
-              padding: 12px 16px;
-              border-bottom: 1px solid var(--border);
-              background: var(--panel);
-              color: var(--error);
-              font-weight: 600;
-            }
+              header {
+                padding: 12px 16px;
+                border-bottom: 1px solid var(--border);
+                background: var(--panel);
+                color: var(--error);
+                font-weight: 600;
+              }
 
-            pre {
-              margin: 0;
-              padding: 16px;
-              white-space: pre-wrap;
-              overflow-wrap: anywhere;
-              tab-size: 2;
-            }
-          </style>
-        </head>
+              pre {
+                margin: 0;
+                padding: 16px;
+                white-space: pre-wrap;
+                overflow-wrap: anywhere;
+                tab-size: 2;
+              }
+            </style>
+          </head>
 
-        <body>
-          <header>Compilation failed</header>
-          <pre><code>#{escaped}</code></pre>
-        </body>
-        </html>
-        HTML
+          <body>
+            <header>Compilation failed</header>
+            <pre><code>#{escaped}</code></pre>
+          </body>
+          </html>
+          HTML
       end
     end
   end

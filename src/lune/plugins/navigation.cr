@@ -39,24 +39,24 @@ module Lune
       # location.hash on every navigation — without the guard, every click
       # would fire on_navigate twice.
       def init_js : String?
-        return nil unless @on_navigate
+        return unless @on_navigate
         changed_key = "#{binding_namespace.gsub("::", ".")}.changed"
         <<-JS
-        (function(){
-          var _last;
-          function _nav(){
-            var u = location.href;
-            if (u === _last) return;
-            _last = u;
-            window[#{changed_key.inspect}](u);
-          }
-          window.addEventListener('popstate', _nav);
-          window.addEventListener('hashchange', _nav);
-          var _push = history.pushState, _replace = history.replaceState;
-          history.pushState = function(){ _push.apply(this, arguments); _nav(); };
-          history.replaceState = function(){ _replace.apply(this, arguments); _nav(); };
-        })();
-        JS
+          (function(){
+            var _last;
+            function _nav(){
+              var u = location.href;
+              if (u === _last) return;
+              _last = u;
+              window[#{changed_key.inspect}](u);
+            }
+            window.addEventListener('popstate', _nav);
+            window.addEventListener('hashchange', _nav);
+            var _push = history.pushState, _replace = history.replaceState;
+            history.pushState = function(){ _push.apply(this, arguments); _nav(); };
+            history.replaceState = function(){ _replace.apply(this, arguments); _nav(); };
+          })();
+          JS
       end
     end
   end

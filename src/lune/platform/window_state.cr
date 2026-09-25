@@ -19,7 +19,7 @@ module Lune
     end
 
     def self.load_from(file_path : String) : NamedTuple(x: Int32, y: Int32, width: Int32, height: Int32)?
-      return nil unless File.exists?(file_path)
+      return unless File.exists?(file_path)
       data = JSON.parse(File.read(file_path))
       {x: data["x"].as_i, y: data["y"].as_i, width: data["width"].as_i, height: data["height"].as_i}
     rescue ex : JSON::ParseException | TypeCastError | File::Error | IO::Error

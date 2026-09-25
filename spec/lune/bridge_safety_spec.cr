@@ -57,7 +57,7 @@ describe "Lune::Bridge — safety barriers" do
     end
 
     fake.resolve_calls.should be_empty
-    backend.entries.any? { |e| e.message.includes?("Bridge reply failed") }.should be_true
+    backend.entries.any?(&.message.includes?("Bridge reply failed")).should be_true
   end
 
   it "swallows a raise from wv.resolve on the error path" do
@@ -74,7 +74,7 @@ describe "Lune::Bridge — safety barriers" do
 
     fake.resolve_calls.should be_empty
     backend.entries.any? { |e| e.message.includes?("Binding execution failed") }.should be_true
-    backend.entries.any? { |e| e.message.includes?("Bridge reply failed") }.should be_true
+    backend.entries.any?(&.message.includes?("Bridge reply failed")).should be_true
   end
 
   it "completes the success path when resolve does not raise" do

@@ -49,7 +49,7 @@ module Lune
     end
 
     private def dispatch_now(event : String, json : String) : Nil
-      return unless (b = @bridge_fn.call)
+      return unless b = @bridge_fn.call
       bm = Lune::Plugin::BRIDGE_MARKER
       js = "if(window.#{bm}&&typeof window.#{bm}.crystalEmit==='function')window.#{bm}.crystalEmit(#{event.inspect},#{json})"
       b.dispatch_eval(js)

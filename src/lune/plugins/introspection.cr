@@ -30,15 +30,15 @@ module Lune
       # binding by its flat dispatch-id key (the shape the bridge exposes it
       # under) and returns its promise. Injected only when devtools are on.
       def init_js : String?
-        return nil unless @devtools
+        return unless @devtools
         bm = BRIDGE_MARKER
         call_key = "#{binding_namespace.gsub("::", ".")}.manifest"
         <<-JS
-        (function(){
-          window.#{bm} = window.#{bm} || {};
-          window.#{bm}.manifest = function(){ return window[#{call_key.inspect}]({}); };
-        })();
-        JS
+          (function(){
+            window.#{bm} = window.#{bm} || {};
+            window.#{bm}.manifest = function(){ return window[#{call_key.inspect}]({}); };
+          })();
+          JS
       end
     end
   end

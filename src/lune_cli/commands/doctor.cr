@@ -266,7 +266,7 @@ module LuneCLI
         else
           types.each do |t|
             if t.kind == "enum"
-              union = t.members.map { |m| m.inspect }.join(" | ")
+              union = t.members.map(&.inspect).join(" | ")
               output.puts "    #{t.name} = #{union}"
             else
               fields = t.fields.map { |f| "#{f.name}: #{f.type}" }.join("; ")

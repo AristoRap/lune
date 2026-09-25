@@ -43,7 +43,7 @@ module Lune
           on(cb)   { window.#{bm}.on("hotkey", cb, -1); },
           once(cb) { window.#{bm}.on("hotkey", cb, 1); },
           off(cb)  { window.#{bm}.off("hotkey", cb); },
-        JS
+          JS
       end
 
       def dts_helpers : String
@@ -51,7 +51,7 @@ module Lune
           on(cb: (event: { key: string }) => void): void;
           once(cb: (event: { key: string }) => void): void;
           off(cb?: (event: { key: string }) => void): void;
-        DTS
+          DTS
       end
     end
   end

@@ -100,7 +100,7 @@ describe "Shell output recovery" do
       plugin.write(pid, "continue\n")
       shell_output_finished(plugin, pid)
       resumed = plugin.snapshot(pid, first.cursor)
-      resumed.records.map(&.line).sort.should eq(["last", "later"])
+      resumed.records.map(&.line).sort!.should eq(["last", "later"])
       resumed.records.all? { |r| r.seq > first.cursor }.should be_true
       resumed.gap.should be_false
       resumed.code.should eq(0)
@@ -135,7 +135,7 @@ describe "Shell output recovery" do
     begin
       pid = shell_output_start(plugin, "console.log('one'); console.log('two'); console.error('err');")
       result = shell_output_finished(plugin, pid)
-      result.records.map(&.line).sort.should eq(["err", "one", "two"])
+      result.records.map(&.line).sort!.should eq(["err", "one", "two"])
       result.errors.should be_empty
       result.code.should eq(0)
       plugin.list.should be_empty

@@ -235,7 +235,7 @@
             entry.handle,
             entry.buffer.as(Void*),
             BUF_SIZE,
-            0,             # watch_subtree = false (immediate children only)
+            0, # watch_subtree = false (immediate children only)
             NOTIFY_FILTER,
             pointerof(bytes),
             entry.overlapped,

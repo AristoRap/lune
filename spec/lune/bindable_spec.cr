@@ -115,7 +115,7 @@ describe "Lune::Bindable + App bindings" do
   it "keeps nullable types and defaulted arguments consistent in dispatch, declarations and manifest" do
     app = Lune::App.new
     app.install(OptionalModule.new)
-    binding = app.bindings.find { |b| b.method == "nullable" }.not_nil!
+    binding = app.bindings.find! { |b| b.method == "nullable" }
     binding.to_dts_sig.should contain("args: { required: string | null; value?: string | null; enabled?: boolean }")
     binding.to_dts_sig.should contain("Promise<string | null>")
     binding.to_vow_descriptor.args.map(&.optional).should eq([false, true, true])
@@ -123,7 +123,7 @@ describe "Lune::Bindable + App bindings" do
     JSON.parse(app.registry.dispatch(binding.id, %({"required":"hello","enabled":true}), nil)).as_s.should eq("hello")
     JSON.parse(app.registry.dispatch(binding.id, %({"required":null,"value":"override","enabled":true}), nil)).as_s.should eq("override")
 
-    defaulted = app.bindings.find { |b| b.method == "defaulted" }.not_nil!
+    defaulted = app.bindings.find! { |b| b.method == "defaulted" }
     defaulted.to_dts_sig.should contain("args?: { value?: string }")
     defaulted.to_js_stub.should contain("defaulted(args = {})")
     JSON.parse(app.registry.dispatch(defaulted.id, "{}", nil)).as_s.should eq("fallback")
@@ -200,8 +200,8 @@ describe "Lune::Bindable + App bindings" do
     app.install(GreetModule.new)
     app.install(MathModule.new)
 
-    names = app.bindings.map(&.method).sort
-    namespaces = app.bindings.map(&.namespace).sort
+    names = app.bindings.map(&.method).sort!
+    namespaces = app.bindings.map(&.namespace).sort!
 
     names.should eq(["add", "greet"])
     namespaces.should eq(["GreetModule", "MathModule"])
@@ -213,7 +213,7 @@ describe "Lune::Bindable + App bindings" do
     app.install(GreetModule.new)
     app.install(MathModule.new)
 
-    app.bindings.empty?.should eq(false)
+    app.bindings.empty?.should be_false
   end
 
   it "captures an enum return as a string-union type alias from its serialized values (via vow)" do
@@ -223,7 +223,7 @@ describe "Lune::Bindable + App bindings" do
     # vow captures the enum generically (no lune-side enum logic): members are
     # the values each one serializes to (Crystal's default lowercases +
     # underscores), referenced by name in the stub and emitted as a `type` alias.
-    t = app.manifest.types.find { |ty| ty.name == "DemoStatus" }.not_nil!
+    t = app.manifest.types.find! { |ty| ty.name == "DemoStatus" }
     t.kind.should eq("enum")
     t.members.should eq(["pending", "running", "done", "two_words"])
 
@@ -254,7 +254,7 @@ describe "Lune::Bindable + App bindings" do
       app = Lune::App.new
       app.install(TsTypeModule.new)
 
-      t = app.manifest.types.find { |ty| ty.name == "DemoCounterState" }.not_nil!
+      t = app.manifest.types.find! { |ty| ty.name == "DemoCounterState" }
       t.fields.map(&.name).should eq(["value", "step", "labels"])
       t.fields.map(&.type).should eq(["Int32", "Int32", "Array(String)"])
     end
@@ -279,7 +279,7 @@ describe "Lune::Bindable + App bindings" do
       app = Lune::App.new
       app.install(NestedModule.new)
 
-      app.manifest.types.map(&.name).sort.should eq(["DemoCounterState", "Wrapper"])
+      app.manifest.types.map(&.name).sort!.should eq(["DemoCounterState", "Wrapper"])
 
       dts = Lune::Generator.generate_app_dts(
         app.bindings.reject(&.internal?),

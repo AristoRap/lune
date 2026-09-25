@@ -127,8 +127,8 @@ describe Lune::Native::Window do
     it "records the call" do
       Lune::Native::Window.setup_file_drop(
         handle,
-        ->(x : Int32, y : Int32, paths : Array(String)) { nil },
-        ->(x : Int32, y : Int32) { nil }
+        ->(_x : Int32, _y : Int32, _paths : Array(String)) { nil },
+        ->(_x : Int32, _y : Int32) { nil }
       )
       Lune::Native::WindowMock.calls.should contain(:setup_file_drop)
     end
@@ -140,7 +140,7 @@ describe Lune::Native::Window do
       Lune::Native::Window.setup_file_drop(
         handle,
         ->(x : Int32, y : Int32, paths : Array(String)) { received_x = x; received_y = y; received_paths = paths; nil },
-        ->(x : Int32, y : Int32) { nil }
+        ->(_x : Int32, _y : Int32) { nil }
       )
       Lune::Native::WindowMock.simulate_drop(42, 99, ["/tmp/a.txt", "/tmp/b.txt"])
       received_x.should eq(42)

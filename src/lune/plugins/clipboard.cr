@@ -52,7 +52,7 @@ module Lune
       DEFAULT_READ_HTML  = -> { Lune::Native::Clipboard.read_html }
       DEFAULT_WRITE_HTML = ->(html : String) { Lune::Native::Clipboard.write_html(html); nil }
 
-      DEFAULT_READ_IMAGE = -> { Lune::Native::Clipboard.read_image }
+      DEFAULT_READ_IMAGE  = -> { Lune::Native::Clipboard.read_image }
       DEFAULT_WRITE_IMAGE = ->(data_url : String) { Lune::Native::Clipboard.write_image(data_url); nil }
 
       def initialize(

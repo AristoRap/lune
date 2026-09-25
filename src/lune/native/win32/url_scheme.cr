@@ -14,7 +14,7 @@
           sam_desired : LibC::REGSAM,
           lp_security_attributes : Void*,
           phk_result : LibC::HKEY*,
-          lp_disposition : LibC::DWORD*
+          lp_disposition : LibC::DWORD*,
         ) : LibC::LSTATUS
 
         fun reg_set_value_ex_w = RegSetValueExW(
@@ -23,7 +23,7 @@
           reserved : LibC::DWORD,
           dw_type : LibC::DWORD,
           lp_data : UInt8*,
-          cb_data : LibC::DWORD
+          cb_data : LibC::DWORD,
         ) : LibC::LSTATUS
       end
 
@@ -38,8 +38,8 @@
         # REGSAM bitmask for KEY_WRITE (STANDARD_RIGHTS_WRITE | SET_VALUE |
         # CREATE_SUB_KEY). Crystal's REGSAM enum lists the individual bits;
         # KEY_WRITE itself isn't named, so we pass the literal value.
-        KEY_WRITE =  0x20006
-        REG_SZ    = 1_u32
+        KEY_WRITE = 0x20006
+        REG_SZ    =   1_u32
 
         def self.register(scheme : String, exe_path : String, display : String) : Bool
           base = "Software\\Classes\\#{scheme}"

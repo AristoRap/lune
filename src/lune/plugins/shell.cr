@@ -157,14 +157,14 @@ module Lune
             b.stOff("shell:" + pid + ":stderr");
             b.stOff("shell:" + pid + ":exit");
           },
-        JS
+          JS
       end
 
       def dts_helpers : String
         <<-DTS
           listen(pid: string, opts: { stdout?: (data: { line: string; truncated: boolean }) => void; stderr?: (data: { line: string; truncated: boolean }) => void; exit?: (data: { code: number }) => void }): () => void;
           unlisten(pid: string): void;
-        DTS
+          DTS
       end
 
       # Validate cwd before the Windows command fallback so a missing directory

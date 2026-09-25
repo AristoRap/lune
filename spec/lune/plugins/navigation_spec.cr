@@ -2,7 +2,8 @@ require "../../spec_helper"
 
 private def nav_with_callback : Lune::Plugins::Navigation
   plugin = Lune::Plugins::Navigation.new
-  opts = Lune::Options.new.tap { |o| o.on_navigate = ->(_u : String) {} }
+  opts = Lune::Options.new.tap(&.on_navigate=(->(_u : String) do
+  end))
   plugin.setup(Lune::Plugin::SetupCtx.new(opts, Pointer(Void).null))
   plugin
 end

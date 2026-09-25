@@ -83,14 +83,14 @@ module Lune
         <<-JS
           on(cb)  { window.#{bm}.on("file_drop", function(data) { cb(data.x, data.y, data.paths); }, -1); },
           off()   { window.#{bm}.off("file_drop"); },
-        JS
+          JS
       end
 
       def dts_helpers : String
         <<-DTS
           on(cb: (x: number, y: number, paths: string[]) => void): void;
           off(): void;
-        DTS
+          DTS
       end
 
       # `on`/`off` are event subscriptions returning void; throwing here would
@@ -103,14 +103,14 @@ module Lune
           _warned: false,
           on(cb) { if (!this._warned) { this._warned = true; console.warn(#{msg.inspect}); } },
           off()  { },
-        JS
+          JS
       end
 
       def unavailable_dts_stub : String?
         <<-DTS
           on(cb: (x: number, y: number, paths: string[]) => void): void;
           off(): void;
-        DTS
+          DTS
       end
 
       private def drop_with_zones(wv : Webview::Webview, user_callback : ((Int32, Int32, Array(String)) -> Nil)?, bm : String) : (Int32, Int32, Array(String)) -> Nil
@@ -169,15 +169,15 @@ module Lune
                 window.#{bm}.crystalEmit("file_drop", { x: x, y: y, paths: JSON.parse(pathsJson) });
               }
             };
-          JS
+            JS
         end
         <<-JS
-        (function(){
-          #{drop_zone}
-          document.addEventListener('dragover', function(e){ e.preventDefault(); }, false);
-          document.addEventListener('drop',     function(e){ e.preventDefault(); }, false);
-        })();
-        JS
+          (function(){
+            #{drop_zone}
+            document.addEventListener('dragover', function(e){ e.preventDefault(); }, false);
+            document.addEventListener('drop',     function(e){ e.preventDefault(); }, false);
+          })();
+          JS
       end
     end
   end

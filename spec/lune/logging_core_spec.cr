@@ -48,7 +48,7 @@ describe "Lune core logging" do
       end
     end
 
-    entry = backend.entries.find { |e| e.message.includes?("Lune JS written") }
+    entry = backend.entries.find(&.message.includes?("Lune JS written"))
     entry.should_not be_nil
     entry.not_nil!.severity.should eq(Log::Severity::Info)
   end

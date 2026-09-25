@@ -19,7 +19,7 @@ module LuneCLI
         command.flags.bool("force", 'f', false, "Delete the app directory and reinitialize from scratch")
         command.flags.bool("skip-existing", 'k', false, "Skip existing files instead of failing")
 
-        command.on_pre_run do |cmd, args|
+        command.on_pre_run do |_, args|
           unless args.first?
             raise Argy::Error.new("Missing app name. Usage: lune init [APP_NAME]")
           end

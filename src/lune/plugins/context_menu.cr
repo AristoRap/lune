@@ -34,20 +34,20 @@ module Lune
         show_key = "#{binding_namespace.gsub("::", ".")}.show"
         block_line = @config.block_default ? "document.addEventListener('contextmenu',function(e){e.preventDefault();});" : ""
         <<-JS
-        (function(){
-          window.#{bm} = window.#{bm} || {};
-          var _ctx_items = null;
-          window.#{bm}.setContextMenu = function(items) {
-            _ctx_items = (items && items.length) ? items : null;
-          };
-          document.addEventListener('contextmenu', function(e) {
-            if (!_ctx_items) return;
-            e.preventDefault();
-            window[#{show_key.inspect}]({ x: e.clientX, y: e.clientY, itemsJson: JSON.stringify(_ctx_items) });
-          });
-          #{block_line}
-        })();
-        JS
+          (function(){
+            window.#{bm} = window.#{bm} || {};
+            var _ctx_items = null;
+            window.#{bm}.setContextMenu = function(items) {
+              _ctx_items = (items && items.length) ? items : null;
+            };
+            document.addEventListener('contextmenu', function(e) {
+              if (!_ctx_items) return;
+              e.preventDefault();
+              window[#{show_key.inspect}]({ x: e.clientX, y: e.clientY, itemsJson: JSON.stringify(_ctx_items) });
+            });
+            #{block_line}
+          })();
+          JS
       end
 
       def js_helpers : String
@@ -56,7 +56,7 @@ module Lune
           set(items)      { window.#{bm}.setContextMenu(items || []); },
           clear()         { window.#{bm}.setContextMenu([]); },
           onSelect(cb)    { window.#{bm}.on("context_menu", function(data) { cb(data.id); }, -1); },
-        JS
+          JS
       end
 
       def dts_helpers : String
@@ -64,7 +64,7 @@ module Lune
           set(items: { id?: string; label?: string; enabled?: boolean; separator?: boolean }[]): void;
           clear(): void;
           onSelect(cb: (id: string) => void): void;
-        DTS
+          DTS
       end
     end
   end

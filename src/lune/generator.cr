@@ -126,7 +126,7 @@ module Lune
       empty = [] of Lune::Plugin
       tree = build_tree(bindings, empty, empty,
         helper_fn: ->(p : Lune::Plugin) { p.js_helpers },
-        unavailable_fn: ->(p : Lune::Plugin) { nil.as(String?) })
+        unavailable_fn: ->(_p : Lune::Plugin) { nil.as(String?) })
       hash = tree.as(Hash)
       blocks = hash.map { |top, sub| "export const #{top} = #{render_js(sub)};" }
       api_members = hash.keys.join(", ")
@@ -153,7 +153,7 @@ module Lune
       empty = [] of Lune::Plugin
       tree = build_tree(bindings, empty, empty, dts: true, known: known,
         helper_fn: ->(p : Lune::Plugin) { p.dts_helpers },
-        unavailable_fn: ->(p : Lune::Plugin) { nil.as(String?) })
+        unavailable_fn: ->(_p : Lune::Plugin) { nil.as(String?) })
       hash = tree.as(Hash)
       decls = hash.map { |top, sub| "export declare const #{top}: #{render_dts(sub)};" }
       api_body = hash.map { |top, sub| "  #{top}: #{render_dts(sub)};" }.join("\n")

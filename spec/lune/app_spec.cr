@@ -465,7 +465,7 @@ class MockWebview
   def resolve(seq : String, status : Int32, result : String)
   end
 
-  def bind_deferred(name : String, &block : String, Array(JSON::Any) ->)
+  def bind_deferred(name : String, &_block : String, Array(JSON::Any) ->)
   end
 end
 

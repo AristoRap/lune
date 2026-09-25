@@ -41,12 +41,10 @@ module Lune
             Lune.logger.debug { "Stream: WS client connected" }
             mu.synchronize { sockets << ws }
             ws.on_message do |raw|
-              begin
-                msg = JSON.parse(raw)
-                app.stream.dispatch(msg["n"].as_s, msg["d"])
-              rescue ex
-                Lune.logger.debug { "Stream: malformed message — #{ex.message}" }
-              end
+              msg = JSON.parse(raw)
+              app.stream.dispatch(msg["n"].as_s, msg["d"])
+            rescue ex
+              Lune.logger.debug { "Stream: malformed message — #{ex.message}" }
             end
             ws.on_close { Lune.logger.debug { "Stream: WS client disconnected" }; mu.synchronize { sockets.delete(ws) } }
           end,
@@ -94,34 +92,34 @@ module Lune
 
       # WebSocket client JS; nil until init_webview has bound the port.
       def init_js : String?
-        return nil if @port == 0
+        return if @port == 0
         port = @port
         bm = BRIDGE_MARKER
         <<-JS
-        (function(){
-          var _h = {};
-          var _q = [];
-          var _ws;
-          function connect() {
-            _ws = new WebSocket("ws://127.0.0.1:#{port}");
-            _ws.onopen  = function() { _q.splice(0).forEach(function(m){ _ws.send(m); }); };
-            _ws.onmessage = function(e) {
-              var m; try { m = JSON.parse(e.data); } catch(_){ return; }
-              (_h[m.n] || []).forEach(function(cb){ cb(m.d); });
+          (function(){
+            var _h = {};
+            var _q = [];
+            var _ws;
+            function connect() {
+              _ws = new WebSocket("ws://127.0.0.1:#{port}");
+              _ws.onopen  = function() { _q.splice(0).forEach(function(m){ _ws.send(m); }); };
+              _ws.onmessage = function(e) {
+                var m; try { m = JSON.parse(e.data); } catch(_){ return; }
+                (_h[m.n] || []).forEach(function(cb){ cb(m.d); });
+              };
+              _ws.onclose = function() { setTimeout(connect, 1000); };
+              _ws.onerror = function() { _ws.close(); };
+            }
+            connect();
+            window.#{bm} = window.#{bm} || {};
+            window.#{bm}.stOn   = function(n,cb){ (_h[n]=_h[n]||[]).push(cb); };
+            window.#{bm}.stOff  = function(n,cb){ if(!cb){delete _h[n];return;} if(_h[n]) _h[n]=_h[n].filter(function(f){return f!==cb;}); };
+            window.#{bm}.stSend = function(n,d){
+              var m = JSON.stringify({n:n, d:d===undefined?null:d});
+              if(_ws && _ws.readyState===1) _ws.send(m); else _q.push(m);
             };
-            _ws.onclose = function() { setTimeout(connect, 1000); };
-            _ws.onerror = function() { _ws.close(); };
-          }
-          connect();
-          window.#{bm} = window.#{bm} || {};
-          window.#{bm}.stOn   = function(n,cb){ (_h[n]=_h[n]||[]).push(cb); };
-          window.#{bm}.stOff  = function(n,cb){ if(!cb){delete _h[n];return;} if(_h[n]) _h[n]=_h[n].filter(function(f){return f!==cb;}); };
-          window.#{bm}.stSend = function(n,d){
-            var m = JSON.stringify({n:n, d:d===undefined?null:d});
-            if(_ws && _ws.readyState===1) _ws.send(m); else _q.push(m);
-          };
-        })();
-        JS
+          })();
+          JS
       end
 
       def js_helpers : String
@@ -131,7 +129,7 @@ module Lune
           once(name, cb)   { var w=function(d){ cb(d); window.#{bm}.stOff(name,w); }; window.#{bm}.stOn(name,w); },
           off(name, cb)    { window.#{bm}.stOff(name, cb); },
           send(name, data) { window.#{bm}.stSend(name, data); },
-        JS
+          JS
       end
 
       def dts_helpers : String
@@ -140,7 +138,7 @@ module Lune
           once(name: string, cb: (data: unknown) => void): void;
           off(name: string, cb?: (data: unknown) => void): void;
           send(name: string, data?: unknown): void;
-        DTS
+          DTS
       end
     end
   end

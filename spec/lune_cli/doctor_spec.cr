@@ -92,8 +92,8 @@ describe LuneCLI::Commands::Doctor do
       end
       rows = doctor.parse_inspect_output_for_spec(framed)
       rows.map { |r| r[:id] }.should eq(["tray", "counter"])
-      rows.find { |r| r[:id] == "tray" }.not_nil![:built_in].should be_true
-      rows.find { |r| r[:id] == "counter" }.not_nil![:built_in].should be_false
+      rows.find! { |r| r[:id] == "tray" }[:built_in].should be_true
+      rows.find! { |r| r[:id] == "counter" }[:built_in].should be_false
     end
 
     it "drops rows with too few columns" do

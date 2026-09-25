@@ -95,7 +95,7 @@ module Lune
       # taskbar icon — same math (`y = tray_y - height`) works for both
       # because the OS coordinate origin and tray location flip together.
       def self.build_window_toggle(handle : Pointer(Void), width : Int32, height : Int32) : (-> Nil)?
-        return nil if handle.null?
+        return if handle.null?
         -> {
           {% if flag?(:darwin) || flag?(:win32) %}
             if Lune::Native::Window.visible?(handle)
@@ -115,7 +115,7 @@ module Lune
       end
 
       private def window_toggle_for(direction : Symbol) : (-> Nil)?
-        return nil unless @config.toggle_window_on.includes?(direction)
+        return unless @config.toggle_window_on.includes?(direction)
         Tray.build_window_toggle(@handle, @width, @height)
       end
 
@@ -176,7 +176,7 @@ module Lune
 
       @[Lune::Bind]
       def set_menu(items : Array(TrayMenuItem)) : Nil
-        @has_menu = items.any?
+        @has_menu = items.present?
         Lune::Native::Tray.set_menu(items, on_menu_click_handler)
       end
 
@@ -189,7 +189,7 @@ module Lune
           setIcon(args) { #{reject.call("setIcon")} },
           popupMenu(args = {}) { #{reject.call("popupMenu")} },
           setMenu(args) { #{reject.call("setMenu")} },
-        JS
+          JS
       end
 
       def unavailable_dts_stub : String?
@@ -199,7 +199,7 @@ module Lune
           setIcon(args: { path: string }): Promise<void>;
           popupMenu(args?: {}): Promise<void>;
           setMenu(args: { items: { id: string; label: string }[] }): Promise<void>;
-        DTS
+          DTS
       end
     end
   end

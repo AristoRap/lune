@@ -29,7 +29,6 @@ describe Lune::Options::Mac do
     it "hide_traffic_lights is false" do
       Lune::Options::Mac.new.hide_traffic_lights.should be_false
     end
-
   end
 
   describe "via opts.mac block" do
@@ -56,10 +55,9 @@ describe Lune::Options::Mac do
 
     it "hide_traffic_lights is settable" do
       opts = Lune::Options.new
-      opts.mac { |m| m.hide_traffic_lights = true }
+      opts.mac(&.hide_traffic_lights=(true))
       opts.mac.hide_traffic_lights.should be_true
     end
-
   end
 end
 

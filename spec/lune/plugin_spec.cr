@@ -117,7 +117,7 @@ describe Lune::Plugin do
     it "System picks up devtools flag from options" do
       sys = Lune::Plugins::System.new(-> { })
       sys.setup(Lune::Plugin::SetupCtx.new(
-        Lune::Options.new.tap { |o| o.devtools = true },
+        Lune::Options.new.tap(&.devtools=(true)),
         Pointer(Void).null,
       ))
 
@@ -141,7 +141,7 @@ describe Lune::Plugin do
       plugin = Lune::Plugins::Tray.new
       Lune.with_plugins(plugin) do
         opts = Lune::Options.new
-        opts.tray { |t| t.event = "myTrayEvent" }
+        opts.tray(&.event=("myTrayEvent"))
         plugin.config.event.should eq("myTrayEvent")
       end
     end
@@ -199,8 +199,8 @@ describe Lune::Plugins::Registry do
       # so the cascade-disable step actually runs on them. FileDrop is
       # platform-filtered out on Win32 before the cascade step, so it never
       # produces a cascade warning there.
-      resolved.warnings.any? { |w| w.includes?("ContextMenu") }.should be_true
-      resolved.warnings.any? { |w| w.includes?("DeepLink") }.should be_true
+      resolved.warnings.any?(&.includes?("ContextMenu")).should be_true
+      resolved.warnings.any?(&.includes?("DeepLink")).should be_true
     end
 
     it "keeps a soft-dep plugin active when its soft dep is excluded" do
@@ -216,8 +216,8 @@ describe Lune::Plugins::Registry do
     it "places deps before dependents in the sorted result" do
       resolved = make_registry.resolve(empty_config)
       names = resolved.plugins.map(&.name)
-      event_pos = names.index("event").not_nil!
-      context_menu_pos = names.index("context_menu").not_nil!
+      event_pos = names.index!("event")
+      context_menu_pos = names.index!("context_menu")
       event_pos.should be < context_menu_pos
     end
 
@@ -253,7 +253,7 @@ describe Lune::Plugins::Registry do
       with_logger(logger) do
         make_registry.validate_resolve_install(config_disabled("event"), Lune::App.new)
       end
-      backend.entries.any? { |e| e.message.includes?("ContextMenu") }.should be_true
+      backend.entries.any?(&.message.includes?("ContextMenu")).should be_true
     end
 
     it "logs validate warnings for unknown plugin names" do
@@ -262,7 +262,7 @@ describe Lune::Plugins::Registry do
       with_logger(logger) do
         make_registry.validate_resolve_install(config_enabled("not_a_real_cap"), Lune::App.new)
       end
-      backend.entries.any? { |e| e.message.includes?("unknown plugin") }.should be_true
+      backend.entries.any?(&.message.includes?("unknown plugin")).should be_true
     end
   end
 
@@ -308,7 +308,7 @@ describe Lune::Plugins::Registry do
       with_logger(logger) do
         make_registry.validate(config_enabled("drag_out"))
       end
-      backend.entries.any? { |e| e.message.includes?("unknown plugin") }.should be_false
+      backend.entries.any?(&.message.includes?("unknown plugin")).should be_false
     end
 
     it "validate still warns on a truly unknown plugin name" do
@@ -317,7 +317,7 @@ describe Lune::Plugins::Registry do
       with_logger(logger) do
         make_registry.validate(config_enabled("not_a_real_cap"))
       end
-      backend.entries.any? { |e| e.message.includes?("unknown plugin") }.should be_true
+      backend.entries.any?(&.message.includes?("unknown plugin")).should be_true
     end
   end
 end

@@ -75,13 +75,13 @@ describe "Lune manifest (vow contract)" do
 
     it "names every procedure by the binding's wire id" do
       app = full_app
-      app.manifest.procedures.map(&.name).sort.should eq(app.bindings.map(&.id).sort)
+      app.manifest.procedures.map(&.name).sort!.should eq(app.bindings.map(&.id).sort!)
     end
 
     it "captures a known plugin procedure faithfully" do
       app = Lune::App.new
       app.install(Lune::Plugins::Window.new)
-      d = app.manifest.procedures.find { |p| p.name == "Lune.Plugins.Window.setSize" }.not_nil!
+      d = app.manifest.procedures.find! { |p| p.name == "Lune.Plugins.Window.setSize" }
       d.args.map(&.type).should eq(["Int32", "Int32"])
       d.return_type.should eq("Nil")
     end
@@ -89,7 +89,7 @@ describe "Lune manifest (vow contract)" do
     it "round-trips through JSON" do
       app = full_app
       restored = Vow::Manifest.from_json(app.manifest.to_json)
-      restored.procedures.map(&.name).sort.should eq(app.manifest.procedures.map(&.name).sort)
+      restored.procedures.map(&.name).sort!.should eq(app.manifest.procedures.map(&.name).sort!)
     end
   end
 
@@ -107,7 +107,7 @@ describe "Lune manifest (vow contract)" do
       signatures = app.manifest.procedures.map do |p|
         args = p.args.map { |a| "#{a.name}: #{a.type}#{a.optional ? "?" : ""}" }.join(", ")
         "#{p.name}(#{args}) -> #{p.return_type}"
-      end.sort
+      end.sort!
 
       # The full macOS contract. Some bindings are compiled out on other
       # platforms (the same gating the runtime-bindings count spec documents):
@@ -188,7 +188,7 @@ describe "Lune manifest (vow contract)" do
       when :linux
         expected.reject! { |s| s.starts_with?("Lune.Plugins.DragOut.") || s == "Lune.Plugins.Window.startDrag() -> Nil" }
       when :win32
-        expected.reject! { |s| s.starts_with?("Lune.Plugins.DragOut.") }
+        expected.reject!(&.starts_with?("Lune.Plugins.DragOut."))
       end
 
       signatures.should eq(expected.sort)

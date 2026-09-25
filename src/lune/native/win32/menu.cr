@@ -14,10 +14,10 @@
         TPM_RIGHTBUTTON = 0x0002_u32
 
         # ACCEL.fVirt flags — see MSDN ACCEL struct.
-        FVIRTKEY  = 0x01_u8
-        FSHIFT    = 0x04_u8
-        FCONTROL  = 0x08_u8
-        FALT      = 0x10_u8
+        FVIRTKEY = 0x01_u8
+        FSHIFT   = 0x04_u8
+        FCONTROL = 0x08_u8
+        FALT     = 0x10_u8
 
         struct Point
           x : LibC::Long
@@ -240,11 +240,11 @@
           key_part = parts.last
           parts[0..-2].each do |mod|
             case mod
-            when "cmd", "ctrl"  then f_virt |= LibUser32Menu::FCONTROL
-            when "alt", "opt"   then f_virt |= LibUser32Menu::FALT
-            when "shift"        then f_virt |= LibUser32Menu::FSHIFT
-            when "meta", "win"  then return nil # no FWIN flag — Windows key isn't routable via accel
-            else                     return nil
+            when "cmd", "ctrl" then f_virt |= LibUser32Menu::FCONTROL
+            when "alt", "opt"  then f_virt |= LibUser32Menu::FALT
+            when "shift"       then f_virt |= LibUser32Menu::FSHIFT
+            when "meta", "win" then return nil # no FWIN flag — Windows key isn't routable via accel
+            else return nil
             end
           end
 
@@ -280,17 +280,17 @@
           end
 
           case key
-          when "enter", "return"      then 0x0D_u16 # VK_RETURN
-          when "esc", "escape"        then 0x1B_u16 # VK_ESCAPE
-          when "tab"                  then 0x09_u16 # VK_TAB
-          when "space"                then 0x20_u16 # VK_SPACE
-          when "backspace"            then 0x08_u16 # VK_BACK
-          when "delete", "del"        then 0x2E_u16 # VK_DELETE
-          when "up"                   then 0x26_u16 # VK_UP
-          when "down"                 then 0x28_u16 # VK_DOWN
-          when "left"                 then 0x25_u16 # VK_LEFT
-          when "right"                then 0x27_u16 # VK_RIGHT
-          else nil
+          when "enter", "return" then 0x0D_u16 # VK_RETURN
+          when "esc", "escape"   then 0x1B_u16 # VK_ESCAPE
+          when "tab"             then 0x09_u16 # VK_TAB
+          when "space"           then 0x20_u16 # VK_SPACE
+          when "backspace"       then 0x08_u16 # VK_BACK
+          when "delete", "del"   then 0x2E_u16 # VK_DELETE
+          when "up"              then 0x26_u16 # VK_UP
+          when "down"            then 0x28_u16 # VK_DOWN
+          when "left"            then 0x25_u16 # VK_LEFT
+          when "right"           then 0x27_u16 # VK_RIGHT
+          else                        nil
           end
         end
 

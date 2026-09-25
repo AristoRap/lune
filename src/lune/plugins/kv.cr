@@ -18,12 +18,12 @@ module Lune
 
       def setup(ctx : SetupCtx) : Nil
         base = {% if flag?(:darwin) %}
-          Path.home.join("Library", "Application Support").to_s
-        {% elsif flag?(:win32) %}
-          ENV["APPDATA"]? || Path.home.to_s
-        {% else %}
-          ENV["XDG_DATA_HOME"]? || Path.home.join(".local", "share").to_s
-        {% end %}
+                 Path.home.join("Library", "Application Support").to_s
+               {% elsif flag?(:win32) %}
+                 ENV["APPDATA"]? || Path.home.to_s
+               {% else %}
+                 ENV["XDG_DATA_HOME"]? || Path.home.join(".local", "share").to_s
+               {% end %}
         slug = ctx.options.title.downcase.gsub(/\s+/, "-").gsub(/[^a-z0-9\-]/, "")
         slug = "lune" if slug.empty?
         @path = File.join(base, slug, "kv.json")

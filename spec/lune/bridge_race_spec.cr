@@ -38,7 +38,7 @@ describe "Bridge races" do
 
     grouped = fake.resolve_calls.group_by(&.[0])
     grouped.size.should eq(seqs.size)
-    grouped.each_value { |calls| calls.size.should eq(1) }
+    grouped.each_value(&.size.should(eq(1)))
     fake.resolve_calls.each { |(_, status, _)| status.should eq(0) }
   end
 

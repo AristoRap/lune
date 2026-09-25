@@ -12,7 +12,7 @@ module LuneCLI
         output: Process::Redirect::Inherit,
         error: Process::Redirect::Inherit
       )
-      return false unless app_status.success?
+      false unless app_status.success?
     end
   end
 end

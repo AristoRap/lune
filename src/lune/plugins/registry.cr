@@ -85,7 +85,7 @@ module Lune
         @platform_filtered = all_plugins - @all
 
         setup_ctx = Lune::Plugin::SetupCtx.new(options, handle, on_quit)
-        @all.each { |plugin| plugin.setup(setup_ctx) }
+        @all.each(&.setup(setup_ctx))
       end
 
       def platform_filtered : Array(Lune::Plugin)

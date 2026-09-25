@@ -312,31 +312,31 @@ module LuneCLI
         icon_entry = icon_name ? "\n  <key>CFBundleIconFile</key>\n  <string>#{icon_name}</string>" : ""
         url_types_entry = url_schemes.empty? ? "" : build_url_types_plist(url_schemes, identifier)
         <<-XML
-        <?xml version="1.0" encoding="UTF-8"?>
-        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-        <plist version="1.0">
-        <dict>
-          <key>CFBundleDevelopmentRegion</key>
-          <string>en</string>
-          <key>CFBundleExecutable</key>
-          <string>#{binary_name}</string>
-          <key>CFBundleIdentifier</key>
-          <string>#{identifier}</string>
-          <key>CFBundleInfoDictionaryVersion</key>
-          <string>6.0</string>
-          <key>CFBundleName</key>
-          <string>#{app_name}</string>
-          <key>CFBundlePackageType</key>
-          <string>APPL</string>
-          <key>CFBundleShortVersionString</key>
-          <string>#{Lune::VERSION}</string>
-          <key>CFBundleVersion</key>
-          <string>#{Lune::VERSION}</string>
-          <key>NSHighResolutionCapable</key>
-          <true/>#{icon_entry}#{url_types_entry}
-        </dict>
-        </plist>
-        XML
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleDevelopmentRegion</key>
+            <string>en</string>
+            <key>CFBundleExecutable</key>
+            <string>#{binary_name}</string>
+            <key>CFBundleIdentifier</key>
+            <string>#{identifier}</string>
+            <key>CFBundleInfoDictionaryVersion</key>
+            <string>6.0</string>
+            <key>CFBundleName</key>
+            <string>#{app_name}</string>
+            <key>CFBundlePackageType</key>
+            <string>APPL</string>
+            <key>CFBundleShortVersionString</key>
+            <string>#{Lune::VERSION}</string>
+            <key>CFBundleVersion</key>
+            <string>#{Lune::VERSION}</string>
+            <key>NSHighResolutionCapable</key>
+            <true/>#{icon_entry}#{url_types_entry}
+          </dict>
+          </plist>
+          XML
       end
 
       private def build_url_types_plist(schemes : Array(String), identifier : String) : String

@@ -57,7 +57,7 @@ describe Lune::Plugins::Sqlite do
       plugin = Lune::Plugins::Sqlite.new
       app = Lune::App.new
       app.install(plugin)
-      b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.open" }.not_nil!
+      b = app.bindings.find! { |b| b.id == "Lune.Plugins.Sqlite.open" }
       result = JSON.parse(app.registry.dispatch(b.id, ({"path" => JSON::Any.new(":memory:")}).to_json, nil))
       result.as_s.size.should eq(16)
     end
@@ -66,8 +66,8 @@ describe Lune::Plugins::Sqlite do
       plugin = Lune::Plugins::Sqlite.new
       app = Lune::App.new
       app.install(plugin)
-      open_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.open" }.not_nil!
-      close_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.close" }.not_nil!
+      open_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Sqlite.open" }
+      close_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Sqlite.close" }
       id = JSON.parse(app.registry.dispatch(open_b.id, ({"path" => JSON::Any.new(":memory:")}).to_json, nil)).as_s
       result = JSON.parse(app.registry.dispatch(close_b.id, ({"db" => JSON::Any.new(id)}).to_json, nil))
       result.raw.should be_nil
@@ -77,7 +77,7 @@ describe Lune::Plugins::Sqlite do
       plugin = Lune::Plugins::Sqlite.new
       app = Lune::App.new
       app.install(plugin)
-      close_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.close" }.not_nil!
+      close_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Sqlite.close" }
       result = JSON.parse(app.registry.dispatch(close_b.id, ({"db" => JSON::Any.new("nonexistent")}).to_json, nil))
       result.raw.should be_nil
     end
@@ -86,8 +86,8 @@ describe Lune::Plugins::Sqlite do
       plugin = Lune::Plugins::Sqlite.new
       app = Lune::App.new
       app.install(plugin)
-      open_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.open" }.not_nil!
-      exec_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.exec" }.not_nil!
+      open_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Sqlite.open" }
+      exec_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Sqlite.exec" }
       id = JSON.parse(app.registry.dispatch(open_b.id, ({"path" => JSON::Any.new(":memory:")}).to_json, nil)).as_s
       result = JSON.parse(app.registry.dispatch(exec_b.id, ({
         "db"     => JSON::Any.new(id),
@@ -102,8 +102,8 @@ describe Lune::Plugins::Sqlite do
       plugin = Lune::Plugins::Sqlite.new
       app = Lune::App.new
       app.install(plugin)
-      open_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.open" }.not_nil!
-      exec_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.exec" }.not_nil!
+      open_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Sqlite.open" }
+      exec_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Sqlite.exec" }
       id = JSON.parse(app.registry.dispatch(open_b.id, ({"path" => JSON::Any.new(":memory:")}).to_json, nil)).as_s
       JSON.parse(app.registry.dispatch(exec_b.id, ({
         "db"     => JSON::Any.new(id),
@@ -123,7 +123,7 @@ describe Lune::Plugins::Sqlite do
       plugin = Lune::Plugins::Sqlite.new
       app = Lune::App.new
       app.install(plugin)
-      exec_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.exec" }.not_nil!
+      exec_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Sqlite.exec" }
       expect_raises(Lune::Error, "No open database") do
         JSON.parse(app.registry.dispatch(exec_b.id, ({
           "db"     => JSON::Any.new("bad"),
@@ -137,8 +137,8 @@ describe Lune::Plugins::Sqlite do
       plugin = Lune::Plugins::Sqlite.new
       app = Lune::App.new
       app.install(plugin)
-      open_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.open" }.not_nil!
-      exec_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.exec" }.not_nil!
+      open_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Sqlite.open" }
+      exec_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Sqlite.exec" }
       id = JSON.parse(app.registry.dispatch(open_b.id, ({"path" => JSON::Any.new(":memory:")}).to_json, nil)).as_s
       err = expect_raises(Lune::Error) do
         JSON.parse(app.registry.dispatch(exec_b.id, ({
@@ -154,9 +154,9 @@ describe Lune::Plugins::Sqlite do
       plugin = Lune::Plugins::Sqlite.new
       app = Lune::App.new
       app.install(plugin)
-      open_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.open" }.not_nil!
-      exec_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.exec" }.not_nil!
-      query_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.query" }.not_nil!
+      open_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Sqlite.open" }
+      exec_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Sqlite.exec" }
+      query_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Sqlite.query" }
       id = JSON.parse(app.registry.dispatch(open_b.id, ({"path" => JSON::Any.new(":memory:")}).to_json, nil)).as_s
       JSON.parse(app.registry.dispatch(exec_b.id, ({
         "db"     => JSON::Any.new(id),
@@ -189,9 +189,9 @@ describe Lune::Plugins::Sqlite do
       plugin = Lune::Plugins::Sqlite.new
       app = Lune::App.new
       app.install(plugin)
-      open_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.open" }.not_nil!
-      exec_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.exec" }.not_nil!
-      query_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.query" }.not_nil!
+      open_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Sqlite.open" }
+      exec_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Sqlite.exec" }
+      query_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Sqlite.query" }
       id = JSON.parse(app.registry.dispatch(open_b.id, ({"path" => JSON::Any.new(":memory:")}).to_json, nil)).as_s
       JSON.parse(app.registry.dispatch(exec_b.id, ({
         "db"     => JSON::Any.new(id),
@@ -215,9 +215,9 @@ describe Lune::Plugins::Sqlite do
       plugin = Lune::Plugins::Sqlite.new
       app = Lune::App.new
       app.install(plugin)
-      open_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.open" }.not_nil!
-      exec_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.exec" }.not_nil!
-      query_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.query" }.not_nil!
+      open_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Sqlite.open" }
+      exec_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Sqlite.exec" }
+      query_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Sqlite.query" }
       id = JSON.parse(app.registry.dispatch(open_b.id, ({"path" => JSON::Any.new(":memory:")}).to_json, nil)).as_s
       JSON.parse(app.registry.dispatch(exec_b.id, ({
         "db"     => JSON::Any.new(id),
@@ -236,7 +236,7 @@ describe Lune::Plugins::Sqlite do
       plugin = Lune::Plugins::Sqlite.new
       app = Lune::App.new
       app.install(plugin)
-      query_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.query" }.not_nil!
+      query_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Sqlite.query" }
       err = expect_raises(Lune::Error) do
         JSON.parse(app.registry.dispatch(query_b.id, ({
           "db"     => JSON::Any.new("bad"),
@@ -253,7 +253,7 @@ describe Lune::Plugins::Sqlite do
       plugin = Lune::Plugins::Sqlite.new
       app = Lune::App.new
       app.install(plugin)
-      open_b = app.bindings.find { |b| b.id == "Lune.Plugins.Sqlite.open" }.not_nil!
+      open_b = app.bindings.find! { |b| b.id == "Lune.Plugins.Sqlite.open" }
       JSON.parse(app.registry.dispatch(open_b.id, ({"path" => JSON::Any.new(":memory:")}).to_json, nil))
       JSON.parse(app.registry.dispatch(open_b.id, ({"path" => JSON::Any.new(":memory:")}).to_json, nil))
       plugin.shutdown

@@ -58,7 +58,7 @@ describe "Lune::Plugins (native)" do
     end
 
     it "marks all bindings as internal" do
-      install_all(handle).each { |b| b.internal?.should be_true }
+      install_all(handle).each(&.internal?.should(be_true))
     end
   end
 
@@ -140,7 +140,7 @@ describe "Lune::Plugins (native)" do
 
       wv.invoke("Lune.Plugins.Dialogs.openFile", "seq6", [JSON.parse(%({"prompt": "Pick", "filters": []}))])
       Lune::Native::DialogsMock.calls.map(&.method).should contain(:open_file)
-      wv.resolve_calls.find { |r| r[0] == "seq6" }.not_nil![2].should contain("/home/user/file.txt")
+      wv.resolve_calls.find! { |r| r[0] == "seq6" }[2].should contain("/home/user/file.txt")
     end
 
     it "save_file binding returns the chosen save path" do
@@ -153,7 +153,7 @@ describe "Lune::Plugins (native)" do
 
       wv.invoke("Lune.Plugins.Dialogs.saveFile", "seq7", [JSON.parse(%({"prompt": "Save", "filename": "data.csv", "filters": []}))])
       Lune::Native::DialogsMock.calls.map(&.method).should contain(:save_file)
-      wv.resolve_calls.find { |r| r[0] == "seq7" }.not_nil![2].should contain("/home/user/out.csv")
+      wv.resolve_calls.find! { |r| r[0] == "seq7" }[2].should contain("/home/user/out.csv")
     end
 
     it "open_dir binding returns the selected directory" do
@@ -166,7 +166,7 @@ describe "Lune::Plugins (native)" do
 
       wv.invoke("Lune.Plugins.Dialogs.openDir", "seq8a", [JSON.parse(%({"prompt": "Pick folder"}))])
       Lune::Native::DialogsMock.calls.map(&.method).should contain(:open_dir)
-      wv.resolve_calls.find { |r| r[0] == "seq8a" }.not_nil![2].should contain("/home/user/docs")
+      wv.resolve_calls.find! { |r| r[0] == "seq8a" }[2].should contain("/home/user/docs")
     end
 
     it "open_files binding returns a JSON array of paths" do
@@ -179,7 +179,7 @@ describe "Lune::Plugins (native)" do
 
       wv.invoke("Lune.Plugins.Dialogs.openFiles", "seq8b", [JSON.parse(%({"prompt": "Pick files", "filters": []}))])
       Lune::Native::DialogsMock.calls.map(&.method).should contain(:open_files)
-      result = JSON.parse(wv.resolve_calls.find { |r| r[0] == "seq8b" }.not_nil![2])
+      result = JSON.parse(wv.resolve_calls.find! { |r| r[0] == "seq8b" }[2])
       result.as_a.map(&.as_s).should eq(["/a/one.txt", "/b/two.txt"])
     end
 
@@ -192,7 +192,7 @@ describe "Lune::Plugins (native)" do
 
       wv.invoke("Lune.Plugins.Dialogs.messageInfo", "seq8c", [JSON.parse(%({"title": "Title", "message": "Hello"}))])
       Lune::Native::DialogsMock.calls.map(&.method).should contain(:message)
-      _, status, _ = wv.resolve_calls.find { |r| r[0] == "seq8c" }.not_nil!
+      _, status, _ = wv.resolve_calls.find! { |r| r[0] == "seq8c" }
       status.should eq(0)
     end
 
@@ -205,7 +205,7 @@ describe "Lune::Plugins (native)" do
       bridge.register_bindings(app.bindings)
 
       wv.invoke("Lune.Plugins.Dialogs.messageQuestion", "seq8d", [JSON.parse(%({"title": "Confirm", "message": "Are you sure?"}))])
-      result = wv.resolve_calls.find { |r| r[0] == "seq8d" }.not_nil!
+      result = wv.resolve_calls.find! { |r| r[0] == "seq8d" }
       result[1].should eq(0)
       JSON.parse(result[2]).as_s.should eq("Yes")
     end
@@ -289,7 +289,7 @@ describe "Lune::Plugins (native)" do
 
     it "configured? is true with explicit on_menu_click override" do
       plugin = Lune::Plugins::Tray.new
-      plugin.config.on_menu_click = ->(id : String) { nil }
+      plugin.config.on_menu_click = ->(_id : String) { nil }
       plugin.configured?.should be_true
     end
   end
@@ -326,7 +326,7 @@ describe "Lune::Plugins (native)" do
       bridge.register_bindings(app.bindings)
 
       wv.invoke("Lune.Plugins.System.screenInfo", "seq12", [] of JSON::Any)
-      resolved = wv.resolve_calls.find { |r| r[0] == "seq12" }.not_nil![2]
+      resolved = wv.resolve_calls.find! { |r| r[0] == "seq12" }[2]
       resolved.should contain("2560")
       resolved.should contain("1440")
       resolved.should contain("2.0")

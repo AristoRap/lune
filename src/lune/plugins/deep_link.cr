@@ -14,7 +14,7 @@ module Lune
       end
 
       def install(app : Lune::App) : Nil
-        url_from_argv = ARGV.find { |arg| arg.includes?("://") }
+        url_from_argv = ARGV.find(&.includes?("://"))
 
         # Linux warm-start: if a primary instance is already running, send
         # the URL over its Unix-socket and exit instead of opening a new
@@ -66,14 +66,14 @@ module Lune
         <<-JS
           on(cb)  { window.#{bm}.on("deep_link", function(data) { cb(data.url); }, -1); },
           off()   { window.#{bm}.off("deep_link"); },
-        JS
+          JS
       end
 
       def dts_helpers : String
         <<-DTS
           on(cb: (url: string) => void): void;
           off(): void;
-        DTS
+          DTS
       end
     end
   end

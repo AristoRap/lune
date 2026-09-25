@@ -105,7 +105,7 @@ module Lune
         end
 
         # Adds a nested submenu via block. Returns the parent `Item` (kind Submenu).
-        def submenu(label : String, &block : Group ->) : Item
+        def submenu(label : String, & : Group ->) : Item
           g = Group.new(label)
           yield g
           m = Item.new(label: label, kind: Item::Kind::Submenu, children: g.items)
@@ -143,7 +143,7 @@ module Lune
       end
 
       # Adds a top-level submenu via block. Returns the `Item` (kind Submenu).
-      def submenu(label : String, &block : Group ->) : Item
+      def submenu(label : String, & : Group ->) : Item
         g = Group.new(label)
         yield g
         m = Item.new(label: label, kind: Item::Kind::Submenu, children: g.items)
@@ -158,8 +158,12 @@ module Lune
         m
       end
 
-      def any? : Bool
+      def present? : Bool
         !@top_level.empty?
+      end
+
+      def any? : Bool
+        present?
       end
 
       # Serializes the menu tree into the JSON shape consumed by the native
