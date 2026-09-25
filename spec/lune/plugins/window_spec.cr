@@ -32,6 +32,14 @@ describe Lune::Plugins::Window do
       Lune::Plugins::Window::Config.new.drag_zone.should be_empty
     end
 
+    it "excludes interactive controls by default and allows customization" do
+      config = Lune::Plugins::Window::Config.new
+      config.drag_exclude.should contain("button")
+      config.drag_exclude.should contain("[data-lune-no-drag]")
+      config.drag_exclude = ".custom-control"
+      config.drag_exclude.should eq(".custom-control")
+    end
+
     it "round-trips via opts.window assignment" do
       Lune.with_plugins(Lune::Plugins::Window.new) do
         opts = Lune::Options.new
@@ -62,6 +70,20 @@ describe Lune::Plugins::Window do
         plugin.config.drag_zone = "--lune-draggable"
         plugin.init_js.not_nil!.should contain("mousedown")
         plugin.init_js.not_nil!.should contain("--lune-draggable")
+      end
+
+      it "preserves controls and no-drag regions inside draggable containers" do
+        plugin = Lune::Plugins::Window.new
+        plugin.config.drag_zone = "--test-drag"
+        default_script = plugin.init_js
+        plugin.config.drag_exclude = ".custom-control"
+        custom_script = plugin.init_js
+        plugin.config.drag_exclude = ""
+        input = {default_script: default_script, custom_script: custom_script, unrestricted_script: plugin.init_js}.to_json
+        output = IO::Memory.new
+        status = Process.run("node", [File.expand_path("../../support/window_drag_test.js", __DIR__)],
+          input: IO::Memory.new(input), output: output, error: output)
+        status.success?.should be_true, output.to_s
       end
 
       # The listener must invoke the binding by its actual dispatch id, which

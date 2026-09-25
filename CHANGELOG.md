@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- **Window drag exclusions.** Draggable containers preserve standard controls, editable regions, charts, dialogs, and scrollbars. Use inline `false`, `0`, or `no-drag` on the configured drag property to exclude a subtree, or customize the new `window.drag_exclude` selector. Drag detection respects shadow DOM paths and ignores modified/non-primary clicks.
+
 ## [0.20.0] - 2026-09-21
 
 ### Added

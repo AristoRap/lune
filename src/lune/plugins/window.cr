@@ -24,10 +24,18 @@ module Lune
 
       config do
         # CSS custom property name that marks an element as a window drag
-        # handle. Any non-empty inline value on the property activates the
-        # drag — `style="--lune-draggable: true"` is the idiomatic shape.
+        # handle. Non-empty inline values enable drag, except false, 0 and
+        # no-drag, which exclude the element's entire subtree.
         # Leave empty to skip drag entirely (default).
         property drag_zone : String = ""
+
+        # CSS selector for controls/regions that must retain pointer interaction.
+        # Override for custom widgets; set empty to use only explicit no-drag markers.
+        property drag_exclude : String = "a, button, input, select, textarea, label, summary, " \
+                                         "[contenteditable]:not([contenteditable='false']), [tabindex], " \
+                                         "[role='button'], [role='link'], [role='slider'], [role='checkbox'], " \
+                                         "[role='switch'], [role='tab'], [role='menuitem'], [role='combobox'], " \
+                                         "[draggable='true'], [data-lune-no-drag], dialog, svg, canvas"
       end
 
       @handle : Void* = Pointer(Void).null
@@ -52,14 +60,32 @@ module Lune
           <<-JS
           (function(){
             document.addEventListener('mousedown', function(e) {
-              var el = e.target;
-              while (el) {
-                if (el.style && el.style.getPropertyValue(#{@config.drag_zone.inspect}).trim() !== "") {
-                  window[#{start_key.inspect}]();
-                  return;
-                }
-                el = el.parentElement;
+              if (e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+              var path = e.composedPath();
+              var excluded = #{@config.drag_exclude.inspect};
+              var draggable = false;
+              for (var i = 0; i < path.length; i++) {
+                var el = path[i];
+                if (!(el instanceof Element)) continue;
+                if (excluded && el.matches(excluded)) return;
+                var value = el.style ? el.style.getPropertyValue(#{@config.drag_zone.inspect}).trim().toLowerCase() : "";
+                if (value === "false" || value === "0" || value === "no-drag") return;
+                if (value !== "") draggable = true;
               }
+              if (!draggable) return;
+              // Scrollbar presses target the scroll container, not its content.
+              var target = path[0];
+              if (target instanceof HTMLElement) {
+                var rect = target.getBoundingClientRect();
+                var x = e.clientX - rect.left;
+                var y = e.clientY - rect.top;
+                if (target.scrollHeight > target.clientHeight && target.offsetWidth > target.clientWidth &&
+                    (x < target.clientLeft || x >= target.clientLeft + target.clientWidth)) return;
+                if (target.scrollWidth > target.clientWidth && target.offsetHeight > target.clientHeight &&
+                    (y < target.clientTop || y >= target.clientTop + target.clientHeight)) return;
+              }
+              e.preventDefault();
+              window[#{start_key.inspect}]();
             }, true);
           })();
           JS

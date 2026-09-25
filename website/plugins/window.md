@@ -50,17 +50,33 @@ Lune.run(app) do |opts|
 end
 ```
 
-| Option      | Type     | Default | Description                                                                             |
-| ----------- | -------- | ------- | --------------------------------------------------------------------------------------- |
-| `drag_zone` | `String` | `""`    | CSS custom property name that marks drag handles. Empty means no listener is installed. |
+| Option         | Type     | Default                      | Description                                                                                                                                   |
+| -------------- | -------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `drag_zone`    | `String` | `""`                         | Inline CSS custom property that marks drag handles or excludes subtrees. Empty disables dragging.                                             |
+| `drag_exclude` | `String` | Interactive elements (below) | CSS selector for elements whose entire subtree must keep pointer interaction. Override for custom widgets; `""` disables selector exclusions. |
 
-Mark an element as a drag handle with an inline style. Any non-empty value on the configured property activates the drag — write `true` for clarity:
+Mark an element as a drag handle with an inline style. Non-empty values enable dragging, except `false`, `0`, and `no-drag`, which exclude a subtree. Write `true` for clarity:
 
 ```html
 <div style="--lune-draggable: true">Title bar</div>
 ```
 
-> **Inline style required.** Detection reads `style.getPropertyValue` directly and walks up the DOM, so marking a container makes all children draggable too.
+> **Inline style required.** Detection reads `style.getPropertyValue` directly. The event's composed path is checked, including ancestors across shadow roots. Exclusions always win, even over a nested drag handle.
+
+You can mark the entire app draggable and opt custom interaction areas out:
+
+```html
+<div style="--lune-draggable: true">
+  <h1>Drag from this heading or the background</h1>
+  <button>Buttons remain clickable automatically</button>
+  <div style="--lune-draggable: false">Selectable text or a custom widget</div>
+  <div data-lune-no-drag>Another custom interaction area</div>
+</div>
+```
+
+By default, `drag_exclude` includes links, buttons, inputs, selects, textareas, labels, summaries, editable regions, elements with `tabindex`, ARIA buttons/links/sliders/checkboxes/switches/tabs/menuitems/comboboxes, HTML drag sources, `[data-lune-no-drag]`, dialogs, SVG, and canvas. Their descendants are excluded too. Disabled controls also remain excluded. The `data-lune-no-drag` attribute is part of this default selector; inline `false`/`0`/`no-drag` exclusions always apply, even with a custom selector.
+
+For custom selectors, assign `opts.window.drag_exclude` (this replaces the default selector). Unmodified primary-button presses initiate dragging; secondary buttons, modifier clicks, already-cancelled events, and native scrollbar presses retain their normal behavior. Text in draggable regions cannot be selected by dragging; mark selectable content as no-drag.
 
 When `drag_zone` is empty (the default), no mousedown listener is installed and the `start_drag` binding is unused — the plugin behaves exactly like before the drag feature existed. To "disable" drag, leave `drag_zone` unset.
 
