@@ -5,6 +5,16 @@
 ### Added
 
 - **Window drag exclusions.** Draggable containers preserve standard controls, editable regions, charts, dialogs, and scrollbars. Use inline `false`, `0`, or `no-drag` on the configured drag property to exclude a subtree, or customize the new `window.drag_exclude` selector. Drag detection respects shadow DOM paths and ignores modified/non-primary clicks.
+- **macOS native toolbar styles.** `opts.mac.toolbar_style` attaches an empty native toolbar with an `Automatic`, `Expanded`, `Preference`, `Unified`, or `UnifiedCompact` layout. The default `nil` preserves existing window chrome. Explicit styles require macOS 11+; older versions use the system's default toolbar layout. Ignored on Linux and Windows.
+- **Menu presence query.** `Lune::Options::Menu#present?` reports whether the menu contains top-level items; `any?` remains available as an alias.
+
+### Removed
+
+- **Window defaults in `lune.yml`** _(breaking)_. The `window:` section no longer configures the runtime window. Move title, dimensions, size constraints, `resizable`, `devtools`, and `remember_frame` settings into the `Lune.run` options block. `Lune::Config::Window`, `Config#window`, and `Options#apply` have been removed.
+
+### Internal
+
+- **Ameba cleanup.** Standardized Crystal formatting, simplified redundant code and blocks, marked unused arguments, and replaced chained nullable lookups with their raising variants in specs.
 
 ## [0.20.0] - 2026-09-21
 
